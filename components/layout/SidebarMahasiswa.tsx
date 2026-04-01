@@ -26,7 +26,7 @@ export default function SidebarMahasiswa() {
         <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
           <img
             alt="Andi Pratama"
-            className="w-10 h-10 rounded-full object-cover"
+            className="w-10 h-10 rounded-full object-cover loading=eager"
             src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=100&auto=format&fit=crop"
           />
           <div>
