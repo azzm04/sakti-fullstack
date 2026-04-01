@@ -1,10 +1,5 @@
-export type RegisterPayload = {
-  name: string;
-  email: string;
-  password: string;
-};
-
-export type LoginPayload = {
-  email: string;
-  password: string;
-};
+/**
+ * @deprecated Import directly from "@/schemas" instead.
+ * This file is kept only for backward compatibility.
+ */
+export type { RegisterPayload, LoginPayload } from "@/schemas";

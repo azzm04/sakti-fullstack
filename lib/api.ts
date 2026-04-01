@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { RegisterPayload } from '../types/auth';
+import { RegisterSchema, type RegisterPayload } from '@/schemas';
 
 // Base URL untuk FastAPI backend
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL ;
@@ -91,8 +91,9 @@ export const authAPI = {
     return response.data;
   },
   
-  register: async (userData: RegisterPayload ) => {
-    const response = await apiClient.post('/api/auth/register', userData);
+  register: async (userData: RegisterPayload) => {
+    const validated = RegisterSchema.parse(userData);
+    const response = await apiClient.post('/api/auth/register', validated);
     return response.data;
   },
   

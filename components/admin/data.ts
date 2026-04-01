@@ -1,24 +1,18 @@
-// ── Shared types & data for admin dashboard ───────────────────────────────────
+import {
+  PendaftarSchema,
+  KriteriaSchema,
+  StatusFilterSchema,
+  type Pendaftar,
+  type Kriteria,
+  type SortKey,
+  type SortDir,
+  type StatusFilter,
+} from "@/schemas";
 
-export type SortKey = "rank" | "ipk" | "penghasilan_raw" | "skor";
-export type SortDir = "asc" | "desc";
-export type StatusFilter = "Semua" | "Prioritas Utama" | "Direkomendasikan" | "Cadangan";
+// Re-export types so consumers don't need to import from two places
+export type { Pendaftar, Kriteria, SortKey, SortDir, StatusFilter };
 
-export interface Pendaftar {
-  rank: number;
-  nama: string;
-  nim: string;
-  prodi: string;
-  ipk: number;
-  penghasilan: string;
-  penghasilan_raw: number;
-  tanggungan: number;
-  jarak: string;
-  prestasi: string;
-  skor: number;
-  status: string;
-}
-
+// ── Validated dummy data ───────────────────────────────────────────────────────
 export const RAW_DATA: Pendaftar[] = [
   { rank: 1,  nama: "Ahmad Dani Ramadhan", nim: "2021010001", prodi: "Teknik Informatika",  ipk: 3.92, penghasilan: "Rp 1.500.000", penghasilan_raw: 1500000, tanggungan: 4, jarak: "45 km", prestasi: "Juara 1 OSN",         skor: 0.9421, status: "Prioritas Utama"   },
   { rank: 2,  nama: "Siti Putri Lestari",  nim: "2021020034", prodi: "Pend. Matematika",    ipk: 3.88, penghasilan: "Rp 2.000.000", penghasilan_raw: 2000000, tanggungan: 3, jarak: "32 km", prestasi: "Juara 2 OSN",         skor: 0.9155, status: "Prioritas Utama"   },
@@ -30,15 +24,17 @@ export const RAW_DATA: Pendaftar[] = [
   { rank: 8,  nama: "Anisa Maharani",      nim: "2021080067", prodi: "Psikologi",            ipk: 3.70, penghasilan: "Rp 3.000.000", penghasilan_raw: 3000000, tanggungan: 3, jarak: "22 km", prestasi: "Juara 2 Karya Tulis", skor: 0.7612, status: "Cadangan"          },
   { rank: 9,  nama: "Hendra Kusuma",       nim: "2021090011", prodi: "Teknik Elektro",       ipk: 3.60, penghasilan: "Rp 1.900.000", penghasilan_raw: 1900000, tanggungan: 4, jarak: "55 km", prestasi: "-",                   skor: 0.7401, status: "Cadangan"          },
   { rank: 10, nama: "Laila Fitriani",      nim: "2021100089", prodi: "Farmasi",              ipk: 3.78, penghasilan: "Rp 2.800.000", penghasilan_raw: 2800000, tanggungan: 3, jarak: "40 km", prestasi: "Juara 1 Karya Tulis", skor: 0.7188, status: "Cadangan"          },
-];
+].map((d) => PendaftarSchema.parse(d)); // validate at startup
 
-export const CRITERIA = [
+export const CRITERIA: Kriteria[] = [
   { key: "penghasilan", label: "Penghasilan OT",    bobot: 30, type: "cost"    },
   { key: "tanggungan",  label: "Jml Tanggungan",    bobot: 20, type: "benefit" },
   { key: "ipk",         label: "IPK",               bobot: 25, type: "benefit" },
   { key: "jarak",       label: "Jarak Tempuh",      bobot: 10, type: "benefit" },
   { key: "prestasi",    label: "Prestasi Akademik", bobot: 15, type: "benefit" },
-];
+].map((c) => KriteriaSchema.parse(c));
+
+export const STATUS_FILTERS: StatusFilter[] = StatusFilterSchema.options;
 
 export const STATUS_STYLE: Record<string, { badge: string; dot: string }> = {
   "Prioritas Utama":  { badge: "bg-blue-50 text-blue-700 ring-1 ring-blue-200",          dot: "bg-blue-500"    },
@@ -54,7 +50,6 @@ export const AVATAR_COLORS = [
   "bg-rose-100 text-rose-700",
 ];
 
-export const STATUS_FILTERS: StatusFilter[] = ["Semua", "Prioritas Utama", "Direkomendasikan", "Cadangan"];
 export const PAGE_SIZE = 5;
 
 export function getInitials(name: string) {
