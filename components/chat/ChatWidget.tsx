@@ -40,9 +40,8 @@ export default function ChatWidget() {
       // 2. Tembak API Backend FastAPI
       const response = await chatAPI.sendMessage(text);
       
-      // Asumsi response API mengembalikan field "reply" atau "message"
-      // Sesuaikan response.reply dengan struktur JSON dari backend Python kamu!
-      const botReply = response.reply || response.message || response.data; 
+      // Backend returns one of: jawaban, reply, message, response
+      const botReply = response.jawaban ?? response.reply ?? response.message ?? response.response ?? response.data;
 
       // 3. Tambahkan balasan bot ke UI
       setMessages((prev) => [

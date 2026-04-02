@@ -35,12 +35,13 @@ export function useChatbot() {
     setIsLoading(true);
 
     try {
-      const response = await chatAPI.sendMessage(message, conversationId);
+      const response = await chatAPI.sendMessage(message);
 
       const assistantRaw = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response.message,
+        // Backend returns one of: jawaban, reply, message
+        content: response.jawaban ?? response.reply ?? response.message ?? '',
         timestamp: new Date().toISOString(),
       };
 

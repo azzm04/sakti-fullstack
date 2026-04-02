@@ -26,16 +26,12 @@ apiClient.interceptors.request.use(
 
 // API Endpoints
 export const chatAPI = {
-  sendMessage: async (message: string, conversationId?: string) => {
+  // Backend schema: PesanMahasiswa { pesan: string, gambar_base64?: string | null }
+  sendMessage: async (message: string, gambarBase64?: string | null) => {
     const response = await apiClient.post('/api/chat', {
-      message,
-      conversation_id: conversationId,
+      pesan: message,
+      gambar_base64: gambarBase64 ?? null,
     });
-    return response.data;
-  },
-  
-  getConversations: async () => {
-    const response = await apiClient.get('/api/chat/conversations');
     return response.data;
   },
 };
