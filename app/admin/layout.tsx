@@ -78,7 +78,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-2.5 rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors"
         >
           <BotMessageSquare size={16} />
-          Aktivasi Telegram
+          Hubungkan Telegram
         </motion.button>
         <motion.button
           whileHover={{ x: 2 }}

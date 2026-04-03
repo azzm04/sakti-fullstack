@@ -73,7 +73,7 @@ export default function SidebarMahasiswa() {
           className="w-full flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-xl font-bold shadow-md hover:bg-primary/90 transition-all"
         >
           <Send className="w-4 h-4" />
-          Aktivasi Telegram
+          Hubungkan Telegram
         </a>
 
         <Link href="/logout" className="w-full block">

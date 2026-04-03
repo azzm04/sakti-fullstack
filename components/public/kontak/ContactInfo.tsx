@@ -1,59 +1,68 @@
-"use client";
+'use client';
 
-import { motion } from "framer-motion";
-import { IconMail, IconPhone, IconMapPin } from "@tabler/icons-react";
+import { motion } from 'framer-motion';
+import { IconMail, IconPhone, IconMapPin } from '@tabler/icons-react';
+import dynamic from 'next/dynamic';
+
+// Leaflet harus di-load secara dynamic (SSR tidak support window/document)
+const DirmawMap = dynamic(() => import('./DirmawMap'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-64 rounded-2xl bg-slate-100 animate-pulse flex items-center justify-center">
+      <span className="text-xs text-slate-400">Memuat peta...</span>
+    </div>
+  ),
+});
 
 export default function ContactInfo() {
   return (
-    <div className="lg:col-span-5 space-y-8">
+    <div className="lg:col-span-5 space-y-6 h-fit">
+      {/* Address card */}
       <motion.div
         initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }}
-        className="bg-surface-container-lowest p-8 rounded-[2rem] shadow-lg flex gap-6 items-start"
+        className="bg-white border border-slate-100 p-8 rounded-2xl shadow-sm flex gap-5 items-start"
       >
-        <div className="w-12 h-12 rounded-xl bg-primary-container/10 flex items-center justify-center text-primary shrink-0">
-          <IconMapPin className="w-6 h-6" />
+        <div className="w-11 h-11 rounded-xl bg-blue-50 flex items-center justify-center text-primary shrink-0">
+          <IconMapPin className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="font-headline font-bold text-xl mb-2">Direktorat Kemahasiswaan Undip</h3>
-          <p className="text-on-surface-variant leading-relaxed">
+          <h3 className="font-headline font-bold text-lg text-slate-800 mb-1">Direktorat Kemahasiswaan Undip</h3>
+          <p className="text-slate-500 text-sm leading-relaxed">
             Jl. Prof. Sudarto, SH, Tembalang, Semarang, Jawa Tengah 50275
           </p>
         </div>
       </motion.div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      {/* Email & Phone */}
+      <div className="grid grid-cols-2 gap-4">
         <motion.div
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-          className="bg-surface-container-low p-6 rounded-xl transition-all hover:bg-surface-container-high cursor-default"
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+          className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
         >
-          <IconMail className="w-6 h-6 text-primary mb-3" />
-          <div className="text-sm font-label uppercase tracking-tighter text-on-surface-variant mb-1">Email Resmi</div>
-          <div className="font-bold">dirmawa@live.undip.ac.id</div>
+          <div className="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center mb-3">
+            <IconMail className="w-4 h-4 text-primary" />
+          </div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Email Resmi</div>
+          <div className="font-bold text-slate-800 text-sm">dirmawa@live.undip.ac.id</div>
         </motion.div>
 
         <motion.div
-          initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-          className="bg-surface-container-low p-6 rounded-xl transition-all hover:bg-surface-container-high cursor-default"
+          initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
+          className="bg-white border border-slate-100 p-5 rounded-2xl shadow-sm hover:shadow-md transition-shadow"
         >
-          <IconPhone className="w-6 h-6 text-primary mb-3" />
-          <div className="text-sm font-label uppercase tracking-tighter text-on-surface-variant mb-1">Telepon</div>
-          <div className="font-bold">(024) 7460024</div>
+          <div className="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center mb-3">
+            <IconPhone className="w-4 h-4 text-primary" />
+          </div>
+          <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-1">Telepon</div>
+          <div className="font-bold text-slate-800 text-sm">(024) 7460024</div>
         </motion.div>
       </div>
 
+      {/* Leaflet Map */}
       <motion.div
-        initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5 }}
-        className="relative group h-64 rounded-[2rem] overflow-hidden shadow-inner bg-surface-container-high"
+        initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.5 }}
       >
-        <img
-          className="w-full h-full object-cover grayscale opacity-80 group-hover:grayscale-0 group-hover:opacity-100 transition-all duration-700"
-          src="/undip-map.jpg" alt="Undip Location"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-primary/20 to-transparent pointer-events-none" />
-        <div className="absolute bottom-4 left-4 bg-white/90 backdrop-blur-md px-4 py-2 rounded-lg flex items-center gap-2">
-          <span className="w-3 h-3 bg-primary rounded-full animate-pulse" />
-          <span className="text-xs font-bold text-primary">KAMPUS UNDIP</span>
-        </div>
+        <DirmawMap />
       </motion.div>
     </div>
   );

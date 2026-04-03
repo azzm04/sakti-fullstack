@@ -53,6 +53,9 @@ export default function Navbar() {
           <Link href="/panduan" className={getMenuClass("/panduan")}>
             Panduan
           </Link>
+          <Link href="/pengaduan" className={getMenuClass("/pengaduan")}>
+            Pengaduan
+          </Link>
           <Link href="/kontak" className={getMenuClass("/kontak")}>
             Kontak
           </Link>
