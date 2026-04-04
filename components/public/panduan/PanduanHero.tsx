@@ -16,7 +16,8 @@ export default function PanduanHero() {
             Panduan Pendaftaran KIP-Kuliah 2026
           </h1>
           <p className="text-lg text-slate-500 leading-relaxed max-w-xl">
-            Akses resmi panduan langkah demi langkah program bantuan pendidikan nasional. Berdasarkan sumber terverifikasi dari Kemdikbudristek.
+            Panduan informasi program KIP-Kuliah berdasarkan dokumen FAQ resmi Dirmawa UNDIP. SAKTI bukan portal pendaftaran — untuk mendaftar KIP-K kunjungi{" "}
+            <a href="https://kip-kuliah.kemdikbud.go.id" target="_blank" rel="noopener noreferrer" className="text-primary font-semibold underline">kip-kuliah.kemdikbud.go.id</a>.
           </p>
           <div className="flex flex-wrap gap-4 pt-4">
             <a href="#tutorial">

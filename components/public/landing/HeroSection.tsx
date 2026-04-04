@@ -9,13 +9,13 @@ export default function HeroSection() {
       <div className="grid lg:grid-cols-2 gap-16 items-center w-full max-w-7xl mx-auto">
         <div className="z-10">
           <span className="inline-block px-4 py-1.5 mb-6 text-[11px] font-bold tracking-[0.15em] text-[#743B00] bg-[#743B00]/10 rounded-full uppercase">
-            Puslapdik Kemendikbudristek
+            Dirmawa Universitas Diponegoro
           </span>
           <h1 className="text-4xl lg:text-5xl xl:text-6xl font-extrabold leading-[1.2] text-primary mb-8 tracking-tight">
-            Sistem Informasi Akademik dan
+            Sistem Asisten KIPK
             <div className="block w-full mt-2">
               <CanvasText
-                text="KIP-Kuliah Terpadu"
+                text="Terpadu & Interaktif"
                 className="text-4xl lg:text-5xl xl:text-6xl font-extrabold text-white"
                 backgroundClassName="bg-white"
                 colors={[
@@ -29,18 +29,28 @@ export default function HeroSection() {
               />
             </div>
           </h1>
-          <p className="text-lg text-secondary leading-relaxed mb-10 max-w-xl">
-            Wujudkan mimpi pendidikan tinggi Anda melalui integrasi data akademik yang cerdas dan bantuan biaya pendidikan nasional yang tepat sasaran.
+          <p className="text-lg text-secondary leading-relaxed mb-4 max-w-xl">
+            Platform pendukung tata kelola beasiswa KIPK Universitas Diponegoro — dilengkapi Asisten Virtual berbasis AI, analitik seleksi SMART-TOPSIS, dan notifikasi Monev otomatis via Telegram.
           </p>
+          {/* Disclaimer penting */}
+          <div className="flex items-start gap-2 mb-8 p-3 bg-amber-50 border border-amber-200 rounded-xl max-w-xl">
+            <span className="material-symbols-outlined text-amber-500 text-base shrink-0 mt-0.5">info</span>
+            <p className="text-xs text-amber-700 leading-relaxed">
+              SAKTI adalah sistem <strong>pendukung analitik</strong> Dirmawa UNDIP — bukan portal pendaftaran KIP-Kuliah. Untuk mendaftar KIP-K, kunjungi{" "}
+              <a href="https://kip-kuliah.kemdikbud.go.id" target="_blank" rel="noopener noreferrer" className="underline font-bold">kip-kuliah.kemdikbud.go.id</a>.
+            </p>
+          </div>
           <div className="flex flex-wrap gap-4">
-            <Link href="/dashboard/student">
+            <Link href="/mahasiswa/dashboard">
               <button className="bg-primary text-white px-8 py-4 rounded-md font-bold text-base hover:bg-primary/90 transition-all flex items-center gap-3">
-                Daftar Sekarang <ArrowRight className="w-5 h-5" />
+                Masuk ke SAKTI <ArrowRight className="w-5 h-5" />
               </button>
             </Link>
-            <button className="bg-transparent border border-secondary text-secondary px-8 py-4 rounded-md font-bold text-base hover:bg-secondary/5 transition-all">
-              Pelajari Alur
-            </button>
+            <Link href="/panduan">
+              <button className="bg-transparent border border-secondary text-secondary px-8 py-4 rounded-md font-bold text-base hover:bg-secondary/5 transition-all">
+                Pelajari Fitur
+              </button>
+            </Link>
           </div>
         </div>
 
@@ -61,8 +71,8 @@ export default function HeroSection() {
                   <GraduationCap className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <div className="text-white font-bold text-xl">952k+ Mahasiswa</div>
-                  <div className="text-white/80 text-sm">Telah terbantu di tahun 2025</div>
+                  <div className="text-white font-bold text-xl">Mahasiswa KIPK UNDIP</div>
+                  <div className="text-white/80 text-sm">Terlayani platform SAKTI</div>
                 </div>
               </div>
             </div>

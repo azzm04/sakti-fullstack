@@ -10,14 +10,17 @@ export default function CtaBanner() {
         />
         <div className="relative z-10 px-12 py-16 lg:py-24 text-center">
           <h2 className="text-3xl lg:text-5xl font-extrabold text-white mb-8 tracking-tight">
-            Siap Menggapai Pendidikan Impian?
+            Mahasiswa KIPK UNDIP?
           </h2>
-          <p className="text-white/80 text-lg mb-12 max-w-2xl mx-auto">
-            Mulai langkah Anda hari ini. Pastikan data profil Anda lengkap dan sesuai untuk mempermudah proses verifikasi beasiswa.
+          <p className="text-white/80 text-lg mb-4 max-w-2xl mx-auto">
+            Akses dashboard personal SAKTI menggunakan email SSO UNDIP Anda untuk mengelola notifikasi Monev dan berinteraksi dengan Asisten Virtual.
           </p>
-          <Link href="/dashboard/student">
+          <p className="text-white/50 text-sm mb-10 max-w-xl mx-auto">
+            Akses login hanya tersedia bagi mahasiswa aktif penerima KIPK yang telah terdaftar di sistem Dirmawa UNDIP.
+          </p>
+          <Link href="/mahasiswa/dashboard">
             <button className="bg-white text-primary px-10 py-4 rounded-md font-bold text-lg hover:bg-slate-100 transition-all">
-              Akses Portal SAKTI
+              Masuk ke Dashboard SAKTI
             </button>
           </Link>
         </div>

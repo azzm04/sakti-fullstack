@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import type { ChatMessage } from '@/schemas';
@@ -11,8 +11,19 @@ interface Props {
   onCopy: (text: string) => void;
 }
 
+function formatTime(iso: string) {
+  return new Date(iso).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatDate() {
+  return new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' });
+}
+
 export default function ChatMessages({ messages, isLoading, onCopy }: Props) {
   const endRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => { setMounted(true); }, []);
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -24,7 +35,7 @@ export default function ChatMessages({ messages, isLoading, onCopy }: Props) {
 
         <div className="flex justify-center">
           <span className="px-4 py-1 rounded-full bg-slate-200/70 text-[11px] font-bold text-slate-500 tracking-wider uppercase">
-            {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
+            {mounted ? formatDate() : ''}
           </span>
         </div>
 
@@ -32,7 +43,7 @@ export default function ChatMessages({ messages, isLoading, onCopy }: Props) {
           {messages.map((msg) => {
             const isUser = msg.role === 'user';
             const msgWithImg = msg as ChatMessage & { imageUrl?: string };
-            const time = new Date(msg.timestamp).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+            const time = mounted ? formatTime(msg.timestamp) : '--:--';
 
             return (
               <motion.div

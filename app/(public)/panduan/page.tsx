@@ -16,7 +16,7 @@ export default function PanduanPage() {
         <VideoSection />
         <StepsSection />
         <EligibilitySection />
-        {/* <WhistleblowerSection /> */}
+        <WhistleblowerSection />
       </main>
       <ChatWidget />
       <Footer />

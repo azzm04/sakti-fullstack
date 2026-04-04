@@ -1,8 +1,8 @@
 const STATS = [
-  { value: "2026",  label: "Tahun Akademik"    },
-  { value: "100%",  label: "Transparansi Data" },
-  { value: "2.4jt", label: "Kuota Tersedia"    },
-  { value: "24/7",  label: "Dukungan SAKABOT"  },
+  { value: "3",      label: "Fitur Utama Sistem"   },
+  { value: "mRAG",   label: "Teknologi Chatbot"    },
+  { value: "TOPSIS", label: "Algoritma Seleksi"    },
+  { value: "24/7",   label: "Asisten Virtual"      },
 ];
 
 export default function StatsBar() {
