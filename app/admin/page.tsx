@@ -13,10 +13,13 @@ export default function AdminDashboard() {
   return (
     <div className="p-5 md:p-8 lg:p-10 space-y-6 max-w-screen-xl mx-auto">
       <DashboardHeader />
-      <StatsRow />
+      {/* <StatsRow /> */}
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-        <UploadCard uploadedFile={uploadedFile} onFileChange={setUploadedFile} />
-        <BobotCard />
+        <UploadCard
+          uploadedFile={uploadedFile}
+          onFileChange={setUploadedFile}
+        />
+        {/* <BobotCard /> */}
       </div>
       <RankingTable />
     </div>
