@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 import { motion, AnimatePresence, type Variants } from "motion/react";
 import {
@@ -35,7 +35,14 @@ const overlayVariants: Variants = {
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" })
+    router.push("/admin/login")
+    router.refresh()
+  }
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full">
@@ -82,6 +89,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </motion.button>
         <motion.button
           whileHover={{ x: 2 }}
+          onClick={handleLogout}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
         >
           <LogOut size={16} />

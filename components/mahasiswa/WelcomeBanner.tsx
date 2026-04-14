@@ -1,6 +1,11 @@
+"use client"
+
 import { BackgroundGradient } from "@/components/ui/background-gradient";
+import { useCurrentUser } from "@/hook/useCurrentUser";
 
 export default function WelcomeBanner() {
+  const { firstName, loading } = useCurrentUser()
+
   return (
     <section className="relative overflow-hidden rounded-4xl">
       <BackgroundGradient className="rounded-4xl p-10">
@@ -9,7 +14,9 @@ export default function WelcomeBanner() {
             Penerima KIP-K 2024
           </span>
           <h2 className="font-headline text-4xl font-black mb-4 leading-tight text-white">
-            Selamat Datang di Portal SAKTI, Andi!
+            {loading
+              ? "Selamat Datang di Portal SAKTI!"
+              : `Selamat Datang di Portal SAKTI, ${firstName}!`}
           </h2>
           <p className="text-blue-100 text-lg leading-relaxed opacity-90">
             Pantau status pencairan, lengkapi laporan Monev, dan pastikan seluruh administrasi Anda tetap terkelola dengan baik.

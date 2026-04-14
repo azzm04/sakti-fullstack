@@ -1,0 +1,119 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── WHITELIST SSO ────────────────────────────────────────
+// Diisi oleh Admin via upload Excel
+model SsoWhitelist {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  nama      String
+  role      Role     @default(MAHASISWA_KIPK)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user      User?
+
+  @@map("sso_whitelist")
+}
+
+// ─── USER ─────────────────────────────────────────────────
+// Dibuat otomatis saat mahasiswa pertama kali login OTP
+model User {
+  id          String       @id @default(cuid())
+  email       String       @unique
+  nama        String
+  nim         String?      @unique
+  prodi       String?
+  fakultas    String?
+  role        Role
+  telegramId  String?      @unique
+  whitelistId String       @unique
+  whitelist   SsoWhitelist @relation(fields: [whitelistId], references: [id])
+  otpTokens   OtpToken[]
+  chatHistory ChatHistory[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@map("users")
+}
+
+// ─── OTP TOKEN ────────────────────────────────────────────
+model OtpToken {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  code      String   // bcrypt hashed
+  expiresAt DateTime // 5 menit dari createdAt
+  used      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@map("otp_tokens")
+}
+
+// ─── ADMIN DIRMAWA ────────────────────────────────────────
+// Login pakai adminId + password, bukan OTP
+model AdminUser {
+  id        String   @id @default(cuid())
+  adminId   String   @unique
+  password  String   // bcrypt hashed
+  nama      String
+  createdAt DateTime @default(now())
+
+  @@map("admin_users")
+}
+
+// ─── CHAT HISTORY ─────────────────────────────────────────
+model ChatHistory {
+  id        String   @id @default(cuid())
+  userId    String?  // null = pengguna umum
+  user      User?    @relation(fields: [userId], references: [id])
+  sessionId String
+  role      String   // "user" | "assistant"
+  content   String   @db.Text
+  imageUrl  String?
+  createdAt DateTime @default(now())
+
+  @@map("chat_history")
+}
+
+// ─── MONEV SCHEDULE ───────────────────────────────────────
+model MonevSchedule {
+  id        String   @id @default(cuid())
+  label     String
+  deadline  DateTime
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  notificationLogs NotificationLog[]
+
+  @@map("monev_schedules")
+}
+
+// ─── NOTIFICATION LOG ─────────────────────────────────────
+model NotificationLog {
+  id              String        @id @default(cuid())
+  monevScheduleId String
+  monevSchedule   MonevSchedule @relation(fields: [monevScheduleId], references: [id])
+  triggerDay      Int
+  totalSent       Int           @default(0)
+  totalFailed     Int           @default(0)
+  sentAt          DateTime      @default(now())
+
+  @@map("notification_logs")
+}
+
+// ─── ENUM ROLE ────────────────────────────────────────────
+enum Role {
+  MAHASISWA_KIPK
+  PEWAWANCARA
+  ADMIN_DIRMAWA
+}
