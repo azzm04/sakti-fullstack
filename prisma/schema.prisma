@@ -1,122 +1,9 @@
 generator client {
-<<<<<<< HEAD
-  provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
-}
-
-datasource db {
-  provider = "postgresql"
-}
-
-// ── Kandidat KIPK ─────────────────────────────────────────────────────────────
-model Kandidat {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Identitas & Pendaftaran
-  no                   Int
-  no_pendaftaran_kipk  String  @default("")
-  nama                 String  @default("")
-  prodi                String  @default("")
-  nik                  String  @default("")
-  no_kartu_keluarga    String  @default("")
-  nik_kepala_keluarga  String  @default("")
-  nisn                 String  @default("")
-
-  // Status Sosial
-  status_dtks   String @default("")
-  validasi_dtks String @default("")
-  status_p3ke   String @default("")
-  validasi_p3ke String @default("")
-  no_kip        String @default("")
-  validasi_kip  String @default("")
-  no_kks        String @default("")
-
-  // Asal Sekolah
-  asal_sekolah     String @default("")
-  kab_kota_sekolah String @default("")
-  provinsi_sekolah String @default("")
-
-  // Data Diri
-  tempat_lahir   String @default("")
-  tanggal_lahir  String @default("")
-  jenis_kelamin  String @default("")
-  alamat_tinggal String @default("")
-  no_hp          String @default("")
-  email          String @default("")
-  sosial_media   String @default("")
-
-  // Data Ayah
-  nama_ayah            String  @default("")
-  pekerjaan_ayah       String  @default("")
-  ket_pekerjaan_ayah   String  @default("")
-  penghasilan_ayah     Float   @default(0)
-  ket_penghasilan_ayah String  @default("")
-  status_ayah          String  @default("")
-
-  // Data Ibu
-  nama_ibu            String  @default("")
-  pekerjaan_ibu       String  @default("")
-  ket_pekerjaan_ibu   String  @default("")
-  penghasilan_ibu     Float   @default(0)
-  ket_penghasilan_ibu String  @default("")
-  status_ibu          String  @default("")
-
-  // Ekonomi Keluarga
-  wali                      String  @default("")
-  penghasilan_lain          Float   @default(0)
-  jumlah_tanggungan         Float   @default(0)
-  jml_tanggungan_sebenarnya Float   @default(0)
-  nominal_per_kapita        Float   @default(0)
-
-  // Kondisi Tempat Tinggal (diisi pewawancara)
-  kepemilikan_rumah String  @default("")
-  tahun_perolehan   String  @default("")
-  sumber_listrik    String  @default("")
-  luas_tanah        Float   @default(0)
-  luas_bangunan     Float   @default(0)
-  sumber_air        String  @default("")
-  mck               String  @default("")
-  kondisi_rumah     String  @default("")
-  jarak_pusat_kota  Float   @default(0)
-
-  // Hasil Wawancara (diisi pewawancara)
-  prestasi    String @default("")
-  rekomendasi String @default("")
-  alasan      String @default("")
-  pewawancara String @default("")
-
-  // Validation flags
-  hasErrors     Boolean  @default(false)
-  missingFields String[] @default([])
-
-  // Relasi ke batch import
-  importBatchId String?
-  importBatch   ImportBatch? @relation(fields: [importBatchId], references: [id])
-
-  @@index([nik])
-  @@index([importBatchId])
-}
-
-// ── Batch Import ──────────────────────────────────────────────────────────────
-model ImportBatch {
-  id         String     @id @default(cuid())
-  createdAt  DateTime   @default(now())
-  fileName   String
-  totalRows  Int
-  validRows  Int
-  errorRows  Int
-  dupRows    Int
-  kandidats  Kandidat[]
-=======
   provider = "prisma-client-js"
 }
 
 datasource db {
   provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 // ─── WHITELIST SSO ────────────────────────────────────────
@@ -227,5 +114,4 @@ enum Role {
   MAHASISWA_KIPK
   PEWAWANCARA
   ADMIN_DIRMAWA
->>>>>>> origin/feat/auth-login
 }
