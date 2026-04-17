@@ -47,18 +47,9 @@ export default function ActivationButton() {
               <IconCheck className="w-5 h-5" /> Berhasil Diaktifkan!
             </span>
           ) : (
-            <CanvasText
-              text="Aktivasi Bot Sekarang"
-              className="text-sm font-extrabold text-primary"
-              backgroundClassName="bg-white"
-              colors={[
-                'rgba(0, 86, 179, 1)',   'rgba(0, 86, 179, 0.85)', 'rgba(0, 86, 179, 0.7)',
-                'rgba(0, 86, 179, 0.55)','rgba(0, 86, 179, 0.4)',  'rgba(0, 86, 179, 0.25)',
-                'rgba(0, 86, 179, 0.1)',
-              ]}
-              lineGap={3}
-              animationDuration={18}
-            />
+            <span className="flex items-center gap-2 text-primary text-sm font-bold">
+              Aktivasi Bot Sekarang
+            </span>
           )}
         </button>
 

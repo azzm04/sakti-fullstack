@@ -18,11 +18,9 @@ export default function SidebarMahasiswa() {
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" })
-    router.push("/login")
-    router.refresh()
+    window.location.href = "/login";
   }
   
-  // Inisial nama untuk avatar — "Nandito Adi" → "NA"
   const initials = user?.nama
     ?.split(" ")
     .slice(0, 2)

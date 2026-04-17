@@ -59,7 +59,7 @@ export default function Navbar() {
 
           {/* Right side */}
           <div className="flex items-center gap-3">
-            <Link href="/dashboard/student" className="hidden md:block">
+            <Link href="/login" className="hidden md:block">
               <button className="bg-primary text-white px-6 lg:px-8 py-2.5 rounded-full font-bold text-sm shadow-md hover:bg-primary/90 hover:shadow-lg active:scale-95 transition-all">
                 Masuk
               </button>

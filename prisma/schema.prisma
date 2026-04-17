@@ -9,15 +9,16 @@ datasource db {
 // ─── WHITELIST SSO ────────────────────────────────────────
 // Diisi oleh Admin via upload Excel
 model SsoWhitelist {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  nama      String
-  role      Role     @default(MAHASISWA_KIPK)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id           String   @id @default(cuid())
+  email        String   @unique  // email login utama (pribadi atau SSO)
+  emailSso     String?  @unique  // email SSO @students.undip.ac.id (opsional)
+  nama         String
+  role         Role     @default(MAHASISWA_KIPK)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
-  user      User?
+  user         User?
 
   @@map("sso_whitelist")
 }

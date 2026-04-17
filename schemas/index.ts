@@ -119,14 +119,10 @@ export const LoginSchema = z.object({
 });
 export type LoginPayload = z.infer<typeof LoginSchema>;
 
-// OTP Flow — Mahasiswa login via email SSO
+// OTP Flow — bisa pakai email pribadi atau SSO
 export const SendOtpSchema = z.object({
-  email: z
-    .string()
-    .email("Format email tidak valid")
-    .endsWith("@students.undip.ac.id", {
-      message: "Harus menggunakan email SSO Undip (@students.undip.ac.id)",
-    }),
+  email: z.string().email("Format email tidak valid"),
+  nama: z.string().optional(), // wajib untuk jalur email pribadi
 });
 export type SendOtpPayload = z.infer<typeof SendOtpSchema>;
 

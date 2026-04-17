@@ -407,7 +407,7 @@ export default function UploadZone({ onDataUploaded, onSave, hasData, saveStatus
 
       {/* Action Buttons */}
       <div className="mt-6 space-y-3">
-        <button
+        {/* <button
           onClick={onSave}
           disabled={!hasData || saveStatus === "saving" || saveStatus === "saved"}
           className={`w-full py-3 rounded-lg font-medium flex items-center justify-center gap-2 shadow-sm transition-all ${
@@ -443,7 +443,7 @@ export default function UploadZone({ onDataUploaded, onSave, hasData, saveStatus
               Simpan ke Database
             </>
           )}
-        </button>
+        </button> */}
       </div>
     </>
   );

@@ -5,7 +5,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { type CandidateData, type ValidationSummary } from "@/schemas";
 import UploadZone from "@/components/admin/import/UploadZone";
 import DataPreviewTable from "@/components/admin/import/DataPreviewTable";
-import ValidationStats from "@/components/admin/import/ValidationStats";
 import TipsCard from "@/components/admin/import/TipsCard";
 
 export type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -95,7 +94,7 @@ export default function ImportDataPage() {
       <div className="mb-8">
         <nav className="flex items-center gap-1.5 mb-3">
           <span className="text-[11px] uppercase tracking-wider font-semibold text-on-surface-variant">
-            Dashboard
+            Admin
           </span>
           <span className="material-symbols-outlined text-xs text-outline">chevron_right</span>
           <span className="text-[11px] uppercase tracking-wider font-semibold text-primary">
@@ -191,11 +190,12 @@ export default function ImportDataPage() {
         <div className={`col-span-12 space-y-5 transition-all duration-300 ${showUpload ? "lg:col-span-8" : "lg:col-span-12"}`}>
           {hasData ? (
             <>
-              <ValidationStats stats={validation} />
               <DataPreviewTable
                 data={uploadedData}
                 fileName={fileName}
-                isSaved={isSaved}
+                onSave={handleSave}
+                saveStatus={saveStatus}
+                hasData={hasData}
               />
               {!isSaved && <TipsCard />}
 

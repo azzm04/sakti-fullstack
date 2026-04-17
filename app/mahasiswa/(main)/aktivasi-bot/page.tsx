@@ -164,23 +164,6 @@ export default function AktivasiBotPage() {
         </aside>
       </div>
 
-      {/* Footer Help */}
-      <div className="mt-16 pt-8 border-t border-outline-variant/10">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div>
-            <h5 className="text-sm font-bold text-on-surface">Butuh bantuan aktivasi?</h5>
-            <p className="text-xs text-on-surface-variant">Tim IT SAKTI siap membantu Anda melalui kanal bantuan 24 jam.</p>
-          </div>
-          <div className="flex space-x-4">
-            <button className="px-6 py-2 rounded-xl text-primary text-xs font-bold border border-primary/20 hover:bg-primary/5 transition-colors">
-              Panduan Manual
-            </button>
-            <button className="px-6 py-2 rounded-xl text-on-surface text-xs font-bold bg-surface-container-high hover:bg-surface-container-highest transition-colors">
-              Hubungi Admin
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }

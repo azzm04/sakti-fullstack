@@ -10,10 +10,17 @@ import {
   LogOut,
   Menu,
   X,
+  Upload,
+  UserCheck,
+  ClipboardList,
 } from "lucide-react";
 
 const navItems = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/admin",           label: "Dashboard",   icon: LayoutDashboard },
+  { href: "/admin/import",    label: "Import Data", icon: Upload          },
+  { href: "/admin/whitelist", label: "Pewawancara", icon: UserCheck       },
+  { href: "/admin/evaluasi",  label: "Evaluasi",    icon: ClipboardList   },
+  { href: "/admin/kalkulasi",  label: "Kalkulasi",    icon: ClipboardList   },
 ];
 
 const sidebarVariants: Variants = {
@@ -40,7 +47,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" })
-    router.push("/admin/login")
+    router.push("/admin-login")
     router.refresh()
   }
 
@@ -58,7 +65,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       <nav className="flex-1 px-3 space-y-0.5">
         {navItems.map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || pathname.startsWith(href + "/");
+          // Dashboard hanya exact match, route lain boleh startsWith
+          const active = href === "/admin"
+            ? pathname === "/admin"
+            : pathname === href || pathname.startsWith(href + "/");
           return (
             <Link
               key={href}
@@ -79,14 +89,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       <div className="px-3 pb-6 pt-4 space-y-1">
         <div className="mx-1 h-px bg-border mb-3" />
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.97 }}
-          className="w-full flex items-center justify-center gap-2 bg-primary text-primary-foreground py-2.5 rounded-xl text-sm font-semibold hover:bg-primary/90 transition-colors"
-        >
-          <BotMessageSquare size={16} />
-          Hubungkan Telegram
-        </motion.button>
         <motion.button
           whileHover={{ x: 2 }}
           onClick={handleLogout}
