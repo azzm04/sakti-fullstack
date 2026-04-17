@@ -131,8 +131,99 @@ export const ContactFormSchema = z.object({
 export type ContactFormData = z.infer<typeof ContactFormSchema>;
 
 /* =========================
-   UI / Filter helpers
+   Import Data / Kandidat KIPK
+   Header kolom sesuai file Excel asli Dirmawa UNDIP
 ========================= */
+export const CandidateDataSchema = z.object({
+  no: z.number().optional(),
+
+  // Identitas & Pendaftaran
+  no_pendaftaran_kipk:  z.string().default(""),
+  nama:                 z.string().default(""),   // validated client-side via hasErrors
+  prodi:                z.string().default(""),
+  nik:                  z.string().default(""),
+  no_kartu_keluarga:    z.string().default(""),
+  nik_kepala_keluarga:  z.string().default(""),
+  nisn:                 z.string().default(""),
+
+  // Status Sosial
+  status_dtks:    z.string().default(""),
+  validasi_dtks:  z.string().default(""),
+  status_p3ke:    z.string().default(""),
+  validasi_p3ke:  z.string().default(""),
+  no_kip:         z.string().default(""),
+  validasi_kip:   z.string().default(""),
+  no_kks:         z.string().default(""),
+
+  // Asal Sekolah
+  asal_sekolah:      z.string().default(""),
+  kab_kota_sekolah:  z.string().default(""),
+  provinsi_sekolah:  z.string().default(""),
+
+  // Data Diri
+  tempat_lahir:   z.string().default(""),
+  tanggal_lahir:  z.string().default(""),
+  jenis_kelamin:  z.string().default(""),
+  alamat_tinggal: z.string().default(""),
+  no_hp:          z.string().default(""),
+  email:          z.string().default(""),
+  sosial_media:   z.string().default(""),
+
+  // Data Ayah
+  nama_ayah:           z.string().default(""),
+  pekerjaan_ayah:      z.string().default(""),
+  ket_pekerjaan_ayah:  z.string().default(""),
+  penghasilan_ayah:    z.number().nonnegative().default(0),
+  ket_penghasilan_ayah: z.string().default(""),
+  status_ayah:         z.string().default(""),
+
+  // Data Ibu
+  nama_ibu:            z.string().default(""),
+  pekerjaan_ibu:       z.string().default(""),
+  ket_pekerjaan_ibu:   z.string().default(""),
+  penghasilan_ibu:     z.number().nonnegative().default(0),
+  ket_penghasilan_ibu: z.string().default(""),
+  status_ibu:          z.string().default(""),
+
+  // Ekonomi Keluarga
+  wali:                    z.string().default(""),
+  penghasilan_lain:        z.number().nonnegative().default(0),
+  jumlah_tanggungan:       z.number().nonnegative().default(0),
+  jml_tanggungan_sebenarnya: z.number().nonnegative().default(0),
+  nominal_per_kapita:      z.number().nonnegative().default(0),
+
+  // Kondisi Tempat Tinggal
+  kepemilikan_rumah:  z.string().default(""),
+  tahun_perolehan:    z.string().default(""),
+  sumber_listrik:     z.string().default(""),
+  luas_tanah:         z.number().nonnegative().default(0),
+  luas_bangunan:      z.number().nonnegative().default(0),
+  sumber_air:         z.string().default(""),
+  mck:                z.string().default(""),
+  kondisi_rumah:      z.string().default(""),
+  jarak_pusat_kota:   z.number().nonnegative().default(0),
+
+  // Hasil Wawancara
+  prestasi:    z.string().default(""),
+  rekomendasi: z.string().default(""),
+  alasan:      z.string().default(""),
+  pewawancara: z.string().default(""),
+
+  // Validation flags
+  hasErrors:     z.boolean().default(false),
+  missingFields: z.array(z.string()).default([]),
+});
+export type CandidateData = z.infer<typeof CandidateDataSchema>;
+
+export const ValidationSummarySchema = z.object({
+  valid: z.number().nonnegative(),
+  incomplete: z.number().nonnegative(),
+  duplicates: z.number().nonnegative(),
+  total: z.number().nonnegative(),
+});
+export type ValidationSummary = z.infer<typeof ValidationSummarySchema>;
+
+
 export const SortKeySchema = z.enum(["rank", "ipk", "penghasilan_raw", "skor"]);
 export type SortKey = z.infer<typeof SortKeySchema>;
 

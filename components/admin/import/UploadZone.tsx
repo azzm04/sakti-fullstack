@@ -4,7 +4,13 @@ import { useState, useCallback } from "react";
 import { useDropzone } from "react-dropzone";
 import { motion, AnimatePresence } from "framer-motion";
 import * as XLSX from "xlsx";
-import { CandidateData, ValidationSummary } from "@/app/admin/import/page";
+import { CandidateData, ValidationSummary } from "@/schemas";
+
+// Normalize header strings: collapse whitespace, trim, uppercase
+const normalize = (s: any) => String(s ?? "").replace(/\s+/g, " ").trim().toUpperCase();
+
+// Module-level map — avoids useRef closure issues with Turbopack
+let _headerMap: Record<string, number> = {};
 
 interface Props {
   onDataUploaded: (
@@ -14,28 +20,32 @@ interface Props {
   ) => void;
   onSave: () => void;
   hasData: boolean;
+  saveStatus?: "idle" | "saving" | "saved" | "error";
 }
 
-export default function UploadZone({ onDataUploaded, onSave, hasData }: Props) {
+export default function UploadZone({ onDataUploaded, onSave, hasData, saveStatus = "idle" }: Props) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
 
+  // Validate required fields using the same normalized keys as get()
   const validateRow = (
-    row: any,
+    row: any[],
   ): { hasErrors: boolean; missingFields: string[] } => {
-    const requiredFields = ["NAMA", "NIM", "PRODI", "NIK", "NO HP", "EMAIL"];
+    const required: Array<{ label: string; keys: string[] }> = [
+      { label: "NAMA",          keys: ["NAMA"] },
+      { label: "NIK",           keys: ["NIK"] },
+      { label: "NO. HANDPHONE", keys: ["NO. HANDPHONE", "NO HANDPHONE", "NO HP"] },
+      { label: "ALAMAT EMAIL",  keys: ["ALAMAT EMAIL", "EMAIL"] },
+    ];
     const missingFields: string[] = [];
-
-    requiredFields.forEach((field) => {
-      if (!row[field] || row[field].toString().trim() === "") {
-        missingFields.push(field);
-      }
+    required.forEach(({ label, keys }) => {
+      const val = keys.map((k) => {
+        const idx = _headerMap[normalize(k)];
+        return idx !== undefined ? String(row[idx] ?? "").trim() : "";
+      }).find((v) => v !== "");
+      if (!val) missingFields.push(label);
     });
-
-    return {
-      hasErrors: missingFields.length > 0,
-      missingFields,
-    };
+    return { hasErrors: missingFields.length > 0, missingFields };
   };
 
   const processExcelFile = useCallback(
@@ -46,112 +56,164 @@ export default function UploadZone({ onDataUploaded, onSave, hasData }: Props) {
       reader.onload = (e) => {
         try {
           const data = e.target?.result;
-          const workbook = XLSX.read(data, { type: "binary" });
+          const workbook = XLSX.read(data, { type: "array" });
           const sheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[sheetName];
-          const jsonData = XLSX.utils.sheet_to_json(worksheet);
 
-          // Map Excel columns to our data structure
-          const candidates: CandidateData[] = jsonData.map(
-            (row: any, index: number) => {
-              const validation = validateRow(row);
+          // ── Step 1: Baca sebagai array of arrays untuk deteksi baris header ──
+          const rawRows: any[][] = XLSX.utils.sheet_to_json(worksheet, {
+            header: 1,
+            defval: "",
+          });
 
-              return {
-                // Identitas Dasar
-                nama: row["NAMA"]?.toString() || "",
-                nim: row["NIM"]?.toString() || "",
-                prodi: row["PRODI"]?.toString() || "",
-                fakultas: row["FAKULTAS"]?.toString() || "",
+          // Cari baris header: baris yang punya setidaknya 3 kolom berisi teks
+          // (lebih toleran — tidak bergantung pada nama kolom spesifik)
+          let headerRowIndex = 0;
+          let bestScore = 0;
 
-                // Status & Verifikasi
-                verifikasi: row["VERIFIKASI"]?.toString() || "",
-                seleksi: row["SELEKSI"]?.toString() || "",
-                status_di_beasiswa_lain:
-                  row["STATUS DI BEASISWA LAIN"]?.toString() || "",
-                jalur_masuk: row["JALUR MASUK"]?.toString() || "",
+          for (let i = 0; i < Math.min(rawRows.length, 15); i++) {
+            const row = rawRows[i];
+            const normalized = row.map(normalize);
+            // Score: berapa banyak kolom yang terisi teks (bukan angka)
+            const textCols = normalized.filter((v) => v && isNaN(Number(v))).length;
+            // Bonus jika ada kolom kunci
+            const hasNama = normalized.some((v) => v === "NAMA");
+            const hasNik  = normalized.some((v) => v === "NIK" || v === "NIM");
+            const score   = textCols + (hasNama ? 10 : 0) + (hasNik ? 5 : 0);
 
-                // Dokumen Identitas
-                nik: row["NIK"]?.toString() || "",
-                no_kk: row["No KK"]?.toString() || "",
-                nomor_pendaftaran_kipk:
-                  row["Nomor Pendaftaran KIP-K"]?.toString() || "",
-                no_kip_kks_sktm: row["No. KIP/KKS/SKTM"]?.toString() || "",
-                nomor_kip: row["Nomor KIP"]?.toString() || "",
-                nomor_kks: row["Nomor KKS"]?.toString() || "",
-                nomor_sktm: row["Nomor SKTM"]?.toString() || "",
+            if (score > bestScore) {
+              bestScore = score;
+              headerRowIndex = i;
+            }
+          }
 
-                // Data Keluarga
-                jumlah_orang_tinggal_serumah:
-                  parseInt(row["Jumlah Orang Tinggal Serumah"]) || 0,
-                validasi_orang_tinggal_serumah:
-                  row["Validasi orang tinggal serumah"]?.toString() || "",
-                jumlah_tanggungan_dalam_kk:
-                  parseInt(row["Jumlah Tanggungan dalam KK"]) || 0,
+          // ── Step 2: Buat mapping header → index ──
+          const headerRow = rawRows[headerRowIndex].map(normalize);
+          const headerMap: Record<string, number> = {};
+          headerRow.forEach((h, idx) => {
+            if (h) headerMap[h] = idx;
+          });
+          // Write to module-level map so validateRow can access it
+          _headerMap = headerMap;
 
-                // Kontak
-                no_hp: row["NO HP"]?.toString() || "",
-                email: row["EMAIL"]?.toString() || "",
+          // Debug: log detected headers so we can verify mapping
+          console.log("[UploadZone] Header row index:", headerRowIndex);
+          console.log("[UploadZone] Detected headers:", headerRow.filter(Boolean));
 
-                // Ekonomi
-                golongan_ukt: row["Golongan UKT"]?.toString() || "",
-                nominal_ukt: parseFloat(row["Nominal UKT"]) || 0,
-                pekerjaan_bapak: row["Pekerjaan Bapak"]?.toString() || "",
-                validasi_kondisi_bapak:
-                  row["Validasi Kondisi Bapak"]?.toString() || "",
-                deskripsi_pekerjaan_bapak:
-                  row["Deskripsi Pekerjaan Bapak"]?.toString() || "",
-                penghasilan_bapak: parseFloat(row["Penghasilan Bapak"]) || 0,
-                validasi_penghasilan_bapak:
-                  row["Validasi Penghasilan Bapak"]?.toString() || "",
-                pekerjaan_ibu: row["Pekerjaan Ibu"]?.toString() || "",
-                validasi_kondisi_ibu:
-                  row["Validasi Kondisi Ibu"]?.toString() || "",
-                deskripsi_pekerjaan_ibu:
-                  row["Deskripsi Pekerjaan Ibu"]?.toString() || "",
-                penghasilan_ibu: parseFloat(row["Penghasilan Ibu"]) || 0,
-                validasi_penghasilan_ibu:
-                  row["Validasi Penghasilan Ibu"]?.toString() || "",
+          // Helper: ambil nilai dari row berdasarkan nama kolom (flexible matching)
+          const get = (row: any[], ...keys: string[]): string => {
+            for (const key of keys) {
+              const idx = headerMap[normalize(key)];
+              if (idx !== undefined && row[idx] !== undefined && row[idx] !== "") {
+                return String(row[idx]).trim();
+              }
+            }
+            return "";
+          };
 
-                // Dokumentasi
-                foto_bersama_keluarga:
-                  row["Foto bersama keluarga di dalam rumah"]?.toString() || "",
-                validasi_foto_bersama_keluarga:
-                  row["Validasi Foto Bersama Keluarga"]?.toString() || "",
-                foto_rumah: row["Foto Rumah"]?.toString() || "",
-                validasi_foto_rumah:
-                  row["Validasi Foto Rumah"]?.toString() || "",
-                titik_koordinat_lokasi_rumah:
-                  row["Titik Koordinat Lokasi Rumah"]?.toString() || "",
+          const getNum = (row: any[], ...keys: string[]): number => {
+            const val = get(row, ...keys);
+            if (!val) return 0;
+            // Hapus semua karakter non-digit kecuali koma dan titik
+            // Format Indonesia: 2.250.000,00 → hapus titik ribuan, ganti koma desimal
+            const cleaned = val
+              .replace(/[Rp\s]/gi, "")   // hapus "Rp" dan spasi
+              .replace(/\./g, "")         // hapus titik ribuan
+              .replace(",", ".");         // ganti koma desimal ke titik
+            const n = parseFloat(cleaned);
+            return isNaN(n) ? 0 : n;
+          };
 
-                // Alamat & Tempat Tinggal
-                alamat: row["ALAMAT"]?.toString() || "",
-                smtst: row["SMTST"]?.toString() || "",
-                status_mahasiswa: row["STATUS MAHASISWA"]?.toString() || "",
-                daya_listrik: row["Daya Listrik"]?.toString() || "",
-                pbb_terakhir: row["PBB Terakhir"]?.toString() || "",
-                validasi_pbb_terakhir:
-                  row["Validasi PBB terakhir"]?.toString() || "",
-
-                // Aset
-                kendaraan_yang_dimiliki:
-                  row["Kendaraan yang dimiliki"]?.toString() || "",
-                barang_elektronik_yang_dimiliki:
-                  row["Barang elektronik yang dimiliki"]?.toString() || "",
-                hp_yang_digunakan_saat_ini:
-                  row["HP yang digunakan saat ini"]?.toString() || "",
-
-                // Hasil Wawancara
-                rekomendasi: row["Rekomendasi"]?.toString() || "",
-                alasan: row["Alasan"]?.toString() || "",
-                pewawancara: row["Pewawancara"]?.toString() || "",
-
-                // Validation flags
-                hasErrors: validation.hasErrors,
-                missingFields: validation.missingFields,
-                no: index + 1,
-              };
-            },
+          // ── Step 3: Proses baris data (setelah header) ──
+          const dataRows = rawRows.slice(headerRowIndex + 1).filter((row) =>
+            row.some((cell) => cell !== "" && cell !== null && cell !== undefined)
           );
+
+          const candidates: CandidateData[] = dataRows.map((row, index) => {
+            const rowObj: Record<string, any> = {};
+            headerRow.forEach((h, i) => { if (h) rowObj[h] = row[i]; });
+
+            const validation = validateRow(row);
+
+            return {
+              no: index + 1,
+
+              // Identitas & Pendaftaran
+              no_pendaftaran_kipk: get(row, "NO. PENDAFTARAN KIPK", "NO.PENDAFTARAN KIPK", "NO PENDAFTARAN KIPK"),
+              nama:                get(row, "NAMA"),
+              prodi:               get(row, "PRODI"),
+              nik:                 get(row, "NIK"),
+              no_kartu_keluarga:   get(row, "NO. KARTU KELUARGA", "NO KARTU KELUARGA"),
+              nik_kepala_keluarga: get(row, "NIK KEPALA KELUARGA"),
+              nisn:                get(row, "NISN"),
+
+              // Status Sosial
+              status_dtks:   get(row, "STATUS DTKS"),
+              validasi_dtks: get(row, "VALIDASI DTKS"),
+              status_p3ke:   get(row, "STATUS P3KE"),
+              validasi_p3ke: get(row, "VALIDASI P3KE"),
+              no_kip:        get(row, "NO. KIP", "NO KIP"),
+              validasi_kip:  get(row, "VALIDASI KIP"),
+              no_kks:        get(row, "NO. KKS", "NO KKS"),
+
+              // Asal Sekolah
+              asal_sekolah:     get(row, "ASAL SEKOLAH"),
+              kab_kota_sekolah: get(row, "KAB/KOTA SEKOLAH"),
+              provinsi_sekolah: get(row, "PROVINSI SEKOLAH"),
+
+              // Data Diri
+              tempat_lahir:   get(row, "TEMPAT LAHIR"),
+              tanggal_lahir:  get(row, "TANGGAL LAHIR"),
+              jenis_kelamin:  get(row, "JENIS KELAMIN"),
+              alamat_tinggal: get(row, "ALAMAT TINGGAL"),
+              no_hp:          get(row, "NO. TELP", "NO. HANDPHONE", "NO HANDPHONE", "NO HP"),
+              email:          get(row, "ALAMAT EMAIL", "EMAIL"),
+              sosial_media:   get(row, "IG/TWITTER/TIKTOK", "ALAMAT IG/TWITTER/TIKTOK", "SOSIAL MEDIA"),
+
+              // Data Ayah
+              nama_ayah:            get(row, "NAMA AYAH"),
+              pekerjaan_ayah:       get(row, "PEKERJAAN AYAH"),
+              ket_pekerjaan_ayah:   get(row, "KET. PEKERJAAN AYAH"),
+              penghasilan_ayah:     getNum(row, "KET. PENGHASILAN AYAH/BLN", "KET. PENGHASILAN AYAH/ BLN", "KET. PENGHASILAN AYAH"),
+              ket_penghasilan_ayah: get(row, "PENGHASILAN AYAH"),
+              status_ayah:          get(row, "STATUS AYAH"),
+
+              // Data Ibu
+              nama_ibu:            get(row, "NAMA IBU"),
+              pekerjaan_ibu:       get(row, "PEKERJAAN IBU"),
+              ket_pekerjaan_ibu:   get(row, "KET. PEKERJAAN IBU"),
+              penghasilan_ibu:     getNum(row, "KET. PENGHASILAN IBU/BLN", "KET. PENGHASILAN IBU/ BLN", "KET. PENGHASILAN IBU"),
+              ket_penghasilan_ibu: get(row, "PENGHASILAN IBU"),
+              status_ibu:          get(row, "STATUS IBU"),
+
+              // Ekonomi Keluarga
+              wali:                      get(row, "WALI (JIKA ADA)", "WALI"),
+              penghasilan_lain:          getNum(row, "PENGHASILAN LAIN/BLN", "PENGHASILAN LAIN/ BLN", "PENGHASILAN LAIN"),
+              jumlah_tanggungan:         getNum(row, "JUMLAH TANGGUNGAN"),
+              jml_tanggungan_sebenarnya: getNum(row, "JML TANGGUNGAN SEBENARNYA"),
+              nominal_per_kapita:        getNum(row, "NOMINAL PER KAPITA"),
+
+              // Kondisi Tempat Tinggal
+              kepemilikan_rumah: get(row, "KEPEMILIKAN RUMAH"),
+              tahun_perolehan:   get(row, "TAHUN PEROLEHAN"),
+              sumber_listrik:    get(row, "SUMBER LISTRIK"),
+              luas_tanah:        getNum(row, "LUAS TANAH"),
+              luas_bangunan:     getNum(row, "LUAS BANGUNAN"),
+              sumber_air:        get(row, "SUMBER AIR"),
+              mck:               get(row, "MCK"),
+              kondisi_rumah:     get(row, "KONDISI RUMAH"),
+              jarak_pusat_kota:  getNum(row, "JARAK PUSAT KOTA (KM)", "JARAK PUSAT KOTA"),
+
+              // Hasil Wawancara
+              prestasi:    get(row, "PRESTASI"),
+              rekomendasi: get(row, "REKOMENDASI"),
+              alasan:      get(row, "ALASAN"),
+              pewawancara: get(row, "NAMA PEWAWANCARA", "PEWAWANCARA"),
+
+              hasErrors:     validation.hasErrors,
+              missingFields: validation.missingFields,
+            };
+          });
 
           // Calculate validation stats
           const validCount = candidates.filter((c) => !c.hasErrors).length;
@@ -187,7 +249,7 @@ export default function UploadZone({ onDataUploaded, onSave, hasData }: Props) {
         }
       };
 
-      reader.readAsBinaryString(file);
+      reader.readAsArrayBuffer(file);
     },
     [onDataUploaded],
   );
@@ -347,21 +409,40 @@ export default function UploadZone({ onDataUploaded, onSave, hasData }: Props) {
       <div className="mt-6 space-y-3">
         <button
           onClick={onSave}
-          disabled={!hasData}
-          className="w-full py-3.5 bg-gradient-to-br from-primary to-primary-container text-white rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-primary/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-95"
+          disabled={!hasData || saveStatus === "saving" || saveStatus === "saved"}
+          className={`w-full py-3 rounded-lg font-medium flex items-center justify-center gap-2 shadow-sm transition-all ${
+            saveStatus === "saved"
+              ? "bg-emerald-500 text-white cursor-default"
+              : saveStatus === "saving"
+              ? "bg-primary/70 text-white cursor-wait"
+              : saveStatus === "error"
+              ? "bg-red-500 text-white"
+              : hasData
+              ? "bg-primary hover:bg-primary/90 text-white"
+              : "bg-slate-100 text-slate-400 cursor-not-allowed"
+          }`}
         >
-          <span className="material-symbols-outlined text-sm">
-            check_circle
-          </span>
-          Simpan & Lanjutkan
-        </button>
-
-        <button
-          onClick={handleDownloadTemplate}
-          className="w-full py-3.5 bg-surface-container-lowest text-primary border border-primary/10 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-primary-fixed-dim/10 transition-all"
-        >
-          <span className="material-symbols-outlined text-sm">download</span>
-          Download Template
+          {saveStatus === "saving" ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Menyimpan...
+            </>
+          ) : saveStatus === "saved" ? (
+            <>
+              <span className="material-symbols-outlined text-[18px]">check_circle</span>
+              Tersimpan & Tabel Dilengkapi
+            </>
+          ) : saveStatus === "error" ? (
+            <>
+              <span className="material-symbols-outlined text-[18px]">error</span>
+              Gagal — Coba Lagi
+            </>
+          ) : (
+            <>
+              <span className="material-symbols-outlined text-[18px]">save</span>
+              Simpan ke Database
+            </>
+          )}
         </button>
       </div>
     </>

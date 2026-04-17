@@ -3,11 +3,20 @@
 import { useRef, useEffect, useCallback, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const ACCEPTED = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'image/webp', 'image/gif'];
+export const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'image/webp', 'image/gif'];
 const ACCEPTED_EXT = '.png,.jpg,.jpeg,.svg,.webp,.gif';
 const QUICK = ['Syarat Ekonomi KIPK', 'Cek Status DTKS', 'Dokumen Pendukung', 'Batas Waktu Pendaftaran'];
 
 export type ImageAttachment = { file: File; previewUrl: string; base64: string };
+
+export function toBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve((reader.result as string).split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
 
 interface Props {
   inputMessage: string;
@@ -16,15 +25,6 @@ interface Props {
   setAttachment: (v: ImageAttachment | null) => void;
   isLoading: boolean;
   onSend: (text?: string) => void;
-}
-
-function toBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve((reader.result as string).split(',')[1]);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
 }
 
 export default function ChatInputBar({
@@ -36,7 +36,6 @@ export default function ChatInputBar({
   const textareaRef  = useRef<HTMLTextAreaElement>(null);
   const [imageError, setImageError] = useState('');
 
-  // Auto-resize textarea
   useEffect(() => {
     const ta = textareaRef.current;
     if (!ta) return;
@@ -47,7 +46,7 @@ export default function ChatInputBar({
   const handleImageSelect = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!ACCEPTED.includes(file.type)) { setImageError('Format tidak didukung.'); return; }
+    if (!ACCEPTED_TYPES.includes(file.type)) { setImageError('Format tidak didukung.'); return; }
     if (file.size > 5 * 1024 * 1024) { setImageError('Ukuran gambar maksimal 5MB.'); return; }
     setImageError('');
     const base64 = await toBase64(file);

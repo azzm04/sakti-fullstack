@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { ValidationSummary } from "@/app/admin/import/page";
+import { ValidationSummary } from "@/schemas";
 
 interface Props {
   stats: ValidationSummary;

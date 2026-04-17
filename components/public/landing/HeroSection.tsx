@@ -12,8 +12,8 @@ export default function HeroSection() {
             Dirmawa Universitas Diponegoro
           </span>
           <h1 className="text-4xl lg:text-5xl xl:text-6xl font-extrabold leading-[1.2] text-primary mb-8 tracking-tight">
-            Sistem Asisten KIPK
-            <div className="block w-full mt-2">
+            Sistem Asisten KIPK Terpadu & Interaktif
+            {/* <div className="block w-full mt-2">
               <CanvasText
                 text="Terpadu & Interaktif"
                 className="text-4xl lg:text-5xl xl:text-6xl font-extrabold text-white"
@@ -27,7 +27,7 @@ export default function HeroSection() {
                 lineGap={4}
                 animationDuration={20}
               />
-            </div>
+            </div> */}
           </h1>
           <p className="text-lg text-secondary leading-relaxed mb-4 max-w-xl">
             Platform pendukung tata kelola beasiswa KIPK Universitas Diponegoro — dilengkapi Asisten Virtual berbasis AI, analitik seleksi SMART-TOPSIS, dan notifikasi Monev otomatis via Telegram.
