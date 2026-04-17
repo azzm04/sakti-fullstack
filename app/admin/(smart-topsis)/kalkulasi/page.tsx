@@ -36,12 +36,17 @@ const parseExcelToRankingPayload = (rawData: any[]): RankingPayload => {
     alternatives.push(String(row["Nama"]));
 
     const matrixRow = [
-      parseNumber(row["Jumlah Anggota Keluarga yang Menjadi Tanggungan"]),
-      parseNumber(row["Jumlah Orang yang Tinggal dalam Satu Rumah"]),
-      parseNumber(row["Penghasilan Bapak/Wali"]),
+      parseNumber(row["Pekerjaan Bapak"]),
+      parseNumber(row["Pekerjaan Ibu"]),
+      parseNumber(row["Penghasilan Bapak"]),
       parseNumber(row["Penghasilan Ibu"]),
-      parseNumber(row["Jumlah PBB Terakhir Dibayarkan"]),
-      parseNumber(row["Daya Listrik"])
+      parseNumber(row["Kepemilikan Rumah"]),
+      parseNumber(row["Jumlah Tanggungan"]),
+      parseNumber(row["Jumlah Orang dalam Satu Rumah"]),
+      parseNumber(row["Luas Bangunan Rumah"]),
+      parseNumber(row["Sumber Air Minum"]),
+      parseNumber(row["Daya Listrik Rumah"]),
+      parseNumber(row["MCK Rumah"])
     ];
 
     matrix.push(matrixRow);
@@ -50,8 +55,8 @@ const parseExcelToRankingPayload = (rawData: any[]): RankingPayload => {
   return {
     alternatives,
     matrix,
-    criteria_points: [10, 15, 25, 20, 25, 20],
-    criteria_types: ["benefit", "benefit", "cost", "cost", "cost", "cost"]
+    criteria_points: [50, 50, 40, 40, 30, 10, 10, 30, 10, 10, 10],
+    criteria_types: ["cost", "cost", "cost", "cost", "cost", "benefit", "benefit", "cost", "cost", "cost", "cost"]
   };
 };
 
