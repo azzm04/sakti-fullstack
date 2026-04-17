@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useCurrentUser } from '@/hook/useCurrentUser';
 
 const MOCK_HISTORY = [
   { id: '1', title: 'Syarat KIP-Kuliah 2024', active: true },
@@ -9,6 +10,8 @@ const MOCK_HISTORY = [
 ];
 
 export default function ChatSidebar() {
+  const { user, loading, initials } = useCurrentUser();
+
   return (
     <aside className="hidden md:flex flex-col h-full w-72 bg-[#f2f4f6] border-r border-slate-200/60 shrink-0">
       <div className="px-6 py-8">
@@ -55,14 +58,19 @@ export default function ChatSidebar() {
         </button>
         <div className="pt-4 border-t border-slate-200/60">
           <div className="flex items-center gap-3 px-4 py-2">
-            <img
-              src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=100&auto=format&fit=crop"
-              alt="User"
-              className="w-8 h-8 rounded-full object-cover"
-            />
-            <div className="flex flex-col">
-              <span className="text-xs font-bold text-slate-700 truncate">Andi Pratama</span>
-              <span className="text-[10px] text-slate-500">Mahasiswa SAKTI</span>
+            {/* Avatar inisial — tidak pakai foto eksternal */}
+            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+              <span className="text-xs font-bold text-primary">{initials}</span>
+            </div>
+            <div className="flex flex-col min-w-0">
+              {loading ? (
+                <div className="h-3 w-20 bg-slate-200 rounded animate-pulse" />
+              ) : (
+                <>
+                  <span className="text-xs font-bold text-slate-700 truncate">{user?.nama ?? '-'}</span>
+                  <span className="text-[10px] text-slate-500">Mahasiswa SAKTI</span>
+                </>
+              )}
             </div>
           </div>
         </div>

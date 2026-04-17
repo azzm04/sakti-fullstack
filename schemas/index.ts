@@ -119,6 +119,37 @@ export const LoginSchema = z.object({
 });
 export type LoginPayload = z.infer<typeof LoginSchema>;
 
+// OTP Flow — Mahasiswa login via email SSO
+export const SendOtpSchema = z.object({
+  email: z
+    .string()
+    .email("Format email tidak valid")
+    .endsWith("@students.undip.ac.id", {
+      message: "Harus menggunakan email SSO Undip (@students.undip.ac.id)",
+    }),
+});
+export type SendOtpPayload = z.infer<typeof SendOtpSchema>;
+
+export const VerifyOtpSchema = z.object({
+  email: z.string().email("Format email tidak valid"),
+  otp: z
+    .string()
+    .length(6, "Kode OTP harus 6 digit")
+    .regex(/^\d+$/, "Kode OTP hanya boleh angka"),
+});
+export type VerifyOtpPayload = z.infer<typeof VerifyOtpSchema>;
+
+// Admin login — pakai adminId + password
+export const AdminLoginSchema = z.object({
+  adminId: z.string().min(1, "Admin ID wajib diisi"),
+  password: z.string().min(1, "Password wajib diisi"),
+});
+export type AdminLoginPayload = z.infer<typeof AdminLoginSchema>;
+
+// Role enum sesuai database
+export const RoleSchema = z.enum(["MAHASISWA_KIPK", "PEWAWANCARA", "ADMIN_DIRMAWA"]);
+export type Role = z.infer<typeof RoleSchema>;
+
 /* =========================
    Contact Form
 ========================= */

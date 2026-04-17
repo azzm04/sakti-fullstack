@@ -12,12 +12,15 @@ export const apiClient = axios.create({
   withCredentials: true,
 });
 
-// Interceptor untuk menambahkaKn token
+// Interceptor untuk menambahkan token
+// Guard typeof window untuk mencegah crash di server-side rendering
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
