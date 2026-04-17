@@ -46,6 +46,6 @@ export const config = {
     // Proteksi semua route admin KECUALI /admin/login
     "/admin/((?!login).*)",
     "/mahasiswa/:path*",
-    "/pewawancara/:path*",
+    // "/pewawancara/:path*",
   ],
 }
