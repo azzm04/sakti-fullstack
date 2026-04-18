@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+import { supabaseAdmin } from "@/lib/supabase";
 
 // GET — ambil semua kandidat dengan kolom wawancara
 export async function GET(req: NextRequest) {
@@ -17,11 +12,12 @@ export async function GET(req: NextRequest) {
     const from    = (page - 1) * limit;
     const to      = from + limit - 1;
 
-    let query = supabase
+    let query = supabaseAdmin
       .from("kandidat")
       .select(
         "id, no, no_pendaftaran_kipk, nama, prodi, nik, no_hp, email, " +
-        "rekomendasi, pewawancara, import_batch_id, created_at",
+        "rekomendasi, pewawancara, hasil_akhir, import_batch_id, created_at, " +
+        "status_wawancara, pewawancara_id",
         { count: "exact" }
       )
       .order("no", { ascending: true })
@@ -35,10 +31,10 @@ export async function GET(req: NextRequest) {
 
     // Filter berdasarkan status evaluasi
     if (filter === "selesai") {
-      query = query.not("rekomendasi", "is", null).not("pewawancara", "is", null)
-        .neq("rekomendasi", "").neq("pewawancara", "");
+      query = query.not("hasil_akhir", "is", null).not("pewawancara", "is", null)
+        .neq("pewawancara", "");
     } else if (filter === "belum") {
-      query = query.or("rekomendasi.is.null,rekomendasi.eq.,pewawancara.is.null,pewawancara.eq.");
+      query = query.or("hasil_akhir.is.null,pewawancara.is.null,pewawancara.eq.");
     }
 
     const { data, count, error } = await query;

@@ -1,18 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
-import { createClient } from "@supabase/supabase-js";
+import { supabaseAdmin } from "@/lib/supabase";
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
-
-// GET — detail satu kandidat
+// GET — detail satu kandidat + join data pewawancara yang bertugas
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from("kandidat")
-      .select("*")
+      .select("*, pewawancara_data:pewawancara_id(id, nama, email, sso_id)")
       .eq("id", id)
       .single();
 
@@ -40,16 +35,22 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       "penghasilan_lain", "jml_tanggungan_sebenarnya", "validasi_orang_rumah",
       "kepemilikan_rumah", "tahun_perolehan", "luas_tanah", "luas_bangunan",
       "sumber_air", "mck", "aset", "kondisi_rumah", "jarak_pusat_kota",
-      "rekomendasi", "alasan", "pewawancara",
+      "hasil_akhir", "rekomendasi", "alasan", "pewawancara",
     ];
 
-    // Hanya ambil field yang diizinkan
     const update: Record<string, unknown> = {};
     for (const key of allowed) {
       if (key in body) update[key] = body[key];
     }
 
-    const { data, error } = await supabase
+    // Auto-update status_wawancara jika hasil_akhir atau rekomendasi diisi
+    if ((update.hasil_akhir || update.rekomendasi) && update.pewawancara) {
+      update.status_wawancara = "completed";
+      update.interviewed_at = new Date().toISOString();
+    }
+    update.updated_at = new Date().toISOString();
+
+    const { data, error } = await supabaseAdmin
       .from("kandidat")
       .update(update)
       .eq("id", id)
@@ -71,7 +72,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    const { error } = await supabase
+    const { error } = await supabaseAdmin
       .from("kandidat")
       .update({ aset: "", rekomendasi: "", alasan: "", pewawancara: "" })
       .eq("id", id);

@@ -57,8 +57,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <span className="text-2xl font-extrabold font-headline text-primary">SAKTI</span>
       </div>
       <div className="px-6 pb-6 pt-1">
-        <p className="font-headline font-bold text-primary text-sm leading-tight">Administrator SAKTI</p>
-        <p className="text-xs text-muted-foreground mt-0.5">Puslapdik Kemendikbud</p>
+        <p className="font-headline font-bold text-primary text-sm leading-tight">Dashboard Admin</p>
       </div>
 
       <div className="mx-4 h-px bg-border mb-3" />

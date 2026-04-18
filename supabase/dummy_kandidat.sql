@@ -1,0 +1,77 @@
+-- Dummy data kandidat KIPK Undip
+-- 30 kandidat, kolom wawancara dikosongkan untuk testing
+-- Jalankan di Supabase SQL Editor
+
+-- Buat import_batch dulu
+INSERT INTO public.import_batch (file_name, total_rows, valid_rows, error_rows, dup_rows)
+VALUES ('dummy_data_testing.xlsx', 30, 30, 0, 0)
+RETURNING id;
+
+-- Ganti {BATCH_ID} dengan id yang muncul dari query di atas
+-- Atau jalankan sekaligus dengan subquery:
+
+INSERT INTO public.kandidat (
+  import_batch_id,
+  no, no_pendaftaran_kipk, no_bantuan_sosial,
+  nama, prodi, nik, no_kartu_keluarga, nisn, asal_sekolah,
+  status_dtsen, jumlah_tanggungan, jumlah_orang_rumah,
+  pekerjaan_ayah, pekerjaan_ibu,
+  penghasilan_ayah, penghasilan_ibu,
+  kab_kota, provinsi, alamat,
+  pbb, daya_listrik,
+  no_hp, email,
+  koordinat, latitude, longitude
+)
+SELECT
+  (SELECT id FROM public.import_batch ORDER BY created_at DESC LIMIT 1),
+  no, no_pendaftaran_kipk, no_bantuan_sosial,
+  nama, prodi, nik, no_kartu_keluarga, nisn, asal_sekolah,
+  status_dtsen, jumlah_tanggungan, jumlah_orang_rumah,
+  pekerjaan_ayah, pekerjaan_ibu,
+  penghasilan_ayah, penghasilan_ibu,
+  kab_kota, provinsi, alamat,
+  pbb, daya_listrik,
+  no_hp, email,
+  koordinat, latitude, longitude
+FROM (VALUES
+  (1,  'KIPK-2026-0001', 'KKS-001', 'Ahmad Fauzi',          'Teknik Informatika',          '3374011501040001', '3374011501040001', '0012345601', 'SMAN 1 Semarang',      'Terdaftar',     4, 5, 'Buruh Harian',   'Ibu Rumah Tangga', 1200000,       0, 'Kota Semarang',    'Jawa Tengah', 'Jl. Karangrejo No. 12, Gajahmungkur',          45000,  '900 VA',  '081234560001', 'ahmad.fauzi01@students.undip.ac.id',   '-7.0051,110.4381', -7.0051, 110.4381),
+  (2,  'KIPK-2026-0002', 'KIP-002', 'Siti Rahayu',           'Ilmu Hukum',                  '3374025502040002', '3374025502040002', '0012345602', 'SMAN 2 Semarang',      'Terdaftar',     3, 4, 'Petani',         'Pedagang Kecil',   800000,  400000, 'Kab. Semarang',    'Jawa Tengah', 'Jl. Ungaran Barat No. 5, Ungaran',             30000,  '450 VA',  '081234560002', 'siti.rahayu02@students.undip.ac.id',   '-7.1333,110.4000', -7.1333, 110.4000),
+  (3,  'KIPK-2026-0003', 'SKTM-003','Budi Santoso',          'Ekonomi Pembangunan',         '3374031503040003', '3374031503040003', '0012345603', 'SMAN 3 Demak',         'Tidak Terdaftar',5, 6, 'Nelayan',        'Ibu Rumah Tangga', 900000,        0, 'Kab. Demak',       'Jawa Tengah', 'Jl. Mranggen No. 8, Demak',                    20000,  '450 VA',  '081234560003', 'budi.santoso03@students.undip.ac.id',  '-6.8942,110.6333', -6.8942, 110.6333),
+  (4,  'KIPK-2026-0004', 'KKS-004', 'Dewi Lestari',          'Kedokteran',                  '3374044504040004', '3374044504040004', '0012345604', 'SMAN 1 Kendal',        'Terdaftar',     5, 6, 'Buruh Pabrik',   'Buruh Pabrik',     1500000, 1200000,'Kab. Kendal',      'Jawa Tengah', 'Jl. Weleri No. 3, Kendal',                     50000,  '900 VA',  '081234560004', 'dewi.lestari04@students.undip.ac.id',  '-6.9167,110.2000', -6.9167, 110.2000),
+  (5,  'KIPK-2026-0005', 'KIP-005', 'Rizky Pratama',         'Teknik Sipil',                '3374055505040005', '3374055505040005', '0012345605', 'SMAN 2 Kudus',         'Terdaftar',     3, 4, 'Wiraswasta',     'Ibu Rumah Tangga', 2000000,       0, 'Kab. Kudus',       'Jawa Tengah', 'Jl. Kudus Kota No. 15, Kudus',                 60000,  '1300 VA', '081234560005', 'rizky.pratama05@students.undip.ac.id', '-6.8050,110.8383', -6.8050, 110.8383),
+  (6,  'KIPK-2026-0006', 'SKTM-006','Nur Hidayah',           'Psikologi',                   '3374066506040006', '3374066506040006', '0012345606', 'SMAN 1 Pati',          'Terdaftar',     4, 5, 'Petani',         'Petani',           700000,  500000, 'Kab. Pati',        'Jawa Tengah', 'Jl. Pati Kota No. 7, Pati',                    15000,  '450 VA',  '081234560006', 'nur.hidayah06@students.undip.ac.id',   '-6.7500,111.0333', -6.7500, 111.0333),
+  (7,  'KIPK-2026-0007', 'KKS-007', 'Eko Wahyudi',           'Teknik Elektro',              '3374077507040007', '3374077507040007', '0012345607', 'SMAN 1 Jepara',        'Terdaftar',     6, 7, 'Buruh Harian',   'Ibu Rumah Tangga', 1100000,       0, 'Kab. Jepara',      'Jawa Tengah', 'Jl. Jepara Kota No. 22, Jepara',               25000,  '450 VA',  '081234560007', 'eko.wahyudi07@students.undip.ac.id',   '-6.5833,110.6667', -6.5833, 110.6667),
+  (8,  'KIPK-2026-0008', 'KIP-008', 'Fitri Handayani',       'Sastra Indonesia',            '3374088508040008', '3374088508040008', '0012345608', 'SMAN 2 Rembang',       'Tidak Terdaftar',3, 4, 'Nelayan',        'Pedagang Kecil',   850000,  300000, 'Kab. Rembang',     'Jawa Tengah', 'Jl. Rembang Kota No. 4, Rembang',              10000,  '450 VA',  '081234560008', 'fitri.handayani08@students.undip.ac.id','-6.7000,111.3500', -6.7000, 111.3500),
+  (9,  'KIPK-2026-0009', 'SKTM-009','Galih Permana',         'Administrasi Bisnis',         '3374099509040009', '3374099509040009', '0012345609', 'SMAN 1 Blora',         'Terdaftar',     4, 5, 'Petani',         'Ibu Rumah Tangga', 600000,        0, 'Kab. Blora',       'Jawa Tengah', 'Jl. Blora Kota No. 9, Blora',                  12000,  '450 VA',  '081234560009', 'galih.permana09@students.undip.ac.id', '-6.9667,111.4167', -6.9667, 111.4167),
+  (10, 'KIPK-2026-0010', 'KKS-010', 'Hana Safitri',          'Ilmu Komunikasi',             '3374101510040010', '3374101510040010', '0012345610', 'SMAN 1 Grobogan',      'Terdaftar',     5, 6, 'Buruh Tani',     'Buruh Tani',       750000,  600000, 'Kab. Grobogan',    'Jawa Tengah', 'Jl. Purwodadi No. 11, Grobogan',               18000,  '450 VA',  '081234560010', 'hana.safitri10@students.undip.ac.id',  '-7.1000,110.9167', -7.1000, 110.9167),
+  (11, 'KIPK-2026-0011', 'KIP-011', 'Irfan Maulana',         'Teknik Mesin',                '3374111511040011', '3374111511040011', '0012345611', 'SMAN 2 Boyolali',      'Terdaftar',     3, 4, 'Wiraswasta',     'Ibu Rumah Tangga', 1800000,       0, 'Kab. Boyolali',    'Jawa Tengah', 'Jl. Boyolali Kota No. 6, Boyolali',            40000,  '900 VA',  '081234560011', 'irfan.maulana11@students.undip.ac.id', '-7.5333,110.5833', -7.5333, 110.5833),
+  (12, 'KIPK-2026-0012', 'SKTM-012','Juwita Sari',           'Akuntansi',                   '3374121512040012', '3374121512040012', '0012345612', 'SMAN 1 Klaten',        'Tidak Terdaftar',4, 5, 'Petani',         'Pedagang Kecil',   650000,  350000, 'Kab. Klaten',      'Jawa Tengah', 'Jl. Klaten Kota No. 14, Klaten',               22000,  '450 VA',  '081234560012', 'juwita.sari12@students.undip.ac.id',   '-7.7000,110.6000', -7.7000, 110.6000),
+  (13, 'KIPK-2026-0013', 'KKS-013', 'Kevin Ardiansyah',      'Teknik Kimia',                '3374131513040013', '3374131513040013', '0012345613', 'SMAN 1 Sukoharjo',     'Terdaftar',     5, 6, 'Buruh Pabrik',   'Ibu Rumah Tangga', 1300000,       0, 'Kab. Sukoharjo',   'Jawa Tengah', 'Jl. Sukoharjo Kota No. 3, Sukoharjo',          35000,  '900 VA',  '081234560013', 'kevin.ardiansyah13@students.undip.ac.id','-7.6833,110.8333',-7.6833, 110.8333),
+  (14, 'KIPK-2026-0014', 'KIP-014', 'Laila Nurul',           'Biologi',                     '3374141514040014', '3374141514040014', '0012345614', 'SMAN 2 Wonogiri',      'Terdaftar',     6, 7, 'Petani',         'Petani',           550000,  450000, 'Kab. Wonogiri',    'Jawa Tengah', 'Jl. Wonogiri Kota No. 18, Wonogiri',           8000,   '450 VA',  '081234560014', 'laila.nurul14@students.undip.ac.id',   '-7.8167,110.9167', -7.8167, 110.9167),
+  (15, 'KIPK-2026-0015', 'SKTM-015','Muhammad Rizal',        'Fisika',                      '3374151515040015', '3374151515040015', '0012345615', 'SMAN 1 Karanganyar',   'Terdaftar',     4, 5, 'Buruh Harian',   'Ibu Rumah Tangga', 950000,        0, 'Kab. Karanganyar', 'Jawa Tengah', 'Jl. Karanganyar Kota No. 7, Karanganyar',      28000,  '450 VA',  '081234560015', 'muhammad.rizal15@students.undip.ac.id','-7.6000,110.9500', -7.6000, 110.9500),
+  (16, 'KIPK-2026-0016', 'KKS-016', 'Nadia Putri',           'Kesehatan Masyarakat',        '3374161516040016', '3374161516040016', '0012345616', 'SMAN 1 Sragen',        'Tidak Terdaftar',3, 4, 'Wiraswasta',     'Pedagang Kecil',   1600000, 500000, 'Kab. Sragen',      'Jawa Tengah', 'Jl. Sragen Kota No. 10, Sragen',               42000,  '900 VA',  '081234560016', 'nadia.putri16@students.undip.ac.id',   '-7.4333,111.0167', -7.4333, 111.0167),
+  (17, 'KIPK-2026-0017', 'KIP-017', 'Oki Firmansyah',        'Teknik Lingkungan',           '3374171517040017', '3374171517040017', '0012345617', 'SMAN 2 Magelang',      'Terdaftar',     5, 6, 'Petani',         'Ibu Rumah Tangga', 700000,        0, 'Kota Magelang',    'Jawa Tengah', 'Jl. Magelang Kota No. 5, Magelang',            16000,  '450 VA',  '081234560017', 'oki.firmansyah17@students.undip.ac.id','-7.4667,110.2167', -7.4667, 110.2167),
+  (18, 'KIPK-2026-0018', 'SKTM-018','Putri Anggraini',       'Manajemen',                   '3374181518040018', '3374181518040018', '0012345618', 'SMAN 1 Purworejo',     'Terdaftar',     4, 5, 'Nelayan',        'Buruh Tani',       800000,  400000, 'Kab. Purworejo',   'Jawa Tengah', 'Jl. Purworejo Kota No. 13, Purworejo',         20000,  '450 VA',  '081234560018', 'putri.anggraini18@students.undip.ac.id','-7.7167,110.0167',-7.7167, 110.0167),
+  (19, 'KIPK-2026-0019', 'KKS-019', 'Qori Ramadhani',        'Ilmu Perpustakaan',           '3374191519040019', '3374191519040019', '0012345619', 'SMAN 1 Kebumen',       'Terdaftar',     6, 7, 'Buruh Harian',   'Ibu Rumah Tangga', 1000000,       0, 'Kab. Kebumen',     'Jawa Tengah', 'Jl. Kebumen Kota No. 2, Kebumen',              14000,  '450 VA',  '081234560019', 'qori.ramadhani19@students.undip.ac.id','-7.6667,109.6500', -7.6667, 109.6500),
+  (20, 'KIPK-2026-0020', 'KIP-020', 'Rendi Kurniawan',       'Teknik Perkapalan',           '3374201520040020', '3374201520040020', '0012345620', 'SMAN 2 Cilacap',       'Tidak Terdaftar',3, 4, 'Nelayan',        'Pedagang Kecil',   900000,  300000, 'Kab. Cilacap',     'Jawa Tengah', 'Jl. Cilacap Kota No. 8, Cilacap',              25000,  '900 VA',  '081234560020', 'rendi.kurniawan20@students.undip.ac.id','-7.7167,109.0167',-7.7167, 109.0167),
+  (21, 'KIPK-2026-0021', 'SKTM-021','Sari Dewi',             'Ilmu Gizi',                   '3374211521040021', '3374211521040021', '0012345621', 'SMAN 1 Banyumas',      'Terdaftar',     5, 6, 'Petani',         'Ibu Rumah Tangga', 650000,        0, 'Kab. Banyumas',    'Jawa Tengah', 'Jl. Purwokerto No. 16, Banyumas',              18000,  '450 VA',  '081234560021', 'sari.dewi21@students.undip.ac.id',     '-7.4167,109.2333', -7.4167, 109.2333),
+  (22, 'KIPK-2026-0022', 'KKS-022', 'Taufik Hidayat',        'Peternakan',                  '3374221522040022', '3374221522040022', '0012345622', 'SMAN 1 Purbalingga',   'Terdaftar',     4, 5, 'Buruh Tani',     'Buruh Tani',       700000,  500000, 'Kab. Purbalingga', 'Jawa Tengah', 'Jl. Purbalingga Kota No. 4, Purbalingga',      12000,  '450 VA',  '081234560022', 'taufik.hidayat22@students.undip.ac.id','-7.3833,109.3667', -7.3833, 109.3667),
+  (23, 'KIPK-2026-0023', 'KIP-023', 'Umi Kalsum',            'Teknik Geodesi',              '3374231523040023', '3374231523040023', '0012345623', 'SMAN 2 Banjarnegara',  'Terdaftar',     3, 4, 'Wiraswasta',     'Ibu Rumah Tangga', 1700000,       0, 'Kab. Banjarnegara','Jawa Tengah', 'Jl. Banjarnegara Kota No. 11, Banjarnegara',   38000,  '900 VA',  '081234560023', 'umi.kalsum23@students.undip.ac.id',    '-7.3833,109.6833', -7.3833, 109.6833),
+  (24, 'KIPK-2026-0024', 'SKTM-024','Vino Saputra',          'Perikanan',                   '3374241524040024', '3374241524040024', '0012345624', 'SMAN 1 Wonosobo',      'Tidak Terdaftar',5, 6, 'Petani',         'Petani',           580000,  420000, 'Kab. Wonosobo',    'Jawa Tengah', 'Jl. Wonosobo Kota No. 6, Wonosobo',            10000,  '450 VA',  '081234560024', 'vino.saputra24@students.undip.ac.id',  '-7.3667,109.9000', -7.3667, 109.9000),
+  (25, 'KIPK-2026-0025', 'KKS-025', 'Wulandari',             'Farmasi',                     '3374251525040025', '3374251525040025', '0012345625', 'SMAN 1 Temanggung',    'Terdaftar',     4, 5, 'Buruh Pabrik',   'Ibu Rumah Tangga', 1400000,       0, 'Kab. Temanggung',  'Jawa Tengah', 'Jl. Temanggung Kota No. 9, Temanggung',        32000,  '900 VA',  '081234560025', 'wulandari25@students.undip.ac.id',     '-7.3167,110.1667', -7.3167, 110.1667),
+  (26, 'KIPK-2026-0026', 'KIP-026', 'Xena Maharani',         'Arsitektur',                  '3374261526040026', '3374261526040026', '0012345626', 'SMAN 2 Batang',        'Terdaftar',     3, 4, 'Nelayan',        'Pedagang Kecil',   850000,  350000, 'Kab. Batang',      'Jawa Tengah', 'Jl. Batang Kota No. 17, Batang',               22000,  '450 VA',  '081234560026', 'xena.maharani26@students.undip.ac.id', '-6.9167,109.7333', -6.9167, 109.7333),
+  (27, 'KIPK-2026-0027', 'SKTM-027','Yoga Pratama',          'Teknik Industri',             '3374271527040027', '3374271527040027', '0012345627', 'SMAN 1 Pekalongan',    'Terdaftar',     5, 6, 'Buruh Harian',   'Ibu Rumah Tangga', 1050000,       0, 'Kota Pekalongan',  'Jawa Tengah', 'Jl. Pekalongan Kota No. 3, Pekalongan',        28000,  '450 VA',  '081234560027', 'yoga.pratama27@students.undip.ac.id',  '-6.8883,109.6753', -6.8883, 109.6753),
+  (28, 'KIPK-2026-0028', 'KKS-028', 'Zahra Aulia',           'Kedokteran Gigi',             '3374281528040028', '3374281528040028', '0012345628', 'SMAN 1 Pemalang',      'Tidak Terdaftar',4, 5, 'Petani',         'Buruh Tani',       620000,  480000, 'Kab. Pemalang',    'Jawa Tengah', 'Jl. Pemalang Kota No. 12, Pemalang',           15000,  '450 VA',  '081234560028', 'zahra.aulia28@students.undip.ac.id',   '-6.8833,109.3833', -6.8833, 109.3833),
+  (29, 'KIPK-2026-0029', 'KIP-029', 'Arif Budiman',          'Sosiologi',                   '3374291529040029', '3374291529040029', '0012345629', 'SMAN 2 Tegal',         'Terdaftar',     6, 7, 'Buruh Pabrik',   'Buruh Pabrik',     1250000, 1100000,'Kota Tegal',       'Jawa Tengah', 'Jl. Tegal Kota No. 8, Tegal',                  35000,  '900 VA',  '081234560029', 'arif.budiman29@students.undip.ac.id',  '-6.8694,109.1403', -6.8694, 109.1403),
+  (30, 'KIPK-2026-0030', 'SKTM-030','Bella Oktavia',         'Teknik Planologi',            '3374301530040030', '3374301530040030', '0012345630', 'SMAN 1 Brebes',        'Terdaftar',     4, 5, 'Petani',         'Ibu Rumah Tangga', 720000,        0, 'Kab. Brebes',      'Jawa Tengah', 'Jl. Brebes Kota No. 5, Brebes',                16000,  '450 VA',  '081234560030', 'bella.oktavia30@students.undip.ac.id', '-6.8717,108.9578', -6.8717, 108.9578)
+) AS v(
+  no, no_pendaftaran_kipk, no_bantuan_sosial,
+  nama, prodi, nik, no_kartu_keluarga, nisn, asal_sekolah,
+  status_dtsen, jumlah_tanggungan, jumlah_orang_rumah,
+  pekerjaan_ayah, pekerjaan_ibu,
+  penghasilan_ayah, penghasilan_ibu,
+  kab_kota, provinsi, alamat,
+  pbb, daya_listrik,
+  no_hp, email,
+  koordinat, latitude, longitude
+);

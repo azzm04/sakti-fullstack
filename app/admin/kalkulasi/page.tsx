@@ -109,7 +109,7 @@ export default function KalkulasiPage() {
 
       {/* Breadcrumb */}
       <nav className="flex items-center gap-2 text-[11px] uppercase tracking-wider font-semibold text-slate-400 mb-4">
-        <span>Management</span>
+        <span>Admin</span>
         <span className="material-symbols-outlined text-xs">chevron_right</span>
         <span>Selection Process</span>
         <span className="material-symbols-outlined text-xs">chevron_right</span>

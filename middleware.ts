@@ -43,9 +43,8 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
-    // Proteksi semua route admin KECUALI /admin/login
     "/admin/((?!login).*)",
     "/mahasiswa/:path*",
-    // "/pewawancara/:path*",
+    "/pewawancara/:path*",
   ],
 }

@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Search, Plus, Pencil, Trash2, X, Loader2, CheckCircle2,
   UserCheck, CalendarDays, Users, Zap, ZapOff, Play, RefreshCw,
-  AlertTriangle, ChevronDown,
+  AlertTriangle,
 } from "lucide-react";
 
 interface Pewawancara {
@@ -46,7 +46,7 @@ export default function PewawancaraPage() {
   return (
     <div className="p-6 md:p-10 min-h-screen bg-[#f7f9fb]">
       <nav className="flex items-center gap-2 text-[11px] uppercase tracking-wider font-semibold text-slate-400 mb-4">
-        <span>Admin</span>
+        <span>Management</span>
         <span>›</span>
         <span className="text-primary">Pewawancara</span>
       </nav>
@@ -178,17 +178,11 @@ function DaftarPewawancara() {
       <div className="flex items-center gap-3 mb-4">
         <div className="relative flex-1 max-w-sm">
           <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari nama atau email..."
+          <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Cari nama atau email..."
             className="w-full pl-9 pr-3 py-2.5 text-sm border border-slate-200 rounded-xl bg-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
           />
         </div>
-        <button
-          onClick={openAdd}
-          className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors shadow-sm"
-        >
+        <button onClick={openAdd} className="flex items-center gap-2 px-4 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors shadow-sm">
           <Plus size={15} /> Tambah
         </button>
       </div>
@@ -222,14 +216,12 @@ function DaftarPewawancara() {
                   <td className="px-4 py-3 text-xs font-semibold text-slate-600">{p.total_assigned}</td>
                   <td className="px-4 py-3 text-xs font-semibold text-emerald-600">{p.total_completed}</td>
                   <td className="px-4 py-3">
-                    <button
-                      onClick={() => handleToggleActive(p)}
+                    <button onClick={() => handleToggleActive(p)}
                       className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border transition-colors ${
                         p.is_active
                           ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
                           : "bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100"
-                      }`}
-                    >
+                      }`}>
                       {p.is_active ? <><CheckCircle2 size={10} /> Aktif</> : "Non-aktif"}
                     </button>
                   </td>
@@ -259,23 +251,17 @@ function DaftarPewawancara() {
       <AnimatePresence>
         {showModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-2xl border border-slate-100 shadow-xl p-6 max-w-sm w-full mx-4"
-            >
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl border border-slate-100 shadow-xl p-6 max-w-sm w-full mx-4">
               <div className="flex items-center justify-between mb-5">
                 <h3 className="font-bold text-slate-800">{editing ? "Edit Pewawancara" : "Tambah Pewawancara"}</h3>
-                <button onClick={() => setShowModal(false)} className="p-1.5 rounded-lg hover:bg-slate-100">
-                  <X size={16} className="text-slate-400" />
-                </button>
+                <button onClick={() => setShowModal(false)} className="p-1.5 rounded-lg hover:bg-slate-100"><X size={16} className="text-slate-400" /></button>
               </div>
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 mb-1.5">Email <span className="text-red-500">*</span></label>
                   <input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                    placeholder="pewawancara@students.undip.ac.id" disabled={!!editing}
+                    placeholder="pewawancara@undip.ac.id" disabled={!!editing}
                     className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-primary bg-slate-50 disabled:opacity-60 transition-all"
                   />
                 </div>
@@ -288,8 +274,7 @@ function DaftarPewawancara() {
                 </div>
                 {!editing && (
                   <p className="text-[11px] text-slate-400 bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
-                    Pewawancara otomatis bisa login via OTP menggunakan email ini.
-                    SSO ID akan di-generate otomatis oleh sistem.
+                    Pewawancara otomatis bisa login via OTP. SSO ID di-generate otomatis.
                   </p>
                 )}
                 {formError && <p className="text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">{formError}</p>}
@@ -321,6 +306,7 @@ function SesiWAR() {
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
   const [distributing, setDistributing] = useState(false);
+  const [deletingSlot, setDeletingSlot] = useState<number | null>(null);
   const [showBuatSesi, setShowBuatSesi] = useState(false);
   const [formSesi, setFormSesi] = useState({ kuota_pewawancara: "20", kuota_mahasiswa: "120" });
   const [savingSesi, setSavingSesi] = useState(false);
@@ -340,7 +326,6 @@ function SesiWAR() {
 
   useEffect(() => { fetchSesi(); }, [fetchSesi]);
 
-  // Auto-refresh setiap 5 detik saat WAR aktif
   useEffect(() => {
     if (!sesi?.war_aktif) return;
     const t = setInterval(fetchSesi, 5000);
@@ -409,18 +394,29 @@ function SesiWAR() {
     }
   }
 
+  async function handleHapusSlot(slotId: number, namaPewawancara: string) {
+    if (!confirm(`Hapus ${namaPewawancara} dari slot WAR?\nMereka bisa klaim slot lagi jika WAR masih aktif.`)) return;
+    setDeletingSlot(slotId);
+    try {
+      const res = await fetch(`/api/admin/sesi?slot_id=${slotId}`, { method: "DELETE" });
+      const json = await res.json();
+      if (!res.ok) { setMsg({ type: "err", text: json.error }); return; }
+      setMsg({ type: "ok", text: `${namaPewawancara} berhasil dihapus dari slot` });
+      setTimeout(() => setMsg(null), 3000);
+      fetchSesi();
+    } finally {
+      setDeletingSlot(null);
+    }
+  }
+
   const slotPenuh = sesi ? slots.length >= sesi.kuota_pewawancara : false;
 
   return (
     <>
-      {/* Date picker */}
       <div className="flex items-center gap-3 mb-6">
         <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-sm">
           <CalendarDays size={15} className="text-slate-400" />
-          <input
-            type="date"
-            value={tanggal}
-            onChange={(e) => setTanggal(e.target.value)}
+          <input type="date" value={tanggal} onChange={(e) => setTanggal(e.target.value)}
             className="text-sm font-semibold text-slate-700 bg-transparent focus:outline-none"
           />
         </div>
@@ -429,17 +425,12 @@ function SesiWAR() {
         </button>
       </div>
 
-      {/* Feedback */}
       <AnimatePresence>
         {msg && (
-          <motion.div
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
+          <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
             className={`mb-4 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 ${
               msg.type === "ok" ? "bg-emerald-50 text-emerald-700 border border-emerald-200" : "bg-red-50 text-red-600 border border-red-200"
-            }`}
-          >
+            }`}>
             {msg.type === "ok" ? <CheckCircle2 size={15} /> : <AlertTriangle size={15} />}
             {msg.text}
           </motion.div>
@@ -451,30 +442,23 @@ function SesiWAR() {
           <Loader2 size={16} className="animate-spin" /> Memuat...
         </div>
       ) : !sesi ? (
-        /* ── Belum ada sesi ── */
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-10 text-center">
           <CalendarDays size={36} className="text-slate-200 mx-auto mb-3" />
           <p className="text-sm font-semibold text-slate-600 mb-1">Belum ada sesi untuk tanggal ini</p>
           <p className="text-xs text-slate-400 mb-5">Buat sesi terlebih dahulu sebelum membuka WAR</p>
-          <button
-            onClick={() => setShowBuatSesi(true)}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors"
-          >
+          <button onClick={() => setShowBuatSesi(true)}
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors">
             <Plus size={15} /> Buat Sesi
           </button>
         </div>
       ) : (
-        /* ── Ada sesi ── */
         <div className="space-y-5">
 
           {/* Status card */}
-          <div className={`rounded-2xl border p-5 ${
-            sesi.war_aktif
-              ? "bg-amber-50 border-amber-200"
-              : sesi.distribusi_done
-              ? "bg-emerald-50 border-emerald-200"
-              : "bg-white border-slate-100"
-          } shadow-sm`}>
+          <div className={`rounded-2xl border p-5 shadow-sm ${
+            sesi.war_aktif ? "bg-amber-50 border-amber-200" :
+            sesi.distribusi_done ? "bg-emerald-50 border-emerald-200" : "bg-white border-slate-100"
+          }`}>
             <div className="flex items-start justify-between gap-4 flex-wrap">
               <div>
                 <div className="flex items-center gap-2 mb-1">
@@ -503,40 +487,29 @@ function SesiWAR() {
                   )}
                 </div>
               </div>
-
               <div className="flex items-center gap-2">
                 {!sesi.distribusi_done && (
-                  <button
-                    onClick={handleToggleWAR}
-                    disabled={toggling || slotPenuh}
+                  <button onClick={handleToggleWAR} disabled={toggling || slotPenuh}
                     className={`flex items-center gap-2 px-4 py-2.5 text-sm font-semibold rounded-xl transition-all disabled:opacity-50 ${
-                      sesi.war_aktif
-                        ? "bg-red-500 text-white hover:bg-red-600"
-                        : "bg-amber-500 text-white hover:bg-amber-600"
-                    }`}
-                  >
+                      sesi.war_aktif ? "bg-red-500 text-white hover:bg-red-600" : "bg-amber-500 text-white hover:bg-amber-600"
+                    }`}>
                     {toggling ? <Loader2 size={14} className="animate-spin" /> : sesi.war_aktif ? <ZapOff size={14} /> : <Zap size={14} />}
                     {sesi.war_aktif ? "Tutup WAR" : "Buka WAR"}
                   </button>
                 )}
                 {!sesi.distribusi_done && slots.length > 0 && (
-                  <button
-                    onClick={handleDistribusi}
-                    disabled={distributing || sesi.war_aktif}
+                  <button onClick={handleDistribusi} disabled={distributing || sesi.war_aktif}
                     className="flex items-center gap-2 px-4 py-2.5 text-sm font-semibold bg-primary text-white rounded-xl hover:bg-primary/90 disabled:opacity-50 transition-all"
-                    title={sesi.war_aktif ? "Tutup WAR dulu sebelum distribusi" : ""}
-                  >
+                    title={sesi.war_aktif ? "Tutup WAR dulu sebelum distribusi" : ""}>
                     {distributing ? <Loader2 size={14} className="animate-spin" /> : <Play size={14} />}
                     Distribusi Mahasiswa
                   </button>
                 )}
               </div>
             </div>
-
             {sesi.war_aktif && (
               <p className="text-xs text-amber-600 mt-3 flex items-center gap-1.5">
-                <AlertTriangle size={12} />
-                Tutup WAR terlebih dahulu sebelum melakukan distribusi mahasiswa
+                <AlertTriangle size={12} /> Tutup WAR terlebih dahulu sebelum melakukan distribusi mahasiswa
               </p>
             )}
           </div>
@@ -545,12 +518,8 @@ function SesiWAR() {
           <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
             <div className="flex items-center justify-between mb-3">
               <h3 className="font-bold text-slate-800 text-sm">Slot Pewawancara</h3>
-              <span className="text-xs font-bold text-primary">
-                {slots.length} / {sesi.kuota_pewawancara} terisi
-              </span>
+              <span className="text-xs font-bold text-primary">{slots.length} / {sesi.kuota_pewawancara} terisi</span>
             </div>
-
-            {/* Progress bar */}
             <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-4">
               <motion.div
                 className={`h-full rounded-full ${slotPenuh ? "bg-emerald-500" : "bg-primary"}`}
@@ -559,21 +528,15 @@ function SesiWAR() {
                 transition={{ duration: 0.5 }}
               />
             </div>
-
-            {/* Grid slot */}
             <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-10 gap-2">
               {Array.from({ length: sesi.kuota_pewawancara }, (_, i) => {
                 const slot = slots.find((s) => s.slot_ke === i + 1);
                 return (
-                  <div
-                    key={i}
+                  <div key={i}
                     title={slot ? `${slot.pewawancara?.nama ?? "—"} (${new Date(slot.claimed_at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" })})` : `Slot ${i + 1} — kosong`}
                     className={`aspect-square rounded-xl flex flex-col items-center justify-center text-xs font-bold transition-all cursor-default ${
-                      slot
-                        ? "bg-primary text-white shadow-sm"
-                        : "bg-slate-100 text-slate-300"
-                    }`}
-                  >
+                      slot ? "bg-primary text-white shadow-sm" : "bg-slate-100 text-slate-300"
+                    }`}>
                     <span>{i + 1}</span>
                     {slot && <span className="text-[8px] font-normal opacity-80 truncate w-full text-center px-1">{slot.pewawancara?.nama?.split(" ")[0]}</span>}
                   </div>
@@ -591,22 +554,22 @@ function SesiWAR() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-100">
-                    {["Slot", "Pewawancara", "Email", "Waktu Klaim", "Mahasiswa (urutan)"].map((h) => (
+                    {["Slot", "Pewawancara", "Email", "Waktu Klaim", "Mahasiswa (urutan)", "Aksi"].map((h) => (
                       <th key={h} className="px-4 py-2.5 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400">{h}</th>
                     ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                   {slots.map((s) => {
-                    // Hitung urutan mahasiswa: slot_ke=N → N, N+step, N+2*step, ...
                     const step = sesi.kuota_pewawancara;
                     const urutan = Array.from(
                       { length: Math.ceil(sesi.kuota_mahasiswa / step) },
                       (_, i) => s.slot_ke + i * step
                     ).filter((n) => n <= sesi.kuota_mahasiswa);
+                    const isDeleting = deletingSlot === s.id;
 
                     return (
-                      <tr key={s.id} className="hover:bg-slate-50/60 transition-colors">
+                      <tr key={s.id} className={`transition-colors ${isDeleting ? "opacity-50" : "hover:bg-slate-50/60"}`}>
                         <td className="px-4 py-3">
                           <div className="w-8 h-8 rounded-full bg-primary text-white flex items-center justify-center text-xs font-bold">
                             {s.slot_ke}
@@ -620,14 +583,24 @@ function SesiWAR() {
                         <td className="px-4 py-3">
                           <div className="flex flex-wrap gap-1">
                             {urutan.slice(0, 6).map((n) => (
-                              <span key={n} className="text-[10px] font-bold px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">
-                                #{n}
-                              </span>
+                              <span key={n} className="text-[10px] font-bold px-1.5 py-0.5 bg-slate-100 text-slate-600 rounded">#{n}</span>
                             ))}
-                            {urutan.length > 6 && (
-                              <span className="text-[10px] text-slate-400">+{urutan.length - 6} lagi</span>
-                            )}
+                            {urutan.length > 6 && <span className="text-[10px] text-slate-400">+{urutan.length - 6} lagi</span>}
                           </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          {!sesi.distribusi_done ? (
+                            <button
+                              onClick={() => handleHapusSlot(s.id, s.pewawancara?.nama ?? "Pewawancara")}
+                              disabled={isDeleting}
+                              title="Hapus dari slot WAR"
+                              className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500 disabled:opacity-40 transition-colors"
+                            >
+                              {isDeleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />}
+                            </button>
+                          ) : (
+                            <span className="text-slate-200 text-xs">—</span>
+                          )}
                         </td>
                       </tr>
                     );
@@ -643,12 +616,8 @@ function SesiWAR() {
       <AnimatePresence>
         {showBuatSesi && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm">
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-2xl border border-slate-100 shadow-xl p-6 max-w-sm w-full mx-4"
-            >
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-white rounded-2xl border border-slate-100 shadow-xl p-6 max-w-sm w-full mx-4">
               <div className="flex items-center justify-between mb-5">
                 <div>
                   <h3 className="font-bold text-slate-800">Buat Sesi Wawancara</h3>
@@ -656,17 +625,12 @@ function SesiWAR() {
                     {new Date(tanggal).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
                   </p>
                 </div>
-                <button onClick={() => setShowBuatSesi(false)} className="p-1.5 rounded-lg hover:bg-slate-100">
-                  <X size={16} className="text-slate-400" />
-                </button>
+                <button onClick={() => setShowBuatSesi(false)} className="p-1.5 rounded-lg hover:bg-slate-100"><X size={16} className="text-slate-400" /></button>
               </div>
-
               <div className="space-y-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 mb-1.5">Kuota Pewawancara / hari</label>
-                  <input
-                    type="number" min={1} max={50}
-                    value={formSesi.kuota_pewawancara}
+                  <input type="number" min={1} max={50} value={formSesi.kuota_pewawancara}
                     onChange={(e) => setFormSesi((f) => ({ ...f, kuota_pewawancara: e.target.value }))}
                     className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-primary bg-slate-50"
                   />
@@ -674,18 +638,15 @@ function SesiWAR() {
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 mb-1.5">Kuota Mahasiswa / hari</label>
-                  <input
-                    type="number" min={1}
-                    value={formSesi.kuota_mahasiswa}
+                  <input type="number" min={1} value={formSesi.kuota_mahasiswa}
                     onChange={(e) => setFormSesi((f) => ({ ...f, kuota_mahasiswa: e.target.value }))}
                     className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-primary bg-slate-50"
                   />
                   <p className="text-[11px] text-slate-400 mt-1">
-                    Tiap pewawancara akan mewawancarai ±{Math.ceil(parseInt(formSesi.kuota_mahasiswa || "120") / parseInt(formSesi.kuota_pewawancara || "20"))} mahasiswa
+                    Tiap pewawancara ±{Math.ceil(parseInt(formSesi.kuota_mahasiswa || "120") / parseInt(formSesi.kuota_pewawancara || "20"))} mahasiswa
                   </p>
                 </div>
               </div>
-
               <div className="flex gap-2 mt-6">
                 <button onClick={() => setShowBuatSesi(false)} className="flex-1 py-2.5 text-sm font-semibold border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">Batal</button>
                 <button onClick={handleBuatSesi} disabled={savingSesi}

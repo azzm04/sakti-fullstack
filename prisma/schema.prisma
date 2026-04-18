@@ -10,8 +10,7 @@ datasource db {
 // Diisi oleh Admin via upload Excel
 model SsoWhitelist {
   id           String   @id @default(cuid())
-  email        String   @unique  // email login utama (pribadi atau SSO)
-  emailSso     String?  @unique  // email SSO @students.undip.ac.id (opsional)
+  email        String   @unique
   nama         String
   role         Role     @default(MAHASISWA_KIPK)
   isActive     Boolean  @default(true)
@@ -115,4 +114,55 @@ enum Role {
   MAHASISWA_KIPK
   PEWAWANCARA
   ADMIN_DIRMAWA
+}
+
+// ─── PEWAWANCARA ──────────────────────────────────────────
+// Tabel pewawancara terpisah (dari skenario BAB 2.5)
+// Berbeda dengan User — pewawancara punya blok penugasan
+model Pewawancara {
+  id              BigInt    @id @default(autoincrement())
+  email           String    @unique
+  nama            String?
+  ssoId           String?   @map("sso_id")
+  blokPenugasan   Int?      @map("blok_penugasan")
+  totalAssigned   Int       @default(0) @map("total_assigned")
+  totalCompleted  Int       @default(0) @map("total_completed")
+  isActive        Boolean   @default(true) @map("is_active")
+  createdAt       DateTime  @default(now()) @map("created_at")
+
+  assignments     WawancaraAssignment[]
+
+  @@map("pewawancara")
+}
+
+// ─── WAWANCARA ASSIGNMENT ─────────────────────────────────
+// Relasi kandidat ↔ pewawancara
+model WawancaraAssignment {
+  id             BigInt    @id @default(autoincrement())
+  kandidatId     BigInt    @map("kandidat_id")
+  pewawancaraId  BigInt    @map("pewawancara_id")
+  blok           Int?
+  status         String    @default("pending") // pending | completed | cancelled
+  scheduledAt    DateTime? @map("scheduled_at")
+  completedAt    DateTime? @map("completed_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  pewawancara    Pewawancara @relation(fields: [pewawancaraId], references: [id])
+
+  @@map("wawancara_assignment")
+}
+
+// ─── TOPSIS WEIGHTS ───────────────────────────────────────
+// Bobot kriteria TOPSIS yang bisa diset admin per periode
+model TopsisWeights {
+  id                  BigInt   @id @default(autoincrement())
+  periode             String?  // e.g. "2026-SNBP"
+  penghasilanWeight   Float    @default(0.3)  @map("penghasilan_weight")
+  tanggunganWeight    Float    @default(0.2)  @map("tanggungan_weight")
+  jarakWeight         Float    @default(0.15) @map("jarak_weight")
+  kondisiRumahWeight  Float    @default(0.15) @map("kondisi_rumah_weight")
+  wawancaraWeight     Float    @default(0.2)  @map("wawancara_weight")
+  createdAt           DateTime @default(now()) @map("created_at")
+
+  @@map("topsis_weights")
 }

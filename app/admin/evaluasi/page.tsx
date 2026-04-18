@@ -16,8 +16,7 @@ export interface MahasiswaEvaluasi {
   nik: string;
   no_hp: string;
   email: string;
-  prestasi: string;
-  rekomendasi: string;
+  hasil_akhir: number | null;
   alasan: string;
   pewawancara: string;
 }
@@ -25,7 +24,19 @@ export interface MahasiswaEvaluasi {
 type FilterStatus = "semua" | "selesai" | "belum";
 
 function getStatus(m: MahasiswaEvaluasi): EvaluasiStatus {
-  return m.rekomendasi && m.pewawancara ? "selesai" : "belum";
+  return m.hasil_akhir && m.pewawancara ? "selesai" : "belum";
+}
+
+function hasilAkhirBadge(v: number | null) {
+  if (!v) return <span className="text-muted-foreground italic text-xs">Belum diisi</span>;
+  const map: Record<number, { label: string; cls: string }> = {
+    1: { label: "Layak",           cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+    2: { label: "Dipertimbangkan", cls: "bg-amber-50 text-amber-700 border-amber-200"       },
+    3: { label: "Tidak Layak",     cls: "bg-red-50 text-red-700 border-red-200"             },
+  };
+  const item = map[v];
+  if (!item) return <span className="text-muted-foreground italic text-xs">—</span>;
+  return <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${item.cls}`}>{item.label}</span>;
 }
 
 export default function EvaluasiPage() {
@@ -138,7 +149,7 @@ export default function EvaluasiPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-border">
-                  {["No", "Nama", "Prodi", "Pewawancara", "Rekomendasi", "Status", "Aksi"].map((h) => (
+                  {["No", "Nama", "Prodi", "Pewawancara", "Hasil Akhir", "Status", "Aksi"].map((h) => (
                     <th key={h} className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                       {h}
                     </th>
@@ -162,15 +173,7 @@ export default function EvaluasiPage() {
                         {m.pewawancara || <span className="text-muted-foreground italic">—</span>}
                       </td>
                       <td className="px-4 py-3">
-                        {m.rekomendasi ? (
-                          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
-                            m.rekomendasi === "Layak" ? "bg-emerald-50 text-emerald-700 border-emerald-200" :
-                            m.rekomendasi === "Dipertimbangkan" ? "bg-amber-50 text-amber-700 border-amber-200" :
-                            "bg-red-50 text-red-700 border-red-200"
-                          }`}>{m.rekomendasi}</span>
-                        ) : (
-                          <span className="text-muted-foreground italic text-xs">Belum diisi</span>
-                        )}
+                        {hasilAkhirBadge(m.hasil_akhir)}
                       </td>
                       <td className="px-4 py-3">
                         {status === "selesai" ? (

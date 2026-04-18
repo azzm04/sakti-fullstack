@@ -58,6 +58,7 @@ interface Kandidat {
   rekomendasi: string;
   alasan: string;
   pewawancara: string;
+  hasil_akhir: number | null;
   skor_total: number;
   ranking: number;
   created_at: string;
@@ -70,7 +71,11 @@ const OPT_KEPEMILIKAN = ["Milik Sendiri", "Sewa", "Tidak Memiliki", "Menumpang"]
 const OPT_SUMBER_AIR  = ["Sumur", "PDAM", "Sungai/Mata Air"];
 const OPT_MCK         = ["Berbagi Pakai", "Milik Sendiri"];
 const OPT_KONDISI     = ["Layak Menerima Beasiswa", "Tidak Layak Beasiswa"];
-const OPT_REKOMENDASI = ["Diusulkan Menerima KIPK", "Tidak Diusulkan"];
+const OPT_HASIL_AKHIR: { label: string; value: number; color: string }[] = [
+  { label: "Layak",           value: 1, color: "bg-emerald-500 text-white border-emerald-500" },
+  { label: "Dipertimbangkan", value: 2, color: "bg-amber-500 text-white border-amber-500"    },
+  { label: "Tidak Layak",     value: 3, color: "bg-red-500 text-white border-red-500"        },
+];
 
 const fmt = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 });
 
@@ -86,10 +91,16 @@ function ReadField({ label, value }: { label: string; value?: string | number | 
 }
 
 // ── Editable components ──────────────────────────────────
-function RadioGroup({ label, value, options, onChange, required }: {
+function RadioGroup({ label, value, options, onChange, required, colored }: {
   label: string; value: string; options: string[];
-  onChange: (v: string) => void; required?: boolean;
+  onChange: (v: string) => void; required?: boolean; colored?: boolean;
 }) {
+  const colorMap: Record<string, string> = {
+    "Layak":            "bg-emerald-500 text-white border-emerald-500",
+    "Dipertimbangkan":  "bg-amber-500 text-white border-amber-500",
+    "Tidak Layak":      "bg-red-500 text-white border-red-500",
+  };
+
   return (
     <div>
       <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
@@ -99,7 +110,11 @@ function RadioGroup({ label, value, options, onChange, required }: {
         {options.map((opt) => (
           <button key={opt} type="button" onClick={() => onChange(opt)}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
-              value === opt ? "bg-primary text-white border-primary" : "bg-white text-muted-foreground border-border hover:border-primary"
+              value === opt
+                ? colored && colorMap[opt]
+                  ? colorMap[opt]
+                  : "bg-primary text-white border-primary"
+                : "bg-white text-muted-foreground border-border hover:border-primary"
             }`}>
             {opt}
           </button>
@@ -182,7 +197,8 @@ export default function PewawancaraDetailPage({ params }: { params: Promise<{ id
           sumber_air: form.sumber_air, mck: form.mck,
           aset: form.aset, kondisi_rumah: form.kondisi_rumah,
           jarak_pusat_kota: form.jarak_pusat_kota,
-          rekomendasi: form.rekomendasi, alasan: form.alasan, pewawancara: form.pewawancara,
+          hasil_akhir: form.hasil_akhir,
+          alasan: form.alasan, pewawancara: form.pewawancara,
         }),
       });
       if (!res.ok) throw new Error();
@@ -320,6 +336,14 @@ export default function PewawancaraDetailPage({ params }: { params: Promise<{ id
             <RadioGroup label="Validasi KIP"  value={form.validasi_kip  ?? ""} options={OPT_ADA_TIDAK} onChange={set("validasi_kip")}  />
             <RadioGroup label="Validasi SKTM" value={form.validasi_sktm ?? ""} options={OPT_ADA_TIDAK} onChange={set("validasi_sktm")} />
           </div>
+          <div className="mt-4">
+            <TextInput
+              label="Sosial Media (Instagram/TikTok/dll)"
+              value={form.sosial_media ?? ""}
+              onChange={set("sosial_media")}
+              placeholder="@username atau link profil"
+            />
+          </div>
         </div>
 
         {/* Validasi Penghasilan */}
@@ -358,7 +382,35 @@ export default function PewawancaraDetailPage({ params }: { params: Promise<{ id
         <div>
           <SectionHeader title="Hasil Wawancara" subtitle="Kesimpulan dan rekomendasi pewawancara" />
           <div className="space-y-4">
-            <RadioGroup label="Rekomendasi" value={form.rekomendasi ?? ""} options={OPT_REKOMENDASI} onChange={set("rekomendasi")} required />
+
+            {/* Hasil Akhir — integer 1/2/3 */}
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+                Hasil Akhir <span className="text-red-500">*</span>
+              </label>
+              <div className="flex gap-2 flex-wrap">
+                {OPT_HASIL_AKHIR.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, hasil_akhir: opt.value }))}
+                    className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                      form.hasil_akhir === opt.value
+                        ? opt.color
+                        : "bg-white text-muted-foreground border-border hover:border-primary"
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
+              {form.hasil_akhir && (
+                <p className="text-[11px] text-muted-foreground mt-1.5">
+                  Dipilih: <span className="font-semibold">{OPT_HASIL_AKHIR.find((o) => o.value === form.hasil_akhir)?.label}</span>
+                </p>
+              )}
+            </div>
+
             <div>
               <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Alasan</label>
               <textarea value={form.alasan ?? ""} onChange={(e) => set("alasan")(e.target.value)}
