@@ -47,6 +47,8 @@ export default function EvaluasiPage() {
   const [filter, setFilter]   = useState<FilterStatus>("semua");
   const [page, setPage]       = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [totalSelesai, setTotalSelesai] = useState(0);
+  const [totalBelum, setTotalBelum]     = useState(0);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -61,6 +63,8 @@ export default function EvaluasiPage() {
       setData(json.data ?? []);
       setTotal(json.total ?? 0);
       setTotalPages(json.totalPages ?? 1);
+      setTotalSelesai(json.totalSelesai ?? 0);
+      setTotalBelum(json.totalBelum ?? 0);
     } catch {
       setData([]);
     } finally {
@@ -101,8 +105,8 @@ export default function EvaluasiPage() {
       <div className="grid grid-cols-3 gap-4 mb-6">
         {[
           { label: "Total Mahasiswa",  value: total,        color: "text-primary",     bg: "bg-primary/8"  },
-          { label: "Sudah Dievaluasi", value: selesaiCount, color: "text-emerald-600", bg: "bg-emerald-50" },
-          { label: "Belum Dievaluasi", value: belumCount,   color: "text-amber-600",   bg: "bg-amber-50"   },
+          { label: "Sudah Dievaluasi", value: totalSelesai, color: "text-emerald-600", bg: "bg-emerald-50" },
+          { label: "Belum Dievaluasi", value: totalBelum,   color: "text-amber-600",   bg: "bg-amber-50"   },
         ].map(({ label, value, color, bg }) => (
           <motion.div key={label} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
             className={`${bg} rounded-2xl border border-border p-4 shadow-sm`}>

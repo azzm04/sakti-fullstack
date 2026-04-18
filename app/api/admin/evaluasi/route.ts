@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 
-// GET — ambil semua kandidat dengan kolom wawancara
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
-    const search  = searchParams.get("search") ?? "";
-    const filter  = searchParams.get("filter") ?? "semua"; // semua | selesai | belum
-    const page    = Math.max(1, parseInt(searchParams.get("page") ?? "1"));
-    const limit   = 50;
-    const from    = (page - 1) * limit;
-    const to      = from + limit - 1;
+    const search = searchParams.get("search") ?? "";
+    const filter = searchParams.get("filter") ?? "semua";
+    const page   = Math.max(1, parseInt(searchParams.get("page") ?? "1"));
+    const limit  = 50;
+    const from   = (page - 1) * limit;
+    const to     = from + limit - 1;
 
+    // ── Query halaman (dengan filter & search) ────────────────────────────────
     let query = supabaseAdmin
       .from("kandidat")
       .select(
@@ -29,7 +29,6 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Filter berdasarkan status evaluasi
     if (filter === "selesai") {
       query = query.not("hasil_akhir", "is", null).not("pewawancara", "is", null)
         .neq("pewawancara", "");
@@ -40,11 +39,26 @@ export async function GET(req: NextRequest) {
     const { data, count, error } = await query;
     if (error) throw error;
 
+    const [{ count: totalSelesai }, { count: totalBelum }] = await Promise.all([
+      supabaseAdmin
+        .from("kandidat")
+        .select("id", { count: "exact", head: true })
+        .not("hasil_akhir", "is", null)
+        .not("pewawancara", "is", null)
+        .neq("pewawancara", ""),
+      supabaseAdmin
+        .from("kandidat")
+        .select("id", { count: "exact", head: true })
+        .or("hasil_akhir.is.null,pewawancara.is.null,pewawancara.eq."),
+    ]);
+
     return NextResponse.json({
-      data:       data ?? [],
-      total:      count ?? 0,
+      data:         data ?? [],
+      total:        count ?? 0,
       page,
-      totalPages: Math.ceil((count ?? 0) / limit),
+      totalPages:   Math.ceil((count ?? 0) / limit),
+      totalSelesai: totalSelesai ?? 0,
+      totalBelum:   totalBelum  ?? 0,
     });
   } catch (err) {
     console.error("[GET /api/admin/evaluasi]", err);
