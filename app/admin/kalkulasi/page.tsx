@@ -32,7 +32,7 @@ export default function KalkulasiPage() {
   const [error, setError]       = useState("");
   const [hasRun, setHasRun]     = useState(false);
   const [filter, setFilter]     = useState<FilterView>("semua");
-  const [apiUrl, setApiUrl]     = useState(process.env.NEXT_PUBLIC_TOPSIS_API_URL ?? "");
+  const [apiUrl, setApiUrl]     = useState(process.env.NEXT_PUBLIC_TOPSIS_API_URL);
 
   const totalKuota = JALUR_OPTIONS.reduce((sum, j) => sum + (parseInt(kuota[j]) || 0), 0);
 
