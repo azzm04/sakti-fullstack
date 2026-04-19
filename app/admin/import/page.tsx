@@ -94,7 +94,7 @@ export default function ImportDataPage() {
       <div className="mb-8">
         <nav className="flex items-center gap-1.5 mb-3">
           <span className="text-[11px] uppercase tracking-wider font-semibold text-on-surface-variant">
-            Admin
+            Dashboard
           </span>
           <span className="material-symbols-outlined text-xs text-outline">chevron_right</span>
           <span className="text-[11px] uppercase tracking-wider font-semibold text-primary">

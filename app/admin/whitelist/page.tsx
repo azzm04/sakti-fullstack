@@ -46,7 +46,7 @@ export default function PewawancaraPage() {
   return (
     <div className="p-6 md:p-10 min-h-screen bg-[#f7f9fb]">
       <nav className="flex items-center gap-2 text-[11px] uppercase tracking-wider font-semibold text-slate-400 mb-4">
-        <span>Admin</span>
+        <span>Dashboard</span>
         <span>›</span>
         <span className="text-primary">Pewawancara</span>
       </nav>

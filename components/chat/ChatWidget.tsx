@@ -30,33 +30,33 @@ export default function ChatWidget() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleSendMessage = async (text: string) => {
-    // 1. Tambahkan pesan user ke UI
-    const userMessage: Message = { id: Date.now().toString(), text, isUser: true };
+  const handleSendMessage = async (text: string, imageBase64?: string | null) => {
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      text: text || "📎 [Gambar dikirim]",
+      isUser: true,
+    };
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
     try {
-      // 2. Tembak API Backend FastAPI
-      const response = await chatAPI.sendMessage(text);
-      
-      // Backend returns one of: jawaban, reply, message, response
+      const response = await chatAPI.sendMessage(
+        text || "Tolong analisis gambar ini.",
+        imageBase64 ?? null
+      );
       const botReply = response.jawaban ?? response.reply ?? response.message ?? response.response ?? response.data;
-
-      // 3. Tambahkan balasan bot ke UI
       setMessages((prev) => [
         ...prev,
         { id: (Date.now() + 1).toString(), text: botReply, isUser: false },
       ]);
     } catch (error) {
       console.error("Gagal mengirim pesan:", error);
-      // Fallback jika API mati/error
       setMessages((prev) => [
         ...prev,
-        { 
-          id: (Date.now() + 1).toString(), 
-          text: "Maaf, SAKABOT sedang mengalami gangguan koneksi. Silakan coba lagi nanti.", 
-          isUser: false 
+        {
+          id: (Date.now() + 1).toString(),
+          text: "Maaf, SAKABOT sedang mengalami gangguan koneksi. Silakan coba lagi nanti.",
+          isUser: false,
         },
       ]);
     } finally {

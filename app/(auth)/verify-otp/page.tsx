@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useRef, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp"
 
 const ROLE_REDIRECT: Record<string, string> = {
   MAHASISWA_KIPK: "/mahasiswa/dashboard",
@@ -10,20 +11,16 @@ const ROLE_REDIRECT: Record<string, string> = {
 }
 
 export default function VerifyOtpPage() {
-  const [digits, setDigits] = useState(Array(6).fill(""))
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const [email, setEmail] = useState("")
-  const [jalur, setJalur] = useState<"sso" | "pribadi">("sso")
+  const [otp, setOtp]             = useState("")
+  const [loading, setLoading]     = useState(false)
+  const [error, setError]         = useState("")
+  const [email, setEmail]         = useState("")
+  const [jalur, setJalur]         = useState<"sso" | "pribadi">("sso")
   const [resendCooldown, setResendCooldown] = useState(0)
-  // Step SSO setelah OTP sukses (hanya jalur pribadi)
-  const [showSsoStep, setShowSsoStep] = useState(false)
-  const [emailSso, setEmailSso] = useState("")
+  const [showSsoStep, setShowSsoStep]       = useState(false)
+  const [emailSso, setEmailSso]   = useState("")
   const [ssoLoading, setSsoLoading] = useState(false)
   const router = useRouter()
-
-  // Buat refs untuk setiap input digit
-  const inputRefs = useRef<(HTMLInputElement | null)[]>(Array(6).fill(null))
 
   useEffect(() => {
     const savedEmail = sessionStorage.getItem("otp_email")
@@ -33,8 +30,6 @@ export default function VerifyOtpPage() {
     }
     setEmail(savedEmail)
     setJalur((sessionStorage.getItem("otp_jalur") as "sso" | "pribadi") ?? "sso")
-    // Focus ke input pertama
-    inputRefs.current[0]?.focus()
   }, [router])
 
   // Countdown cooldown resend
@@ -44,38 +39,8 @@ export default function VerifyOtpPage() {
     return () => clearTimeout(timer)
   }, [resendCooldown])
 
-  function handlePaste(e: React.ClipboardEvent) {
-    e.preventDefault()
-    const pasted = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6)
-    if (!pasted) return
-    const next = [...digits]
-    pasted.split("").forEach((char, i) => { next[i] = char })
-    setDigits(next)
-    // Focus ke input terakhir yang terisi, atau input ke-6
-    const focusIdx = Math.min(pasted.length, 5)
-    inputRefs.current[focusIdx]?.focus()
-  }
-
-  function handleDigit(i: number, val: string) {
-    if (!/^\d*$/.test(val)) return
-    const next = [...digits]
-    next[i] = val.slice(-1)
-    setDigits(next)
-    // Auto focus ke input berikutnya
-    if (val && i < 5) inputRefs.current[i + 1]?.focus()
-  }
-
-  function handleKeyDown(i: number, e: React.KeyboardEvent) {
-    // Backspace — kembali ke input sebelumnya
-    if (e.key === "Backspace" && !digits[i] && i > 0) {
-      inputRefs.current[i - 1]?.focus()
-    }
-  }
-
   async function handleVerify() {
-    const otp = digits.join("")
     if (otp.length < 6) return
-
     setLoading(true)
     setError("")
 
@@ -90,16 +55,13 @@ export default function VerifyOtpPage() {
     if (!res.ok) {
       setError(data.error)
       setLoading(false)
-      // Reset input saat salah
-      setDigits(Array(6).fill(""))
-      inputRefs.current[0]?.focus()
+      setOtp("")
       return
     }
 
     sessionStorage.removeItem("otp_email")
     sessionStorage.removeItem("otp_jalur")
 
-    // Jalur pribadi → tampilkan step input SSO dulu
     if (jalur === "pribadi") {
       setShowSsoStep(true)
       return
@@ -119,9 +81,8 @@ export default function VerifyOtpPage() {
     })
 
     if (res.ok) {
-      setResendCooldown(60) // cooldown 60 detik
-      setDigits(Array(6).fill(""))
-      inputRefs.current[0]?.focus()
+      setResendCooldown(60)
+      setOtp("")
     }
   }
 
@@ -195,23 +156,33 @@ export default function VerifyOtpPage() {
           </p>
           <p className="text-sm font-medium text-primary mb-6 truncate">{email}</p>
 
-          {/* Input 6 digit */}
-          <div className="flex gap-2 mb-4 justify-center">
-            {digits.map((d, i) => (
-              <input
-                key={i}
-                ref={(el) => { inputRefs.current[i] = el }}
-                value={d}
-                maxLength={1}
-                inputMode="numeric"
-                onChange={(e) => handleDigit(i, e.target.value)}
-                onKeyDown={(e) => handleKeyDown(i, e)}
-                onPaste={handlePaste}
-                className="w-11 h-12 text-center text-xl border-2 border-slate-300 rounded-xl
-                  focus:border-primary focus:outline-none font-bold text-slate-800
-                  transition-colors"
-              />
-            ))}
+          {/* Input OTP */}
+          <div className="flex justify-center mb-5">
+            <InputOTP
+              maxLength={6}
+              value={otp}
+              onChange={(val) => {
+                setOtp(val)
+                if (val.length === 6) {
+                  // Auto-submit saat 6 digit terisi
+                  setTimeout(() => {
+                    document.getElementById("btn-verify")?.click()
+                  }, 100)
+                }
+              }}
+            >
+              <InputOTPGroup>
+                <InputOTPSlot index={0} />
+                <InputOTPSlot index={1} />
+                <InputOTPSlot index={2} />
+              </InputOTPGroup>
+              <div className="mx-1 text-muted-foreground text-sm">—</div>
+              <InputOTPGroup>
+                <InputOTPSlot index={3} />
+                <InputOTPSlot index={4} />
+                <InputOTPSlot index={5} />
+              </InputOTPGroup>
+            </InputOTP>
           </div>
 
           {error && (
@@ -221,8 +192,9 @@ export default function VerifyOtpPage() {
           )}
 
           <button
+            id="btn-verify"
             onClick={handleVerify}
-            disabled={loading || digits.join("").length < 6}
+            disabled={loading || otp.length < 6}
             className="w-full bg-primary text-white py-2.5 rounded-xl text-sm font-semibold
               hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed
               transition-colors mb-4"

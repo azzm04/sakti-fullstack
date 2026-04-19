@@ -4,65 +4,7 @@ import { use, useState, useEffect } from "react";
 import Link from "next/link";
 import { ArrowLeft, Save, CheckCircle2, Loader2, Eye } from "lucide-react";
 
-interface Kandidat {
-  id: string;
-  import_batch_id: number;
-  no: number;
-  // Data Awal
-  no_pendaftaran_kipk: string;
-  no_bantuan_sosial: string;
-  nama: string;
-  prodi: string;
-  nik: string;
-  no_kartu_keluarga: string;
-  nisn: string;
-  asal_sekolah: string;
-  status_dtsen: string;
-  jumlah_tanggungan: number;
-  jumlah_orang_rumah: number;
-  pekerjaan_ayah: string;
-  pekerjaan_ibu: string;
-  penghasilan_ayah: number;
-  penghasilan_ibu: number;
-  kab_kota: string;
-  provinsi: string;
-  alamat: string;
-  pbb: number;
-  daya_listrik: string;
-  no_hp: string;
-  email: string;
-  koordinat: string;
-  latitude: number;
-  longitude: number;
-  // Validasi — diisi pewawancara
-  validasi_kks: string;
-  validasi_kip: string;
-  validasi_sktm: string;
-  sosial_media: string;
-  ket_pekerjaan_ayah: string;
-  ket_penghasilan_ayah: string;
-  ket_pekerjaan_ibu: string;
-  ket_penghasilan_ibu: string;
-  penghasilan_lain: number;
-  jml_tanggungan_sebenarnya: number;
-  validasi_orang_rumah: number;
-  kepemilikan_rumah: string;
-  tahun_perolehan: string;
-  luas_tanah: number;
-  luas_bangunan: number;
-  sumber_air: string;
-  mck: string;
-  aset: string;
-  kondisi_rumah: string;
-  jarak_pusat_kota: number;
-  rekomendasi: string;
-  alasan: string;
-  pewawancara: string;
-  hasil_akhir: number | null;
-  skor_total: number;
-  ranking: number;
-  created_at: string;
-}
+import type { Kandidat } from "@/schemas";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -77,9 +19,11 @@ const OPT_HASIL_AKHIR: { label: string; value: number; color: string }[] = [
   { label: "Tidak Layak",     value: 3, color: "bg-red-500 text-white border-red-500"        },
 ];
 
+const OPT_JALUR_MASUK = ["SNBP", "SNBT", "UM"];
+
 const fmt = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 });
 
-// ── Read-only field ──────────────────────────────────────
+// Read-only field
 function ReadField({ label, value }: { label: string; value?: string | number | null }) {
   const display = value && value !== 0 ? String(value) : "—";
   return (
@@ -90,7 +34,6 @@ function ReadField({ label, value }: { label: string; value?: string | number | 
   );
 }
 
-// ── Editable components ──────────────────────────────────
 function RadioGroup({ label, value, options, onChange, required, colored }: {
   label: string; value: string; options: string[];
   onChange: (v: string) => void; required?: boolean; colored?: boolean;
@@ -198,6 +141,7 @@ export default function PewawancaraDetailPage({ params }: { params: Promise<{ id
           aset: form.aset, kondisi_rumah: form.kondisi_rumah,
           jarak_pusat_kota: form.jarak_pusat_kota,
           hasil_akhir: form.hasil_akhir,
+          jalur_masuk: form.jalur_masuk,
           alasan: form.alasan, pewawancara: form.pewawancara,
         }),
       });
@@ -382,6 +326,29 @@ export default function PewawancaraDetailPage({ params }: { params: Promise<{ id
         <div>
           <SectionHeader title="Hasil Wawancara" subtitle="Kesimpulan dan rekomendasi pewawancara" />
           <div className="space-y-4">
+
+            {/* Jalur Masuk */}
+            <div>
+              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+                Jalur Masuk <span className="text-red-500">*</span>
+              </label>
+              <div className="flex gap-2 flex-wrap">
+                {OPT_JALUR_MASUK.map((opt) => (
+                  <button
+                    key={opt}
+                    type="button"
+                    onClick={() => setForm((f) => ({ ...f, jalur_masuk: opt }))}
+                    className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                      form.jalur_masuk === opt
+                        ? "bg-primary text-white border-primary"
+                        : "bg-white text-muted-foreground border-border hover:border-primary"
+                    }`}
+                  >
+                    {opt}
+                  </button>
+                ))}
+              </div>
+            </div>
 
             {/* Hasil Akhir — integer 1/2/3 */}
             <div>

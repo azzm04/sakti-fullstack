@@ -8,20 +8,7 @@ import {
   ClipboardList, ArrowRight, Users, AlertTriangle,
 } from "lucide-react";
 
-interface WarStatus {
-  war_aktif: boolean;
-  slot_terisi: number;
-  slot_saya: { slot_ke: number; claimed_at: string } | null;
-  sesi: {
-    id: number;
-    tanggal: string;
-    kuota_pewawancara: number;
-    kuota_mahasiswa: number;
-    war_dibuka_at: string | null;
-    distribusi_done: boolean;
-  } | null;
-  slots: { slot_ke: number; pewawancara: { nama: string } | null }[];
-}
+import type { WarStatus } from "@/schemas";
 
 export default function PewawancaraDashboard() {
   const [status, setStatus] = useState<WarStatus | null>(null);
@@ -57,13 +44,15 @@ export default function PewawancaraDashboard() {
     };
   }, [status?.war_aktif, status?.slot_saya, fetchStatus]);
 
+  const [unwarring, setUnwarring] = useState(false);
+  const [unwarMsg, setUnwarMsg]   = useState<{ type: "ok" | "err"; text: string } | null>(null);
+
   async function handleKlaim() {
     setClaiming(true);
     setClaimMsg(null);
     try {
       const res = await fetch("/api/war", { method: "POST" });
       const json = await res.json();
-
       if (res.ok) {
         setClaimMsg({ type: "ok", text: json.message });
         fetchStatus();
@@ -75,9 +64,23 @@ export default function PewawancaraDashboard() {
     }
   }
 
-  const today = new Date().toLocaleDateString("id-ID", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric",
-  });
+  async function handleUnwar() {
+    if (!confirm("Batalkan slot WAR kamu?\nSlot akan tersedia untuk pewawancara lain.")) return;
+    setUnwarring(true);
+    setUnwarMsg(null);
+    try {
+      const res = await fetch("/api/war", { method: "DELETE" });
+      const json = await res.json();
+      if (res.ok) {
+        setUnwarMsg({ type: "ok", text: json.message });
+        fetchStatus();
+      } else {
+        setUnwarMsg({ type: "err", text: json.error ?? "Gagal membatalkan slot" });
+      }
+    } finally {
+      setUnwarring(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -93,6 +96,14 @@ export default function PewawancaraDashboard() {
   const slotTerisi = status?.slot_terisi ?? 0;
   const kuota = sesi?.kuota_pewawancara ?? 20;
   const slotPenuh = slotTerisi >= kuota;
+
+  const today = sesi
+    ? new Date(sesi.tanggal + "T00:00:00").toLocaleDateString("id-ID", {
+        weekday: "long", day: "numeric", month: "long", year: "numeric",
+      })
+    : new Date().toLocaleDateString("id-ID", {
+        weekday: "long", day: "numeric", month: "long", year: "numeric",
+      });
 
   return (
     <div className="p-6 md:p-8 max-w-2xl mx-auto">
@@ -180,13 +191,44 @@ export default function PewawancaraDashboard() {
                     </p>
                   )}
                 </div>
-                {sesi.distribusi_done && (
+
+                {/* Feedback UN-WAR */}
+                <AnimatePresence>
+                  {unwarMsg && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
+                      className={`mb-3 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 ${
+                        unwarMsg.type === "ok"
+                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+                          : "bg-red-50 text-red-600 border border-red-200"
+                      }`}
+                    >
+                      {unwarMsg.type === "ok" ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />}
+                      {unwarMsg.text}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {sesi.distribusi_done ? (
                   <Link
                     href="/pewawancara/mahasiswa"
                     className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors"
                   >
                     <ClipboardList size={15} /> Mulai Wawancara <ArrowRight size={14} />
                   </Link>
+                ) : (
+                  /* Tombol UN-WAR — hanya sebelum distribusi */
+                  <button
+                    onClick={handleUnwar}
+                    disabled={unwarring}
+                    className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-red-600 border border-red-200 bg-red-50 rounded-xl hover:bg-red-100 disabled:opacity-50 transition-all"
+                  >
+                    {unwarring
+                      ? <Loader2 size={13} className="animate-spin" />
+                      : <ZapOff size={13} />
+                    }
+                    {unwarring ? "Membatalkan..." : "UN-WAR — Batalkan Slot"}
+                  </button>
                 )}
               </div>
             ) : warAktif ? (

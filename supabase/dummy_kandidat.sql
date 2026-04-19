@@ -1,14 +1,8 @@
--- Dummy data kandidat KIPK Undip
--- 30 kandidat, kolom wawancara dikosongkan untuk testing
--- Jalankan di Supabase SQL Editor
 
--- Buat import_batch dulu
 INSERT INTO public.import_batch (file_name, total_rows, valid_rows, error_rows, dup_rows)
 VALUES ('dummy_data_testing.xlsx', 30, 30, 0, 0)
 RETURNING id;
 
--- Ganti {BATCH_ID} dengan id yang muncul dari query di atas
--- Atau jalankan sekaligus dengan subquery:
 
 INSERT INTO public.kandidat (
   import_batch_id,

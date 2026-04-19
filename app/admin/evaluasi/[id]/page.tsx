@@ -10,72 +10,9 @@ import {
   MapPin, UserCheck, Eye, Home,
 } from "lucide-react";
 
-interface PewawancaraData {
-  id: number;
-  nama: string;
-  email: string;
-  sso_id: string | null;
-}
+import type { Kandidat } from "@/schemas";
 
-interface Kandidat {
-  id: string;
-  no: number;
-  no_pendaftaran_kipk: string;
-  no_bantuan_sosial: string;
-  nama: string;
-  prodi: string;
-  nik: string;
-  no_kartu_keluarga: string;
-  nisn: string;
-  asal_sekolah: string;
-  status_dtsen: string;
-  jumlah_tanggungan: number;
-  jumlah_orang_rumah: number;
-  pekerjaan_ayah: string;
-  pekerjaan_ibu: string;
-  penghasilan_ayah: number;
-  penghasilan_ibu: number;
-  kab_kota: string;
-  provinsi: string;
-  alamat: string;
-  pbb: number;
-  daya_listrik: string;
-  no_hp: string;
-  email: string;
-  koordinat: string;
-  // Hasil wawancara
-  validasi_kks: string;
-  validasi_kip: string;
-  validasi_sktm: string;
-  sosial_media: string;
-  ket_pekerjaan_ayah: string;
-  ket_penghasilan_ayah: string;
-  ket_pekerjaan_ibu: string;
-  ket_penghasilan_ibu: string;
-  penghasilan_lain: number;
-  jml_tanggungan_sebenarnya: number;
-  validasi_orang_rumah: number;
-  kepemilikan_rumah: string;
-  tahun_perolehan: string;
-  luas_tanah: number;
-  luas_bangunan: number;
-  sumber_air: string;
-  mck: string;
-  aset: string;
-  kondisi_rumah: string;
-  jarak_pusat_kota: number;
-  rekomendasi: string;
-  alasan: string;
-  pewawancara: string;
-  hasil_akhir: number | null;
-  pewawancara_id: number | null;
-  pewawancara_data: PewawancaraData | null;
-  status_wawancara: string;
-  interviewed_at: string | null;
-  skor_total: number;
-  ranking: number;
-  created_at: string;
-}
+type PewawancaraData = NonNullable<Kandidat["pewawancara_data"]>;
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -200,7 +137,57 @@ export default function EvaluasiDetailPage({ params }: { params: Promise<{ id: s
     );
   }
 
-  const isComplete = !!(form.hasil_akhir && form.pewawancara);
+  const isComplete = !!(
+    form.hasil_akhir &&
+    form.pewawancara &&
+    kandidat.jalur_masuk &&
+    kandidat.validasi_kks &&
+    kandidat.validasi_kip &&
+    kandidat.validasi_sktm &&
+    kandidat.sosial_media &&
+    kandidat.ket_pekerjaan_ayah &&
+    kandidat.ket_penghasilan_ayah &&
+    kandidat.ket_pekerjaan_ibu &&
+    kandidat.ket_penghasilan_ibu &&
+    (kandidat.jml_tanggungan_sebenarnya ?? 0) > 0 &&
+    (kandidat.validasi_orang_rumah ?? 0) > 0 &&
+    kandidat.kepemilikan_rumah &&
+    kandidat.tahun_perolehan &&
+    (kandidat.luas_tanah ?? 0) > 0 &&
+    (kandidat.luas_bangunan ?? 0) > 0 &&
+    kandidat.sumber_air &&
+    kandidat.mck &&
+    kandidat.kondisi_rumah &&
+    (kandidat.jarak_pusat_kota ?? 0) > 0
+  );
+
+  const FIELD_CHECKS = [
+    // Hasil wawancara
+    { label: "Hasil Akhir",                  ok: !!form.hasil_akhir },
+    { label: "Nama Pewawancara",             ok: !!form.pewawancara },
+    { label: "Jalur Masuk",                  ok: !!kandidat.jalur_masuk },
+    // Validasi dokumen
+    { label: "Validasi KKS",                 ok: !!kandidat.validasi_kks },
+    { label: "Validasi KIP",                 ok: !!kandidat.validasi_kip },
+    { label: "Validasi SKTM",                ok: !!kandidat.validasi_sktm },
+    { label: "Sosial Media",                 ok: !!kandidat.sosial_media },
+    // Validasi penghasilan
+    { label: "Ket. Pekerjaan Ayah",          ok: !!kandidat.ket_pekerjaan_ayah },
+    { label: "Ket. Penghasilan Ayah",        ok: !!kandidat.ket_penghasilan_ayah },
+    { label: "Ket. Pekerjaan Ibu",           ok: !!kandidat.ket_pekerjaan_ibu },
+    { label: "Ket. Penghasilan Ibu",         ok: !!kandidat.ket_penghasilan_ibu },
+    { label: "Tanggungan Sebenarnya",        ok: (kandidat.jml_tanggungan_sebenarnya ?? 0) > 0 },
+    { label: "Orang Tinggal di Rumah",       ok: (kandidat.validasi_orang_rumah ?? 0) > 0 },
+    // Kondisi tempat tinggal
+    { label: "Kepemilikan Rumah",            ok: !!kandidat.kepemilikan_rumah },
+    { label: "Tahun Perolehan Rumah",        ok: !!kandidat.tahun_perolehan },
+    { label: "Luas Tanah",                   ok: (kandidat.luas_tanah ?? 0) > 0 },
+    { label: "Luas Bangunan",                ok: (kandidat.luas_bangunan ?? 0) > 0 },
+    { label: "Sumber Air",                   ok: !!kandidat.sumber_air },
+    { label: "MCK",                          ok: !!kandidat.mck },
+    { label: "Kondisi Rumah",                ok: !!kandidat.kondisi_rumah },
+    { label: "Jarak Pusat Kota",             ok: (kandidat.jarak_pusat_kota ?? 0) > 0 },
+  ];
   const hasWawancaraData = !!(kandidat.kepemilikan_rumah || kandidat.kondisi_rumah || kandidat.validasi_kks);
 
   return (
@@ -291,15 +278,27 @@ export default function EvaluasiDetailPage({ params }: { params: Promise<{ id: s
           {/* Status evaluasi */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
             className={`rounded-2xl border p-4 ${isComplete ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"}`}>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 mb-2">
               {isComplete ? <CheckCircle2 size={15} className="text-emerald-600" /> : <AlertCircle size={15} className="text-amber-600" />}
               <p className={`text-xs font-bold ${isComplete ? "text-emerald-700" : "text-amber-700"}`}>
                 {isComplete ? "Evaluasi Lengkap" : "Evaluasi Belum Selesai"}
               </p>
             </div>
-            <p className={`text-[11px] mt-1 ${isComplete ? "text-emerald-600" : "text-amber-600"}`}>
-              {isComplete ? "Hasil akhir dan pewawancara sudah terisi." : "Hasil akhir dan nama pewawancara wajib diisi."}
-            </p>
+            {isComplete ? (
+              <p className="text-[11px] text-emerald-600">Semua field wajib sudah terisi.</p>
+            ) : (
+              <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
+                {FIELD_CHECKS.filter((f) => !f.ok).map((f) => (
+                  <p key={f.label} className="text-[11px] text-amber-700 flex items-center gap-1.5">
+                    <span className="w-1 h-1 rounded-full bg-amber-500 shrink-0" />
+                    {f.label} belum diisi
+                  </p>
+                ))}
+                <p className="text-[10px] text-amber-500 mt-1 font-semibold">
+                  {FIELD_CHECKS.filter((f) => !f.ok).length} dari {FIELD_CHECKS.length} field belum lengkap
+                </p>
+              </div>
+            )}
           </motion.div>
 
           {/* Data mahasiswa — lengkap, read-only */}
@@ -426,6 +425,7 @@ export default function EvaluasiDetailPage({ params }: { params: Promise<{ id: s
                     <ReadField label="MCK"                value={kandidat.mck} />
                     <ReadField label="Jarak Pusat Kota"   value={kandidat.jarak_pusat_kota ? `${kandidat.jarak_pusat_kota} km` : null} />
                     <ReadField label="Kondisi Rumah"      value={kandidat.kondisi_rumah} />
+                    <ReadField label="Jalur Masuk"      value={kandidat.jalur_masuk} />
                   </div>
                   {kandidat.aset && (
                     <div className="mt-3">

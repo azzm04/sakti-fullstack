@@ -16,8 +16,14 @@ export async function GET(req: NextRequest) {
       .from("kandidat")
       .select(
         "id, no, no_pendaftaran_kipk, nama, prodi, nik, no_hp, email, " +
-        "rekomendasi, pewawancara, hasil_akhir, import_batch_id, created_at, " +
-        "status_wawancara, pewawancara_id",
+        "pewawancara, hasil_akhir, import_batch_id, created_at, " +
+        "status_wawancara, pewawancara_id, jalur_masuk, " +
+        // Field validasi untuk cek kelengkapan
+        "validasi_kks, validasi_kip, validasi_sktm, sosial_media, " +
+        "ket_pekerjaan_ayah, ket_penghasilan_ayah, ket_pekerjaan_ibu, ket_penghasilan_ibu, " +
+        "jml_tanggungan_sebenarnya, validasi_orang_rumah, " +
+        "kepemilikan_rumah, tahun_perolehan, luas_tanah, luas_bangunan, " +
+        "sumber_air, mck, kondisi_rumah, jarak_pusat_kota",
         { count: "exact" }
       )
       .order("no", { ascending: true })
@@ -29,11 +35,18 @@ export async function GET(req: NextRequest) {
       );
     }
 
+    // Filter dasar di DB — cek field utama
+    // Kelengkapan penuh dicek di client via getStatus()
     if (filter === "selesai") {
-      query = query.not("hasil_akhir", "is", null).not("pewawancara", "is", null)
-        .neq("pewawancara", "");
+      query = query
+        .not("hasil_akhir", "is", null)
+        .not("pewawancara", "is", null).neq("pewawancara", "")
+        .not("jalur_masuk", "is", null).neq("jalur_masuk", "")
+        .not("kondisi_rumah", "is", null).neq("kondisi_rumah", "");
     } else if (filter === "belum") {
-      query = query.or("hasil_akhir.is.null,pewawancara.is.null,pewawancara.eq.");
+      query = query.or(
+        "hasil_akhir.is.null,pewawancara.is.null,pewawancara.eq.,jalur_masuk.is.null,jalur_masuk.eq.,kondisi_rumah.is.null,kondisi_rumah.eq."
+      );
     }
 
     const { data, count, error } = await query;
@@ -44,12 +57,18 @@ export async function GET(req: NextRequest) {
         .from("kandidat")
         .select("id", { count: "exact", head: true })
         .not("hasil_akhir", "is", null)
-        .not("pewawancara", "is", null)
-        .neq("pewawancara", ""),
+        .not("pewawancara", "is", null).neq("pewawancara", "")
+        .not("jalur_masuk", "is", null).neq("jalur_masuk", "")
+        .not("kondisi_rumah", "is", null).neq("kondisi_rumah", "")
+        .not("validasi_kks", "is", null).neq("validasi_kks", "")
+        .not("sumber_air", "is", null).neq("sumber_air", "")
+        .not("kepemilikan_rumah", "is", null).neq("kepemilikan_rumah", ""),
       supabaseAdmin
         .from("kandidat")
         .select("id", { count: "exact", head: true })
-        .or("hasil_akhir.is.null,pewawancara.is.null,pewawancara.eq."),
+        .or(
+          "hasil_akhir.is.null,pewawancara.is.null,pewawancara.eq.,jalur_masuk.is.null,jalur_masuk.eq.,kondisi_rumah.is.null,kondisi_rumah.eq.,validasi_kks.is.null,validasi_kks.eq."
+        ),
     ]);
 
     return NextResponse.json({

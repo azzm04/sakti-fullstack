@@ -3,31 +3,54 @@
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Search, ChevronRight, CheckCircle2, Clock, Filter, Loader2 } from "lucide-react";
+import { Search, ChevronRight, CheckCircle2, Clock, Loader2, ListFilter } from "lucide-react";
+import { nanoid } from "nanoid";
+import Filters, {
+  AnimateChangeInHeight, Filter, FilterOperator, FilterType,
+  filterViewOptions, filterViewToFilterOptions, FilterOption,
+} from "@/components/ui/filters";
+import { Button } from "@/components/ui/button";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
+
+import type { MahasiswaEvaluasi, EvaluasiApiResponse } from "@/schemas";
 
 export type EvaluasiStatus = "selesai" | "belum";
 
-export interface MahasiswaEvaluasi {
-  id: string;
-  no: number;
-  no_pendaftaran_kipk: string;
-  nama: string;
-  prodi: string;
-  nik: string;
-  no_hp: string;
-  email: string;
-  hasil_akhir: number | null;
-  alasan: string;
-  pewawancara: string;
-}
-
 type FilterStatus = "semua" | "selesai" | "belum";
 
-function getStatus(m: MahasiswaEvaluasi): EvaluasiStatus {
-  return m.hasil_akhir && m.pewawancara ? "selesai" : "belum";
+function isEvaluasiSelesai(m: MahasiswaEvaluasi): boolean {
+  return !!(
+    m.hasil_akhir &&
+    m.pewawancara &&
+    m.jalur_masuk &&
+    m.validasi_kks &&
+    m.validasi_kip &&
+    m.validasi_sktm &&
+    m.sosial_media &&
+    m.ket_pekerjaan_ayah &&
+    m.ket_penghasilan_ayah &&
+    m.ket_pekerjaan_ibu &&
+    m.ket_penghasilan_ibu &&
+    (m.jml_tanggungan_sebenarnya ?? 0) > 0 &&
+    (m.validasi_orang_rumah ?? 0) > 0 &&
+    m.kepemilikan_rumah &&
+    m.tahun_perolehan &&
+    (m.luas_tanah ?? 0) > 0 &&
+    (m.luas_bangunan ?? 0) > 0 &&
+    m.sumber_air &&
+    m.mck &&
+    m.kondisi_rumah &&
+    (m.jarak_pusat_kota ?? 0) > 0
+  );
 }
 
-function hasilAkhirBadge(v: number | null) {
+function getStatus(m: MahasiswaEvaluasi): EvaluasiStatus {
+  return isEvaluasiSelesai(m) ? "selesai" : "belum";
+}
+
+function hasilAkhirBadge(v: number | null | undefined) {
   if (!v) return <span className="text-muted-foreground italic text-xs">Belum diisi</span>;
   const map: Record<number, { label: string; cls: string }> = {
     1: { label: "Layak",           cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
@@ -44,33 +67,53 @@ export default function EvaluasiPage() {
   const [total, setTotal]     = useState(0);
   const [loading, setLoading] = useState(true);
   const [search, setSearch]   = useState("");
-  const [filter, setFilter]   = useState<FilterStatus>("semua");
+  const [filter, setFilter]   = useState<"semua" | "selesai" | "belum">("semua");
   const [page, setPage]       = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalSelesai, setTotalSelesai] = useState(0);
   const [totalBelum, setTotalBelum]     = useState(0);
+  const [filters, setFilters] = useState<Filter[]>([]);
+  const [filterOpen, setFilterOpen] = useState(false);
+  const [selectedView, setSelectedView] = useState<FilterType | null>(null);
+  const [filterInput, setFilterInput] = useState("");
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({
-        search,
-        filter,
-        page: String(page),
-      });
+      const params = new URLSearchParams({ search, filter, page: String(page) });
       const res  = await fetch(`/api/admin/evaluasi?${params}`);
-      const json = await res.json();
+      const json: EvaluasiApiResponse = await res.json();
       setData(json.data ?? []);
       setTotal(json.total ?? 0);
       setTotalPages(json.totalPages ?? 1);
       setTotalSelesai(json.totalSelesai ?? 0);
       setTotalBelum(json.totalBelum ?? 0);
-    } catch {
-      setData([]);
-    } finally {
-      setLoading(false);
-    }
+    } catch { setData([]); } finally { setLoading(false); }
   }, [search, filter, page]);
+
+  // Apply client-side filters dari komponen Filters
+  const filteredData = data.filter((m) => {
+    for (const f of filters) {
+      if (!f.value?.length) continue;
+      const isNot = f.operator === "is not";
+
+      if (f.type === FilterType.HASIL_AKHIR) {
+        const hasilMap: Record<string, number> = { "Layak": 1, "Dipertimbangkan": 2, "Tidak Layak": 3 };
+        const match = f.value.some((v) => hasilMap[v] === m.hasil_akhir);
+        if (isNot ? match : !match) return false;
+      }
+      if (f.type === FilterType.STATUS) {
+        const selesai = isEvaluasiSelesai(m);
+        const match = f.value.some((v) => (v === "Selesai" ? selesai : !selesai));
+        if (isNot ? match : !match) return false;
+      }
+      if (f.type === FilterType.JALUR_MASUK) {
+        const match = f.value.some((v) => v === m.jalur_masuk);
+        if (isNot ? match : !match) return false;
+      }
+    }
+    return true;
+  });
 
   useEffect(() => {
     const t = setTimeout(fetchData, search ? 400 : 0);
@@ -126,16 +169,73 @@ export default function EvaluasiPage() {
             className="w-full pl-9 pr-3 py-2.5 text-sm border border-border rounded-xl bg-white focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
           />
         </div>
-        <div className="flex items-center gap-1 p-1 bg-white border border-border rounded-xl">
-          <Filter size={13} className="text-muted-foreground ml-2" />
-          {(["semua", "selesai", "belum"] as FilterStatus[]).map((f) => (
-            <button key={f} onClick={() => setFilter(f)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold capitalize transition-all ${
-                filter === f ? "bg-primary text-white shadow-sm" : "text-muted-foreground hover:text-foreground"
-              }`}>
-              {f === "semua" ? "Semua" : f === "selesai" ? "Sudah" : "Belum"}
-            </button>
-          ))}
+
+        {/* Filter bar */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Filters filters={filters} setFilters={setFilters} />
+
+          {filters.filter((f) => f.value?.length > 0).length > 0 && (
+            <Button variant="outline" size="sm" className="h-6 text-xs rounded-sm" onClick={() => setFilters([])}>
+              Clear
+            </Button>
+          )}
+
+          <Popover open={filterOpen} onOpenChange={(o) => { setFilterOpen(o); if (!o) setTimeout(() => { setSelectedView(null); setFilterInput(""); }, 200); }}>
+            <PopoverTrigger asChild>
+              <Button variant="ghost" size="sm"
+                className={cn("h-6 text-xs rounded-sm flex gap-1.5 items-center transition group", filters.length > 0 && "w-6")}>
+                <ListFilter className="size-3 shrink-0 text-muted-foreground group-hover:text-primary transition-all" />
+                {!filters.length && "Filter"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-[200px] p-0" align="end">
+              <AnimateChangeInHeight>
+                <Command>
+                  <CommandInput
+                    placeholder={selectedView ?? "Filter..."}
+                    className="h-9"
+                    value={filterInput}
+                    onInputCapture={(e) => setFilterInput(e.currentTarget.value)}
+                  />
+                  <CommandList>
+                    <CommandEmpty>Tidak ditemukan.</CommandEmpty>
+                    {selectedView ? (
+                      <CommandGroup>
+                        {filterViewToFilterOptions[selectedView].map((f: FilterOption) => (
+                          <CommandItem key={f.name} value={f.name}
+                            className="group text-muted-foreground flex gap-2 items-center"
+                            onSelect={(val) => {
+                              setFilters((prev) => [...prev, { id: nanoid(), type: selectedView, operator: FilterOperator.IS, value: [val] }]);
+                              setTimeout(() => { setSelectedView(null); setFilterInput(""); }, 200);
+                              setFilterOpen(false);
+                            }}>
+                            {f.icon}
+                            <span className="text-accent-foreground">{f.name}</span>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    ) : (
+                      filterViewOptions.map((group: FilterOption[], idx: number) => (
+                        <div key={idx}>
+                          <CommandGroup>
+                            {group.map((f: FilterOption) => (
+                              <CommandItem key={f.name} value={f.name}
+                                className="group text-muted-foreground flex gap-2 items-center"
+                                onSelect={(val) => { setSelectedView(val as FilterType); setFilterInput(""); }}>
+                                {f.icon}
+                                <span className="text-accent-foreground">{f.name}</span>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                          {idx < filterViewOptions.length - 1 && <CommandSeparator />}
+                        </div>
+                      ))
+                    )}
+                  </CommandList>
+                </Command>
+              </AnimateChangeInHeight>
+            </PopoverContent>
+          </Popover>
         </div>
       </div>
 
@@ -153,7 +253,7 @@ export default function EvaluasiPage() {
             <table className="w-full text-sm">
               <thead>
                 <tr className="bg-slate-50 border-b border-border">
-                  {["No", "Nama", "Prodi", "Pewawancara", "Hasil Akhir", "Status", "Aksi"].map((h) => (
+                  {["No", "Nama", "Prodi", "Pewawancara", "Hasil Akhir", "Status","Jalur Masuk", "Aksi"].map((h) => (
                     <th key={h} className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
                       {h}
                     </th>
@@ -161,7 +261,7 @@ export default function EvaluasiPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {data.map((m, idx) => {
+                {filteredData.map((m, idx) => {
                   const status = getStatus(m);
                   return (
                     <tr key={m.id} className="hover:bg-slate-50/60 transition-colors">
@@ -189,6 +289,9 @@ export default function EvaluasiPage() {
                             <Clock size={11} /> Menunggu
                           </span>
                         )}
+                      </td>
+                      <td className="px-4 py-3 text-xs text-on-surface">
+                        {m.jalur_masuk || <span className="text-muted-foreground italic">—</span>}
                       </td>
                       <td className="px-4 py-3">
                         <Link href={`/admin/evaluasi/${m.id}`}

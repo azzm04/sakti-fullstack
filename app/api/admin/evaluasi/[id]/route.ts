@@ -35,7 +35,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       "penghasilan_lain", "jml_tanggungan_sebenarnya", "validasi_orang_rumah",
       "kepemilikan_rumah", "tahun_perolehan", "luas_tanah", "luas_bangunan",
       "sumber_air", "mck", "aset", "kondisi_rumah", "jarak_pusat_kota",
-      "hasil_akhir", "rekomendasi", "alasan", "pewawancara",
+      "hasil_akhir", "jalur_masuk", "rekomendasi", "alasan", "pewawancara",
     ];
 
     const update: Record<string, unknown> = {};
