@@ -1,230 +1,319 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp"
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Loader2,
+  ArrowRight,
+  AlertCircle,
+  CheckCircle2,
+  ShieldCheck,
+} from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const ROLE_REDIRECT: Record<string, string> = {
   MAHASISWA_KIPK: "/mahasiswa/dashboard",
-  PEWAWANCARA:    "/pewawancara",
-  ADMIN_DIRMAWA:  "/admin",
-}
+  PEWAWANCARA: "/pewawancara",
+  ADMIN_DIRMAWA: "/admin",
+};
 
 export default function VerifyOtpPage() {
-  const [otp, setOtp]             = useState("")
-  const [loading, setLoading]     = useState(false)
-  const [error, setError]         = useState("")
-  const [email, setEmail]         = useState("")
-  const [jalur, setJalur]         = useState<"sso" | "pribadi">("sso")
-  const [resendCooldown, setResendCooldown] = useState(0)
-  const [showSsoStep, setShowSsoStep]       = useState(false)
-  const [emailSso, setEmailSso]   = useState("")
-  const [ssoLoading, setSsoLoading] = useState(false)
-  const router = useRouter()
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  const [email, setEmail] = useState("");
+  const [otp, setOtp] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [resendCooldown, setResendCooldown] = useState(0);
 
   useEffect(() => {
-    const savedEmail = sessionStorage.getItem("otp_email")
-    if (!savedEmail) {
-      router.push("/login")
-      return
-    }
-    setEmail(savedEmail)
-    setJalur((sessionStorage.getItem("otp_jalur") as "sso" | "pribadi") ?? "sso")
-  }, [router])
+    const urlEmail = searchParams.get("email");
+    const sessionEmail = sessionStorage.getItem("otp_email");
 
-  // Countdown cooldown resend
+    if (urlEmail) {
+      setEmail(urlEmail);
+    } else if (sessionEmail) {
+      setEmail(sessionEmail);
+    } else {
+      router.push("/login");
+    }
+  }, [searchParams, router]);
+
   useEffect(() => {
-    if (resendCooldown <= 0) return
-    const timer = setTimeout(() => setResendCooldown((c) => c - 1), 1000)
-    return () => clearTimeout(timer)
-  }, [resendCooldown])
+    if (resendCooldown <= 0) return;
+    const timer = setTimeout(() => setResendCooldown((c) => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCooldown]);
 
-  async function handleVerify() {
-    if (otp.length < 6) return
-    setLoading(true)
-    setError("")
+  async function handleVerify(e?: React.SyntheticEvent) {
+    if (e) e.preventDefault();
+    if (otp.length < 6) return;
 
-    const res = await fetch("/api/auth/verify-otp", {
-      method: "POST",
-      body: JSON.stringify({ email, otp }),
-      headers: { "Content-Type": "application/json" },
-    })
+    setLoading(true);
+    setError("");
+    setSuccess("");
 
-    const data = await res.json()
+    try {
+      const res = await fetch("/api/auth/verify-otp", {
+        method: "POST",
+        body: JSON.stringify({ email, otp }),
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+      });
 
-    if (!res.ok) {
-      setError(data.error)
-      setLoading(false)
-      setOtp("")
-      return
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Gagal memverifikasi OTP.");
+      }
+
+      // Hapus session storage HANYA setelah sukses
+      sessionStorage.removeItem("otp_email");
+
+      setSuccess("Verifikasi Berhasil! Mengalihkan...");
+
+      // Redirect berdasarkan role
+      setTimeout(() => {
+        router.push(ROLE_REDIRECT[data.user?.role || data.role] ?? "/");
+      }, 1000);
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+        setOtp("");
+      } else {
+        setError("Terjadi kesalahan yang tidak diketahui.");
+      }
+    } finally {
+      setLoading(false);
     }
-
-    sessionStorage.removeItem("otp_email")
-    sessionStorage.removeItem("otp_jalur")
-
-    if (jalur === "pribadi") {
-      setShowSsoStep(true)
-      return
-    }
-
-    router.push(ROLE_REDIRECT[data.role] ?? "/")
   }
 
   async function handleResend() {
-    if (resendCooldown > 0) return
-    setError("")
+    if (resendCooldown > 0) return;
+    setError("");
+    setSuccess("");
+    setLoading(true);
 
-    const res = await fetch("/api/auth/send-otp", {
-      method: "POST",
-      body: JSON.stringify({ email }),
-      headers: { "Content-Type": "application/json" },
-    })
-
-    if (res.ok) {
-      setResendCooldown(60)
-      setOtp("")
-    }
-  }
-
-  async function handleSsoSubmit(skip: boolean) {
-    setSsoLoading(true)
-    if (!skip && emailSso) {
-      // TODO: PATCH /api/auth/update-sso { emailSso }
-      await fetch("/api/auth/update-sso", {
-        method: "PATCH",
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        body: JSON.stringify({ email }),
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ emailSso: emailSso.trim().toLowerCase() }),
-      }).catch(() => {})
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Gagal mengirim ulang OTP.");
+      }
+
+      setSuccess("Kode OTP baru telah dikirim ke email Anda.");
+      setResendCooldown(60);
+      setOtp("");
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Terjadi kesalahan yang tidak diketahui.");
+      }
+    } finally {
+      setLoading(false);
     }
-    setSsoLoading(false)
-    router.push(ROLE_REDIRECT["MAHASISWA_KIPK"])
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 font-body">
-      <div className="w-full max-w-sm px-4">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-headline font-extrabold text-primary">SAKTI</h1>
-        </div>
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden font-body">
+      <div className="absolute inset-0 z-0">
+        {/* PERUBAHAN: Opacity diturunkan menjadi 65% atau 70%, dan efek blur dihapus */}
+        <div className="absolute inset-0 bg-primary/65 z-10 mix-blend-multiply" />
 
-        {/* ── Step SSO (setelah OTP sukses, jalur pribadi) ── */}
-        {showSsoStep ? (
-          <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
-            <h2 className="text-lg font-semibold text-slate-800 mb-1">Tambahkan Email SSO</h2>
-            <p className="text-sm text-slate-500 mb-6">
-              Jika sudah punya email SSO Undip, masukkan sekarang. Bisa dilewati dan diisi nanti.
-            </p>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                  Email SSO Undip <span className="text-slate-400 font-normal">(opsional)</span>
-                </label>
-                <input
-                  type="email"
-                  value={emailSso}
-                  onChange={(e) => setEmailSso(e.target.value)}
-                  placeholder="nim@students.undip.ac.id"
-                  className="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm
-                    focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
-                />
-              </div>
-              <button
-                onClick={() => handleSsoSubmit(false)}
-                disabled={ssoLoading || !emailSso}
-                className="w-full bg-primary text-white py-2.5 rounded-xl text-sm font-semibold
-                  hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-              >
-                {ssoLoading ? "Menyimpan..." : "Simpan & Masuk"}
-              </button>
-              <button
-                onClick={() => handleSsoSubmit(true)}
-                disabled={ssoLoading}
-                className="w-full py-2.5 rounded-xl text-sm font-medium text-slate-500
-                  hover:bg-slate-100 transition-colors"
-              >
-                Lewati, isi nanti →
-              </button>
+        {/* Lapisan kedua (opsional) untuk memastikan warnanya tidak terlalu pekat tapi tetap jelas terbaca teksnya */}
+        <div className="absolute inset-0 bg-blue-900/40 z-10" />
+
+        <Image
+          src="/widyapuraya.jpeg"
+          alt="Background Undip"
+          fill
+          priority
+          className="object-cover object-center"
+        />
+      </div>
+
+      <div className="relative z-20 w-full max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 px-6 sm:px-8 py-12 items-center min-h-screen">
+        {/* KOLOM KIRI (Hidden di Mobile, Muncul di Desktop) */}
+        <div className="hidden lg:flex flex-col text-white pr-8">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center p-2">
+              <Image src="/next.svg" alt="Logo" width={40} height={40} />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-wider uppercase font-headline">
+                Sistem SAKTI
+              </h1>
+              <p className="text-sm text-blue-200">Universitas Diponegoro</p>
             </div>
           </div>
-        ) : (
-          <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
-          <h2 className="text-lg font-semibold text-slate-800 mb-1">
-            Masukkan Kode OTP
+
+          <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight font-headline">
+            Keamanan Akun <br /> & Verifikasi OTP
           </h2>
-          <p className="text-sm text-slate-500 mb-2">
-            Kode 6 digit telah dikirim ke:
+
+          <p className="text-blue-100/80 leading-relaxed text-sm max-w-md text-justify">
+            Sebagai langkah keamanan dan validasi identitas, kami telah
+            mengirimkan kode otentikasi 6-digit (OTP) ke email SSO Anda. Silakan
+            masukkan kode tersebut untuk memverifikasi kepemilikan akun dan
+            melanjutkan akses ke dalam portal SAKTI.
           </p>
-          <p className="text-sm font-medium text-primary mb-6 truncate">{email}</p>
+        </div>
 
-          {/* Input OTP */}
-          <div className="flex justify-center mb-5">
-            <InputOTP
-              maxLength={6}
-              value={otp}
-              onChange={(val) => {
-                setOtp(val)
-                if (val.length === 6) {
-                  // Auto-submit saat 6 digit terisi
-                  setTimeout(() => {
-                    document.getElementById("btn-verify")?.click()
-                  }, 100)
-                }
-              }}
-            >
-              <InputOTPGroup>
-                <InputOTPSlot index={0} />
-                <InputOTPSlot index={1} />
-                <InputOTPSlot index={2} />
-              </InputOTPGroup>
-              <div className="mx-1 text-muted-foreground text-sm">—</div>
-              <InputOTPGroup>
-                <InputOTPSlot index={3} />
-                <InputOTPSlot index={4} />
-                <InputOTPSlot index={5} />
-              </InputOTPGroup>
-            </InputOTP>
-          </div>
+        {/* KOLOM KANAN: Form Card */}
+        <div className="w-full flex justify-center lg:justify-end">
+          <div className="bg-white w-full max-w-[420px] rounded-xl shadow-2xl p-8 sm:p-10 border border-white/20">
+            {/* Header Form */}
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 text-primary mb-4">
+                <ShieldCheck className="w-6 h-6" />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-800 font-headline">
+                Verifikasi OTP
+              </h2>
+              <p className="text-sm text-slate-500 mt-1">
+                Kode 6-digit dikirim ke <br />
+                <span className="font-semibold text-primary">{email}</span>
+              </p>
+            </div>
 
-          {error && (
-            <p className="text-red-500 text-xs bg-red-50 px-3 py-2 rounded-lg mb-4">
-              {error}
-            </p>
-          )}
+            <div className="space-y-6">
+              <AnimatePresence mode="wait">
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                  >
+                    <Alert variant="destructive" className="py-2.5">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription className="text-xs ml-2 leading-relaxed">
+                        {error}
+                      </AlertDescription>
+                    </Alert>
+                  </motion.div>
+                )}
+                {success && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                  >
+                    <Alert variant="success" className="py-2.5">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <AlertDescription className="text-xs ml-2 font-medium">
+                        {success}
+                      </AlertDescription>
+                    </Alert>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-          <button
-            id="btn-verify"
-            onClick={handleVerify}
-            disabled={loading || otp.length < 6}
-            className="w-full bg-primary text-white py-2.5 rounded-xl text-sm font-semibold
-              hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed
-              transition-colors mb-4"
-          >
-            {loading ? "Memverifikasi..." : "Verifikasi"}
-          </button>
+              <div className="flex justify-center">
+                <InputOTP
+                  maxLength={6}
+                  value={otp}
+                  onChange={(val) => {
+                    setOtp(val);
+                    if (val.length === 6) {
+                      setTimeout(() => handleVerify(), 150);
+                    }
+                  }}
+                  disabled={loading || !!success}
+                >
+                  <InputOTPGroup>
+                    <InputOTPSlot
+                      index={0}
+                      className="w-10 h-12 text-lg font-bold"
+                    />
+                    <InputOTPSlot
+                      index={1}
+                      className="w-10 h-12 text-lg font-bold"
+                    />
+                    <InputOTPSlot
+                      index={2}
+                      className="w-10 h-12 text-lg font-bold"
+                    />
+                  </InputOTPGroup>
+                  <div className="mx-2 text-slate-300">—</div>
+                  <InputOTPGroup>
+                    <InputOTPSlot
+                      index={3}
+                      className="w-10 h-12 text-lg font-bold"
+                    />
+                    <InputOTPSlot
+                      index={4}
+                      className="w-10 h-12 text-lg font-bold"
+                    />
+                    <InputOTPSlot
+                      index={5}
+                      className="w-10 h-12 text-lg font-bold"
+                    />
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
 
-          <div className="text-center">
-            <p className="text-xs text-slate-500">
-              Tidak menerima kode?{" "}
               <button
-                onClick={handleResend}
-                disabled={resendCooldown > 0}
-                className="text-primary font-medium hover:underline disabled:opacity-50
-                  disabled:cursor-not-allowed"
+                onClick={handleVerify}
+                disabled={loading || otp.length < 6 || !!success}
+                className="w-full flex items-center justify-center gap-2 h-11 mt-2 font-bold rounded-lg bg-[#3b5998] hover:bg-[#3b5998]/90 text-white shadow-md transition-all disabled:opacity-70 disabled:cursor-not-allowed"
               >
-                {resendCooldown > 0 ? `Kirim ulang (${resendCooldown}s)` : "Kirim ulang"}
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Memverifikasi...
+                  </>
+                ) : (
+                  <>
+                    <ArrowRight className="w-4 h-4" />
+                    Verifikasi Kode
+                  </>
+                )}
               </button>
-            </p>
+
+              <div className="text-center pt-2">
+                <p className="text-xs text-slate-500">
+                  Tidak menerima kode?{" "}
+                  <button
+                    onClick={handleResend}
+                    disabled={resendCooldown > 0 || loading || !!success}
+                    className="text-primary font-semibold hover:underline disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  >
+                    {resendCooldown > 0
+                      ? `Kirim ulang (${resendCooldown}s)`
+                      : "Kirim ulang"}
+                  </button>
+                </p>
+              </div>
+
+              <div className="pt-6 border-t border-slate-100 flex justify-center text-xs text-slate-500">
+                <Link
+                  href="/login"
+                  className="hover:text-primary transition-colors flex items-center gap-1 font-medium text-slate-400"
+                >
+                  ← Kembali ke Halaman Login
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
-        )} {/* end showSsoStep ternary */}
-
-        <button
-          onClick={() => router.push("/login")}
-          className="w-full text-center text-xs text-slate-400 mt-4 hover:text-slate-600"
-        >
-          ← Kembali ke halaman login
-        </button>
       </div>
     </div>
-  )
+  );
 }

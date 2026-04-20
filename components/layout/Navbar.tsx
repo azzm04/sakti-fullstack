@@ -40,7 +40,7 @@ export default function Navbar() {
         <nav
           className={`pointer-events-auto flex justify-between items-center transition-all duration-500 ease-in-out ${
             isScrolled
-              ? "mt-4 w-[calc(100%-2rem)] md:w-full max-w-4xl h-16 bg-primary/70 backdrop-blur-lg shadow-lg rounded-full px-5 md:px-8 border border-white/20"
+              ? "mt-4 w-[calc(100%-2rem)] lg:w-full max-w-4xl h-16 bg-primary/70 backdrop-blur-lg shadow-lg rounded-full px-5 md:px-8 border border-white/20"
               : "mt-0 w-full max-w-full h-20 bg-primary px-6 md:px-10 border-b border-white/10"
           }`}
         >

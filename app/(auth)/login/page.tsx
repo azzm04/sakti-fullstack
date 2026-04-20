@@ -2,198 +2,204 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { motion, AnimatePresence } from "framer-motion";
-import { Mail, User, ArrowRight, ChevronRight } from "lucide-react";
-
-type Jalur = "sso" | "pribadi" | null;
+import Link from "next/link";
+import Image from "next/image";
+import {
+  Mail,
+  ArrowRight,
+  Loader2,
+  AlertCircle,
+  LogIn,
+  Home,
+} from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [jalur, setJalur]     = useState<Jalur>(null);
-  const [nama, setNama]       = useState("");
-  const [email, setEmail]     = useState("");
+  const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError]     = useState("");
+  const [error, setError] = useState("");
 
   async function handleSubmit(e: React.SyntheticEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
 
-    const body: Record<string, string> = { email: email.trim().toLowerCase() };
-    if (jalur === "pribadi") body.nama = nama.trim();
+    try {
+      // Validasi format email SSO Undip
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim().toLowerCase() }),
+      });
 
-    const res = await fetch("/api/auth/send-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
+      const data = await res.json();
 
-    const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Terjadi kesalahan, coba lagi.");
+      }
 
-    if (!res.ok) {
-      setError(data.error ?? "Terjadi kesalahan, coba lagi.");
+      sessionStorage.setItem("otp_email", email.trim().toLowerCase());
+      router.push(
+        `/verify-otp?email=${encodeURIComponent(email.trim().toLowerCase())}`,
+      );
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("Terjadi kesalahan yang tidak diketahui.");
+      }
+    } finally {
       setLoading(false);
-      return;
     }
-
-    sessionStorage.setItem("otp_email", email.trim().toLowerCase());
-    router.push("/verify-otp");
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 font-body">
-      <div className="w-full max-w-sm px-4">
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden font-body">
+      <div className="absolute inset-0 z-0">
+        {/* PERUBAHAN: Opacity diturunkan menjadi 65% atau 70%, dan efek blur dihapus */}
+        <div className="absolute inset-0 bg-primary/65 z-10 mix-blend-multiply" />
 
-        {/* Brand */}
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-headline font-extrabold text-primary">SAKTI</h1>
-          <p className="text-sm text-slate-500 mt-1">Sistem Asisten KIPK Terpadu dan Interaktif</p>
+        {/* Lapisan kedua (opsional) untuk memastikan warnanya tidak terlalu pekat tapi tetap jelas terbaca teksnya */}
+        <div className="absolute inset-0 bg-blue-900/40 z-10" />
+
+        <Image
+          src="/widyapuraya.jpeg"
+          alt="Background Undip"
+          fill
+          priority
+          className="object-cover object-center"
+        />
+      </div>
+
+      <div className="relative z-20 w-full max-w-6xl mx-auto grid lg:grid-cols-2 gap-12 px-6 sm:px-8 py-12 items-center min-h-screen">
+        {/* KOLOM BAGIAN KIRI (Hidden di Mobile, Muncul di Desktop) */}
+        <div className="hidden lg:flex flex-col text-white pr-8">
+          <div className="flex items-center gap-4 mb-8">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center p-2">
+              <Image src="/next.svg" alt="Logo" width={40} height={40} />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold tracking-wider uppercase font-headline">
+                Sistem SAKTI
+              </h1>
+              <p className="text-sm text-blue-200">Universitas Diponegoro</p>
+            </div>
+          </div>
+
+          <h2 className="text-3xl md:text-4xl font-bold mb-6 leading-tight font-headline">
+            Portal Login <br /> Mahasiswa KIP-Kuliah
+          </h2>
+
+          <p className="text-blue-100/80 leading-relaxed text-sm max-w-md text-justify">
+            Portal khusus bagi Mahasiswa Aktif penerima beasiswa KIP-Kuliah
+            Universitas Diponegoro. Silakan masuk menggunakan Email SSO
+            (@students.undip.ac.id) Anda untuk mengakses layanan informasi,
+            pelaporan monitoring evaluasi (Monev), dan kanal pengaduan resmi.
+          </p>
         </div>
 
-        <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200">
-          <h2 className="text-lg font-semibold text-slate-800 mb-1">Masuk ke SAKTI</h2>
-          <p className="text-sm text-slate-500 mb-6">Pilih cara masuk sesuai kondisi Anda</p>
+        {/* KOLOM BAGIAN KANAN: Form Card */}
+        <div className="w-full flex justify-center lg:justify-end">
+          <div className="bg-white w-full max-w-105 rounded-xl shadow-2xl p-8 sm:p-10 border border-white/20">
+            {/* Header Form */}
+            <div className="text-center mb-8">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-blue-50 text-primary mb-4">
+                <LogIn className="w-6 h-6" />
+              </div>
+              <h2 className="text-2xl font-bold text-slate-800 font-headline">
+                Masuk ke SAKTI
+              </h2>
+              <p className="text-sm text-slate-500 mt-1">
+                Gunakan email SSO Undip Anda
+              </p>
+            </div>
 
-          <AnimatePresence mode="wait">
+            <div className="space-y-5">
+              {/* Alert Pesan Error */}
+              {error && (
+                <Alert variant="destructive" className="py-2.5">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="text-xs ml-2 font-medium">
+                    {error}
+                  </AlertDescription>
+                </Alert>
+              )}
 
-            {/* ── Step 1: Pilih jalur ── */}
-            {!jalur && (
-              <motion.div
-                key="pilih"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                className="space-y-3"
-              >
-                <button
-                  onClick={() => setJalur("sso")}
-                  className="w-full flex items-center justify-between gap-3 p-4 border-2 border-border rounded-xl hover:border-primary hover:bg-primary/5 transition-all group text-left"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
-                      <Mail size={16} className="text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-800">Sudah punya email SSO</p>
-                      <p className="text-xs text-slate-500">nim@students.undip.ac.id</p>
-                    </div>
-                  </div>
-                  <ChevronRight size={16} className="text-slate-400 group-hover:text-primary transition-colors" />
-                </button>
-
-                <button
-                  onClick={() => setJalur("pribadi")}
-                  className="w-full flex items-center justify-between gap-3 p-4 border-2 border-border rounded-xl hover:border-primary hover:bg-primary/5 transition-all group text-left"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
-                      <User size={16} className="text-slate-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-800">Belum punya email SSO</p>
-                      <p className="text-xs text-slate-500">Gunakan nama + email pribadi aktif</p>
-                    </div>
-                  </div>
-                  <ChevronRight size={16} className="text-slate-400 group-hover:text-primary transition-colors" />
-                </button>
-              </motion.div>
-            )}
-
-            {/* ── Step 2: Form input ── */}
-            {jalur && (
-              <motion.form
-                key="form"
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
-                onSubmit={handleSubmit}
-                className="space-y-4"
-              >
-                {/* Back */}
-                <button
-                  type="button"
-                  onClick={() => { setJalur(null); setError(""); setEmail(""); setNama(""); }}
-                  className="flex items-center gap-1 text-xs text-slate-400 hover:text-primary transition-colors mb-2"
-                >
-                  ← Ganti pilihan
-                </button>
-
-                {/* Label konteks */}
-                <div className={`flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold ${
-                  jalur === "sso" ? "bg-primary/8 text-primary" : "bg-slate-100 text-slate-600"
-                }`}>
-                  {jalur === "sso" ? <Mail size={13} /> : <User size={13} />}
-                  {jalur === "sso" ? "Login dengan Email SSO Undip" : "Login dengan Nama + Email Pribadi"}
-                </div>
-
-                {/* Nama — hanya untuk jalur pribadi */}
-                {jalur === "pribadi" && (
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                      Nama Lengkap
-                    </label>
+              {/* Form Input */}
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-1.5">
+                  <Label className="text-xs font-semibold text-slate-600">
+                    Email SSO Undip
+                  </Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
                     <input
-                      type="text"
-                      value={nama}
-                      onChange={(e) => setNama(e.target.value)}
-                      placeholder="Sesuai data pendaftaran KIPK"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="email@students.undip.ac.id"
                       required
-                      className="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm
-                        focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
+                      className="w-full pl-10 h-11 text-sm bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
                     />
                   </div>
-                )}
-
-                {/* Email */}
-                <div>
-                  <label className="block text-sm font-medium text-slate-700 mb-1.5">
-                    {jalur === "sso" ? "Email SSO Undip" : "Email Pribadi Aktif"}
-                  </label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder={jalur === "sso" ? "nim@students.undip.ac.id" : "emailkamu@gmail.com"}
-                    required
-                    className="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm
-                      focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
-                  />
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    {jalur === "sso"
-                      ? "Email SSO harus terdaftar di data pendaftaran KIPK."
-                      : "Harus cocok dengan email yang terdaftar di data pendaftaran KIPK."}
-                  </p>
                 </div>
-
-                {error && (
-                  <p className="text-red-500 text-xs bg-red-50 px-3 py-2 rounded-lg">{error}</p>
-                )}
 
                 <button
                   type="submit"
-                  disabled={loading || !email || (jalur === "pribadi" && !nama)}
-                  className="w-full flex items-center justify-center gap-2 bg-primary text-white py-2.5 rounded-xl text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  disabled={loading || !email}
+                  className="w-full flex justify-center items-center gap-2 h-11 mt-2 font-bold rounded-lg bg-[#3b5998] hover:bg-[#3b5998]/90 text-white shadow-md transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                   {loading ? (
-                    <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Mengirim OTP...
+                    </>
                   ) : (
-                    <ArrowRight size={15} />
+                    <>
+                      <ArrowRight className="w-4 h-4" />
+                      Kirim Kode OTP
+                    </>
                   )}
-                  {loading ? "Mengirim OTP..." : "Kirim Kode OTP"}
                 </button>
-              </motion.form>
-            )}
-          </AnimatePresence>
-        </div>
+              </form>
 
-        <p className="text-center text-xs text-slate-400 mt-6">
-          Admin DIRMAWA?{" "}
-          <a href="/admin-login" className="text-primary hover:underline font-medium">
-            Login di sini
-          </a>
-        </p>
+              {/* Footer / Links */}
+              <div className="pt-6 border-t border-slate-100 flex flex-row items-center justify-center gap-3 text-[13px] text-slate-500">
+                <Link
+                  href="/"
+                  className="hover:text-[#3b5998] transition-colors flex items-center gap-1.5 font-semibold text-[#3b5998]"
+                >
+                  <Home className="w-4 h-4" /> Beranda
+                </Link>
+
+                <span className="text-slate-300">|</span>
+
+                <span>
+                  Mahasiswa KIPK Baru?{" "}
+                  <Link
+                    href="/verify-kandidat"
+                    className="text-[#3b5998] hover:underline font-semibold"
+                  >
+                    Verifikasi
+                  </Link>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
+}
+
+// OPSIONAL BIAR RAPI
+function Label({
+  className,
+  children,
+}: {
+  className?: string;
+  children: React.ReactNode;
+}) {
+  return <label className={`block ${className}`}>{children}</label>;
 }

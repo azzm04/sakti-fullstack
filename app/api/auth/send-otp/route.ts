@@ -25,14 +25,12 @@ export async function POST(req: NextRequest) {
     const { email, nama } = result.data
     const normalizedEmail = email.toLowerCase().trim()
 
-    // ── Cek tabel kandidat (Supabase) ────────────────────────────────────────
     // Validasi: email harus ada di tabel kandidat
     let kandidatQuery = supabaseAdmin
       .from("kandidat")
       .select("id, nama, email, no_pendaftaran_kipk")
       .eq("email", normalizedEmail)
 
-    // Jika nama dikirim, validasi nama juga (case-insensitive)
     if (nama?.trim()) {
       kandidatQuery = kandidatQuery.ilike("nama", nama.trim())
     }
@@ -57,8 +55,6 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // ── Upsert sso_whitelist (Prisma) ─────────────────────────────────────────
-    // Buat/update entry whitelist agar user bisa login
     const whitelist = await prisma.ssoWhitelist.upsert({
       where: { email: normalizedEmail },
       create: {
@@ -73,7 +69,7 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // ── Upsert user ───────────────────────────────────────────────────────────
+    // Upsert user 
     const user = await prisma.user.upsert({
       where: { email: normalizedEmail },
       create: {
@@ -85,7 +81,7 @@ export async function POST(req: NextRequest) {
       update: {},
     })
 
-    // ── Generate & simpan OTP ─────────────────────────────────────────────────
+    //  Generate & simpan OTP
     await prisma.otpToken.deleteMany({ where: { userId: user.id } })
 
     const otp    = generateOtp()
@@ -99,7 +95,6 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // ── Kirim OTP ke email pribadi kandidat ───────────────────────────────────
     await sendOtpEmail(normalizedEmail, otp, kandidat.nama)
 
     return NextResponse.json({ success: true })

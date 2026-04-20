@@ -19,7 +19,7 @@ export default function Footer() {
             Platform SAKTI
           </p>
           <p className="text-sm text-white/70 leading-relaxed">
-            Platform pendukung tata kelola beasiswa KIP-Kuliah — dilengkapi
+            Platform pendukung tata kelola beasiswa KIP-Kuliah dilengkapi
             Asisten Virtual AI, sistem pelaporan evaluasi, dan kanal pengaduan
             resmi.
           </p>

@@ -2,53 +2,60 @@
 
 import { useEffect, useRef } from "react";
 import Link from "next/link";
+import gsap from "gsap"; // Pastikan import gsap secara statis di atas
 
 export default function HeroSection() {
   const titleRef = useRef<HTMLHeadingElement>(null);
 
   useEffect(() => {
-    let animation: gsap.core.Tween | undefined;
-    let ctx: gsap.Context | undefined;
+    // Menggunakan gsap.context agar pembersihan (cleanup) lebih aman
+    const ctx = gsap.context(() => {
+      const chars = titleRef.current?.querySelectorAll(".char");
 
-    async function animateTitle() {
-      const { gsap } = await import("gsap");
-
-      ctx = gsap.context(() => {
-        const chars = titleRef.current?.querySelectorAll(".char");
-
-        if (chars?.length) {
-          animation = gsap.from(chars, {
-            x: 150,
-            opacity: 0,
+      if (chars && chars.length > 0) {
+        // Menggunakan fromTo lebih stabil di React Strict Mode & Next.js Navigation
+        gsap.fromTo(
+          chars,
+          { 
+            x: 100, // Mulai dari geser kanan 100px
+            opacity: 0, // Transparan
+          },
+          {
+            x: 0, // Berakhir di posisi asli
+            opacity: 1, // Muncul penuh
             duration: 0.8,
-            ease: "power4.out",
-            stagger: 0.04,
-          });
-        }
-      }, titleRef);
-    }
-
-    animateTitle();
+            ease: "power3.out",
+            stagger: 0.03, // Jeda per huruf sedikit dipercepat agar lebih mulus
+            delay: 0.1, // Beri sedikit jeda saat halaman baru dimuat
+          }
+        );
+      }
+    }, titleRef); // Scope context ke titleRef
 
     return () => {
-      animation?.kill();
-      ctx?.revert();
+      // Membersihkan animasi saat komponen di-unmount (pindah halaman)
+      ctx.revert();
     };
-  }, []);
+  }, []); // Kosong array dependency agar hanya jalan sekali saat mount
 
   const headingLines = ["Sistem Asisten KIPK", "Terpadu & Interaktif"];
 
   const renderSplitText = (text: string) =>
     text.split("").map((char, index) => (
-      <span key={`${text}-${index}`} className="inline-block char">
-        {char === " " ? "\u00A0" : char}
+      <span
+        key={`${text}-${index}`}
+        // Tambahkan inline-block dan opacity-0 sebagai default agar tidak berkedip
+        className="inline-block char opacity-0"
+        style={{ whiteSpace: "pre" }} // Memastikan spasi tidak diabaikan
+      >
+        {char}
       </span>
     ));
 
   return (
     <section
       id="beranda"
-      className="relative pt-28 pb-32 md:pt-32 md:pb-40 bg-primary text-white overflow-hidden flex flex-col justify-center items-center text-center px-4 sm:px-6 lg:px-8"
+      className="relative pt-28 pb-32 md:pt-32 md:pb-40 bg-primary text-white selection:bg-white/30 selection:text-white overflow-hidden flex flex-col justify-center items-center text-center px-4 sm:px-6 lg:px-8"
     >
       <div
         className="absolute inset-0 bg-cover bg-center"
@@ -64,12 +71,13 @@ export default function HeroSection() {
           className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight mb-6 leading-tight"
         >
           {headingLines.map((line, index) => (
-            <span key={index} className="block">
+            <span key={index} className="block overflow-hidden pb-2">
               {renderSplitText(line)}
               {index === 0 && <br className="hidden md:block" />}
             </span>
           ))}
         </h1>
+        
         <p className="text-base sm:text-lg md:text-xl text-white max-w-2xl mb-10 font-light hover:text-white">
           Platform pendukung tata kelola beasiswa KIP-Kuliah — dilengkapi
           Asisten Virtual AI, sistem pelaporan evaluasi, dan kanal pengaduan
