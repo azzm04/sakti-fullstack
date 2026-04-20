@@ -12,30 +12,27 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "URL API wajib diisi" }, { status: 400 });
     }
 
-    // Ambil SEMUA kolom kandidat yang sudah selesai wawancara
+    // Ambil SEMUA kolom kandidat dari tabel kandidat
     const { data: kandidats, error } = await supabaseAdmin
       .from("kandidat")
       .select("*")
-      .not("hasil_akhir", "is", null)
-      .not("pewawancara", "is", null)
-      .neq("pewawancara", "")
       .order("no", { ascending: true });
 
     if (error) throw error;
 
     if (!kandidats || kandidats.length === 0) {
       return NextResponse.json(
-        { error: "Belum ada kandidat yang selesai diwawancara" },
+        { error: "Belum ada data kandidat di tabel" },
         { status: 400 }
       );
     }
 
-    // Kirim semua data kandidat ke FastAPI — backend yang proses
+    // Kirim semua isi tabel kandidat ke FastAPI SMART-TOPSIS
     const topsisRes = await fetch(apiUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        kandidat: kandidats,
+        alternatives: kandidats,
         kuota: kuota ?? { SNBP: 0, SNBT: 0, UM: 0 },
       }),
     });

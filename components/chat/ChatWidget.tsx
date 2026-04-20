@@ -65,7 +65,7 @@ export default function ChatWidget() {
   };
 
   return (
-    <div className="fixed bottom-8 right-8 z-[60] group font-body">
+    <div className="fixed bottom-5 right-5 md:bottom-8 md:right-8 z-[60] group font-body">
       
       {/* TOOLTIP (Hanya Muncul Jika Chat Tertutup) */}
       <div
@@ -108,7 +108,7 @@ export default function ChatWidget() {
               <h3 className="font-bold text-sm tracking-wide">SAKABOT</h3>
               <div className="flex items-center gap-1.5 text-[10px] text-blue-100">
                 <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse shadow-[0_0_5px_#4ade80]"></span>
-                Siap Membantu
+                Siap Membantu Terkait KIP-Kuliah
               </div>
             </div>
           </div>

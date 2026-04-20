@@ -72,7 +72,7 @@ export default function AdminLoginPage() {
               type="text"
               value={adminId}
               onChange={(e) => setAdminId(e.target.value)}
-              placeholder="admin_dirmawa"
+              placeholder="username"
               required
               autoComplete="username"
               className="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm

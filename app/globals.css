@@ -14,8 +14,8 @@
   --color-background: hsl(210 40% 98%);
   --color-foreground: hsl(222 47% 11%);
   
-  /* Primary (#0056B3) */
-  --color-primary: hsl(211 100% 35%);
+  /* Primary (#001349) */
+  --color-primary: #001349;
   --color-primary-foreground: hsl(0 0% 100%);
   
   /* Secondary (#475569) */
@@ -92,3 +92,25 @@
 .material-symbols-outlined {
   font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
+
+html.lenis,
+html.lenis.body {
+  height: auto;
+}
+
+.lenis.lenis-smooth {
+  scroll-behavior: auto !important;
+} 
+
+.lenis.lenis-smooth [data-lenis-prevent] {
+  overscroll-behavior: contain;
+}
+
+.lenis.lenis-stopped {
+  overflow: hidden;
+}
+
+.lenis.lenis-smooth iframe {
+  pointer-events: none;
+}
+

@@ -330,7 +330,7 @@ export default function KalkulasiPage() {
         <div className="bg-white rounded-2xl border border-slate-100 shadow-sm py-20 text-center">
           <Calculator size={36} className="text-slate-200 mx-auto mb-3" />
           <p className="text-sm text-slate-400 mb-1">Belum ada hasil kalkulasi</p>
-          <p className="text-xs text-slate-300">Isi kuota dan URL API, lalu klik "Jalankan SMART-TOPSIS"</p>
+          <p className="text-xs text-slate-300">Isi kuota dan URL API, lalu klik Jalankan SMART-TOPSIS</p>
         </div>
       )}
     </div>

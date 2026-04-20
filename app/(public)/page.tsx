@@ -1,22 +1,27 @@
 import Navbar from "@/components/layout/Navbar";
-import ChatWidget from "@/components/chat/ChatWidget";
 import Footer from "@/components/layout/Footer";
-import HeroSection from "@/components/public/landing/HeroSection";
-import StatsBar from "@/components/public/landing/StatsBar";
-import JadwalSection from "@/components/public/landing/JadwalSection";
-import CtaBanner from "@/components/public/landing/CtaBanner";
+import ChatWidget from "@/components/chat/ChatWidget";
+import HeroSection from "@/components/landing/HeroSection";
+import LayananSection from "@/components/landing/LayananSection";
+import PanduanSection from "@/components/landing/PanduanSection";
+import PengaduanSection from "@/components/landing/PengaduanSection";
 
 export default function LandingPage() {
   return (
-    <div className="bg-[#F8FAFC] font-body text-secondary selection:bg-primary/20 selection:text-primary">
+    <div className="bg-[#F8FAFC] font-body text-slate-800 selection:bg-primary/20 selection:text-primary">
       <Navbar />
-      <main className="pt-20">
+
+      <main className="min-h-screen">
         <HeroSection />
-        <StatsBar />
-        <JadwalSection />
-        <CtaBanner />
+        <LayananSection />
+        <PanduanSection />
+        <PengaduanSection />
       </main>
+
+      {/* Widget Chatbot */}
       <ChatWidget />
+
+      {/* Footer Utama */}
       <Footer />
     </div>
   );
