@@ -31,7 +31,8 @@ export async function POST(req: NextRequest) {
         otpTokens: {
           orderBy: { createdAt: "desc" }, // Selalu ambil OTP terakhir yang di-generate
           take: 1
-        } 
+        },
+        whitelist: true 
       },
     })
 
@@ -81,7 +82,7 @@ export async function POST(req: NextRequest) {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET)
     const jwt = await new SignJWT({
       sub: user.id,
-      role: user.role,
+      role: user.whitelist.role,
       email: user.email,
       nama: user.nama,
     })
@@ -95,7 +96,7 @@ export async function POST(req: NextRequest) {
       user: {
         email: user.email,
         nama: user.nama,
-        role: user.role,
+        role: user.whitelist.role,
       },
     })
 
