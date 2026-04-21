@@ -43,6 +43,7 @@ export async function middleware(req: NextRequest) {
 
 export const config = {
   matcher: [
+    "/admin",
     "/admin/((?!login).*)",
     "/mahasiswa/:path*",
     "/pewawancara/:path*",

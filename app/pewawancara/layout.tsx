@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence, type Variants } from "motion/react";
 import {
   LayoutDashboard,
@@ -38,6 +38,34 @@ export default function PewawancaraLayout({ children }: { children: React.ReactN
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  // Validasi role pewawancara
+  useEffect(() => {
+    const checkPewawancaraRole = async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        const data = await res.json();
+        
+        if (!res.ok || data.role !== "PEWAWANCARA") {
+          // Redirect ke halaman berdasarkan role
+          const roleRoutes: Record<string, string> = {
+            MAHASISWA_KIPK: "/mahasiswa",
+            ADMIN_DIRMAWA: "/admin",
+          };
+          const redirectPath = roleRoutes[data.role] || "/login";
+          router.push(redirectPath);
+          return;
+        }
+        
+        setLoading(false);
+      } catch {
+        router.push("/login");
+      }
+    };
+
+    checkPewawancaraRole();
+  }, [router]);
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -95,64 +123,74 @@ export default function PewawancaraLayout({ children }: { children: React.ReactN
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Desktop Sidebar */}
-      <motion.aside
-        variants={sidebarVariants}
-        initial="hidden"
-        animate="visible"
-        className="hidden md:flex sticky top-0 h-screen w-60 flex-col bg-white border-r border-border shrink-0"
-      >
-        <SidebarContent />
-      </motion.aside>
-
-      {/* Mobile Topbar */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 bg-white border-b border-border">
-        <span className="text-xl font-extrabold font-headline text-primary">SAKTI</span>
-        <motion.button
-          whileTap={{ scale: 0.9 }}
-          onClick={() => setMobileOpen(true)}
-          className="p-2 rounded-lg hover:bg-muted transition-colors"
-        >
-          <Menu size={20} className="text-foreground" />
-        </motion.button>
-      </div>
-
-      {/* Mobile Drawer */}
-      <AnimatePresence>
-        {mobileOpen && (
-          <div className="md:hidden fixed inset-0 z-50 flex">
-            <motion.div
-              variants={overlayVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="absolute inset-0 bg-foreground/30 backdrop-blur-sm"
-              onClick={() => setMobileOpen(false)}
-            />
-            <motion.aside
-              variants={drawerVariants}
-              initial="hidden"
-              animate="visible"
-              exit="exit"
-              className="relative w-64 bg-white h-full shadow-xl flex flex-col"
-            >
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                onClick={() => setMobileOpen(false)}
-                className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-muted transition-colors"
-              >
-                <X size={18} className="text-muted-foreground" />
-              </motion.button>
-              <SidebarContent />
-            </motion.aside>
+      {loading ? (
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="inline-flex h-8 w-8 animate-spin rounded-full border-4 border-border border-t-primary"></div>
           </div>
-        )}
-      </AnimatePresence>
+        </div>
+      ) : (
+        <>
+          {/* Desktop Sidebar */}
+          <motion.aside
+            variants={sidebarVariants}
+            initial="hidden"
+            animate="visible"
+            className="hidden md:flex sticky top-0 h-screen w-60 flex-col bg-white border-r border-border shrink-0"
+          >
+            <SidebarContent />
+          </motion.aside>
 
-      {/* Main */}
-      <main className="flex-1 min-w-0 md:pt-0 pt-14">
-        {children}
-      </main>
+          {/* Mobile Topbar */}
+          <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 bg-white border-b border-border">
+            <span className="text-xl font-extrabold font-headline text-primary">SAKTI</span>
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setMobileOpen(true)}
+              className="p-2 rounded-lg hover:bg-muted transition-colors"
+            >
+              <Menu size={20} className="text-foreground" />
+            </motion.button>
+          </div>
+
+          {/* Mobile Drawer */}
+          <AnimatePresence>
+            {mobileOpen && (
+              <div className="md:hidden fixed inset-0 z-50 flex">
+                    <motion.div
+                  variants={overlayVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  className="absolute inset-0 bg-foreground/30 backdrop-blur-sm"
+                  onClick={() => setMobileOpen(false)}
+                />
+                <motion.aside
+                  variants={drawerVariants}
+                  initial="hidden"
+                  animate="visible"
+                  exit="exit"
+                  className="relative w-64 bg-white h-full shadow-xl flex flex-col"
+                >
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    onClick={() => setMobileOpen(false)}
+                    className="absolute top-4 right-4 p-1.5 rounded-lg hover:bg-muted transition-colors"
+                  >
+                    <X size={18} className="text-muted-foreground" />
+                  </motion.button>
+                  <SidebarContent />
+                </motion.aside>
+              </div>
+            )}
+          </AnimatePresence>
+
+          {/* Main */}
+          <main className="flex-1 min-w-0 md:pt-0 pt-14">
+            {children}
+          </main>
+        </>
+      )}
     </div>
   );
 }
