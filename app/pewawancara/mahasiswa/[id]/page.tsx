@@ -8,40 +8,80 @@ import type { Kandidat } from "@/schemas";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
-const OPT_ADA_TIDAK   = ["Ada", "Tidak Ada"];
-const OPT_KEPEMILIKAN = ["Milik Sendiri", "Sewa", "Tidak Memiliki", "Menumpang"];
-const OPT_SUMBER_AIR  = ["Sumur", "PDAM", "Sungai/Mata Air"];
-const OPT_MCK         = ["Berbagi Pakai", "Milik Sendiri"];
-const OPT_KONDISI     = ["Layak Menerima Beasiswa", "Tidak Layak Beasiswa"];
+const OPT_ADA_TIDAK = ["Ada", "Tidak Ada"];
+const OPT_KEPEMILIKAN = [
+  "Milik Sendiri",
+  "Sewa",
+  "Tidak Memiliki",
+  "Menumpang",
+];
+const OPT_SUMBER_AIR = ["Sumur", "PDAM", "Sungai/Mata Air"];
+const OPT_MCK = ["Berbagi Pakai", "Milik Sendiri"];
+const OPT_KONDISI = ["Layak Menerima Beasiswa", "Tidak Layak Beasiswa"];
 const OPT_HASIL_AKHIR: { label: string; value: number; color: string }[] = [
-  { label: "Layak",           value: 1, color: "bg-emerald-500 text-white border-emerald-500" },
-  { label: "Dipertimbangkan", value: 2, color: "bg-amber-500 text-white border-amber-500"    },
-  { label: "Tidak Layak",     value: 3, color: "bg-red-500 text-white border-red-500"        },
+  {
+    label: "Layak",
+    value: 1,
+    color: "bg-emerald-500 text-white border-emerald-500",
+  },
+  {
+    label: "Dipertimbangkan",
+    value: 2,
+    color: "bg-amber-500 text-white border-amber-500",
+  },
+  {
+    label: "Tidak Layak",
+    value: 3,
+    color: "bg-red-500 text-white border-red-500",
+  },
 ];
 
 const OPT_JALUR_MASUK = ["SNBP", "SNBT", "UM"];
 
-const fmt = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 });
+const fmt = new Intl.NumberFormat("id-ID", {
+  style: "currency",
+  currency: "IDR",
+  minimumFractionDigits: 0,
+});
 
 // Read-only field
-function ReadField({ label, value }: { label: string; value?: string | number | null }) {
+function ReadField({
+  label,
+  value,
+}: {
+  label: string;
+  value?: string | number | null;
+}) {
   const display = value && value !== 0 ? String(value) : "—";
   return (
     <div>
-      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-0.5">{label}</p>
+      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-0.5">
+        {label}
+      </p>
       <p className="text-sm text-on-surface font-medium">{display}</p>
     </div>
   );
 }
 
-function RadioGroup({ label, value, options, onChange, required, colored }: {
-  label: string; value: string; options: string[];
-  onChange: (v: string) => void; required?: boolean; colored?: boolean;
+function RadioGroup({
+  label,
+  value,
+  options,
+  onChange,
+  required,
+  colored,
+}: {
+  label: string;
+  value: string;
+  options: string[];
+  onChange: (v: string) => void;
+  required?: boolean;
+  colored?: boolean;
 }) {
   const colorMap: Record<string, string> = {
-    "Layak":            "bg-emerald-500 text-white border-emerald-500",
-    "Dipertimbangkan":  "bg-amber-500 text-white border-amber-500",
-    "Tidak Layak":      "bg-red-500 text-white border-red-500",
+    Layak: "bg-emerald-500 text-white border-emerald-500",
+    Dipertimbangkan: "bg-amber-500 text-white border-amber-500",
+    "Tidak Layak": "bg-red-500 text-white border-red-500",
   };
 
   return (
@@ -51,14 +91,18 @@ function RadioGroup({ label, value, options, onChange, required, colored }: {
       </label>
       <div className="flex gap-2 flex-wrap">
         {options.map((opt) => (
-          <button key={opt} type="button" onClick={() => onChange(opt)}
+          <button
+            key={opt}
+            type="button"
+            onClick={() => onChange(opt)}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-all ${
               value === opt
                 ? colored && colorMap[opt]
                   ? colorMap[opt]
                   : "bg-primary text-white border-primary"
                 : "bg-white text-muted-foreground border-border hover:border-primary"
-            }`}>
+            }`}
+          >
             {opt}
           </button>
         ))}
@@ -67,53 +111,95 @@ function RadioGroup({ label, value, options, onChange, required, colored }: {
   );
 }
 
-function TextInput({ label, value, onChange, placeholder, required }: {
-  label: string; value: string; onChange: (v: string) => void;
-  placeholder?: string; required?: boolean;
+function TextInput({
+  label,
+  value,
+  onChange,
+  placeholder,
+  required,
+}: {
+  label: string;
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+  required?: boolean;
 }) {
   return (
     <div>
       <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
-      <input type="text" value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
+      <input
+        type="text"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={placeholder}
         className="w-full px-3 py-2.5 text-sm border border-border rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-slate-50 transition-all"
       />
     </div>
   );
 }
 
-function NumberInput({ label, value, onChange }: { label: string; value: number; onChange: (v: number) => void }) {
+function NumberInput({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: number;
+  onChange: (v: number) => void;
+}) {
   return (
     <div>
-      <label className="block text-xs font-semibold text-muted-foreground mb-1.5">{label}</label>
-      <input type="number" value={value || ""} onChange={(e) => onChange(Number(e.target.value))}
+      <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+        {label}
+      </label>
+      <input
+        type="number"
+        value={value || ""}
+        onChange={(e) => onChange(Number(e.target.value))}
         className="w-full px-3 py-2.5 text-sm border border-border rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-slate-50 transition-all"
+        title="input"
       />
     </div>
   );
 }
 
-function SectionHeader({ title, subtitle }: { title: string; subtitle?: string }) {
+function SectionHeader({
+  title,
+  subtitle,
+}: {
+  title: string;
+  subtitle?: string;
+}) {
   return (
     <div className="pb-2 border-b border-border mb-4">
       <h3 className="text-sm font-bold text-on-surface">{title}</h3>
-      {subtitle && <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>}
+      {subtitle && (
+        <p className="text-[11px] text-muted-foreground mt-0.5">{subtitle}</p>
+      )}
     </div>
   );
 }
 
-export default function PewawancaraDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function PewawancaraDetailPage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = use(params);
-  const [kandidat, setKandidat]     = useState<Kandidat | null>(null);
-  const [loading, setLoading]       = useState(true);
+  const [kandidat, setKandidat] = useState<Kandidat | null>(null);
+  const [loading, setLoading] = useState(true);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
-  const [form, setForm]             = useState<Partial<Kandidat>>({});
+  const [form, setForm] = useState<Partial<Kandidat>>({});
 
   useEffect(() => {
     fetch(`/api/admin/evaluasi/${id}`)
       .then((r) => r.json())
-      .then((d) => { setKandidat(d); setForm(d); })
+      .then((d) => {
+        setKandidat(d);
+        setForm(d);
+      })
       .catch(() => setKandidat(null))
       .finally(() => setLoading(false));
   }, [id]);
@@ -128,21 +214,31 @@ export default function PewawancaraDetailPage({ params }: { params: Promise<{ id
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          validasi_kks: form.validasi_kks, validasi_kip: form.validasi_kip,
-          validasi_sktm: form.validasi_sktm, sosial_media: form.sosial_media,
-          ket_pekerjaan_ayah: form.ket_pekerjaan_ayah, ket_penghasilan_ayah: form.ket_penghasilan_ayah,
-          ket_pekerjaan_ibu: form.ket_pekerjaan_ibu, ket_penghasilan_ibu: form.ket_penghasilan_ibu,
+          validasi_kks: form.validasi_kks,
+          validasi_kip: form.validasi_kip,
+          validasi_sktm: form.validasi_sktm,
+          sosial_media: form.sosial_media,
+          ket_pekerjaan_ayah: form.ket_pekerjaan_ayah,
+          ket_penghasilan_ayah: form.ket_penghasilan_ayah,
+          ket_pekerjaan_ibu: form.ket_pekerjaan_ibu,
+          ket_penghasilan_ibu: form.ket_penghasilan_ibu,
           penghasilan_lain: form.penghasilan_lain,
           jml_tanggungan_sebenarnya: form.jml_tanggungan_sebenarnya,
           validasi_orang_rumah: form.validasi_orang_rumah,
-          kepemilikan_rumah: form.kepemilikan_rumah, tahun_perolehan: form.tahun_perolehan,
-          luas_tanah: form.luas_tanah, luas_bangunan: form.luas_bangunan,
-          sumber_air: form.sumber_air, mck: form.mck,
-          aset: form.aset, kondisi_rumah: form.kondisi_rumah,
+          kepemilikan_rumah: form.kepemilikan_rumah,
+          tahun_perolehan: form.tahun_perolehan,
+          luas_tanah: form.luas_tanah,
+          luas_bangunan: form.luas_bangunan,
+          sumber_air: form.sumber_air,
+          mck: form.mck,
+          aset: form.aset,
+          kondisi_rumah: form.kondisi_rumah,
           jarak_pusat_kota: form.jarak_pusat_kota,
-          hasil_akhir: form.hasil_akhir,
-          jalur_masuk: form.jalur_masuk,
-          alasan: form.alasan, pewawancara: form.pewawancara,
+          rekomendasi: form.rekomendasi,
+          alasan: form.alasan,
+          // Pewawancara ID akan diset dari JWT token di server
+          is_draft: false,
+          interviewed_at: new Date().toISOString(),
         }),
       });
       if (!res.ok) throw new Error();
@@ -154,49 +250,76 @@ export default function PewawancaraDetailPage({ params }: { params: Promise<{ id
     }
   }
 
-  if (loading) return (
-    <div className="flex items-center justify-center min-h-screen gap-2 text-muted-foreground">
-      <Loader2 size={16} className="animate-spin" /> Memuat...
-    </div>
-  );
-
-  if (!kandidat) return (
-    <div className="flex items-center justify-center min-h-screen">
-      <div className="text-center">
-        <p className="font-bold mb-2">Data tidak ditemukan</p>
-        <Link href="/pewawancara/mahasiswa" className="text-sm text-primary hover:underline">← Kembali</Link>
+  if (loading)
+    return (
+      <div className="flex items-center justify-center min-h-screen gap-2 text-muted-foreground">
+        <Loader2 size={16} className="animate-spin" /> Memuat...
       </div>
-    </div>
-  );
+    );
+
+  if (!kandidat)
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <p className="font-bold mb-2">Data tidak ditemukan</p>
+          <Link
+            href="/pewawancara/mahasiswa"
+            className="text-sm text-primary hover:underline"
+          >
+            ← Kembali
+          </Link>
+        </div>
+      </div>
+    );
 
   const SaveBtn = ({ className = "" }: { className?: string }) => (
-    <button onClick={handleSave} disabled={saveStatus === "saving"}
+    <button
+      onClick={handleSave}
+      disabled={saveStatus === "saving"}
       className={`flex items-center gap-1.5 px-4 py-2 text-sm font-semibold rounded-xl transition-all disabled:opacity-60 ${
-        saveStatus === "saved" ? "bg-emerald-500 text-white" :
-        saveStatus === "error" ? "bg-red-500 text-white" :
-        "bg-primary text-white hover:bg-primary/90"
-      } ${className}`}>
+        saveStatus === "saved"
+          ? "bg-emerald-500 text-white"
+          : saveStatus === "error"
+            ? "bg-red-500 text-white"
+            : "bg-primary text-white hover:bg-primary/90"
+      } ${className}`}
+    >
+      {saveStatus === "saving" ? (
+        <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+      ) : saveStatus === "saved" ? (
+        <CheckCircle2 size={15} />
+      ) : (
+        <Save size={15} />
+      )}
       {saveStatus === "saving"
-        ? <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-        : saveStatus === "saved" ? <CheckCircle2 size={15} /> : <Save size={15} />}
-      {saveStatus === "saving" ? "Menyimpan..." : saveStatus === "saved" ? "Tersimpan" : "Simpan Evaluasi"}
+        ? "Menyimpan..."
+        : saveStatus === "saved"
+          ? "Tersimpan"
+          : "Simpan Evaluasi"}
     </button>
   );
 
   return (
     <div className="p-6 md:p-8 max-w-3xl mx-auto pb-16">
-
       {/* Header */}
       <div className="mb-6">
-        <Link href="/pewawancara/mahasiswa"
-          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary mb-3 transition-colors">
+        <Link
+          href="/pewawancara/mahasiswa"
+          className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary mb-3 transition-colors"
+        >
           <ArrowLeft size={13} /> Kembali ke daftar
         </Link>
         <div className="flex items-start justify-between gap-4 flex-wrap">
           <div>
-            <h1 className="text-2xl font-extrabold text-primary font-headline">{kandidat.nama}</h1>
-            <p className="text-muted-foreground text-sm font-mono">{kandidat.no_pendaftaran_kipk}</p>
-            <p className="text-muted-foreground text-xs mt-0.5">{kandidat.prodi}</p>
+            <h1 className="text-2xl font-extrabold text-primary font-headline">
+              {kandidat.nama}
+            </h1>
+            <p className="text-muted-foreground text-sm font-mono">
+              {kandidat.no_pendaftaran_kipk}
+            </p>
+            <p className="text-muted-foreground text-xs mt-0.5">
+              {kandidat.prodi}
+            </p>
           </div>
           <SaveBtn />
         </div>
@@ -216,18 +339,36 @@ export default function PewawancaraDetailPage({ params }: { params: Promise<{ id
           <div>
             <SectionHeader title="Identitas" />
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              <ReadField label="No. Pendaftaran KIPK"                value={kandidat.no_pendaftaran_kipk} />
-              <ReadField label="Nomor Bantuan Sosial (KIP/KKS/SKTM)" value={kandidat.no_bantuan_sosial}   />
-              <ReadField label="NIK"                                  value={kandidat.nik}                 />
-              <ReadField label="No. Kartu Keluarga"                   value={kandidat.no_kartu_keluarga}   />
-              <ReadField label="NISN"                                 value={kandidat.nisn}                />
-              <ReadField label="Nama Sekolah Asal"                    value={kandidat.asal_sekolah}        />
-              <ReadField label="Kota/Kabupaten Asal"                  value={kandidat.kab_kota}            />
-              <ReadField label="Provinsi Asal"                        value={kandidat.provinsi}            />
-              <ReadField label="Alamat Domisili"                      value={kandidat.alamat}              />
-              <ReadField label="No. HP Aktif"                         value={kandidat.no_hp}               />
-              <ReadField label="Alamat Email Aktif"                   value={kandidat.email}               />
-              <ReadField label="Koordinat / Link GPS"                 value={kandidat.koordinat}           />
+              <ReadField
+                label="No. Pendaftaran KIPK"
+                value={kandidat.no_pendaftaran_kipk}
+              />
+              <ReadField
+                label="Nomor Bantuan Sosial (KIP/KKS/SKTM)"
+                value={kandidat.no_bantuan_sosial}
+              />
+              <ReadField label="NIK" value={kandidat.nik} />
+              <ReadField
+                label="No. Kartu Keluarga"
+                value={kandidat.no_kartu_keluarga}
+              />
+              <ReadField label="NISN" value={kandidat.nisn} />
+              <ReadField
+                label="Nama Sekolah Asal"
+                value={kandidat.asal_sekolah}
+              />
+              <ReadField
+                label="Kota/Kabupaten Asal"
+                value={kandidat.kab_kota}
+              />
+              <ReadField label="Provinsi Asal" value={kandidat.provinsi} />
+              <ReadField label="Alamat Domisili" value={kandidat.alamat} />
+              <ReadField label="No. HP Aktif" value={kandidat.no_hp} />
+              <ReadField label="Alamat Email Aktif" value={kandidat.email} />
+              <ReadField
+                label="Koordinat / Link GPS"
+                value={kandidat.koordinat}
+              />
             </div>
           </div>
 
@@ -235,9 +376,15 @@ export default function PewawancaraDetailPage({ params }: { params: Promise<{ id
           <div>
             <SectionHeader title="Status Sosial Ekonomi" />
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              <ReadField label="Status DTSEN"                   value={kandidat.status_dtsen}       />
-              <ReadField label="Jumlah Tanggungan"              value={kandidat.jumlah_tanggungan}  />
-              <ReadField label="Jumlah Orang Tinggal di Rumah"  value={kandidat.jumlah_orang_rumah} />
+              <ReadField label="Status DTSEN" value={kandidat.status_dtsen} />
+              <ReadField
+                label="Jumlah Tanggungan"
+                value={kandidat.jumlah_tanggungan}
+              />
+              <ReadField
+                label="Jumlah Orang Tinggal di Rumah"
+                value={kandidat.jumlah_orang_rumah}
+              />
             </div>
           </div>
 
@@ -245,10 +392,27 @@ export default function PewawancaraDetailPage({ params }: { params: Promise<{ id
           <div>
             <SectionHeader title="Pekerjaan & Penghasilan" />
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              <ReadField label="Pekerjaan Bapak/Wali"   value={kandidat.pekerjaan_ayah}  />
-              <ReadField label="Penghasilan Bapak/Wali" value={kandidat.penghasilan_ayah ? fmt.format(kandidat.penghasilan_ayah) : "—"} />
-              <ReadField label="Pekerjaan Ibu"          value={kandidat.pekerjaan_ibu}   />
-              <ReadField label="Penghasilan Ibu"        value={kandidat.penghasilan_ibu  ? fmt.format(kandidat.penghasilan_ibu)  : "—"} />
+              <ReadField
+                label="Pekerjaan Bapak/Wali"
+                value={kandidat.pekerjaan_ayah}
+              />
+              <ReadField
+                label="Penghasilan Bapak/Wali"
+                value={
+                  kandidat.penghasilan_ayah
+                    ? fmt.format(kandidat.penghasilan_ayah)
+                    : "—"
+                }
+              />
+              <ReadField label="Pekerjaan Ibu" value={kandidat.pekerjaan_ibu} />
+              <ReadField
+                label="Penghasilan Ibu"
+                value={
+                  kandidat.penghasilan_ibu
+                    ? fmt.format(kandidat.penghasilan_ibu)
+                    : "—"
+                }
+              />
             </div>
           </div>
 
@@ -256,8 +420,11 @@ export default function PewawancaraDetailPage({ params }: { params: Promise<{ id
           <div>
             <SectionHeader title="Kondisi Tempat Tinggal (Klaim Mahasiswa)" />
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-              <ReadField label="Jumlah PBB Terakhir Dibayar" value={kandidat.pbb ? fmt.format(kandidat.pbb) : "—"} />
-              <ReadField label="Daya Listrik"                value={kandidat.daya_listrik}                      />
+              <ReadField
+                label="Jumlah PBB Terakhir Dibayar"
+                value={kandidat.pbb ? fmt.format(kandidat.pbb) : "—"}
+              />
+              <ReadField label="Daya Listrik" value={kandidat.daya_listrik} />
             </div>
           </div>
         </div>
@@ -274,11 +441,29 @@ export default function PewawancaraDetailPage({ params }: { params: Promise<{ id
 
         {/* Validasi Dokumen */}
         <div>
-          <SectionHeader title="Validasi Dokumen" subtitle="Cocokkan dengan dokumen fisik yang dibawa mahasiswa" />
+          <SectionHeader
+            title="Validasi Dokumen"
+            subtitle="Cocokkan dengan dokumen fisik yang dibawa mahasiswa"
+          />
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <RadioGroup label="Validasi KKS"  value={form.validasi_kks  ?? ""} options={OPT_ADA_TIDAK} onChange={set("validasi_kks")}  />
-            <RadioGroup label="Validasi KIP"  value={form.validasi_kip  ?? ""} options={OPT_ADA_TIDAK} onChange={set("validasi_kip")}  />
-            <RadioGroup label="Validasi SKTM" value={form.validasi_sktm ?? ""} options={OPT_ADA_TIDAK} onChange={set("validasi_sktm")} />
+            <RadioGroup
+              label="Validasi KKS"
+              value={form.validasi_kks ?? ""}
+              options={OPT_ADA_TIDAK}
+              onChange={set("validasi_kks")}
+            />
+            <RadioGroup
+              label="Validasi KIP"
+              value={form.validasi_kip ?? ""}
+              options={OPT_ADA_TIDAK}
+              onChange={set("validasi_kip")}
+            />
+            <RadioGroup
+              label="Validasi SKTM"
+              value={form.validasi_sktm ?? ""}
+              options={OPT_ADA_TIDAK}
+              onChange={set("validasi_sktm")}
+            />
           </div>
           <div className="mt-4">
             <TextInput
@@ -292,41 +477,119 @@ export default function PewawancaraDetailPage({ params }: { params: Promise<{ id
 
         {/* Validasi Penghasilan */}
         <div>
-          <SectionHeader title="Validasi Penghasilan" subtitle="Verifikasi keterangan penghasilan yang disampaikan mahasiswa" />
+          <SectionHeader
+            title="Validasi Penghasilan"
+            subtitle="Verifikasi keterangan penghasilan yang disampaikan mahasiswa"
+          />
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <TextInput   label="Validasi Ket. Pekerjaan Ayah"        value={form.ket_pekerjaan_ayah   ?? ""} onChange={set("ket_pekerjaan_ayah")}   />
-            <TextInput   label="Validasi Ket. Penghasilan Ayah/bln"  value={form.ket_penghasilan_ayah ?? ""} onChange={set("ket_penghasilan_ayah")} />
-            <TextInput   label="Validasi Ket. Pekerjaan Ibu"         value={form.ket_pekerjaan_ibu    ?? ""} onChange={set("ket_pekerjaan_ibu")}    />
-            <TextInput   label="Validasi Ket. Penghasilan Ibu/bln"   value={form.ket_penghasilan_ibu  ?? ""} onChange={set("ket_penghasilan_ibu")}  />
-            <NumberInput label="Validasi Penghasilan Lain/bln (Rp)"  value={form.penghasilan_lain ?? 0}     onChange={set("penghasilan_lain")}      />
-            <NumberInput label="Validasi Jumlah Tanggungan Sebenarnya"  value={form.jml_tanggungan_sebenarnya ?? 0} onChange={set("jml_tanggungan_sebenarnya")} />
-            <NumberInput label="Validasi Jumlah Orang Tinggal di Rumah" value={form.validasi_orang_rumah      ?? 0} onChange={set("validasi_orang_rumah")}      />
+            <TextInput
+              label="Validasi Ket. Pekerjaan Ayah"
+              value={form.ket_pekerjaan_ayah ?? ""}
+              onChange={set("ket_pekerjaan_ayah")}
+            />
+            <TextInput
+              label="Validasi Ket. Penghasilan Ayah/bln"
+              value={form.ket_penghasilan_ayah ?? ""}
+              onChange={set("ket_penghasilan_ayah")}
+            />
+            <TextInput
+              label="Validasi Ket. Pekerjaan Ibu"
+              value={form.ket_pekerjaan_ibu ?? ""}
+              onChange={set("ket_pekerjaan_ibu")}
+            />
+            <TextInput
+              label="Validasi Ket. Penghasilan Ibu/bln"
+              value={form.ket_penghasilan_ibu ?? ""}
+              onChange={set("ket_penghasilan_ibu")}
+            />
+            <NumberInput
+              label="Validasi Penghasilan Lain/bln (Rp)"
+              value={form.penghasilan_lain ?? 0}
+              onChange={set("penghasilan_lain")}
+            />
+            <NumberInput
+              label="Validasi Jumlah Tanggungan Sebenarnya"
+              value={form.jml_tanggungan_sebenarnya ?? 0}
+              onChange={set("jml_tanggungan_sebenarnya")}
+            />
+            <NumberInput
+              label="Validasi Jumlah Orang Tinggal di Rumah"
+              value={form.validasi_orang_rumah ?? 0}
+              onChange={set("validasi_orang_rumah")}
+            />
           </div>
         </div>
 
         {/* Kondisi Tempat Tinggal */}
         <div>
-          <SectionHeader title="Kondisi Tempat Tinggal" subtitle="Hasil observasi langsung saat kunjungan rumah" />
+          <SectionHeader
+            title="Kondisi Tempat Tinggal"
+            subtitle="Hasil observasi langsung saat kunjungan rumah"
+          />
           <div className="space-y-4">
-            <RadioGroup label="Kepemilikan Rumah" value={form.kepemilikan_rumah ?? ""} options={OPT_KEPEMILIKAN} onChange={set("kepemilikan_rumah")} />
+            <RadioGroup
+              label="Kepemilikan Rumah"
+              value={form.kepemilikan_rumah ?? ""}
+              options={OPT_KEPEMILIKAN}
+              onChange={set("kepemilikan_rumah")}
+            />
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <TextInput   label="Tahun Perolehan Rumah" value={form.tahun_perolehan ?? ""} onChange={set("tahun_perolehan")} placeholder="2010" />
-              <NumberInput label="Luas Tanah (m²)"       value={form.luas_tanah    ?? 0}   onChange={set("luas_tanah")}    />
-              <NumberInput label="Luas Bangunan (m²)"    value={form.luas_bangunan ?? 0}   onChange={set("luas_bangunan")} />
+              <TextInput
+                label="Tahun Perolehan Rumah"
+                value={form.tahun_perolehan ?? ""}
+                onChange={set("tahun_perolehan")}
+                placeholder="2010"
+              />
+              <NumberInput
+                label="Luas Tanah (m²)"
+                value={form.luas_tanah ?? 0}
+                onChange={set("luas_tanah")}
+              />
+              <NumberInput
+                label="Luas Bangunan (m²)"
+                value={form.luas_bangunan ?? 0}
+                onChange={set("luas_bangunan")}
+              />
             </div>
-            <RadioGroup label="Sumber Air Minum" value={form.sumber_air    ?? ""} options={OPT_SUMBER_AIR} onChange={set("sumber_air")}    />
-            <RadioGroup label="MCK"              value={form.mck           ?? ""} options={OPT_MCK}        onChange={set("mck")}           />
-            <TextInput   label="Aset yang Dimiliki (Elektronik/Kendaraan)" value={form.aset ?? ""} onChange={set("aset")} placeholder="TV, motor, kulkas, dll." />
-            <RadioGroup  label="Kondisi Rumah"   value={form.kondisi_rumah ?? ""} options={OPT_KONDISI}    onChange={set("kondisi_rumah")} />
-            <NumberInput label="Jarak Pusat Kota (KM)" value={form.jarak_pusat_kota ?? 0} onChange={set("jarak_pusat_kota")} />
+            <RadioGroup
+              label="Sumber Air Minum"
+              value={form.sumber_air ?? ""}
+              options={OPT_SUMBER_AIR}
+              onChange={set("sumber_air")}
+            />
+            <RadioGroup
+              label="MCK"
+              value={form.mck ?? ""}
+              options={OPT_MCK}
+              onChange={set("mck")}
+            />
+            <TextInput
+              label="Aset yang Dimiliki (Elektronik/Kendaraan)"
+              value={form.aset ?? ""}
+              onChange={set("aset")}
+              placeholder="TV, motor, kulkas, dll."
+            />
+            <RadioGroup
+              label="Kondisi Rumah"
+              value={form.kondisi_rumah ?? ""}
+              options={OPT_KONDISI}
+              onChange={set("kondisi_rumah")}
+            />
+            <NumberInput
+              label="Jarak Pusat Kota (KM)"
+              value={form.jarak_pusat_kota ?? 0}
+              onChange={set("jarak_pusat_kota")}
+            />
           </div>
         </div>
 
         {/* Hasil Wawancara */}
         <div>
-          <SectionHeader title="Hasil Wawancara" subtitle="Kesimpulan dan rekomendasi pewawancara" />
+          <SectionHeader
+            title="Hasil Wawancara"
+            subtitle="Kesimpulan dan rekomendasi pewawancara"
+          />
           <div className="space-y-4">
-
             {/* Jalur Masuk */}
             <div>
               <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
@@ -360,7 +623,9 @@ export default function PewawancaraDetailPage({ params }: { params: Promise<{ id
                   <button
                     key={opt.value}
                     type="button"
-                    onClick={() => setForm((f) => ({ ...f, hasil_akhir: opt.value }))}
+                    onClick={() =>
+                      setForm((f) => ({ ...f, hasil_akhir: opt.value }))
+                    }
                     className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
                       form.hasil_akhir === opt.value
                         ? opt.color
@@ -373,19 +638,36 @@ export default function PewawancaraDetailPage({ params }: { params: Promise<{ id
               </div>
               {form.hasil_akhir && (
                 <p className="text-[11px] text-muted-foreground mt-1.5">
-                  Dipilih: <span className="font-semibold">{OPT_HASIL_AKHIR.find((o) => o.value === form.hasil_akhir)?.label}</span>
+                  Dipilih:{" "}
+                  <span className="font-semibold">
+                    {
+                      OPT_HASIL_AKHIR.find((o) => o.value === form.hasil_akhir)
+                        ?.label
+                    }
+                  </span>
                 </p>
               )}
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Alasan</label>
-              <textarea value={form.alasan ?? ""} onChange={(e) => set("alasan")(e.target.value)}
-                rows={3} placeholder="Catatan hasil wawancara..."
+              <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+                Alasan
+              </label>
+              <textarea
+                value={form.alasan ?? ""}
+                onChange={(e) => set("alasan")(e.target.value)}
+                rows={3}
+                placeholder="Catatan hasil wawancara..."
                 className="w-full px-3 py-2.5 text-sm border border-border rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-slate-50 resize-none transition-all"
               />
             </div>
-            <TextInput label="Nama Pewawancara" value={form.pewawancara ?? ""} onChange={set("pewawancara")} placeholder="Dr. Budi Santoso" required />
+            <TextInput
+              label="Nama Pewawancara"
+              value={form.pewawancara ?? ""}
+              onChange={set("pewawancara")}
+              placeholder="Dr. Budi Santoso"
+              required
+            />
           </div>
         </div>
       </div>

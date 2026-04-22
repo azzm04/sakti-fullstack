@@ -36,7 +36,7 @@ export default function PewawancaraMahasiswaPage() {
     setLocked(false);
     try {
       const params = new URLSearchParams({ mode, search, page: String(page) });
-      const res  = await fetch(`/api/pewawancara/MahasiswaListItem?${params}`);
+      const res  = await fetch(`/api/pewawancara/mahasiswa?${params}`);
       const json: MahasiswaApiResponse = await res.json();
 
       if (res.status === 403 && json.locked) {

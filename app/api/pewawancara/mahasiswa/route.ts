@@ -33,16 +33,16 @@ export async function GET(req: NextRequest) {
     const to     = from + limit - 1;
 
     // Cek apakah jatah sendiri sudah selesai semua
-    // (semua mahasiswa yang ditugaskan sudah punya rekomendasi)
+    // (semua hasil_wawancara untuk pewawancara ini sudah punya rekomendasi)
     const { count: jatahSelesai } = await supabaseAdmin
-      .from("kandidat")
+      .from("hasil_wawancara")
       .select("id", { count: "exact", head: true })
       .eq("pewawancara_id", pw.id)
       .not("rekomendasi", "is", null)
       .neq("rekomendasi", "");
 
     const { count: jatahTotal } = await supabaseAdmin
-      .from("kandidat")
+      .from("hasil_wawancara")
       .select("id", { count: "exact", head: true })
       .eq("pewawancara_id", pw.id);
 
@@ -61,7 +61,8 @@ export async function GET(req: NextRequest) {
     let query = supabaseAdmin
       .from("kandidat")
       .select(
-        "id, no, no_pendaftaran_kipk, nama, prodi, rekomendasi, pewawancara, status_wawancara, pewawancara_id",
+        "id, no, no_pendaftaran_kipk, nama, prodi, pewawancara_id, " +
+        "hasil_wawancara(id, rekomendasi, alasan, is_draft, pewawancara_id, updated_at)",
         { count: "exact" }
       )
       .order("no", { ascending: true })
@@ -98,11 +99,28 @@ export async function GET(req: NextRequest) {
       query = query.or(`nama.ilike.%${search}%,no_pendaftaran_kipk.ilike.%${search}%,prodi.ilike.%${search}%`);
     }
 
-    const { data, count, error } = await query;
+    const { data: rawData, count, error } = await query;
     if (error) throw error;
 
+    // Flatten hasil_wawancara untuk client compatibility
+    const data = (rawData ?? []).map((row: any) => {
+      const hw = row.hasil_wawancara?.[0] || null;
+      return {
+        id: row.id,
+        no: row.no,
+        no_pendaftaran_kipk: row.no_pendaftaran_kipk,
+        nama: row.nama,
+        prodi: row.prodi,
+        pewawancara_id: row.pewawancara_id,
+        rekomendasi: hw?.rekomendasi,
+        alasan: hw?.alasan,
+        is_draft: hw?.is_draft,
+        status_wawancara: hw ? "completed" : "pending",
+      };
+    });
+
     return NextResponse.json({
-      data: data ?? [],
+      data: data,
       total: count ?? 0,
       page,
       totalPages: Math.ceil((count ?? 0) / limit),

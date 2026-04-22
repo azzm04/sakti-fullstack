@@ -94,6 +94,10 @@ export async function POST(req: NextRequest) {
 
     const email = payload.email as string;
 
+    // Ambil slot_ke dari body
+    const body = await req.json().catch(() => ({}));
+    const requestedSlot = body.slot_ke as number | undefined;
+
     // Ambil sesi yang war_aktif, atau fallback ke hari ini
     const tanggalHariIni = new Date().toISOString().split("T")[0];
     let { data: sesi } = await supabaseAdmin
@@ -141,16 +145,41 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    const { count: slotTerisi } = await supabaseAdmin
-      .from("slot_pewawancara")
-      .select("id", { count: "exact", head: true })
-      .eq("sesi_id", sesi.id);
+    // Tentukan slot_ke yang akan digunakan
+    let slot_ke = requestedSlot;
 
-    if ((slotTerisi ?? 0) >= sesi.kuota_pewawancara) {
-      return NextResponse.json({ error: "Semua slot sudah penuh" }, { status: 409 });
+    if (!requestedSlot) {
+      // Jika tidak ada slot yang diminta, gunakan auto-increment
+      const { count: slotTerisi } = await supabaseAdmin
+        .from("slot_pewawancara")
+        .select("id", { count: "exact", head: true })
+        .eq("sesi_id", sesi.id);
+
+      slot_ke = (slotTerisi ?? 0) + 1;
     }
 
-    const slot_ke = (slotTerisi ?? 0) + 1;
+    // Validasi slot_ke dalam range kuota
+    if (slot_ke < 1 || slot_ke > sesi.kuota_pewawancara) {
+      return NextResponse.json(
+        { error: `Slot ${slot_ke} tidak valid. Kuota tersedia: 1-${sesi.kuota_pewawancara}` },
+        { status: 400 }
+      );
+    }
+
+    // Cek apakah slot sudah terisi
+    const { data: existingSlot } = await supabaseAdmin
+      .from("slot_pewawancara")
+      .select("id")
+      .eq("sesi_id", sesi.id)
+      .eq("slot_ke", slot_ke)
+      .maybeSingle();
+
+    if (existingSlot) {
+      return NextResponse.json(
+        { error: `Slot ${slot_ke} sudah diambil oleh pewawancara lain` },
+        { status: 409 }
+      );
+    }
 
     const { data: newSlot, error: insertErr } = await supabaseAdmin
       .from("slot_pewawancara")
@@ -165,8 +194,14 @@ export async function POST(req: NextRequest) {
       throw insertErr;
     }
 
+    // Cek semua slot sudah terisi
+    const { count: totalSlots } = await supabaseAdmin
+      .from("slot_pewawancara")
+      .select("id", { count: "exact", head: true })
+      .eq("sesi_id", sesi.id);
+
     // Tutup WAR otomatis jika penuh
-    if (slot_ke >= sesi.kuota_pewawancara) {
+    if ((totalSlots ?? 0) >= sesi.kuota_pewawancara) {
       await supabaseAdmin
         .from("sesi_wawancara")
         .update({ war_aktif: false, war_ditutup_at: new Date().toISOString() })
