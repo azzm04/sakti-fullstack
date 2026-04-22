@@ -139,17 +139,6 @@ export default function KalkulasiPage() {
                 lapangan.
               </p>
             </div>
-
-            {/* API Status Badge */}
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-white rounded-full border border-slate-200 shadow-sm text-xs font-medium text-slate-600 w-fit">
-              <div
-                className={`w-2 h-2 rounded-full ${process.env.NEXT_PUBLIC_TOPSIS_API_URL ? "bg-emerald-500 animate-pulse" : "bg-red-500"}`}
-              />
-              API{" "}
-              {process.env.NEXT_PUBLIC_TOPSIS_API_URL
-                ? "Terhubung"
-                : "Tidak Ditemukan"}
-            </div>
           </div>
         </div>
 

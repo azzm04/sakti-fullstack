@@ -5,7 +5,7 @@ import { useDropzone } from "react-dropzone";
 import { motion, AnimatePresence } from "framer-motion";
 import * as XLSX from "xlsx";
 import { CandidateData, ValidationSummary } from "@/schemas";
-
+import {UploadCloud} from "lucide-react";
 // Normalize header strings: collapse whitespace, trim, uppercase
 const normalize = (s: any) => String(s ?? "").replace(/\s+/g, " ").trim().toUpperCase();
 
@@ -361,7 +361,7 @@ export default function UploadZone({ onDataUploaded, onSave, hasData, saveStatus
             className="w-16 h-16 bg-primary-fixed-dim/20 rounded-full flex items-center justify-center mb-4"
           >
             <span className="material-symbols-outlined text-primary text-3xl">
-              {isProcessing ? "hourglass_empty" : "cloud_upload"}
+              {isProcessing ? "hourglass_empty" : <UploadCloud size={40} />}
             </span>
           </motion.div>
 

@@ -225,10 +225,9 @@ export default function PewawancaraMahasiswaPage() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      {/* Mode hari_ini/semua: hanya tampilkan aksi untuk yang belum selesai */}
                       {(mode === "saya" || !done) ? (
                         <Link
-                          href={`/pewawancara/MahasiswaListItem/${m.id}`}
+                          href={`/pewawancara/mahasiswa/${m.id}`}
                           className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
                         >
                           {done ? "Lihat" : "Isi Evaluasi"} <ChevronRight size={13} />

@@ -10,6 +10,7 @@ import {
   Menu,
   X,
   LogOut,
+  BookMarked,
 } from "lucide-react";
 import { useCurrentUser } from "@/hook/useCurrentUser";
 
@@ -37,18 +38,19 @@ export default function Topbar() {
   }
 
   // 2. Inisial avatar yang sama dengan Sidebar
-  const initials = user?.nama
-    ?.split(" ")
-    .slice(0, 2)
-    .map((n) => n[0])
-    .join("")
-    .toUpperCase() ?? "?";
+  const initials =
+    user?.nama
+      ?.split(" ")
+      .slice(0, 2)
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase() ?? "?";
 
   // 3. Daftar Menu yang disamakan dengan Sidebar
   const menuItems = [
     { href: "/mahasiswa/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-    { href: "/mahasiswa/aktivasi-bot", icon: Bell, label: "Aktivasi Bot" },
     { href: "/mahasiswa/chatbot", icon: Bot, label: "SAKABOT" },
+    { href: "/mahasiswa/monev", icon: BookMarked, label: "Evaluasi" },
   ];
 
   return (
@@ -127,7 +129,9 @@ export default function Topbar() {
                     <p className="text-sm font-bold text-slate-700 truncate">
                       {user?.nama ?? "Memuat..."}
                     </p>
-                    <p className="text-[10px] text-slate-500">Mahasiswa SAKTI</p>
+                    <p className="text-[10px] text-slate-500">
+                      Mahasiswa SAKTI
+                    </p>
                   </div>
                 </div>
               </div>

@@ -359,12 +359,12 @@ export default function EvaluasiDetailPage({ params }: { params: Promise<{ id: s
                 <div>
                   <SectionHeader title="Kondisi Tempat Tinggal Riil" icon={Home} />
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
-                    <ReadField label="Kepemilikan Rumah (Enum)"  value={kandidat.kepemilikan_rumah} />
+                    <ReadField label="Kepemilikan Rumah"  value={kandidat.kepemilikan_rumah} />
                     <ReadField label="Tahun Perolehan"           value={kandidat.tahun_perolehan} />
                     <ReadField label="Luas Tanah (m²)"           value={kandidat.luas_tanah} />
                     <ReadField label="Luas Bangunan (m²)"        value={kandidat.luas_bangunan} />
-                    <ReadField label="Sumber Air (Enum)"         value={kandidat.sumber_air} />
-                    <ReadField label="MCK (Enum)"                value={kandidat.mck} />
+                    <ReadField label="Sumber Air"         value={kandidat.sumber_air} />
+                    <ReadField label="MCK"                value={kandidat.mck} />
                     <ReadField label="Jarak Pusat Kota"          value={kandidat.jarak_pusat_kota ? `${kandidat.jarak_pusat_kota} km` : null} />
                     <ReadField label="Kondisi Rumah"             value={kandidat.kondisi_rumah} />
                   </div>

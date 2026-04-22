@@ -2,6 +2,8 @@
 
 import { useCurrentUser } from "@/hook/useCurrentUser";
 import { MessageSquare, Plus, HelpCircle, X, Bot } from "lucide-react"; // Menggunakan Lucide
+import Image from "next/image";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"; // Pastikan path ini sesuai dengan letak komponen shadcn-mu
 
 const MOCK_HISTORY = [
   { id: "1", title: "Syarat KIP-Kuliah 2024", active: true },
@@ -29,12 +31,12 @@ export default function ChatSidebar({ isOpen, onClose }: ChatSidebarProps) {
       <div className="px-6 py-6 md:py-8">
         <div className="flex items-center justify-between mb-8">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary to-blue-700 flex items-center justify-center text-white shadow-lg shrink-0">
-              <Bot className="w-6 h-6" />
-            </div>
+            <Avatar className="size-10 shrink-0 mt-1 shadow-sm">
+            <AvatarImage alt="SAKABOT" src="https://api.dicebear.com/9.x/glass/svg?seed=alice" />
+          </Avatar>
             <div>
               <h1 className="text-xl font-headline font-bold text-primary tracking-tight">SAKABOT</h1>
-              <p className="text-[10px] font-semibold text-slate-500 tracking-wider uppercase">Puslapdik Assistant</p>
+              <p className="text-[10px] font-semibold text-slate-500 tracking-wider uppercase">Chatbot SAKTI</p>
             </div>
           </div>
           
@@ -42,6 +44,7 @@ export default function ChatSidebar({ isOpen, onClose }: ChatSidebarProps) {
           <button 
             onClick={onClose}
             className="md:hidden p-1.5 text-slate-400 hover:bg-slate-200 rounded-lg transition-colors"
+            title="Tutup Modal"
           >
             <X className="w-5 h-5" />
           </button>
