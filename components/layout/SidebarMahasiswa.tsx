@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { LayoutDashboard, Bell, Bot, Send, LogOut } from "lucide-react";
+import { LayoutDashboard, Bell, Bot, Send, LogOut, BookMarked } from "lucide-react";
 import { useCurrentUser } from "@/hook/useCurrentUser";
 
 export default function SidebarMahasiswa() {
@@ -12,8 +12,8 @@ export default function SidebarMahasiswa() {
 
   const menuItems = [
     { href: "/mahasiswa/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-    { href: "/mahasiswa/aktivasi-bot", icon: Bell, label: "Aktivasi Bot" },
     { href: "/mahasiswa/chatbot", icon: Bot, label: "SAKABOT" },
+    { href: "/mahasiswa/monev", icon: BookMarked, label: "Evaluasi" },
   ];
 
   async function handleLogout() {
@@ -79,16 +79,6 @@ export default function SidebarMahasiswa() {
 
       {/* Bottom Actions */}
       <div className="px-4 py-4 mt-auto space-y-3">
-        <a
-          href="https://t.me/SAKTI_Undip_Bot"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full flex items-center justify-center gap-2 bg-primary text-white py-3 rounded-xl font-bold shadow-md hover:bg-primary/90 transition-all"
-        >
-          <Send className="w-4 h-4" />
-          Hubungkan Telegram
-        </a>
-
         <button
           onClick={handleLogout}
           className="flex items-center gap-3 px-4 py-3 text-red-600 font-medium hover:bg-red-50 rounded-xl transition-all w-full"

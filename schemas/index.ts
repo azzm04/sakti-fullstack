@@ -158,13 +158,10 @@ export const ContactFormSchema = z.object({
 export type ContactFormData = z.infer<typeof ContactFormSchema>;
 
 /* =========================
-   Import Data / Kandidat KIPK
-   Sesuai tabel kandidat di database
+   Import Data / Kandidat KIPK (Form Import)
 ========================= */
 export const CandidateDataSchema = z.object({
   no: z.number().optional(),
-
-  // Data Awal (1–23)
   no_pendaftaran_kipk: z.string().default(""),
   no_bantuan_sosial:   z.string().default(""),
   nama:                z.string().default(""),
@@ -187,37 +184,9 @@ export const CandidateDataSchema = z.object({
   daya_listrik:        z.string().default(""),
   no_hp:               z.string().default(""),
   email:               z.string().default(""),
-
-  // Koordinat
   koordinat:  z.string().default(""),
   latitude:   z.number().default(0),
   longitude:  z.number().default(0),
-
-  // Validasi (24–46) — diisi pewawancara
-  validasi_kks:              z.string().default(""),
-  validasi_kip:              z.string().default(""),
-  validasi_sktm:             z.string().default(""),
-  sosial_media:              z.string().default(""),
-  ket_pekerjaan_ayah:        z.string().default(""),
-  ket_penghasilan_ayah:      z.string().default(""),
-  ket_pekerjaan_ibu:         z.string().default(""),
-  ket_penghasilan_ibu:       z.string().default(""),
-  penghasilan_lain:          z.number().nonnegative().default(0),
-  jml_tanggungan_sebenarnya: z.number().nonnegative().default(0),
-  validasi_orang_rumah:      z.number().nonnegative().default(0),
-  kepemilikan_rumah:         z.string().default(""),
-  tahun_perolehan:           z.string().default(""),
-  luas_tanah:                z.number().nonnegative().default(0),
-  luas_bangunan:             z.number().nonnegative().default(0),
-  sumber_air:                z.string().default(""),
-  mck:                       z.string().default(""),
-  aset:                      z.string().default(""),
-  kondisi_rumah:             z.string().default(""),
-  jarak_pusat_kota:          z.number().nonnegative().default(0),
-  rekomendasi:               z.string().default(""),
-  alasan:                    z.string().default(""),
-  pewawancara:               z.string().default(""),
-
   // Validation flags (client-side only)
   hasErrors:     z.boolean().default(false),
   missingFields: z.array(z.string()).default([]),
@@ -231,7 +200,6 @@ export const ValidationSummarySchema = z.object({
   total: z.number().nonnegative(),
 });
 export type ValidationSummary = z.infer<typeof ValidationSummarySchema>;
-
 
 export const SortKeySchema = z.enum(["rank", "ipk", "penghasilan_raw", "skor"]);
 export type SortKey = z.infer<typeof SortKeySchema>;
@@ -248,121 +216,103 @@ export const StatusFilterSchema = z.enum([
 export type StatusFilter = z.infer<typeof StatusFilterSchema>;
 
 /* =========================
-   Kandidat DB (full row)
+   Kandidat DB (Base Table: kandidat)
 ========================= */
-export const KandidatSchema = z.object({
-  id:                        z.union([z.string(), z.number()]),
-  import_batch_id:           z.number().nullable().optional(),
-  no:                        z.number(),
-  no_pendaftaran_kipk:       z.string().default(""),
-  no_bantuan_sosial:         z.string().default(""),
-  nama:                      z.string().default(""),
-  prodi:                     z.string().default(""),
-  nik:                       z.string().default(""),
-  no_kartu_keluarga:         z.string().default(""),
-  nisn:                      z.string().default(""),
-  asal_sekolah:              z.string().default(""),
-  status_dtsen:              z.string().default(""),
-  jumlah_tanggungan:         z.number().default(0),
-  jumlah_orang_rumah:        z.number().default(0),
-  pekerjaan_ayah:            z.string().default(""),
-  pekerjaan_ibu:             z.string().default(""),
-  penghasilan_ayah:          z.number().default(0),
-  penghasilan_ibu:           z.number().default(0),
-  kab_kota:                  z.string().default(""),
-  provinsi:                  z.string().default(""),
-  alamat:                    z.string().default(""),
-  pbb:                       z.number().default(0),
-  daya_listrik:              z.string().default(""),
-  no_hp:                     z.string().default(""),
-  email:                     z.string().default(""),
-  koordinat:                 z.string().default(""),
-  latitude:                  z.number().default(0),
-  longitude:                 z.number().default(0),
-  // Validasi wawancara
-  validasi_kks:              z.string().default(""),
-  validasi_kip:              z.string().default(""),
-  validasi_sktm:             z.string().default(""),
-  sosial_media:              z.string().default(""),
-  ket_pekerjaan_ayah:        z.string().default(""),
-  ket_penghasilan_ayah:      z.string().default(""),
-  ket_pekerjaan_ibu:         z.string().default(""),
-  ket_penghasilan_ibu:       z.string().default(""),
-  penghasilan_lain:          z.number().default(0),
-  jml_tanggungan_sebenarnya: z.number().default(0),
-  validasi_orang_rumah:      z.number().default(0),
-  kepemilikan_rumah:         z.string().default(""),
-  tahun_perolehan:           z.string().default(""),
-  luas_tanah:                z.number().default(0),
-  luas_bangunan:             z.number().default(0),
-  sumber_air:                z.string().default(""),
-  mck:                       z.string().default(""),
-  aset:                      z.string().default(""),
-  kondisi_rumah:             z.string().default(""),
-  jarak_pusat_kota:          z.number().default(0),
-  rekomendasi:               z.string().default(""),
-  alasan:                    z.string().default(""),
-  pewawancara:               z.string().default(""),
-  hasil_akhir:               z.number().nullable().optional(),
-  jalur_masuk:               z.string().default(""),
-  skor_total:                z.number().default(0),
-  ranking:                   z.number().nullable().optional(),
-  status_wawancara:          z.string().default("pending"),
-  pewawancara_id:            z.number().nullable().optional(),
-  interviewed_at:            z.string().nullable().optional(),
-  status_seleksi:            z.string().nullable().optional(),
-  catatan_admin:             z.string().nullable().optional(),
-  created_at:                z.string().optional(),
-  updated_at:                z.string().optional(),
-  // Join field dari API
-  pewawancara_data: z.object({
-    id:     z.number(),
-    nama:   z.string(),
-    email:  z.string(),
-    sso_id: z.string().nullable().optional(),
-  }).nullable().optional(),
+export const KandidatBaseSchema = z.object({
+  id:                  z.union([z.string(), z.number()]),
+  import_batch_id:     z.number().nullable().optional(),
+  no:                  z.number().nullable().optional(),
+  no_pendaftaran_kipk: z.string().nullable().optional(),
+  no_bantuan_sosial:   z.string().nullable().optional(),
+  nama:                z.string().nullable().optional(),
+  prodi:               z.string().nullable().optional(),
+  nik:                 z.string().nullable().optional(),
+  no_kartu_keluarga:   z.string().nullable().optional(),
+  nisn:                z.string().nullable().optional(),
+  asal_sekolah:        z.string().nullable().optional(),
+  status_dtsen:        z.string().nullable().optional(),
+  jumlah_tanggungan:   z.number().nullable().optional(),
+  jumlah_orang_rumah:  z.number().nullable().optional(),
+  pekerjaan_ayah:      z.string().nullable().optional(),
+  pekerjaan_ibu:       z.string().nullable().optional(),
+  penghasilan_ayah:    z.union([z.string(), z.number()]).nullable().optional(),
+  penghasilan_ibu:     z.union([z.string(), z.number()]).nullable().optional(),
+  kab_kota:            z.string().nullable().optional(),
+  provinsi:            z.string().nullable().optional(),
+  alamat:              z.string().nullable().optional(),
+  pbb:                 z.number().nullable().optional(),
+  daya_listrik:        z.string().nullable().optional(),
+  no_hp:               z.string().nullable().optional(),
+  email:               z.string().nullable().optional(),
+  koordinat:           z.string().nullable().optional(),
+  latitude:            z.number().nullable().optional(),
+  longitude:           z.number().nullable().optional(),
+  skor_total:          z.number().nullable().optional(),
+  ranking:             z.number().nullable().optional(),
+  status_seleksi:      z.string().nullable().optional(),
+  catatan_admin:       z.string().nullable().optional(),
+  jalur_masuk:         z.string().nullable().optional(),
+  hasil_seleksi:       z.string().nullable().optional(),
+  created_at:          z.string().nullable().optional(),
+  updated_at:          z.string().nullable().optional(),
 });
-export type Kandidat = z.infer<typeof KandidatSchema>;
+export type KandidatBase = z.infer<typeof KandidatBaseSchema>;
 
 /* =========================
-   Evaluasi list item (admin)
+   Hasil Wawancara DB (Base Table: hasil_wawancara)
 ========================= */
-export const MahasiswaEvaluasiSchema = z.object({
-  id:                        z.string(),
-  no:                        z.number(),
-  no_pendaftaran_kipk:       z.string(),
-  nama:                      z.string(),
-  prodi:                     z.string(),
-  nik:                       z.string().optional(),
-  no_hp:                     z.string().optional(),
-  email:                     z.string().optional(),
-  hasil_akhir:               z.number().nullable().optional(),
-  alasan:                    z.string().optional(),
-  pewawancara:               z.string().optional(),
-  status_wawancara:          z.string().optional(),
+export const HasilWawancaraBaseSchema = z.object({
+  hasil_wawancara_id:        z.number().nullable().optional(),
+  kandidat_id:               z.number().nullable().optional(),
   pewawancara_id:            z.number().nullable().optional(),
-  // Field validasi wawancara — untuk cek kelengkapan
-  jalur_masuk:               z.string().optional(),
-  validasi_kks:              z.string().optional(),
-  validasi_kip:              z.string().optional(),
-  validasi_sktm:             z.string().optional(),
-  sosial_media:              z.string().optional(),
-  ket_pekerjaan_ayah:        z.string().optional(),
-  ket_penghasilan_ayah:      z.string().optional(),
-  ket_pekerjaan_ibu:         z.string().optional(),
-  ket_penghasilan_ibu:       z.string().optional(),
-  jml_tanggungan_sebenarnya: z.number().optional(),
-  validasi_orang_rumah:      z.number().optional(),
-  kepemilikan_rumah:         z.string().optional(),
-  tahun_perolehan:           z.string().optional(),
-  luas_tanah:                z.number().optional(),
-  luas_bangunan:             z.number().optional(),
-  sumber_air:                z.string().optional(),
-  mck:                       z.string().optional(),
-  kondisi_rumah:             z.string().optional(),
-  jarak_pusat_kota:          z.number().optional(),
+  validasi_kks:              z.boolean().nullable().optional(),
+  validasi_kip:              z.boolean().nullable().optional(),
+  validasi_sktm:             z.boolean().nullable().optional(),
+  sosial_media:              z.string().nullable().optional(),
+  ket_pekerjaan_ayah:        z.string().nullable().optional(),
+  ket_penghasilan_ayah:      z.number().nullable().optional(),
+  ket_pekerjaan_ibu:         z.string().nullable().optional(),
+  ket_penghasilan_ibu:       z.number().nullable().optional(),
+  penghasilan_lain:          z.number().nullable().optional(),
+  jml_tanggungan_sebenarnya: z.number().nullable().optional(),
+  validasi_orang_rumah:      z.number().nullable().optional(),
+  kepemilikan_rumah:         z.number().nullable().optional(),
+  tahun_perolehan:           z.string().nullable().optional(),
+  luas_tanah:                z.number().nullable().optional(),
+  luas_bangunan:             z.number().nullable().optional(),
+  sumber_air:                z.number().nullable().optional(),
+  mck:                       z.number().nullable().optional(),
+  aset:                      z.string().nullable().optional(),
+  kondisi_rumah:             z.string().nullable().optional(),
+  jarak_pusat_kota:          z.number().nullable().optional(),
+  rekomendasi:               z.string().nullable().optional(),
+  alasan:                    z.string().nullable().optional(),
+  is_draft:                  z.boolean().nullable().optional(),
+  interviewed_at:            z.string().nullable().optional(),
+});
+export type HasilWawancaraBase = z.infer<typeof HasilWawancaraBaseSchema>;
+
+/* =========================
+   Pewawancara Data (Partial untuk Join)
+========================= */
+export const PewawancaraDataSchema = z.object({
+  id:     z.number(),
+  nama:   z.string(),
+  email:  z.string().optional(),
+  sso_id: z.string().nullable().optional(),
+});
+
+/* =========================
+   Mahasiswa Evaluasi / Kandidat (API Response Merged)
+========================= */
+export const MahasiswaEvaluasiSchema = KandidatBaseSchema.merge(HasilWawancaraBaseSchema).extend({
+  hasil_akhir:      z.number().nullable().optional(), // Mapping untuk UI
+  pewawancara:      z.string().nullable().optional(), // Nama pewawancara
+  pewawancara_data: PewawancaraDataSchema.nullable().optional(),
+  status_wawancara: z.string().default("pending"),
 });
 export type MahasiswaEvaluasi = z.infer<typeof MahasiswaEvaluasiSchema>;
+export type Kandidat = MahasiswaEvaluasi; // Alias agar komponen lama tidak error
 
 /* =========================
    Pewawancara DB
@@ -422,7 +372,7 @@ export const WarStatusSchema = z.object({
 export type WarStatus = z.infer<typeof WarStatusSchema>;
 
 /* =========================
-   Mahasiswa list (pewawancara)
+   Mahasiswa list (pewawancara) - flattened untuk client
 ========================= */
 export const MahasiswaListItemSchema = z.object({
   id:                  z.string(),
@@ -430,10 +380,12 @@ export const MahasiswaListItemSchema = z.object({
   no_pendaftaran_kipk: z.string(),
   nama:                z.string(),
   prodi:               z.string(),
-  rekomendasi:         z.string().optional(),
-  pewawancara:         z.string().optional(),
-  status_wawancara:    z.string().optional(),
   pewawancara_id:      z.number().nullable().optional(),
+  pewawancara:         z.string().nullable().optional(),
+  rekomendasi:         z.string().nullable().optional(),
+  alasan:              z.string().nullable().optional(),
+  is_draft:            z.boolean().optional(),
+  status_wawancara:    z.string().optional(),
 });
 export type MahasiswaListItem = z.infer<typeof MahasiswaListItemSchema>;
 

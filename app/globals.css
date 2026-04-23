@@ -22,8 +22,8 @@
   --color-secondary: hsl(215 19% 35%);
   --color-secondary-foreground: hsl(0 0% 100%);
   
-  /* Tertiary (#743B00) */
-  --color-tertiary: hsl(31 100% 23%);
+  /* Tertiary (#FFFFFF) */
+  --color-tertiary:#FFFFFF;
   --color-tertiary-foreground: hsl(0 0% 100%);
 
   /* UI Komponen Shadcn */

@@ -5,85 +5,98 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search") ?? "";
-    const filter = searchParams.get("filter") ?? "semua";
     const page   = Math.max(1, parseInt(searchParams.get("page") ?? "1"));
     const limit  = 50;
     const from   = (page - 1) * limit;
     const to     = from + limit - 1;
 
-    // ── Query halaman (dengan filter & search) ────────────────────────────────
     let query = supabaseAdmin
       .from("kandidat")
-      .select(
-        "id, no, no_pendaftaran_kipk, nama, prodi, nik, no_hp, email, " +
-        "pewawancara, hasil_akhir, import_batch_id, created_at, " +
-        "status_wawancara, pewawancara_id, jalur_masuk, " +
-        // Field validasi untuk cek kelengkapan
-        "validasi_kks, validasi_kip, validasi_sktm, sosial_media, " +
-        "ket_pekerjaan_ayah, ket_penghasilan_ayah, ket_pekerjaan_ibu, ket_penghasilan_ibu, " +
-        "jml_tanggungan_sebenarnya, validasi_orang_rumah, " +
-        "kepemilikan_rumah, tahun_perolehan, luas_tanah, luas_bangunan, " +
-        "sumber_air, mck, kondisi_rumah, jarak_pusat_kota",
-        { count: "exact" }
-      )
+      .select(`
+        *,
+        hasil_wawancara (
+          *,
+          pewawancara:pewawancara_id (nama)
+        )
+      `, { count: "exact" })
       .order("no", { ascending: true })
       .range(from, to);
 
     if (search) {
-      query = query.or(
-        `nama.ilike.%${search}%,no_pendaftaran_kipk.ilike.%${search}%,prodi.ilike.%${search}%`
-      );
+      query = query.or(`nama.ilike.%${search}%,no_pendaftaran_kipk.ilike.%${search}%,prodi.ilike.%${search}%`);
     }
 
-    // Filter dasar di DB — cek field utama
-    // Kelengkapan penuh dicek di client via getStatus()
-    if (filter === "selesai") {
-      query = query
-        .not("hasil_akhir", "is", null)
-        .not("pewawancara", "is", null).neq("pewawancara", "")
-        .not("jalur_masuk", "is", null).neq("jalur_masuk", "")
-        .not("kondisi_rumah", "is", null).neq("kondisi_rumah", "");
-    } else if (filter === "belum") {
-      query = query.or(
-        "hasil_akhir.is.null,pewawancara.is.null,pewawancara.eq.,jalur_masuk.is.null,jalur_masuk.eq.,kondisi_rumah.is.null,kondisi_rumah.eq."
-      );
-    }
-
-    const { data, count, error } = await query;
+    const { data: rawData, count, error } = await query;
     if (error) throw error;
 
-    const [{ count: totalSelesai }, { count: totalBelum }] = await Promise.all([
-      supabaseAdmin
-        .from("kandidat")
-        .select("id", { count: "exact", head: true })
-        .not("hasil_akhir", "is", null)
-        .not("pewawancara", "is", null).neq("pewawancara", "")
-        .not("jalur_masuk", "is", null).neq("jalur_masuk", "")
-        .not("kondisi_rumah", "is", null).neq("kondisi_rumah", "")
-        .not("validasi_kks", "is", null).neq("validasi_kks", "")
-        .not("sumber_air", "is", null).neq("sumber_air", "")
-        .not("kepemilikan_rumah", "is", null).neq("kepemilikan_rumah", ""),
-      supabaseAdmin
-        .from("kandidat")
-        .select("id", { count: "exact", head: true })
-        .or(
-          "hasil_akhir.is.null,pewawancara.is.null,pewawancara.eq.,jalur_masuk.is.null,jalur_masuk.eq.,kondisi_rumah.is.null,kondisi_rumah.eq.,validasi_kks.is.null,validasi_kks.eq."
-        ),
-    ]);
+    const data = (rawData ?? []).map((row: Record<string, unknown>) => {
+      const hw = Array.isArray(row.hasil_wawancara) ? row.hasil_wawancara[0] : row.hasil_wawancara;
+      
+      // Mapping Teks Rekomendasi dari DB ke Nomor untuk UI
+      let mappedHasil = null;
+      const rekDb = hw?.rekomendasi?.toLowerCase() || "";
+      if (rekDb.includes("tidak")) mappedHasil = 3;
+      else if (rekDb.includes("pertimbang")) mappedHasil = 2;
+      else if (rekDb.includes("layak")) mappedHasil = 1;
+      
+      const pewawancaraData = Array.isArray(hw?.pewawancara) ? hw?.pewawancara[0] : hw?.pewawancara;
+
+      return {
+        ...row,
+        hasil_wawancara: undefined,
+        
+        // Flatten hasil_wawancara
+        hasil_wawancara_id: hw?.id,
+        validasi_kks: hw?.validasi_kks,
+        validasi_kip: hw?.validasi_kip,
+        validasi_sktm: hw?.validasi_sktm,
+        sosial_media: hw?.sosial_media,
+        ket_pekerjaan_ayah: hw?.ket_pekerjaan_ayah,
+        ket_penghasilan_ayah: hw?.ket_penghasilan_ayah,
+        ket_pekerjaan_ibu: hw?.ket_pekerjaan_ibu,
+        ket_penghasilan_ibu: hw?.ket_penghasilan_ibu,
+        penghasilan_lain: hw?.penghasilan_lain,
+        jml_tanggungan_sebenarnya: hw?.jml_tanggungan_sebenarnya,
+        validasi_orang_rumah: hw?.validasi_orang_rumah,
+        kepemilikan_rumah: hw?.kepemilikan_rumah,
+        tahun_perolehan: hw?.tahun_perolehan,
+        luas_tanah: hw?.luas_tanah,
+        luas_bangunan: hw?.luas_bangunan,
+        sumber_air: hw?.sumber_air,
+        mck: hw?.mck,
+        aset: hw?.aset,
+        kondisi_rumah: hw?.kondisi_rumah,
+        jarak_pusat_kota: hw?.jarak_pusat_kota,
+        rekomendasi: hw?.rekomendasi,
+        alasan: hw?.alasan,
+        pewawancara_id: hw?.pewawancara_id,
+        is_draft: hw?.is_draft,
+        interviewed_at: hw?.interviewed_at,
+        
+        // Nilai Khusus UI List
+        hasil_akhir: mappedHasil,
+        pewawancara: pewawancaraData?.nama || null,
+      };
+    });
+
+    // Hitung total data untuk statistik atas
+    const { count: totalKandidat } = await supabaseAdmin.from("kandidat").select("id", { count: "exact", head: true });
+    const { count: totalWawancara } = await supabaseAdmin.from("hasil_wawancara").select("id", { count: "exact", head: true });
+    
+    const realTotal = totalKandidat ?? 0;
+    const realTotalSelesai = totalWawancara ?? 0;
+    const realTotalBelum = realTotal - realTotalSelesai;
 
     return NextResponse.json({
-      data:         data ?? [],
-      total:        count ?? 0,
+      data,
+      total: count ?? 0,
       page,
-      totalPages:   Math.ceil((count ?? 0) / limit),
-      totalSelesai: totalSelesai ?? 0,
-      totalBelum:   totalBelum  ?? 0,
+      totalPages: Math.ceil((count ?? 0) / limit),
+      totalSelesai: realTotalSelesai,
+      totalBelum: realTotalBelum,
     });
   } catch (err) {
     console.error("[GET /api/admin/evaluasi]", err);
-    return NextResponse.json(
-      { error: "Gagal mengambil data", detail: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Gagal mengambil data" }, { status: 500 });
   }
 }

@@ -37,17 +37,12 @@ export default function ChatbotPage() {
             <button 
               onClick={() => setIsSidebarOpen(true)}
               className="md:hidden p-2 text-slate-500 hover:bg-slate-200 rounded-lg transition-colors"
+              title="Buka Modal"
             >
               <Menu className="w-6 h-6" />
             </button>
 
             <div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest hidden sm:inline-block">
-                  Interaksi Aktif
-                </span>
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse hidden sm:block" />
-              </div>
               <h2 className="font-headline font-extrabold text-lg md:text-xl text-primary tracking-tight leading-none mt-0.5">
                 SAKABOT AI
               </h2>

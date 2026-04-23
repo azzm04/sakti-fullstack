@@ -36,7 +36,7 @@ export default function PewawancaraMahasiswaPage() {
     setLocked(false);
     try {
       const params = new URLSearchParams({ mode, search, page: String(page) });
-      const res  = await fetch(`/api/pewawancara/MahasiswaListItem?${params}`);
+      const res  = await fetch(`/api/pewawancara/mahasiswa?${params}`);
       const json: MahasiswaApiResponse = await res.json();
 
       if (res.status === 403 && json.locked) {
@@ -225,10 +225,9 @@ export default function PewawancaraMahasiswaPage() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      {/* Mode hari_ini/semua: hanya tampilkan aksi untuk yang belum selesai */}
                       {(mode === "saya" || !done) ? (
                         <Link
-                          href={`/pewawancara/MahasiswaListItem/${m.id}`}
+                          href={`/pewawancara/mahasiswa/${m.id}`}
                           className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
                         >
                           {done ? "Lihat" : "Isi Evaluasi"} <ChevronRight size={13} />

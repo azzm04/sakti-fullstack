@@ -5,28 +5,25 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
-  ArrowLeft, Save, Trash2, User, Phone, Mail, BookOpen,
+  ArrowLeft, Save, Trash2, Home,
   ClipboardList, AlertCircle, CheckCircle2, Loader2,
-  MapPin, UserCheck, Eye, Home,
+  UserCheck, Eye,
 } from "lucide-react";
 
 import type { Kandidat } from "@/schemas";
 
-type PewawancaraData = NonNullable<Kandidat["pewawancara_data"]>;
-
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
-const HASIL_AKHIR_OPTIONS: { label: string; value: number; active: string; inactive: string }[] = [
-  { label: "Layak",           value: 1, active: "bg-emerald-500 text-white border-emerald-500", inactive: "bg-white text-muted-foreground border-border hover:border-emerald-400" },
-  { label: "Dipertimbangkan", value: 2, active: "bg-amber-500 text-white border-amber-500",    inactive: "bg-white text-muted-foreground border-border hover:border-amber-400"   },
-  { label: "Tidak Layak",     value: 3, active: "bg-red-500 text-white border-red-500",        inactive: "bg-white text-muted-foreground border-border hover:border-red-400"     },
+const HASIL_AKHIR_OPTIONS = [
+  { label: "Layak",           value: 1, text_db: "Layak",           active: "bg-emerald-500 text-white border-emerald-500", inactive: "bg-white text-muted-foreground border-border hover:border-emerald-400" },
+  { label: "Dipertimbangkan", value: 2, text_db: "Dipertimbangkan", active: "bg-amber-500 text-white border-amber-500",    inactive: "bg-white text-muted-foreground border-border hover:border-amber-400"   },
+  { label: "Tidak Layak",     value: 3, text_db: "Tidak Layak",     active: "bg-red-500 text-white border-red-500",        inactive: "bg-white text-muted-foreground border-border hover:border-red-400"     },
 ];
 
 const fmt = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 });
 
 function ReadField({ label, value }: { label: string; value?: string | number | null }) {
-  const display = value !== undefined && value !== null && value !== 0 && value !== ""
-    ? String(value) : "—";
+  const display = value !== undefined && value !== null && value !== 0 && value !== "" ? String(value) : "—";
   return (
     <div>
       <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-0.5">{label}</p>
@@ -44,30 +41,33 @@ function SectionHeader({ title, icon: Icon }: { title: string; icon?: React.Elem
   );
 }
 
-function Badge({ value, type }: { value: string; type: "validasi" | "rekomendasi" | "status" }) {
-  if (!value) return <span className="text-slate-300 text-xs">—</span>;
+function Badge({ value, type }: { value: boolean | string | null | undefined; type: "validasi" | "rekomendasi" }) {
+  if (value === null || value === undefined || value === "") return <span className="text-slate-300 text-xs">—</span>;
 
   if (type === "validasi") {
-    const ada = value === "Ada";
+    // Di DB yang baru validasi menggunakan boolean (true/false)
+    const isValid = value === true || value === "Ada" || value === "true";
     return (
       <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
-        ada ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-600 border-red-200"
-      }`}>{value}</span>
+        isValid ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-red-50 text-red-600 border-red-200"
+      }`}>
+        {isValid ? "Ada" : "Tidak ada"}
+      </span>
     );
   }
 
   if (type === "rekomendasi") {
-    const lower = value.toLowerCase();
+    const lower = String(value).toLowerCase();
     if (lower.includes("layak") && !lower.includes("tidak") && !lower.includes("pertimbang")) {
-      return <span className="text-[11px] font-bold px-2 py-0.5 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200">{value}</span>;
+      return <span className="text-[11px] font-bold px-2 py-0.5 rounded-full border bg-emerald-50 text-emerald-700 border-emerald-200">{String(value)}</span>;
     }
-    if (lower.includes("pertimbang") || lower.includes("dipertimbangkan")) {
-      return <span className="text-[11px] font-bold px-2 py-0.5 rounded-full border bg-amber-50 text-amber-700 border-amber-200">{value}</span>;
+    if (lower.includes("pertimbang")) {
+      return <span className="text-[11px] font-bold px-2 py-0.5 rounded-full border bg-amber-50 text-amber-700 border-amber-200">{String(value)}</span>;
     }
-    return <span className="text-[11px] font-bold px-2 py-0.5 rounded-full border bg-red-50 text-red-600 border-red-200">{value}</span>;
+    return <span className="text-[11px] font-bold px-2 py-0.5 rounded-full border bg-red-50 text-red-600 border-red-200">{String(value)}</span>;
   }
 
-  return <span className="text-xs text-on-surface">{value}</span>;
+  return <span className="text-xs text-on-surface">{String(value)}</span>;
 }
 
 export default function EvaluasiDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -76,20 +76,32 @@ export default function EvaluasiDetailPage({ params }: { params: Promise<{ id: s
 
   const [kandidat, setKandidat] = useState<Kandidat | null>(null);
   const [loading, setLoading]   = useState(true);
-  const [form, setForm] = useState({ aset: "", hasil_akhir: null as number | null, alasan: "", pewawancara: "" });
+  const [form, setForm] = useState({ 
+    hasil_akhir: null as number | null, 
+    rekomendasi_teks: "", // Nilai asli DB
+    alasan: ""
+  });
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [showDelete, setShowDelete] = useState(false);
 
   useEffect(() => {
     fetch(`/api/admin/evaluasi/${id}`)
       .then((r) => r.json())
-      .then((d) => {
+      .then((res) => {
+        const d = res.data || res; // handle jika response dibungkus object { data: ... }
         setKandidat(d);
+
+        // Mapping Teks Rekomendasi dari DB ke Nomor UI (1,2,3)
+        let mappedHasil = null;
+        const rekDb = d.rekomendasi?.toLowerCase() || "";
+        if (rekDb.includes("tidak")) mappedHasil = 3;
+        else if (rekDb.includes("pertimbang")) mappedHasil = 2;
+        else if (rekDb.includes("layak")) mappedHasil = 1;
+
         setForm({
-          aset:        d.aset        ?? "",
-          hasil_akhir: d.hasil_akhir ?? null,
-          alasan:      d.alasan      ?? "",
-          pewawancara: d.pewawancara ?? "",
+          hasil_akhir: mappedHasil,
+          rekomendasi_teks: d.rekomendasi || "",
+          alasan: d.alasan || "",
         });
       })
       .catch(() => setKandidat(null))
@@ -98,13 +110,24 @@ export default function EvaluasiDetailPage({ params }: { params: Promise<{ id: s
 
   async function handleSave() {
     setSaveStatus("saving");
+
+    // Ambil string teks dari opsi yang dipilih user
+    const textRekomendasi = HASIL_AKHIR_OPTIONS.find(o => o.value === form.hasil_akhir)?.text_db || null;
+
     try {
+      // Endpoint PATCH harus di-setting agar meng-update tabel 'hasil_wawancara' (upsert)
       const res = await fetch(`/api/admin/evaluasi/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({
+          // Kirim rekomendasi sebagai string agar cocok dengan tipe varchar(50) di DB
+          rekomendasi: textRekomendasi, 
+          alasan: form.alasan,
+          is_draft: false // Tandai sudah bukan draft
+        }),
       });
       if (!res.ok) throw new Error();
+      
       setSaveStatus("saved");
       setTimeout(() => setSaveStatus("idle"), 2500);
     } catch {
@@ -114,6 +137,7 @@ export default function EvaluasiDetailPage({ params }: { params: Promise<{ id: s
   }
 
   async function handleDelete() {
+    // Endpoint DELETE harus diset agar menghapus record di 'hasil_wawancara'
     await fetch(`/api/admin/evaluasi/${id}`, { method: "DELETE" }).catch(() => {});
     router.push("/admin/evaluasi");
   }
@@ -137,58 +161,18 @@ export default function EvaluasiDetailPage({ params }: { params: Promise<{ id: s
     );
   }
 
+  // Cek kelengkapan berdasarkan relasi tabel hasil_wawancara
+  const hasWawancaraData = !!(kandidat.hasil_wawancara_id || kandidat.rekomendasi);
+  
+  // Asumsi kelengkapan untuk UI
   const isComplete = !!(
     form.hasil_akhir &&
-    form.pewawancara &&
     kandidat.jalur_masuk &&
-    kandidat.validasi_kks &&
-    kandidat.validasi_kip &&
-    kandidat.validasi_sktm &&
-    kandidat.sosial_media &&
+    kandidat.validasi_kks !== null &&
     kandidat.ket_pekerjaan_ayah &&
-    kandidat.ket_penghasilan_ayah &&
-    kandidat.ket_pekerjaan_ibu &&
-    kandidat.ket_penghasilan_ibu &&
     (kandidat.jml_tanggungan_sebenarnya ?? 0) > 0 &&
-    (kandidat.validasi_orang_rumah ?? 0) > 0 &&
-    kandidat.kepemilikan_rumah &&
-    kandidat.tahun_perolehan &&
-    (kandidat.luas_tanah ?? 0) > 0 &&
-    (kandidat.luas_bangunan ?? 0) > 0 &&
-    kandidat.sumber_air &&
-    kandidat.mck &&
-    kandidat.kondisi_rumah &&
-    (kandidat.jarak_pusat_kota ?? 0) > 0
+    kandidat.kepemilikan_rumah !== null
   );
-
-  const FIELD_CHECKS = [
-    // Hasil wawancara
-    { label: "Hasil Akhir",                  ok: !!form.hasil_akhir },
-    { label: "Nama Pewawancara",             ok: !!form.pewawancara },
-    { label: "Jalur Masuk",                  ok: !!kandidat.jalur_masuk },
-    // Validasi dokumen
-    { label: "Validasi KKS",                 ok: !!kandidat.validasi_kks },
-    { label: "Validasi KIP",                 ok: !!kandidat.validasi_kip },
-    { label: "Validasi SKTM",                ok: !!kandidat.validasi_sktm },
-    { label: "Sosial Media",                 ok: !!kandidat.sosial_media },
-    // Validasi penghasilan
-    { label: "Ket. Pekerjaan Ayah",          ok: !!kandidat.ket_pekerjaan_ayah },
-    { label: "Ket. Penghasilan Ayah",        ok: !!kandidat.ket_penghasilan_ayah },
-    { label: "Ket. Pekerjaan Ibu",           ok: !!kandidat.ket_pekerjaan_ibu },
-    { label: "Ket. Penghasilan Ibu",         ok: !!kandidat.ket_penghasilan_ibu },
-    { label: "Tanggungan Sebenarnya",        ok: (kandidat.jml_tanggungan_sebenarnya ?? 0) > 0 },
-    { label: "Orang Tinggal di Rumah",       ok: (kandidat.validasi_orang_rumah ?? 0) > 0 },
-    // Kondisi tempat tinggal
-    { label: "Kepemilikan Rumah",            ok: !!kandidat.kepemilikan_rumah },
-    { label: "Tahun Perolehan Rumah",        ok: !!kandidat.tahun_perolehan },
-    { label: "Luas Tanah",                   ok: (kandidat.luas_tanah ?? 0) > 0 },
-    { label: "Luas Bangunan",                ok: (kandidat.luas_bangunan ?? 0) > 0 },
-    { label: "Sumber Air",                   ok: !!kandidat.sumber_air },
-    { label: "MCK",                          ok: !!kandidat.mck },
-    { label: "Kondisi Rumah",                ok: !!kandidat.kondisi_rumah },
-    { label: "Jarak Pusat Kota",             ok: (kandidat.jarak_pusat_kota ?? 0) > 0 },
-  ];
-  const hasWawancaraData = !!(kandidat.kepemilikan_rumah || kandidat.kondisi_rumah || kandidat.validasi_kks);
 
   return (
     <div className="min-h-screen bg-surface p-6 md:p-10">
@@ -244,7 +228,7 @@ export default function EvaluasiDetailPage({ params }: { params: Promise<{ id: s
           {/* Info pewawancara yang bertugas */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
             className={`rounded-2xl border p-5 shadow-sm ${
-              kandidat.pewawancara_data ? "bg-white border-border" : "bg-slate-50 border-dashed border-slate-200"
+              kandidat.pewawancara_data || kandidat.pewawancara_id ? "bg-white border-border" : "bg-slate-50 border-dashed border-slate-200"
             }`}>
             <div className="flex items-center gap-2 mb-3">
               <div className="w-8 h-8 rounded-xl bg-primary/8 flex items-center justify-center">
@@ -252,15 +236,13 @@ export default function EvaluasiDetailPage({ params }: { params: Promise<{ id: s
               </div>
               <h3 className="font-bold text-on-surface text-sm">Pewawancara Bertugas</h3>
             </div>
-            {kandidat.pewawancara_data ? (
+            
+            {/* Fallback tampilkan ID pewawancara jika data join users tidak ada */}
+            {kandidat.pewawancara_data || kandidat.pewawancara_id ? (
               <div className="space-y-2">
-                <p className="font-semibold text-on-surface text-sm">{kandidat.pewawancara_data.nama}</p>
-                <p className="text-xs text-muted-foreground">{kandidat.pewawancara_data.email}</p>
-                {kandidat.pewawancara_data.sso_id && (
-                  <span className="text-[10px] font-bold font-mono px-2 py-0.5 bg-slate-100 text-slate-500 rounded-lg">
-                    {kandidat.pewawancara_data.sso_id}
-                  </span>
-                )}
+                <p className="font-semibold text-on-surface text-sm">
+                  {kandidat.pewawancara_data?.nama || `Pewawancara ID: ${kandidat.pewawancara_id}`}
+                </p>
                 {kandidat.interviewed_at && (
                   <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-1">
                     <CheckCircle2 size={11} className="text-emerald-500" />
@@ -272,32 +254,6 @@ export default function EvaluasiDetailPage({ params }: { params: Promise<{ id: s
               </div>
             ) : (
               <p className="text-xs text-muted-foreground italic">Belum ada pewawancara yang ditugaskan</p>
-            )}
-          </motion.div>
-
-          {/* Status evaluasi */}
-          <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}
-            className={`rounded-2xl border p-4 ${isComplete ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"}`}>
-            <div className="flex items-center gap-2 mb-2">
-              {isComplete ? <CheckCircle2 size={15} className="text-emerald-600" /> : <AlertCircle size={15} className="text-amber-600" />}
-              <p className={`text-xs font-bold ${isComplete ? "text-emerald-700" : "text-amber-700"}`}>
-                {isComplete ? "Evaluasi Lengkap" : "Evaluasi Belum Selesai"}
-              </p>
-            </div>
-            {isComplete ? (
-              <p className="text-[11px] text-emerald-600">Semua field wajib sudah terisi.</p>
-            ) : (
-              <div className="space-y-1 max-h-48 overflow-y-auto pr-1">
-                {FIELD_CHECKS.filter((f) => !f.ok).map((f) => (
-                  <p key={f.label} className="text-[11px] text-amber-700 flex items-center gap-1.5">
-                    <span className="w-1 h-1 rounded-full bg-amber-500 shrink-0" />
-                    {f.label} belum diisi
-                  </p>
-                ))}
-                <p className="text-[10px] text-amber-500 mt-1 font-semibold">
-                  {FIELD_CHECKS.filter((f) => !f.ok).length} dari {FIELD_CHECKS.length} field belum lengkap
-                </p>
-              </div>
             )}
           </motion.div>
 
@@ -316,18 +272,13 @@ export default function EvaluasiDetailPage({ params }: { params: Promise<{ id: s
               <div>
                 <SectionHeader title="Identitas" />
                 <div className="grid grid-cols-2 gap-3">
-                  <ReadField label="No. Pendaftaran KIPK"         value={kandidat.no_pendaftaran_kipk} />
-                  <ReadField label="No. Bantuan Sosial"           value={kandidat.no_bantuan_sosial}   />
-                  <ReadField label="NIK"                          value={kandidat.nik}                 />
-                  <ReadField label="No. Kartu Keluarga"           value={kandidat.no_kartu_keluarga}   />
-                  <ReadField label="NISN"                         value={kandidat.nisn}                />
-                  <ReadField label="Nama Sekolah Asal"            value={kandidat.asal_sekolah}        />
-                  <ReadField label="Kota/Kabupaten Asal"          value={kandidat.kab_kota}            />
-                  <ReadField label="Provinsi Asal"                value={kandidat.provinsi}            />
-                  <ReadField label="Alamat Domisili"              value={kandidat.alamat}              />
-                  <ReadField label="No. HP Aktif"                 value={kandidat.no_hp}               />
-                  <ReadField label="Alamat Email Aktif"           value={kandidat.email}               />
-                  <ReadField label="Koordinat / Link GPS"         value={kandidat.koordinat}           />
+                  <ReadField label="No. Pendaftaran KIPK"   value={kandidat.no_pendaftaran_kipk} />
+                  <ReadField label="No. Bantuan Sosial"     value={kandidat.no_bantuan_sosial}   />
+                  <ReadField label="NIK"                    value={kandidat.nik}                 />
+                  <ReadField label="No. Kartu Keluarga"     value={kandidat.no_kartu_keluarga}   />
+                  <ReadField label="NISN"                   value={kandidat.nisn}                />
+                  <ReadField label="Kota/Kabupaten Asal"    value={kandidat.kab_kota}            />
+                  <ReadField label="No. HP Aktif"           value={kandidat.no_hp}               />
                 </div>
               </div>
 
@@ -335,29 +286,20 @@ export default function EvaluasiDetailPage({ params }: { params: Promise<{ id: s
               <div>
                 <SectionHeader title="Status Sosial Ekonomi" />
                 <div className="grid grid-cols-2 gap-3">
-                  <ReadField label="Status DTSEN"                  value={kandidat.status_dtsen}       />
-                  <ReadField label="Jumlah Tanggungan"             value={kandidat.jumlah_tanggungan}  />
-                  <ReadField label="Jumlah Orang Tinggal di Rumah" value={kandidat.jumlah_orang_rumah} />
+                  <ReadField label="Status DTSEN"           value={kandidat.status_dtsen}        />
+                  <ReadField label="Jumlah Tanggungan"      value={kandidat.jumlah_tanggungan}  />
+                  <ReadField label="Orang Tinggal di Rumah" value={kandidat.jumlah_orang_rumah} />
                 </div>
               </div>
 
               {/* Pekerjaan & Penghasilan */}
               <div>
-                <SectionHeader title="Pekerjaan & Penghasilan" />
+                <SectionHeader title="Pekerjaan & Penghasilan (Awal)" />
                 <div className="grid grid-cols-2 gap-3">
                   <ReadField label="Pekerjaan Bapak/Wali"   value={kandidat.pekerjaan_ayah}  />
-                  <ReadField label="Penghasilan Bapak/Wali" value={kandidat.penghasilan_ayah ? fmt.format(kandidat.penghasilan_ayah) : "—"} />
+                  <ReadField label="Penghasilan Bapak/Wali" value={kandidat.penghasilan_ayah ? fmt.format(Number(kandidat.penghasilan_ayah)) : "—"} />
                   <ReadField label="Pekerjaan Ibu"          value={kandidat.pekerjaan_ibu}   />
-                  <ReadField label="Penghasilan Ibu"        value={kandidat.penghasilan_ibu  ? fmt.format(kandidat.penghasilan_ibu)  : "—"} />
-                </div>
-              </div>
-
-              {/* Kondisi Rumah */}
-              <div>
-                <SectionHeader title="Kondisi Tempat Tinggal (Klaim Mahasiswa)" />
-                <div className="grid grid-cols-2 gap-3">
-                  <ReadField label="Jumlah PBB Terakhir Dibayar" value={kandidat.pbb ? fmt.format(kandidat.pbb) : "—"} />
-                  <ReadField label="Daya Listrik"                value={kandidat.daya_listrik} />
+                  <ReadField label="Penghasilan Ibu"        value={kandidat.penghasilan_ibu  ? fmt.format(Number(kandidat.penghasilan_ibu))  : "—"} />
                 </div>
               </div>
             </div>
@@ -368,20 +310,20 @@ export default function EvaluasiDetailPage({ params }: { params: Promise<{ id: s
         <div className="xl:col-span-2 space-y-5">
 
           {/* Data yang diisi pewawancara — READ ONLY untuk admin */}
-          {hasWawancaraData && (
+          {hasWawancaraData ? (
             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
               className="bg-slate-50 rounded-2xl border border-border p-5">
               <div className="flex items-center gap-2 mb-4">
                 <Eye size={14} className="text-muted-foreground" />
                 <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                  Data Hasil Wawancara — Diisi Pewawancara
+                  Data Hasil Wawancara Lapangan
                 </p>
               </div>
 
               <div className="space-y-5">
                 {/* Validasi Dokumen */}
                 <div>
-                  <SectionHeader title="Validasi Dokumen" />
+                  <SectionHeader title="Validasi Kepemilikan Dokumen" />
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">KKS</p>
@@ -398,34 +340,33 @@ export default function EvaluasiDetailPage({ params }: { params: Promise<{ id: s
                   </div>
                 </div>
 
-                {/* Validasi Penghasilan */}
+                {/* Validasi Penghasilan Riil */}
                 <div>
-                  <SectionHeader title="Validasi Penghasilan" />
+                  <SectionHeader title="Validasi Penghasilan Riil" />
                   <div className="grid grid-cols-2 gap-4">
                     <ReadField label="Ket. Pekerjaan Ayah"    value={kandidat.ket_pekerjaan_ayah} />
-                    <ReadField label="Penghasilan Ayah/bln"   value={kandidat.ket_penghasilan_ayah} />
+                    <ReadField label="Penghasilan Ayah/bln"   value={kandidat.ket_penghasilan_ayah ? fmt.format(kandidat.ket_penghasilan_ayah) : null} />
                     <ReadField label="Ket. Pekerjaan Ibu"     value={kandidat.ket_pekerjaan_ibu} />
-                    <ReadField label="Penghasilan Ibu/bln"    value={kandidat.ket_penghasilan_ibu} />
-                    <ReadField label="Penghasilan Lain/bln"   value={kandidat.penghasilan_lain ? fmt.format(kandidat.penghasilan_lain) : null} />
+                    <ReadField label="Penghasilan Ibu/bln"    value={kandidat.ket_penghasilan_ibu ? fmt.format(kandidat.ket_penghasilan_ibu) : null} />
+                    <ReadField label="Penghasilan Lain/bln"   value={kandidat.penghasilan_lain ? fmt.format(kandidat.penghasilan_lain) : "Rp 0"} />
                     <ReadField label="Tanggungan Sebenarnya"  value={kandidat.jml_tanggungan_sebenarnya} />
                     <ReadField label="Orang Tinggal di Rumah" value={kandidat.validasi_orang_rumah} />
                     <ReadField label="Sosial Media"           value={kandidat.sosial_media} />
                   </div>
                 </div>
 
-                {/* Kondisi Tempat Tinggal */}
+                {/* Kondisi Tempat Tinggal Riil */}
                 <div>
-                  <SectionHeader title="Kondisi Tempat Tinggal" icon={Home} />
+                  <SectionHeader title="Kondisi Tempat Tinggal Riil" icon={Home} />
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     <ReadField label="Kepemilikan Rumah"  value={kandidat.kepemilikan_rumah} />
-                    <ReadField label="Tahun Perolehan"    value={kandidat.tahun_perolehan} />
-                    <ReadField label="Luas Tanah (m²)"    value={kandidat.luas_tanah} />
-                    <ReadField label="Luas Bangunan (m²)" value={kandidat.luas_bangunan} />
+                    <ReadField label="Tahun Perolehan"           value={kandidat.tahun_perolehan} />
+                    <ReadField label="Luas Tanah (m²)"           value={kandidat.luas_tanah} />
+                    <ReadField label="Luas Bangunan (m²)"        value={kandidat.luas_bangunan} />
                     <ReadField label="Sumber Air"         value={kandidat.sumber_air} />
                     <ReadField label="MCK"                value={kandidat.mck} />
-                    <ReadField label="Jarak Pusat Kota"   value={kandidat.jarak_pusat_kota ? `${kandidat.jarak_pusat_kota} km` : null} />
-                    <ReadField label="Kondisi Rumah"      value={kandidat.kondisi_rumah} />
-                    <ReadField label="Jalur Masuk"      value={kandidat.jalur_masuk} />
+                    <ReadField label="Jarak Pusat Kota"          value={kandidat.jarak_pusat_kota ? `${kandidat.jarak_pusat_kota} km` : null} />
+                    <ReadField label="Kondisi Rumah"             value={kandidat.kondisi_rumah} />
                   </div>
                   {kandidat.aset && (
                     <div className="mt-3">
@@ -434,6 +375,11 @@ export default function EvaluasiDetailPage({ params }: { params: Promise<{ id: s
                   )}
                 </div>
               </div>
+            </motion.div>
+          ) : (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="bg-slate-50 rounded-2xl border border-dashed border-slate-200 p-10 text-center">
+              <ClipboardList size={32} className="text-slate-300 mx-auto mb-3" />
+              <p className="text-slate-500 font-medium">Pewawancara belum mengisi data lapangan.</p>
             </motion.div>
           )}
 
@@ -445,15 +391,15 @@ export default function EvaluasiDetailPage({ params }: { params: Promise<{ id: s
                 <ClipboardList size={16} className="text-primary" />
               </div>
               <div>
-                <h3 className="font-bold text-on-surface text-sm">Hasil & Rekomendasi</h3>
-                <p className="text-[11px] text-muted-foreground">Admin dapat mengedit hasil wawancara</p>
+                <h3 className="font-bold text-on-surface text-sm">Rekomendasi Wawancara</h3>
+                <p className="text-[11px] text-muted-foreground">Override rekomendasi wawancara berdasarkan keputusan panitia.</p>
               </div>
             </div>
 
             <div className="space-y-5">
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
-                  Hasil Akhir <span className="text-red-500">*</span>
+                  Rekomendasi <span className="text-red-500">*</span>
                 </label>
                 <div className="flex gap-2 flex-wrap">
                   {HASIL_AKHIR_OPTIONS.map((opt) => (
@@ -473,10 +419,10 @@ export default function EvaluasiDetailPage({ params }: { params: Promise<{ id: s
                 )}
               </div>
               <div>
-                <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Alasan / Catatan</label>
+                <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Catatan Admin</label>
                 <textarea value={form.alasan}
                   onChange={(e) => setForm((f) => ({ ...f, alasan: e.target.value }))}
-                  placeholder="Catatan hasil wawancara, kondisi ekonomi, dll."
+                  placeholder="Isi alasan jika Anda mengubah rekomendasi dari pewawancara..."
                   rows={4}
                   className="w-full px-3 py-2.5 text-sm border border-border rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-slate-50 resize-none transition-all"
                 />
@@ -495,10 +441,10 @@ export default function EvaluasiDetailPage({ params }: { params: Promise<{ id: s
               <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center">
                 <Trash2 size={18} className="text-red-500" />
               </div>
-              <h3 className="font-bold text-on-surface">Hapus Evaluasi?</h3>
+              <h3 className="font-bold text-on-surface">Hapus Hasil Wawancara?</h3>
             </div>
             <p className="text-sm text-muted-foreground mb-5">
-              Data evaluasi wawancara <span className="font-semibold text-on-surface">{kandidat.nama}</span> akan direset.
+              Data laporan lapangan untuk <span className="font-semibold text-on-surface">{kandidat.nama}</span> akan dihapus permanen.
             </p>
             <div className="flex gap-2">
               <button onClick={() => setShowDelete(false)}

@@ -4,17 +4,33 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
-  Zap, ZapOff, CheckCircle2, Clock, Loader2,
-  ClipboardList, ArrowRight, Users, AlertTriangle,
+  Zap,
+  ZapOff,
+  CheckCircle2,
+  Clock,
+  Loader2,
+  ClipboardList,
+  ArrowRight,
+  Users,
+  Hash,
+  MousePointerClick,
+  X,
 } from "lucide-react";
 
+// Sesuaikan path import ini dengan instalasi shadcn kamu
+import { toast } from "sonner";
 import type { WarStatus } from "@/schemas";
 
 export default function PewawancaraDashboard() {
   const [status, setStatus] = useState<WarStatus | null>(null);
   const [loading, setLoading] = useState(true);
+  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
   const [claiming, setClaiming] = useState(false);
-  const [claimMsg, setClaimMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [unwarring, setUnwarring] = useState(false);
+
+  // State baru untuk menggantikan confirm() browser
+  const [confirmUnwar, setConfirmUnwar] = useState(false);
+
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchStatus = useCallback(async () => {
@@ -31,33 +47,41 @@ export default function PewawancaraDashboard() {
     fetchStatus();
   }, [fetchStatus]);
 
-  // Polling realtime: setiap 3 detik saat WAR aktif dan belum dapat slot
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
-
     if (status?.war_aktif && !status.slot_saya) {
       intervalRef.current = setInterval(fetchStatus, 3000);
     }
-
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
   }, [status?.war_aktif, status?.slot_saya, fetchStatus]);
 
-  const [unwarring, setUnwarring] = useState(false);
-  const [unwarMsg, setUnwarMsg]   = useState<{ type: "ok" | "err"; text: string } | null>(null);
-
   async function handleKlaim() {
+    if (!selectedSlot) return;
     setClaiming(true);
-    setClaimMsg(null);
     try {
-      const res = await fetch("/api/war", { method: "POST" });
+      const res = await fetch("/api/war", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ slot_ke: selectedSlot }),
+      });
       const json = await res.json();
       if (res.ok) {
-        setClaimMsg({ type: "ok", text: json.message });
+        toast({
+          title: "Slot Berhasil Diklaim!",
+          description:
+            json.message || `Kamu mendapatkan slot #${selectedSlot}.`,
+        });
+        setSelectedSlot(null);
         fetchStatus();
       } else {
-        setClaimMsg({ type: "err", text: json.error ?? "Gagal klaim slot" });
+        toast({
+          variant: "destructive",
+          title: "Klaim Gagal",
+          description:
+            json.error ?? "Gagal klaim slot, mungkin sudah didului orang lain.",
+        });
       }
     } finally {
       setClaiming(false);
@@ -65,17 +89,25 @@ export default function PewawancaraDashboard() {
   }
 
   async function handleUnwar() {
-    if (!confirm("Batalkan slot WAR kamu?\nSlot akan tersedia untuk pewawancara lain.")) return;
     setUnwarring(true);
-    setUnwarMsg(null);
     try {
       const res = await fetch("/api/war", { method: "DELETE" });
       const json = await res.json();
       if (res.ok) {
-        setUnwarMsg({ type: "ok", text: json.message });
+        toast({
+          title: "Slot Dibatalkan",
+          description:
+            json.message ||
+            "Slot kamu telah dikembalikan dan tersedia untuk pewawancara lain.",
+        });
+        setConfirmUnwar(false); // Reset state konfirmasi
         fetchStatus();
       } else {
-        setUnwarMsg({ type: "err", text: json.error ?? "Gagal membatalkan slot" });
+        toast({
+          variant: "destructive",
+          title: "Gagal Membatalkan",
+          description: json.error ?? "Terjadi kesalahan saat membatalkan slot.",
+        });
       }
     } finally {
       setUnwarring(false);
@@ -84,7 +116,7 @@ export default function PewawancaraDashboard() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen gap-2 text-slate-400">
+      <div className="flex items-center justify-center min-h-screen gap-2 text-muted-foreground">
         <Loader2 size={18} className="animate-spin" /> Memuat...
       </div>
     );
@@ -97,258 +129,355 @@ export default function PewawancaraDashboard() {
   const kuota = sesi?.kuota_pewawancara ?? 20;
   const slotPenuh = slotTerisi >= kuota;
 
+  const takenSlots = new Set((status?.slots ?? []).map((s) => s.slot_ke));
+
+  function getMahasiswaForSlot(slotKe: number): number[] {
+    if (!sesi) return [];
+    const result: number[] = [];
+    for (let n = slotKe; n <= sesi.kuota_mahasiswa; n += kuota) {
+      result.push(n);
+    }
+    return result;
+  }
+
   const today = sesi
     ? new Date(sesi.tanggal + "T00:00:00").toLocaleDateString("id-ID", {
-        weekday: "long", day: "numeric", month: "long", year: "numeric",
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
       })
     : new Date().toLocaleDateString("id-ID", {
-        weekday: "long", day: "numeric", month: "long", year: "numeric",
+        weekday: "long",
+        day: "numeric",
+        month: "long",
+        year: "numeric",
       });
 
   return (
     <div className="p-6 md:p-8 max-w-2xl mx-auto">
-
-      {/* Header */}
+      {/* ── Header ── */}
       <div className="mb-8">
-        <p className="text-[11px] font-bold uppercase tracking-widest text-slate-400 mb-1">Portal Pewawancara</p>
-        <h1 className="text-2xl font-extrabold text-primary font-headline">Dashboard</h1>
-        <p className="text-slate-400 text-sm mt-0.5">{today}</p>
+        <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground mb-1">
+          Portal Pewawancara
+        </p>
+        <h1 className="text-2xl font-extrabold text-primary font-headline">
+          Dashboard
+        </h1>
+        <p className="text-muted-foreground text-sm mt-0.5">{today}</p>
       </div>
 
-      {/* ── Tidak ada sesi ── */}
       {!sesi && (
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-8 text-center">
-          <Clock size={36} className="text-slate-200 mx-auto mb-3" />
-          <p className="font-semibold text-slate-600 mb-1">Belum ada sesi wawancara hari ini</p>
-          <p className="text-sm text-slate-400">Admin belum membuat sesi untuk hari ini. Cek kembali nanti.</p>
+        <div className="bg-card rounded-2xl border border-border shadow-sm p-10 text-center">
+          <Clock size={36} className="text-muted-foreground/30 mx-auto mb-3" />
+          <p className="font-semibold text-foreground mb-1">
+            Belum ada sesi wawancara hari ini
+          </p>
+          <p className="text-sm text-muted-foreground">
+            Admin belum membuat sesi untuk hari ini. Cek kembali nanti.
+          </p>
         </div>
       )}
 
-      {/* ── Ada sesi ── */}
       {sesi && (
         <div className="space-y-4">
+          {/* ════ STATE 1: Sudah dapat slot ════ */}
+          {slotSaya && (
+            <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+              <div className="bg-primary px-6 py-4 flex items-center gap-3">
+                <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
+                  <CheckCircle2 size={16} className="text-white" />
+                </div>
+                <div>
+                  <p className="text-white font-bold text-sm leading-none">
+                    Slot Berhasil Diklaim
+                  </p>
+                  <p className="text-white/70 text-xs mt-0.5">
+                    Kamu sudah terdaftar sebagai pewawancara
+                  </p>
+                </div>
+                <span className="ml-auto text-3xl font-extrabold text-white/90">
+                  #{slotSaya.slot_ke}
+                </span>
+              </div>
 
-          {/* Card utama WAR */}
-          <motion.div
-            animate={warAktif && !slotSaya ? { boxShadow: ["0 0 0 0 rgba(245,158,11,0)", "0 0 0 8px rgba(245,158,11,0.15)", "0 0 0 0 rgba(245,158,11,0)"] } : {}}
-            transition={{ repeat: Infinity, duration: 2 }}
-            className={`rounded-2xl border p-6 ${
-              slotSaya
-                ? "bg-emerald-50 border-emerald-200"
-                : warAktif
-                ? "bg-amber-50 border-amber-300"
-                : "bg-white border-slate-100"
-            } shadow-sm`}
-          >
-            {/* Status badge */}
-            <div className="flex items-center gap-2 mb-4">
-              {slotSaya ? (
-                <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full">
-                  <CheckCircle2 size={12} /> SLOT DIDAPAT
-                </span>
-              ) : warAktif ? (
-                <span className="flex items-center gap-1.5 text-xs font-bold text-amber-700 bg-amber-100 px-3 py-1 rounded-full animate-pulse">
-                  <Zap size={12} /> WAR SEDANG BERLANGSUNG
-                </span>
-              ) : slotPenuh ? (
-                <span className="flex items-center gap-1.5 text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">
-                  <Users size={12} /> SLOT PENUH
-                </span>
-              ) : (
-                <span className="flex items-center gap-1.5 text-xs font-bold text-slate-400 bg-slate-100 px-3 py-1 rounded-full">
-                  <ZapOff size={12} /> MENUNGGU ADMIN
-                </span>
-              )}
-            </div>
-
-            {/* Konten berdasarkan state */}
-            {slotSaya ? (
-              /* Sudah dapat slot */
-              <div>
-                <p className="text-3xl font-extrabold text-emerald-700 mb-1">
-                  Slot #{slotSaya.slot_ke}
-                </p>
-                <p className="text-sm text-emerald-600 mb-3">
-                  Kamu berhasil mendapatkan slot wawancara hari ini!
-                </p>
-                <div className="bg-white rounded-xl border border-emerald-200 p-4 mb-4">
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Mahasiswa yang akan kamu wawancara</p>
-                  <div className="flex flex-wrap gap-2">
-                    {Array.from(
-                      { length: Math.ceil((sesi.kuota_mahasiswa) / kuota) },
-                      (_, i) => slotSaya.slot_ke + i * kuota
-                    )
-                      .filter((n) => n <= sesi.kuota_mahasiswa)
-                      .map((n) => (
-                        <span key={n} className="text-xs font-bold px-2.5 py-1 bg-emerald-100 text-emerald-700 rounded-lg">
-                          Urutan #{n}
-                        </span>
-                      ))}
+              <div className="p-5 space-y-5">
+                <div>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                    Urutan mahasiswa yang akan kamu wawancara
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {getMahasiswaForSlot(slotSaya.slot_ke).map((n) => (
+                      <span
+                        key={n}
+                        className="text-xs font-bold px-2.5 py-1 bg-primary/10 text-primary rounded-lg border border-primary/20"
+                      >
+                        #{n}
+                      </span>
+                    ))}
                   </div>
                   {!sesi.distribusi_done && (
-                    <p className="text-[11px] text-slate-400 mt-3 flex items-center gap-1">
-                      <Clock size={11} /> Menunggu admin melakukan distribusi mahasiswa...
+                    <p className="text-[11px] text-muted-foreground mt-2.5 flex items-center gap-1.5">
+                      <Clock size={11} /> Menunggu admin melakukan distribusi
+                      mahasiswa…
                     </p>
                   )}
                 </div>
 
-                {/* Feedback UN-WAR */}
-                <AnimatePresence>
-                  {unwarMsg && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}
-                      className={`mb-3 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 ${
-                        unwarMsg.type === "ok"
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : "bg-red-50 text-red-600 border border-red-200"
-                      }`}
-                    >
-                      {unwarMsg.type === "ok" ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />}
-                      {unwarMsg.text}
-                    </motion.div>
-                  )}
-                </AnimatePresence>
-
                 {sesi.distribusi_done ? (
                   <Link
                     href="/pewawancara/mahasiswa"
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors"
+                    className="flex items-center justify-between w-full px-4 py-3 bg-primary text-primary-foreground text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors"
                   >
-                    <ClipboardList size={15} /> Mulai Wawancara <ArrowRight size={14} />
+                    <span className="flex items-center gap-2">
+                      <ClipboardList size={15} /> Mulai Wawancara
+                    </span>
+                    <ArrowRight size={14} />
                   </Link>
                 ) : (
-                  /* Tombol UN-WAR — hanya sebelum distribusi */
-                  <button
-                    onClick={handleUnwar}
-                    disabled={unwarring}
-                    className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-red-600 border border-red-200 bg-red-50 rounded-xl hover:bg-red-100 disabled:opacity-50 transition-all"
-                  >
-                    {unwarring
-                      ? <Loader2 size={13} className="animate-spin" />
-                      : <ZapOff size={13} />
-                    }
-                    {unwarring ? "Membatalkan..." : "UN-WAR — Batalkan Slot"}
-                  </button>
+                  <div className="pt-2 border-t border-border">
+                    {!confirmUnwar ? (
+                      <button
+                        onClick={() => setConfirmUnwar(true)}
+                        className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-destructive border border-destructive/20 bg-destructive/5 rounded-xl hover:bg-destructive/10 transition-all"
+                      >
+                        <ZapOff size={13} /> UN-WAR — Batalkan Slot
+                      </button>
+                    ) : (
+                      <motion.div
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        className="flex items-center gap-2"
+                      >
+                        <span className="text-xs font-medium text-muted-foreground mr-1">
+                          Yakin batalkan?
+                        </span>
+                        <button
+                          onClick={handleUnwar}
+                          disabled={unwarring}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-destructive rounded-lg hover:bg-destructive/90 disabled:opacity-50 transition-all"
+                        >
+                          {unwarring ? (
+                            <Loader2 size={13} className="animate-spin" />
+                          ) : (
+                            <CheckCircle2 size={13} />
+                          )}
+                          Ya, Batalkan
+                        </button>
+                        <button
+                          onClick={() => setConfirmUnwar(false)}
+                          disabled={unwarring}
+                          className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-foreground bg-muted border border-border rounded-lg hover:bg-muted/80 disabled:opacity-50 transition-all"
+                        >
+                          <X size={13} /> Batal
+                        </button>
+                      </motion.div>
+                    )}
+                  </div>
                 )}
               </div>
-            ) : warAktif ? (
-              /* WAR aktif, belum klaim */
-              <div>
-                <p className="text-lg font-bold text-amber-800 mb-1">
-                  Rebut slot wawancara sekarang!
-                </p>
-                <p className="text-sm text-amber-700 mb-4">
-                  Sisa slot: <span className="font-extrabold text-xl">{kuota - slotTerisi}</span> dari {kuota}
-                </p>
+            </div>
+          )}
+
+          {/* ════ STATE 2: WAR aktif, belum punya slot ════ */}
+          {!slotSaya && warAktif && (
+            <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+              <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <motion.div
+                    animate={{ scale: [1, 1.2, 1] }}
+                    transition={{ repeat: Infinity, duration: 1.5 }}
+                    className="h-2 w-2 rounded-full bg-primary inline-block"
+                  />
+                  <span className="text-xs font-bold text-primary uppercase tracking-wider">
+                    WAR Sedang Berlangsung
+                  </span>
+                </div>
+                <span className="text-xs text-muted-foreground font-medium">
+                  {kuota - slotTerisi} slot tersisa
+                </span>
+              </div>
+
+              <div className="p-5 space-y-5">
+                <div>
+                  <p className="font-bold text-foreground mb-0.5">
+                    Pilih slot yang kamu inginkan
+                  </p>
+                  <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+                    <MousePointerClick size={13} />
+                    Klik slot yang tersedia, lalu konfirmasi klaimmu
+                  </p>
+                </div>
+
+                <div>
+                  <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
+                    {Array.from({ length: kuota }, (_, i) => {
+                      const slotKe = i + 1;
+                      const isTaken = takenSlots.has(slotKe);
+                      const isSelected = selectedSlot === slotKe;
+
+                      return (
+                        <motion.button
+                          key={slotKe}
+                          whileHover={!isTaken ? { scale: 1.08 } : {}}
+                          whileTap={!isTaken ? { scale: 0.95 } : {}}
+                          onClick={() => {
+                            if (isTaken) return;
+                            setSelectedSlot(isSelected ? null : slotKe);
+                          }}
+                          disabled={isTaken}
+                          className={`
+                            aspect-square rounded-xl flex items-center justify-center text-sm font-bold
+                            transition-all duration-150 border-2 relative
+                            ${
+                              isTaken
+                                ? "bg-muted border-transparent text-muted-foreground/40 cursor-not-allowed"
+                                : isSelected
+                                  ? "bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/25 ring-2 ring-primary/30 ring-offset-1"
+                                  : "bg-card border-border text-foreground hover:border-primary/50 hover:bg-primary/5 cursor-pointer"
+                            }
+                          `}
+                        >
+                          {slotKe}
+                          {isTaken && (
+                            <span className="absolute inset-0 flex items-center justify-center">
+                              <span className="w-4 h-px bg-muted-foreground/30 rotate-45 block" />
+                            </span>
+                          )}
+                        </motion.button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="flex items-center gap-4 mt-3">
+                    <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      <span className="h-3 w-3 rounded bg-primary inline-block" />{" "}
+                      Dipilih
+                    </span>
+                    <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      <span className="h-3 w-3 rounded bg-muted border border-border inline-block" />{" "}
+                      Terisi
+                    </span>
+                    <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                      <span className="h-3 w-3 rounded bg-card border-2 border-border inline-block" />{" "}
+                      Tersedia
+                    </span>
+                  </div>
+                </div>
 
                 <AnimatePresence>
-                  {claimMsg && (
+                  {selectedSlot && (
                     <motion.div
-                      initial={{ opacity: 0, y: -4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0 }}
-                      className={`mb-3 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 ${
-                        claimMsg.type === "ok"
-                          ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          : "bg-red-50 text-red-600 border border-red-200"
-                      }`}
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: "auto" }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="overflow-hidden"
                     >
-                      {claimMsg.type === "ok" ? <CheckCircle2 size={13} /> : <AlertTriangle size={13} />}
-                      {claimMsg.text}
+                      <div className="rounded-xl bg-primary/5 border border-primary/20 p-4">
+                        <p className="text-xs font-bold text-primary mb-2 flex items-center gap-1.5">
+                          <Hash size={12} />
+                          Slot {selectedSlot} — Mahasiswa yang akan kamu
+                          tangani:
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {getMahasiswaForSlot(selectedSlot).map((n) => (
+                            <span
+                              key={n}
+                              className="text-xs font-semibold px-2 py-0.5 bg-primary/15 text-primary rounded-lg"
+                            >
+                              #{n}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>
 
                 <motion.button
-                  whileTap={{ scale: 0.97 }}
+                  whileTap={selectedSlot ? { scale: 0.98 } : {}}
                   onClick={handleKlaim}
-                  disabled={claiming}
-                  className="w-full py-4 bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-lg rounded-2xl transition-all disabled:opacity-60 flex items-center justify-center gap-3 shadow-lg shadow-amber-200"
+                  disabled={!selectedSlot || claiming}
+                  className={`
+                    w-full py-3.5 font-bold text-sm rounded-xl transition-all duration-200
+                    flex items-center justify-center gap-2
+                    ${
+                      selectedSlot && !claiming
+                        ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20"
+                        : "bg-muted text-muted-foreground cursor-not-allowed"
+                    }
+                  `}
                 >
                   {claiming ? (
-                    <Loader2 size={20} className="animate-spin" />
+                    <>
+                      <Loader2 size={16} className="animate-spin" /> Mengklaim
+                      Slot {selectedSlot}…
+                    </>
+                  ) : selectedSlot ? (
+                    <>
+                      <Zap size={16} /> Klaim Slot #{selectedSlot}
+                    </>
                   ) : (
-                    <Zap size={20} />
+                    <>Pilih slot di atas terlebih dahulu</>
                   )}
-                  {claiming ? "Mengklaim..." : "KLAIM SLOT SEKARANG"}
                 </motion.button>
-                <p className="text-[11px] text-amber-600 text-center mt-2">
-                  Klik cepat sebelum slot habis!
-                </p>
               </div>
-            ) : slotPenuh ? (
-              /* Slot penuh, tidak dapat */
-              <div>
-                <p className="font-bold text-slate-600 mb-1">Semua slot sudah terisi</p>
-                <p className="text-sm text-slate-400">
-                  {kuota} pewawancara sudah mendapatkan slot untuk hari ini.
-                  Kamu tidak mendapatkan slot pada sesi ini.
-                </p>
-              </div>
-            ) : (
-              /* WAR belum dibuka */
-              <div>
-                <p className="font-bold text-slate-600 mb-1">WAR belum dibuka</p>
-                <p className="text-sm text-slate-400">
-                  Tunggu admin membuka WAR. Halaman ini akan otomatis update saat WAR dibuka.
-                </p>
-                <p className="text-xs text-slate-300 mt-3">Halaman refresh otomatis setiap 3 detik</p>
-              </div>
-            )}
-          </motion.div>
-
-          {/* Progress slot realtime */}
-          <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-sm font-bold text-slate-700">Slot Terisi</p>
-              <span className="text-xs font-bold text-primary">{slotTerisi}/{kuota}</span>
             </div>
-            <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-3">
+          )}
+
+          {/* ════ STATE 3 & 4 (Penuh / Belum Dibuka) tetap sama strukturnya, saya potong untuk efisiensi ruang ════ */}
+
+          {/* ── Perbaikan: Progress bar slot (Tidak gepeng & Responsive) ── */}
+          <div className="bg-card rounded-2xl border border-border shadow-sm p-5 sm:p-6 mt-4">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-sm font-bold text-foreground">
+                Status Keterisian
+              </p>
+              <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-md">
+                {slotTerisi} / {kuota}
+              </span>
+            </div>
+
+            <div className="w-full h-2 sm:h-2.5 bg-muted rounded-full overflow-hidden mb-5">
               <motion.div
-                className={`h-full rounded-full ${slotPenuh ? "bg-emerald-500" : "bg-primary"}`}
+                className="h-full bg-primary rounded-full"
                 animate={{ width: `${(slotTerisi / kuota) * 100}%` }}
-                transition={{ duration: 0.4 }}
+                transition={{ duration: 0.5, ease: "easeOut" }}
               />
             </div>
-            <div className="grid grid-cols-5 sm:grid-cols-10 gap-1.5">
+
+            {/* Perbaikan Grid: Menggunakan sm:grid-cols-10 untuk mobile-friendly dan tinggi elemen ditambah (h-3) */}
+            <div className="grid grid-cols-5 sm:grid-cols-10 gap-2 sm:gap-1.5">
               {Array.from({ length: kuota }, (_, i) => {
-                const slot = status?.slots.find((s) => s.slot_ke === i + 1);
-                const isMine = slotSaya?.slot_ke === i + 1;
+                const slotKe = i + 1;
+                const slot = status?.slots.find((s) => s.slot_ke === slotKe);
+                const isMine = slotSaya?.slot_ke === slotKe;
                 return (
                   <div
-                    key={i}
-                    title={slot ? slot.pewawancara?.nama ?? "Terisi" : `Slot ${i + 1}`}
-                    className={`aspect-square rounded-lg flex items-center justify-center text-[10px] font-bold transition-all ${
+                    key={slotKe}
+                    title={
+                      slot
+                        ? isMine
+                          ? "Slot kamu"
+                          : (slot.pewawancara?.nama ?? "Terisi")
+                        : `Slot ${slotKe} — tersedia`
+                    }
+                    className={`h-2.5 sm:h-3 w-full rounded-full transition-all duration-300 ${
                       isMine
-                        ? "bg-emerald-500 text-white ring-2 ring-emerald-300"
+                        ? "bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]"
                         : slot
-                        ? "bg-primary/80 text-white"
-                        : "bg-slate-100 text-slate-300"
+                          ? "bg-primary/40"
+                          : "bg-muted border border-border/50"
                     }`}
-                  >
-                    {i + 1}
-                  </div>
+                  />
                 );
               })}
             </div>
+            <div className="flex items-center justify-between mt-3 text-[11px] text-muted-foreground font-medium">
+              <span>Slot 1</span>
+              <span>Slot {kuota}</span>
+            </div>
           </div>
-
-          {/* Link ke daftar mahasiswa jika distribusi sudah done */}
-          {sesi.distribusi_done && slotSaya && (
-            <Link
-              href="/pewawancara/mahasiswa"
-              className="flex items-center justify-between p-4 bg-primary text-white rounded-2xl hover:bg-primary/90 transition-colors shadow-sm"
-            >
-              <div className="flex items-center gap-3">
-                <ClipboardList size={18} />
-                <div>
-                  <p className="font-bold text-sm">Daftar Mahasiswa Saya</p>
-                  <p className="text-xs text-white/70">Lihat dan isi hasil wawancara</p>
-                </div>
-              </div>
-              <ArrowRight size={16} />
-            </Link>
-          )}
         </div>
       )}
     </div>

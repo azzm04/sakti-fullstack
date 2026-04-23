@@ -13,14 +13,17 @@ import {
   Upload,
   UserCheck,
   ClipboardList,
+  BookMarked
 } from "lucide-react";
 
 const navItems = [
   { href: "/admin",           label: "Dashboard",   icon: LayoutDashboard },
   { href: "/admin/import",    label: "Import Data", icon: Upload          },
-  { href: "/admin/whitelist", label: "Pewawancara", icon: UserCheck       },
+  { href: "/admin/pewawancara", label: "Pewawancara", icon: UserCheck       },
   { href: "/admin/evaluasi",  label: "Evaluasi",    icon: ClipboardList   },
   { href: "/admin/kalkulasi",  label: "Kalkulasi",    icon: ClipboardList   },
+  { href: "/admin/monev", label: "Monev", icon: BookMarked       },
+
 ];
 
 const sidebarVariants: Variants = {
