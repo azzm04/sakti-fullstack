@@ -71,16 +71,7 @@ export default function Topbar() {
           className="flex items-center gap-3 md:gap-4 relative"
           ref={menuRef}
         >
-          {/* Tombol Notifikasi */}
-          <button
-            className="p-2 text-slate-400 hover:text-primary hover:bg-slate-100 rounded-full transition-colors relative"
-            title="Notifikasi"
-          >
-            <Bell className="w-5 h-5 md:w-6 md:h-6" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 md:w-2.5 md:h-2.5 bg-red-500 rounded-full border border-white"></span>
-          </button>
-
-          <div className="h-8 w-[1px] bg-slate-200 hidden sm:block"></div>
+          <div className="h-8 w-px bg-slate-200 hidden sm:block"></div>
 
           {/* Info User (Desktop Only) */}
           <div className="hidden sm:flex items-center gap-3 text-right">

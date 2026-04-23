@@ -42,7 +42,10 @@ const MessageItem = memo(
         {/* ── Avatar Assistant ── */}
         {!isUser && (
           <Avatar className="size-8 shrink-0 mt-1 shadow-sm">
-            <AvatarImage alt="SAKABOT" src="https://api.dicebear.com/9.x/glass/svg?seed=alice" />
+            <AvatarImage
+              alt="SAKABOT"
+              src="https://api.dicebear.com/9.x/glass/svg?seed=alice"
+            />
             <AvatarFallback className="bg-indigo-100 text-indigo-700 text-xs font-bold">
               SA
             </AvatarFallback>
@@ -57,11 +60,21 @@ const MessageItem = memo(
         >
           {/* Gambar Lampiran */}
           {msg.imageUrl && (
-            <div className="mb-2 relative rounded-2xl overflow-hidden border border-slate-200 shadow-sm max-w-sm">
+            <div className="mb-2 relative rounded-xl overflow-hidden border border-slate-200 shadow-sm max-w-[200px] bg-slate-100 flex items-center justify-center min-h-[100px]">
               <img
-                src={msg.imageUrl}
+                // Perbaikan: Otomatis tambahkan prefix data URI jika belum ada
+                src={
+                  msg.imageUrl.startsWith("data:") ||
+                  msg.imageUrl.startsWith("http")
+                    ? msg.imageUrl
+                    : `data:image/jpeg;base64,${msg.imageUrl}`
+                }
                 alt="Lampiran"
-                className="w-full h-auto object-cover"
+                className="w-full h-auto max-h-[250px] object-cover"
+                onError={(e) => {
+                  // Sembunyikan jika gambar tetap gagal dimuat (corrupt)
+                  e.currentTarget.style.display = "none";
+                }}
               />
             </div>
           )}
@@ -116,7 +129,10 @@ const MessageItem = memo(
         {/* ── Avatar User ── */}
         {isUser && (
           <Avatar className="size-8 shrink-0 mt-1 border border-slate-200 shadow-sm">
-            <AvatarImage alt="User" src="https://api.dicebear.com/9.x/glass/svg?seed=you" />
+            <AvatarImage
+              alt="User"
+              src="https://api.dicebear.com/9.x/glass/svg?seed=you"
+            />
             <AvatarFallback className="bg-slate-200 text-slate-600 text-xs font-bold">
               U
             </AvatarFallback>
@@ -144,7 +160,7 @@ export default function ChatMessages({
   }, [safeMessages, isLoading]);
 
   return (
-    <div ref={containerRef} className="flex flex-col gap-5 py-6 scroll-smooth">
+    <div ref={containerRef} className="flex flex-col gap-5 py-6 scroll-smooth overflow-y-auto pr-2">
       <AnimatePresence initial={false}>
         {safeMessages.map((msg) => (
           <MessageItem key={msg.id} msg={msg} onCopy={onCopy} />
@@ -160,7 +176,10 @@ export default function ChatMessages({
             className="flex w-full gap-3 justify-start"
           >
             <Avatar className="size-8 shrink-0 mt-1 border border-slate-200 shadow-sm">
-              <AvatarImage alt="SAKABOT" src="https://api.dicebear.com/9.x/glass/svg?seed=alice" />
+              <AvatarImage
+                alt="SAKABOT"
+                src="https://api.dicebear.com/9.x/glass/svg?seed=alice"
+              />
               <AvatarFallback className="bg-indigo-100 text-indigo-700 text-xs font-bold">
                 SA
               </AvatarFallback>

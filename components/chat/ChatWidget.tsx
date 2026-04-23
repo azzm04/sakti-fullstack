@@ -1,73 +1,91 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState } from "react";
 import { MessageSquare, X, Bot } from "lucide-react";
-import ChatMessage from "./ChatMessage";
+// Import dari komponen baru yang kamu buat
+import ChatMessages from "./ChatMessage";
+// Import API dan Schema
+import { chatAPI } from "@/lib/api";
+import type { ChatMessage } from "@/schemas";
 import ChatInput from "./ChatInput";
-// Sesuaikan import ini dengan letak file api.ts milikmu
-import { chatAPI } from "@/lib/api"; 
-
-interface Message {
-  id: string;
-  text: string;
-  isUser: boolean;
-}
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
-  const [messages, setMessages] = useState<Message[]>([
+  const [isLoading, setIsLoading] = useState(false);
+
+  // 1. Update State menggunakan schema ChatMessage yang baru
+  const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: "welcome",
-      text: "Halo! Saya SAKABOT. Ada yang bisa saya bantu terkait KIP-Kuliah?",
-      isUser: false,
+      role: "assistant",
+      content:
+        "Halo! Saya SAKABOT. Ada yang bisa saya bantu terkait KIP-Kuliah?",
+      timestamp: new Date().toISOString(),
     },
   ]);
-  const [isLoading, setIsLoading] = useState(false);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll ke bawah setiap kali array messages bertambah
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  const handleSendMessage = async (text: string, imageBase64?: string | null) => {
-    const userMessage: Message = {
+  const handleSendMessage = async (
+    text: string,
+    imageBase64?: string | null,
+  ) => {
+    // 2. Format pesan user sesuai schema baru
+    const userMessage: ChatMessage = {
       id: Date.now().toString(),
-      text: text || "📎 [Gambar dikirim]",
-      isUser: true,
+      role: "user",
+      content: text || "📎 [Gambar dikirim]",
+      timestamp: new Date().toISOString(),
+      imageUrl: imageBase64 || undefined,
     };
+
     setMessages((prev) => [...prev, userMessage]);
     setIsLoading(true);
 
     try {
       const response = await chatAPI.sendMessage(
         text || "Tolong analisis gambar ini.",
-        imageBase64 ?? null
+        imageBase64 ?? null,
       );
-      const botReply = response.jawaban ?? response.reply ?? response.message ?? response.response ?? response.data;
-      setMessages((prev) => [
-        ...prev,
-        { id: (Date.now() + 1).toString(), text: botReply, isUser: false },
-      ]);
+
+      const botReply =
+        response.jawaban ??
+        response.reply ??
+        response.message ??
+        response.response ??
+        response.data;
+
+      // 3. Format balasan bot sesuai schema baru
+      const botMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: botReply,
+        timestamp: new Date().toISOString(),
+      };
+
+      setMessages((prev) => [...prev, botMessage]);
     } catch (error) {
       console.error("Gagal mengirim pesan:", error);
-      setMessages((prev) => [
-        ...prev,
-        {
-          id: (Date.now() + 1).toString(),
-          text: "Maaf, SAKABOT sedang mengalami gangguan koneksi. Silakan coba lagi nanti.",
-          isUser: false,
-        },
-      ]);
+      const errorMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content:
+          "Maaf, SAKABOT sedang mengalami gangguan koneksi. Silakan coba lagi nanti.",
+        timestamp: new Date().toISOString(),
+      };
+      setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
     }
   };
 
+  // Fungsi untuk meng-copy teks
+  const handleCopy = (text: string) => {
+    navigator.clipboard.writeText(text);
+  };
+
   return (
     <div className="fixed bottom-5 right-5 md:bottom-8 md:right-8 z-[60] group font-body">
-      
-      {/* TOOLTIP (Hanya Muncul Jika Chat Tertutup) */}
+      {/* TOOLTIP */}
       <div
         className={`absolute bottom-full right-0 mb-4 w-72 bg-white rounded-2xl shadow-xl p-5 border border-slate-200 transition-all duration-300 origin-bottom-right ${
           isOpen
@@ -77,7 +95,15 @@ export default function ChatWidget() {
       >
         <div className="flex items-center gap-3 mb-3">
           <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center border border-blue-100">
-            <Bot className="w-5 h-5 text-primary" />
+            <Avatar className="size-8 shrink-0 mt-1 shadow-sm">
+              <AvatarImage
+                alt="SAKABOT"
+                src="https://api.dicebear.com/9.x/glass/svg?seed=alice"
+              />
+              <AvatarFallback className="bg-indigo-100 text-indigo-700 text-xs font-bold">
+                SA
+              </AvatarFallback>
+            </Avatar>
           </div>
           <div>
             <div className="text-sm font-bold text-slate-800">SAKABOT</div>
@@ -93,17 +119,27 @@ export default function ChatWidget() {
       </div>
 
       {/* MINI CHAT WINDOW */}
-      <div 
-        className={`absolute bottom-20 right-0 w-[350px] bg-white rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden transition-all duration-300 origin-bottom-right ${
-          isOpen ? "opacity-100 scale-100 visible h-[500px]" : "opacity-0 scale-50 invisible h-0"
+      <div
+        className={`absolute bottom-20 right-0 w-[350px] sm:w-[380px] bg-slate-50 rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden transition-all duration-300 origin-bottom-right ${
+          isOpen
+            ? "opacity-100 scale-100 visible h-[550px]"
+            : "opacity-0 scale-50 invisible h-0"
         }`}
       >
         {/* Header Chat */}
-        <div className="bg-primary p-4 text-white flex items-center justify-between shadow-sm z-10">
+        <div className="bg-primary p-4 text-white flex items-center justify-between shadow-sm z-10 shrink-0">
           <div className="flex items-center gap-3">
-            <div className="bg-white/20 p-2 rounded-full backdrop-blur-sm">
-              <Bot className="w-5 h-5 text-white" />
-            </div>
+            {/* <div className="p-2  backdrop-blur-sm">
+              <Avatar className="size-8 shrink-0 mt-1 shadow-sm">
+                <AvatarImage
+                  alt="SAKABOT"
+                  src="https://api.dicebear.com/9.x/glass/svg?seed=alice"
+                />
+                <AvatarFallback className="bg-indigo-100 text-indigo-700 text-xs font-bold">
+                  SA
+                </AvatarFallback>
+              </Avatar>
+            </div> */}
             <div>
               <h3 className="font-bold text-sm tracking-wide">SAKABOT</h3>
               <div className="flex items-center gap-1.5 text-[10px] text-blue-100">
@@ -112,40 +148,27 @@ export default function ChatWidget() {
               </div>
             </div>
           </div>
-          <button 
-            onClick={() => setIsOpen(false)} 
+          <button
+            onClick={() => setIsOpen(false)}
             className="p-1.5 hover:bg-white/20 rounded-lg transition-colors"
-            title="btn"
+            title="Tutup"
           >
             <X className="w-5 h-5 text-white/90" />
           </button>
         </div>
 
-        {/* Body Chat (Area Pesan) */}
-        <div className="flex-1 bg-slate-50 p-4 overflow-y-auto space-y-4">
-          {messages.map((msg) => (
-            <ChatMessage key={msg.id} text={msg.text} isUser={msg.isUser} />
-          ))}
-          
-          {/* Indikator Mengetik dari Bot */}
-          {isLoading && (
-            <div className="flex gap-2 items-end">
-              <div className="w-7 h-7 rounded-full bg-blue-100 border border-blue-300 flex items-center justify-center shrink-0 mb-1">
-                <Bot className="w-4 h-4 text-primary" />
-              </div>
-              <div className="bg-white p-4 rounded-2xl rounded-bl-sm shadow-sm border border-slate-200 flex gap-1.5">
-                <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce"></span>
-                <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce delay-100"></span>
-                <span className="w-2 h-2 bg-slate-400 rounded-full animate-bounce delay-200"></span>
-              </div>
-            </div>
-          )}
-          {/* Dummy div agar bisa auto-scroll ke dasar chat */}
-          <div ref={messagesEndRef} />
+        <div className="flex-1 overflow-hidden flex flex-col px-4 relative bg-slate-50/50">
+          <ChatMessages
+            messages={messages}
+            isLoading={isLoading}
+            onCopy={handleCopy}
+          />
         </div>
 
-        {/* Footer Chat (Input Area Terpisah) */}
-        <ChatInput onSend={handleSendMessage} isLoading={isLoading} />
+        {/* Footer Chat */}
+        <div className="shrink-0 bg-white">
+          <ChatInput onSend={handleSendMessage} isLoading={isLoading} />
+        </div>
       </div>
 
       {/* FLOATING TRIGGER BUTTON */}
@@ -159,7 +182,6 @@ export default function ChatWidget() {
           <MessageSquare className="w-6 h-6 transition-transform duration-300" />
         )}
       </button>
-
     </div>
   );
 }

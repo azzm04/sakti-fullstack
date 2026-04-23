@@ -219,7 +219,7 @@ export default function DashboardMahasiswa() {
 
             {/* Badges yang lebih modern */}
             <div className="flex gap-2.5 flex-wrap">
-              {["Cek Syarat", "Status Pencairan", "Panduan Upload"].map(
+              {["Cek Syarat", "Panduan Upload"].map(
                 (tag) => (
                   <span
                     key={tag}
@@ -274,9 +274,6 @@ export default function DashboardMahasiswa() {
             >
               <Bot size={16} /> Aktifkan Sekarang
             </Link>
-            <span className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider text-center sm:text-right">
-              Gratis & Aman
-            </span>
           </div>
         </div>
 
