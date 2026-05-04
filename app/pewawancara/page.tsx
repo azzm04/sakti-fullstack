@@ -68,19 +68,14 @@ export default function PewawancaraDashboard() {
       });
       const json = await res.json();
       if (res.ok) {
-        toast({
-          title: "Slot Berhasil Diklaim!",
-          description:
-            json.message || `Kamu mendapatkan slot #${selectedSlot}.`,
+        toast.success("Slot Berhasil Diklaim!", {
+          description: json.message || `Kamu mendapatkan slot #${selectedSlot}.`,
         });
         setSelectedSlot(null);
         fetchStatus();
       } else {
-        toast({
-          variant: "destructive",
-          title: "Klaim Gagal",
-          description:
-            json.error ?? "Gagal klaim slot, mungkin sudah didului orang lain.",
+        toast.error("Klaim Gagal", {
+          description: json.error ?? "Gagal klaim slot, mungkin sudah didului orang lain.",
         });
       }
     } finally {
@@ -94,18 +89,13 @@ export default function PewawancaraDashboard() {
       const res = await fetch("/api/war", { method: "DELETE" });
       const json = await res.json();
       if (res.ok) {
-        toast({
-          title: "Slot Dibatalkan",
-          description:
-            json.message ||
-            "Slot kamu telah dikembalikan dan tersedia untuk pewawancara lain.",
+        toast.success("Slot Dibatalkan", {
+          description: json.message || "Slot kamu telah dikembalikan dan tersedia untuk pewawancara lain.",
         });
-        setConfirmUnwar(false); // Reset state konfirmasi
+        setConfirmUnwar(false);
         fetchStatus();
       } else {
-        toast({
-          variant: "destructive",
-          title: "Gagal Membatalkan",
+        toast.error("Gagal Membatalkan", {
           description: json.error ?? "Terjadi kesalahan saat membatalkan slot.",
         });
       }

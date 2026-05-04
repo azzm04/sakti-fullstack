@@ -3,6 +3,7 @@ import { Inter, Manrope, Montserrat } from "next/font/google";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import LenisScroll from "@/components/layout/LenisScroll";
+import { Toaster } from "sonner";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -37,6 +38,7 @@ export default function RootLayout({
       <body className="min-h-full flex flex-col font-body">
         <LenisScroll />
         {children}
+        <Toaster richColors position="top-right" />
       </body>
     </html>
   );

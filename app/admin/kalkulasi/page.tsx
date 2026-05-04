@@ -177,7 +177,7 @@ export default function KalkulasiPage() {
                       onClick={() => setJalurTerpilih(j)}
                       className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all duration-200 ${
                         jalurTerpilih === j
-                          ? "bg-white text-indigo-600 shadow-sm"
+                          ? "bg-white text-primary shadow-sm"
                           : "text-slate-500 hover:text-slate-700 hover:bg-slate-200/50"
                       }`}
                     >

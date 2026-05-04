@@ -1,31 +1,64 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 
-// Proxy ke FastAPI SMART-TOPSIS
-// 1. Terima jalur_masuk + kuota dari frontend
-// 2. Filter kandidat berdasarkan jalur
-// 3. Kirim ke Smart TOPSIS
-// 4. Terima skor & ranking, update DB dengan status_seleksi
+// Kriteria SMART-TOPSIS:
+// 1. penghasilan_total  → cost   (makin kecil makin baik)
+// 2. tanggungan         → benefit (makin banyak makin butuh)
+// 3. jarak_pusat_kota   → benefit (makin jauh makin terpencil)
+// 4. kondisi_rumah      → benefit (skor 1=baik, 2=kurang baik)
+// 5. hasil_akhir        → benefit (1=Layak→3pts, 2=Dipertimbangkan→2pts, 3=TidakLayak→1pt)
+const CRITERIA_POINTS: number[] = [0.30, 0.20, 0.15, 0.15, 0.20];
+const CRITERIA_TYPES: string[]  = ["cost", "benefit", "benefit", "benefit", "benefit"];
+
+function kondisiRumahScore(kondisi: string | null): number {
+  if (!kondisi) return 1;
+  const lower = kondisi.toLowerCase();
+  // "tidak layak" / "rusak" / "buruk" → 2 (lebih butuh bantuan)
+  if (lower.includes("tidak") || lower.includes("rusak") || lower.includes("buruk")) return 2;
+  return 1;
+}
+
+function hasilAkhirScore(hasil: number | null): number {
+  // 1=Layak → 3 poin, 2=Dipertimbangkan → 2, 3=Tidak Layak → 1
+  if (hasil === 1) return 3;
+  if (hasil === 2) return 2;
+  return 1;
+}
+
+type KandidatRow = {
+  id: number;
+  no: number;
+  nama: string;
+  prodi: string;
+  no_pendaftaran_kipk: string;
+  jalur_masuk: string | null;
+  penghasilan_ayah: number | null;
+  penghasilan_ibu: number | null;
+  penghasilan_lain: number | null;
+  jml_tanggungan_sebenarnya: number | null;
+  jumlah_tanggungan: number | null;
+  jarak_pusat_kota: number | null;
+  kondisi_rumah: string | null;
+  hasil_akhir: number | null;
+};
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { jalur_masuk, kuota } = body;
+    const { jalur_masuk, kuota } = body as {
+      jalur_masuk: string;
+      kuota: number;
+    };
 
     // Validasi input
     if (!jalur_masuk) {
-      return NextResponse.json(
-        { error: "jalur_masuk wajib diisi" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "jalur_masuk wajib diisi" }, { status: 400 });
     }
     if (!kuota || kuota <= 0) {
-      return NextResponse.json(
-        { error: "kuota harus > 0" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "kuota harus > 0" }, { status: 400 });
     }
 
-    // Ambil env var — API URL dari environment, bukan dari user input
+    // URL FastAPI dari environment variable
     const apiUrl = process.env.NEXT_PUBLIC_TOPSIS_API_URL;
     if (!apiUrl) {
       return NextResponse.json(
@@ -34,31 +67,62 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Filter kandidat berdasarkan jalur_masuk
-    const { data: kandidats, error } = await supabaseAdmin
+    // 1. Ambil kandidat berdasarkan jalur_masuk yang sudah selesai wawancara
+    const { data: rawKandidats, error } = await supabaseAdmin
       .from("kandidat")
-      .select("*")
+      .select(
+        "id, no, nama, prodi, no_pendaftaran_kipk, jalur_masuk, " +
+        "penghasilan_ayah, penghasilan_ibu, penghasilan_lain, " +
+        "jml_tanggungan_sebenarnya, jumlah_tanggungan, " +
+        "jarak_pusat_kota, kondisi_rumah, hasil_akhir"
+      )
       .eq("jalur_masuk", jalur_masuk)
+      .not("hasil_akhir", "is", null)
       .order("no", { ascending: true });
 
     if (error) throw error;
 
-    if (!kandidats || kandidats.length === 0) {
+    if (!rawKandidats || rawKandidats.length === 0) {
       return NextResponse.json(
-        { error: `Belum ada kandidat untuk jalur ${jalur_masuk}` },
+        { error: `Belum ada kandidat jalur ${jalur_masuk} yang selesai diwawancara` },
         { status: 400 }
       );
     }
 
-    console.log(`[TOPSIS] Mengirim ${kandidats.length} kandidat dari jalur ${jalur_masuk} ke ${apiUrl}`);
+    const kandidats = rawKandidats as unknown as KandidatRow[];
 
-    // Kirim data kandidat (dari jalur terpilih) ke FastAPI SMART-TOPSIS
+    // 2. Transform ke format yang diharapkan FastAPI
+    const alternatives: string[] = kandidats.map((k) => k.nama ?? `Kandidat-${k.no}`);
+
+    const matrix: number[][] = kandidats.map((k) => {
+      const penghasilan =
+        (k.penghasilan_ayah ?? 0) +
+        (k.penghasilan_ibu ?? 0) +
+        (k.penghasilan_lain ?? 0);
+      const tanggungan =
+        (k.jml_tanggungan_sebenarnya ?? 0) > 0
+          ? (k.jml_tanggungan_sebenarnya ?? 0)
+          : (k.jumlah_tanggungan ?? 0);
+      const jarak   = k.jarak_pusat_kota ?? 0;
+      const kondisi = kondisiRumahScore(k.kondisi_rumah);
+      const hasil   = hasilAkhirScore(k.hasil_akhir);
+
+      return [penghasilan, tanggungan, jarak, kondisi, hasil];
+    });
+
+    console.log(
+      `[TOPSIS] Mengirim ${kandidats.length} kandidat jalur ${jalur_masuk} ke ${apiUrl}`
+    );
+
+    // 3. Kirim ke FastAPI SMART-TOPSIS
     const topsisRes = await fetch(apiUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        alternatives: kandidats,
-        kuota: kuota, // Single kuota value
+        alternatives,
+        matrix,
+        criteria_points: CRITERIA_POINTS,
+        criteria_types:  CRITERIA_TYPES,
       }),
     });
 
@@ -71,37 +135,49 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const result = await topsisRes.json();
-    console.log(`[TOPSIS] Menerima response dari API`, result);
-
-    // Normalisasi response dari FastAPI — bisa array atau { data: [...] }
-    const ranked = Array.isArray(result) ? result : (result.data ?? result.hasil ?? []);
+    // 4. Response: [{ rank, alternative, closeness_score }, ...]
+    const ranked: { rank: number; alternative: string; closeness_score: number }[] =
+      await topsisRes.json();
 
     if (!Array.isArray(ranked) || ranked.length === 0) {
       return NextResponse.json(
-        { error: "Response dari SMART-TOPSIS tidak valid" },
+        { error: "Response dari SMART-TOPSIS tidak valid atau kosong" },
         { status: 400 }
       );
     }
 
-    // Update tabel kandidat dengan skor_total, ranking, status_seleksi
-    // Lolos = ranking <= kuota, Tidak lolos = ranking > kuota
-    for (const item of ranked) {
+    // 5. Map balik ke data kandidat berdasarkan nama
+    const nameToKandidat = Object.fromEntries(
+      kandidats.map((k) => [k.nama ?? `Kandidat-${k.no}`, k])
+    );
+
+    const hasil = ranked.map((r) => {
+      const k = nameToKandidat[r.alternative];
+      return {
+        id:                  k?.id,
+        no:                  k?.no,
+        no_pendaftaran_kipk: k?.no_pendaftaran_kipk ?? "",
+        nama:                r.alternative,
+        prodi:               k?.prodi ?? "",
+        jalur_masuk:         k?.jalur_masuk ?? jalur_masuk,
+        skor_total:          r.closeness_score,
+        ranking:             r.rank,
+        lolos:               r.rank <= kuota,
+      };
+    });
+
+    // 6. Update DB: skor_total, ranking, status_seleksi
+    for (const item of hasil) {
       if (!item.id) continue;
-
-      const ranking = Number(item.ranking ?? item.rank ?? 0);
-      const skor = Number(item.skor ?? item.skor_total ?? item.score ?? 0);
-      const statusSeleksi = ranking <= kuota ? "LOLOS" : "TIDAK LOLOS";
-
-      console.log(`[TOPSIS UPDATE] ID ${item.id}: skor=${skor}, ranking=${ranking}, status=${statusSeleksi}`);
+      const statusSeleksi = item.lolos ? "LOLOS" : "TIDAK LOLOS";
 
       const { error: updateError } = await supabaseAdmin
         .from("kandidat")
         .update({
-          skor_total: skor,
-          ranking: ranking,
+          skor_total:     item.skor_total,
+          ranking:        item.ranking,
           status_seleksi: statusSeleksi,
-          updated_at: new Date().toISOString(),
+          updated_at:     new Date().toISOString(),
         })
         .eq("id", item.id);
 
@@ -111,12 +187,12 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json({
-      success: true,
-      jalur_masuk: jalur_masuk,
-      kuota: kuota,
-      data: ranked,
-      kandidat_count: ranked.length,
-      updated: ranked.length,
+      success:        true,
+      jalur_masuk,
+      kuota,
+      data:           hasil,
+      total:          hasil.length,
+      kandidat_count: kandidats.length,
     });
   } catch (err) {
     console.error("[POST /api/admin/kalkulasi/topsis]", err);

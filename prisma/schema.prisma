@@ -85,16 +85,25 @@ model ChatHistory {
 
 // ─── MONEV SCHEDULE ───────────────────────────────────────
 model MonevSchedule {
-  id        String   @id @default(cuid())
-  label     String
-  deadline  DateTime
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id          String     @id @default(cuid())
+  tipeMonev   TipeMonev  @map("tipe_monev")
+  label       String     @db.VarChar(100)
+  waktuMulai  DateTime?  @map("waktu_mulai")
+  deadline    DateTime
+  isActive    Boolean    @default(true) @map("is_active")
+  createdAt   DateTime   @default(now()) @map("created_at")
+  updatedAt   DateTime   @updatedAt @map("updated_at")
 
   notificationLogs NotificationLog[]
 
   @@map("monev_schedules")
+}
+
+enum TipeMonev {
+  Evaluasi_Ekonomi  @map("Evaluasi Ekonomi")
+  Evaluasi_Akademik @map("Evaluasi Akademik")
+  Evaluasi_Sosial   @map("Evaluasi Sosial")
+  Evaluasi_Akhir    @map("Evaluasi Akhir")
 }
 
 // ─── NOTIFICATION LOG ─────────────────────────────────────

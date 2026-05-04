@@ -124,7 +124,7 @@ export async function POST(req: NextRequest) {
       .from("pewawancara")
       .select("id, is_active")
       .eq("email", email)
-      .single();
+      .maybeSingle();
 
     if (!pw) return NextResponse.json({ error: "Data pewawancara tidak ditemukan" }, { status: 404 });
     if (!pw.is_active) return NextResponse.json({ error: "Akun pewawancara tidak aktif" }, { status: 403 });
@@ -146,16 +146,18 @@ export async function POST(req: NextRequest) {
     }
 
     // Tentukan slot_ke yang akan digunakan
-    let slot_ke = requestedSlot;
+    let slot_ke: number;
 
-    if (!requestedSlot) {
-      // Jika tidak ada slot yang diminta, gunakan auto-increment
+    if (!requestedSlot || requestedSlot < 1) {
+      // Auto-increment jika tidak ada slot yang diminta
       const { count: slotTerisi } = await supabaseAdmin
         .from("slot_pewawancara")
         .select("id", { count: "exact", head: true })
         .eq("sesi_id", sesi.id);
 
       slot_ke = (slotTerisi ?? 0) + 1;
+    } else {
+      slot_ke = requestedSlot;
     }
 
     // Validasi slot_ke dalam range kuota
@@ -270,7 +272,7 @@ export async function DELETE(req: NextRequest) {
       .from("pewawancara")
       .select("id, total_assigned")
       .eq("email", email)
-      .single();
+      .maybeSingle();
 
     if (!pw) return NextResponse.json({ error: "Data pewawancara tidak ditemukan" }, { status: 404 });
 
@@ -280,7 +282,7 @@ export async function DELETE(req: NextRequest) {
       .select("id")
       .eq("sesi_id", sesi.id)
       .eq("pewawancara_id", pw.id)
-      .single();
+      .maybeSingle();
 
     if (!slot) return NextResponse.json({ error: "Kamu tidak memiliki slot aktif hari ini" }, { status: 404 });
 
