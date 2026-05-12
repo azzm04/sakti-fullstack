@@ -21,13 +21,56 @@ async function getPewawancaraFromToken(req: NextRequest) {
   }
 }
 
-// ── GET — status WAR (ambil sesi yang war_aktif, atau sesi hari ini) ──────────
+// ── GET — status WAR ──────────────────────────────────────────────────────────
+// Logika pencarian sesi (prioritas):
+//   1. Pewawancara sudah punya slot di sesi manapun yang belum lewat → tampilkan sesi itu
+//   2. Ada sesi war_aktif=true → tampilkan
+//   3. Sesi upcoming terdekat (hari ini atau ke depan)
 export async function GET(req: NextRequest) {
   try {
-    // Prioritas: sesi yang war_aktif = true (bisa tanggal berapa saja)
-    // Fallback: sesi hari ini
     const tanggalHariIni = new Date().toISOString().split("T")[0];
+    const pw = await getPewawancaraFromToken(req);
 
+    // 1. Jika pewawancara sudah login, cari slot miliknya di sesi yang masih relevan
+    if (pw) {
+      const { data: slotMilikSaya } = await supabaseAdmin
+        .from("slot_pewawancara")
+        .select(`
+          id, slot_ke, claimed_at, pewawancara_id,
+          sesi_wawancara!inner(id, tanggal, kuota_pewawancara, kuota_mahasiswa, war_aktif, war_dibuka_at, distribusi_done)
+        `)
+        .eq("pewawancara_id", pw.id)
+        .gte("sesi_wawancara.tanggal", tanggalHariIni)  // sesi hari ini atau ke depan
+        .order("sesi_wawancara.tanggal", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (slotMilikSaya) {
+        // Pewawancara sudah punya slot — tampilkan sesi tersebut
+        const sesiData = Array.isArray(slotMilikSaya.sesi_wawancara)
+          ? slotMilikSaya.sesi_wawancara[0]
+          : slotMilikSaya.sesi_wawancara;
+
+        const { data: allSlots } = await supabaseAdmin
+          .from("slot_pewawancara")
+          .select("id, slot_ke, claimed_at, pewawancara_id, pewawancara(nama, email)")
+          .eq("sesi_id", sesiData.id)
+          .order("slot_ke", { ascending: true });
+
+        return NextResponse.json({
+          war_aktif:   sesiData.war_aktif,
+          sesi:        sesiData,
+          slots:       allSlots ?? [],
+          slot_terisi: (allSlots ?? []).length,
+          slot_saya:   {
+            slot_ke:    slotMilikSaya.slot_ke,
+            claimed_at: slotMilikSaya.claimed_at,
+          },
+        });
+      }
+    }
+
+    // 2. Tidak ada slot milik pewawancara → cari sesi war_aktif=true
     let { data: sesi, error } = await supabaseAdmin
       .from("sesi_wawancara")
       .select("id, tanggal, kuota_pewawancara, kuota_mahasiswa, war_aktif, war_dibuka_at, distribusi_done")
@@ -38,18 +81,21 @@ export async function GET(req: NextRequest) {
 
     if (error) throw error;
 
-    // Jika tidak ada sesi WAR aktif, coba ambil sesi hari ini
+    // 3. Tidak ada WAR aktif → cari sesi upcoming terdekat
     if (!sesi) {
-      const { data: sesiHariIni, error: err2 } = await supabaseAdmin
+      const { data: upcoming, error: err2 } = await supabaseAdmin
         .from("sesi_wawancara")
         .select("id, tanggal, kuota_pewawancara, kuota_mahasiswa, war_aktif, war_dibuka_at, distribusi_done")
-        .eq("tanggal", tanggalHariIni)
+        .gte("tanggal", tanggalHariIni)
+        .order("tanggal", { ascending: true })
+        .limit(1)
         .maybeSingle();
       if (err2) throw err2;
-      sesi = sesiHariIni;
+      sesi = upcoming;
     }
+
     if (!sesi) {
-      return NextResponse.json({ war_aktif: false, sesi: null, slots: [], slot_saya: null });
+      return NextResponse.json({ war_aktif: false, sesi: null, slots: [], slot_saya: null, slot_terisi: 0 });
     }
 
     const { data: slots } = await supabaseAdmin
@@ -58,19 +104,18 @@ export async function GET(req: NextRequest) {
       .eq("sesi_id", sesi.id)
       .order("slot_ke", { ascending: true });
 
-    // Cek slot milik pewawancara yang request
-    const pw = await getPewawancaraFromToken(req);
+    // Cek slot milik pewawancara di sesi ini
     let slotSaya = null;
     if (pw) {
       slotSaya = (slots ?? []).find((s) => s.pewawancara_id === pw.id) ?? null;
     }
 
     return NextResponse.json({
-      war_aktif:    sesi.war_aktif,
+      war_aktif:   sesi.war_aktif,
       sesi,
-      slots:        slots ?? [],
-      slot_terisi:  (slots ?? []).length,
-      slot_saya:    slotSaya,
+      slots:       slots ?? [],
+      slot_terisi: (slots ?? []).length,
+      slot_saya:   slotSaya,
     });
   } catch (err) {
     return NextResponse.json(
@@ -98,7 +143,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({}));
     const requestedSlot = body.slot_ke as number | undefined;
 
-    // Ambil sesi yang war_aktif, atau fallback ke hari ini
+    // Ambil sesi yang war_aktif, atau upcoming terdekat
     const tanggalHariIni = new Date().toISOString().split("T")[0];
     let { data: sesi } = await supabaseAdmin
       .from("sesi_wawancara")
@@ -109,15 +154,17 @@ export async function POST(req: NextRequest) {
       .maybeSingle();
 
     if (!sesi) {
-      const { data: fallback } = await supabaseAdmin
+      const { data: upcoming } = await supabaseAdmin
         .from("sesi_wawancara")
         .select("id, war_aktif, kuota_pewawancara")
-        .eq("tanggal", tanggalHariIni)
+        .gte("tanggal", tanggalHariIni)
+        .order("tanggal", { ascending: true })
+        .limit(1)
         .maybeSingle();
-      sesi = fallback;
+      sesi = upcoming;
     }
 
-    if (!sesi) return NextResponse.json({ error: "Belum ada sesi wawancara untuk hari ini" }, { status: 404 });
+    if (!sesi) return NextResponse.json({ error: "Belum ada sesi wawancara yang tersedia" }, { status: 404 });
     if (!sesi.war_aktif) return NextResponse.json({ error: "WAR belum dibuka oleh admin" }, { status: 403 });
 
     const { data: pw } = await supabaseAdmin
@@ -236,9 +283,8 @@ export async function DELETE(req: NextRequest) {
     }
 
     const email   = payload.email as string;
-    const tanggal = new Date().toISOString().split("T")[0];
 
-    // Cari sesi aktif (war_aktif atau hari ini, belum distribusi)
+    // Cari sesi: war_aktif=true, atau upcoming terdekat yang belum distribusi
     const tanggalHariIni = new Date().toISOString().split("T")[0];
     let { data: sesi } = await supabaseAdmin
       .from("sesi_wawancara")
@@ -249,15 +295,17 @@ export async function DELETE(req: NextRequest) {
       .maybeSingle();
 
     if (!sesi) {
-      const { data: fallback } = await supabaseAdmin
+      const { data: upcoming } = await supabaseAdmin
         .from("sesi_wawancara")
         .select("id, distribusi_done")
-        .eq("tanggal", tanggalHariIni)
+        .gte("tanggal", tanggalHariIni)
+        .order("tanggal", { ascending: true })
+        .limit(1)
         .maybeSingle();
-      sesi = fallback;
+      sesi = upcoming;
     }
 
-    if (!sesi) return NextResponse.json({ error: "Tidak ada sesi hari ini" }, { status: 404 });
+    if (!sesi) return NextResponse.json({ error: "Tidak ada sesi yang tersedia" }, { status: 404 });
 
     // Tidak boleh UN-WAR jika distribusi sudah dilakukan
     if (sesi.distribusi_done) {

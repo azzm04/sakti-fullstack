@@ -2,26 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { jwtVerify } from "jose";
 
-interface RawKandidatData {
-  id: number | string;
-  no: number;
-  no_pendaftaran_kipk: string;
-  nama: string;
-  prodi: string;
-  hasil_wawancara?: {
-    id: number;
-    rekomendasi?: string | null;
-    alasan?: string | null;
-    is_draft?: boolean;
-    pewawancara_id?: number | null;
-    updated_at?: string;
-    created_at?: string;
-    pewawancara?: {
-      nama: string;
-    } | { nama: string }[];
-  } | any[]; // Terkadang Supabase mereturn array dari relasi 1-to-1
-}
-
 export async function GET(req: NextRequest) {
   try {
     const token = req.cookies.get("sakti_token")?.value;
@@ -41,25 +21,25 @@ export async function GET(req: NextRequest) {
     if (pwErr || !pw) return NextResponse.json({ error: "Data pewawancara tidak ditemukan" }, { status: 404 });
 
     const { searchParams } = new URL(req.url);
-    const mode   = searchParams.get("mode") ?? "saya"; // saya | hari_ini | semua
+    const mode   = searchParams.get("mode") ?? "saya";
     const search = searchParams.get("search") ?? "";
     const page   = Math.max(1, parseInt(searchParams.get("page") ?? "1"));
     const limit  = 50;
     const from   = (page - 1) * limit;
     const to     = from + limit - 1;
 
-    // Cek apakah jatah sendiri sudah selesai semua
-    // Di tabel hasil_wawancara yang baru, selesai artinya rekomendasi tidak null
-    const { count: jatahSelesai } = await supabaseAdmin
-      .from("hasil_wawancara")
-      .select("id", { count: "exact", head: true })
-      .eq("pewawancara_id", pw.id)
-      .not("rekomendasi", "is", null);
-
+    // Hitung progress jatah sendiri berdasarkan hasil_wawancara
+    // Selesai = kandidat yang ditugaskan ke pewawancara ini dan sudah ada hasil evaluasi
     const { count: jatahTotal } = await supabaseAdmin
       .from("hasil_wawancara")
       .select("id", { count: "exact", head: true })
       .eq("pewawancara_id", pw.id);
+
+    const { count: jatahSelesai } = await supabaseAdmin
+      .from("hasil_wawancara")
+      .select("id", { count: "exact", head: true })
+      .eq("pewawancara_id", pw.id)
+      .not("hasil_akhir", "is", null);
 
     const jatahSudahSelesai = (jatahTotal ?? 0) > 0 && (jatahSelesai ?? 0) >= (jatahTotal ?? 0);
 
@@ -69,99 +49,82 @@ export async function GET(req: NextRequest) {
         error: "Selesaikan semua wawancara jatahmu terlebih dahulu",
         locked: true,
         jatah_selesai: jatahSelesai ?? 0,
-        jatah_total: jatahTotal ?? 0,
+        jatah_total:   jatahTotal ?? 0,
       }, { status: 403 });
     }
 
-    // Bangun Query Utama
+    // ── Bangun query berdasarkan mode ────────────────────────────────────────
+    // Ambil kandidat yang ter-assign via hasil_wawancara
+    let assignmentQuery = supabaseAdmin
+      .from("hasil_wawancara")
+      .select("kandidat_id");
+
+    if (mode === "saya") {
+      // Hanya kandidat yang ditugaskan ke pewawancara ini
+      assignmentQuery = assignmentQuery.eq("pewawancara_id", pw.id);
+    } else if (mode === "hari_ini") {
+      // Kandidat yang di-assign hari ini (based on created_at)
+      const today = new Date().toISOString().split("T")[0];
+      assignmentQuery = assignmentQuery
+        .gte("created_at", `${today}T00:00:00.000Z`)
+        .lte("created_at", `${today}T23:59:59.999Z`);
+    } else {
+      // Semua kandidat yang sudah di-assign (untuk mode "semua")
+      assignmentQuery = assignmentQuery.not("pewawancara_id", "is", null);
+    }
+
+    const { data: assignmentData } = await assignmentQuery;
+    const kandidatIds = (assignmentData ?? []).map((a) => a.kandidat_id);
+
+    if (!kandidatIds.length) {
+      return NextResponse.json({
+        data: [],
+        total: 0,
+        page,
+        totalPages: 0,
+        jatah_selesai: jatahSelesai,
+        jatah_total: jatahTotal ?? 0,
+      });
+    }
+
+    // Ambil data kandidat dengan filter
+    const selectFields = `id, no, no_pendaftaran_kipk, nama, prodi`;
+
     let query = supabaseAdmin
       .from("kandidat")
-      .select(`
-        id, no, no_pendaftaran_kipk, nama, prodi,
-        hasil_wawancara(id, rekomendasi, alasan, is_draft, pewawancara_id, updated_at, created_at,
-          pewawancara:pewawancara_id(nama)
-        )
-      `, { count: "exact" })
+      .select(selectFields, { count: "exact" })
+      .in("id", kandidatIds)
       .order("no", { ascending: true })
       .range(from, to);
 
-    if (mode === "saya") {
-      // Hanya mahasiswa yang ditugaskan ke pewawancara ini (!inner memaksa join ketat)
-      query = supabaseAdmin
-        .from("kandidat")
-        .select(`
-          id, no, no_pendaftaran_kipk, nama, prodi,
-          hasil_wawancara!inner(id, rekomendasi, alasan, is_draft, pewawancara_id, updated_at, created_at,
-            pewawancara:pewawancara_id(nama)
-          )
-        `, { count: "exact" })
-        .eq("hasil_wawancara.pewawancara_id", pw.id)
-        .order("no", { ascending: true })
-        .range(from, to);
-
-    } else if (mode === "hari_ini") {
-      // Ambil tugas yang dibuat (created_at) pada hari ini di hasil_wawancara
-      const today = new Date().toISOString().split("T")[0];
-      const start = `${today}T00:00:00.000Z`;
-      const end   = `${today}T23:59:59.999Z`;
-
-      query = supabaseAdmin
-        .from("kandidat")
-        .select(`
-          id, no, no_pendaftaran_kipk, nama, prodi,
-          hasil_wawancara!inner(id, rekomendasi, alasan, is_draft, pewawancara_id, updated_at, created_at,
-            pewawancara:pewawancara_id(nama)
-          )
-        `, { count: "exact" })
-        .gte("hasil_wawancara.created_at", start)
-        .lte("hasil_wawancara.created_at", end)
-        .order("no", { ascending: true })
-        .range(from, to);
-
-    } else {
-      // Mode Semua - Gunakan query awal (semua kandidat)
-    }
-
     if (search) {
-      query = query.or(`nama.ilike.%${search}%,no_pendaftaran_kipk.ilike.%${search}%,prodi.ilike.%${search}%`);
+      query = query.or(`nama.ilike.%${search}%,no_pendaftaran_kipk.ilike.%${search}%`);
     }
 
-    const { data: rawData, count, error } = await query as { data: RawKandidatData[] | null, count: number | null, error: any };
-    
+    const { data: rawData, count, error } = await query;
+
     if (error) {
       console.error("[GET Pewawancara Mahasiswa] DB Error:", error);
       throw error;
     }
 
-    const data = (rawData ?? []).map((row: RawKandidatData) => {
-      const hwArray = Array.isArray(row.hasil_wawancara) ? row.hasil_wawancara : [row.hasil_wawancara];
-      const hw = hwArray[0]; 
-      
-      const pwArray = Array.isArray(hw?.pewawancara) ? hw?.pewawancara : [hw?.pewawancara];
-      const pwData = pwArray[0];
-
+    const data = (rawData ?? []).map((row) => {
       return {
-        id: String(row.id),
-        no: row.no,
+        id:                  String(row.id),
+        no:                  row.no,
         no_pendaftaran_kipk: row.no_pendaftaran_kipk,
-        nama: row.nama,
-        prodi: row.prodi,
-        pewawancara_id: hw?.pewawancara_id,
-        pewawancara: pwData?.nama || null,
-        rekomendasi: hw?.rekomendasi,
-        alasan: hw?.alasan,
-        is_draft: hw?.is_draft,
-        status_wawancara: hw?.rekomendasi ? "completed" : "pending",
+        nama:                row.nama,
+        prodi:               row.prodi,
       };
     });
 
     return NextResponse.json({
-      data: data,
-      total: count ?? 0,
+      data,
+      total:               count ?? 0,
       page,
-      totalPages: Math.ceil((count ?? 0) / limit),
-      jatah_selesai: jatahSelesai ?? 0,
-      jatah_total: jatahTotal ?? 0,
+      totalPages:          Math.ceil((count ?? 0) / limit),
+      jatah_selesai:       jatahSelesai ?? 0,
+      jatah_total:         jatahTotal ?? 0,
       jatah_sudah_selesai: jatahSudahSelesai,
     });
 

@@ -49,13 +49,20 @@ export default function PewawancaraDashboard() {
 
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
-    if (status?.war_aktif && !status.slot_saya) {
-      intervalRef.current = setInterval(fetchStatus, 3000);
+    // Poll setiap 5 detik jika:
+    // - WAR sedang aktif dan belum punya slot (rebutan slot)
+    // - WAR belum aktif tapi ada sesi upcoming (menunggu admin buka)
+    const shouldPoll =
+      (status?.war_aktif && !status.slot_saya) ||
+      (!status?.war_aktif && !!status?.sesi && !status?.sesi?.distribusi_done);
+
+    if (shouldPoll) {
+      intervalRef.current = setInterval(fetchStatus, 5000);
     }
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [status?.war_aktif, status?.slot_saya, fetchStatus]);
+  }, [status?.war_aktif, status?.slot_saya, status?.sesi, fetchStatus]);
 
   async function handleKlaim() {
     if (!selectedSlot) return;
@@ -144,6 +151,10 @@ export default function PewawancaraDashboard() {
         year: "numeric",
       });
 
+  // Label header: jika sesi bukan hari ini, tampilkan keterangan
+  const tanggalHariIni = new Date().toISOString().split("T")[0];
+  const isUpcoming = sesi && sesi.tanggal > tanggalHariIni;
+
   return (
     <div className="p-6 md:p-8 max-w-2xl mx-auto">
       {/* ── Header ── */}
@@ -154,7 +165,14 @@ export default function PewawancaraDashboard() {
         <h1 className="text-2xl font-extrabold text-primary font-headline">
           Dashboard
         </h1>
-        <p className="text-muted-foreground text-sm mt-0.5">{today}</p>
+        <p className="text-muted-foreground text-sm mt-0.5">
+          {today}
+          {isUpcoming && (
+            <span className="ml-2 text-[11px] font-bold text-amber-600 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+              Sesi Mendatang
+            </span>
+          )}
+        </p>
       </div>
 
       {!sesi && (
@@ -267,6 +285,53 @@ export default function PewawancaraDashboard() {
                 )}
               </div>
             </div>
+          )}
+
+          {/* ════ STATE 1.5: Sesi ada tapi WAR belum dibuka ════ */}
+          {!slotSaya && !warAktif && sesi && !sesi.distribusi_done && (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden"
+            >
+              <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-amber-400 inline-block" />
+                  <span className="text-xs font-bold text-amber-600 uppercase tracking-wider">
+                    Menunggu WAR Dibuka
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                  <Loader2 size={12} className="animate-spin" />
+                  <span>Memperbarui otomatis…</span>
+                </div>
+              </div>
+              <div className="p-6 text-center space-y-3">
+                <div className="w-14 h-14 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center mx-auto">
+                  <Clock size={26} className="text-amber-500" />
+                </div>
+                <div>
+                  <p className="font-bold text-foreground text-base">
+                    Sesi wawancara sudah dijadwalkan
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Admin belum membuka WAR untuk sesi ini. Halaman akan otomatis
+                    memperbarui setiap 5 detik.
+                  </p>
+                </div>
+                <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/5 border border-primary/20 rounded-xl text-sm font-semibold text-primary">
+                  <ClipboardList size={14} />
+                  {new Date(sesi.tanggal + "T00:00:00").toLocaleDateString("id-ID", {
+                    weekday: "long", day: "numeric", month: "long", year: "numeric",
+                  })}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Kuota: <span className="font-semibold text-foreground">{sesi.kuota_pewawancara} pewawancara</span>
+                  {" · "}
+                  <span className="font-semibold text-foreground">{sesi.kuota_mahasiswa} mahasiswa</span>
+                </p>
+              </div>
+            </motion.div>
           )}
 
           {/* ════ STATE 2: WAR aktif, belum punya slot ════ */}
