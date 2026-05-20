@@ -5,8 +5,11 @@ const ACCEPTED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/web
 const ACCEPTED_EXT = ".png,.jpg,.jpeg,.webp,.gif";
 
 interface ChatInputProps {
-  onSend: (message: string, imageBase64?: string | null) => void;
+  input: string;                                          // ← dari useChat
+  onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void; // ← dari useChat
+  onSend: (imageBase64?: string | null) => void;         // ← tidak perlu kirim text
   isLoading: boolean;
+  onStop?: () => void;
 }
 
 function toBase64(file: File): Promise<string> {
@@ -18,8 +21,7 @@ function toBase64(file: File): Promise<string> {
   });
 }
 
-export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
-  const [input, setInput]           = useState("");
+export default function ChatInput({ onSend, isLoading, input, onInputChange }: ChatInputProps) {
   const [preview, setPreview]       = useState<string | null>(null);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
   const [imgError, setImgError]     = useState("");
@@ -27,8 +29,8 @@ export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
 
   const handleSend = () => {
     if ((!input.trim() && !imageBase64) || isLoading) return;
-    onSend(input, imageBase64);
-    setInput("");
+    onSend(imageBase64);
+    onInputChange({ target: { value: "" } } as React.ChangeEvent<HTMLInputElement>);
     setPreview(null);
     setImageBase64(null);
     setImgError("");
@@ -72,6 +74,7 @@ export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
           <button
             onClick={removeImage}
             className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-slate-800 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px] shadow"
+            title="button"
           >
             <X size={10} />
           </button>
@@ -84,7 +87,7 @@ export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
       <div className="bg-slate-50 rounded-2xl flex items-end px-3 py-1.5 border border-slate-200 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 transition-all gap-1">
 
         {/* Image attach button */}
-        <input ref={fileRef} type="file" accept={ACCEPTED_EXT} className="hidden" onChange={handleFile} />
+        <input ref={fileRef} type="file" accept={ACCEPTED_EXT} className="hidden" onChange={handleFile} title="Masukkan gambar" />
         <button
           type="button"
           onClick={() => fileRef.current?.click()}
@@ -102,7 +105,7 @@ export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
           type="text"
           placeholder="Tanya SAKABOT..."
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={onInputChange}
           onKeyDown={(e) => e.key === "Enter" && handleSend()}
           disabled={isLoading}
           className="bg-transparent border-none outline-none flex-1 text-sm text-slate-700 placeholder:text-slate-400 py-1.5 disabled:opacity-50"
@@ -117,7 +120,7 @@ export default function ChatInput({ onSend, isLoading }: ChatInputProps) {
           {isLoading ? (
             <Loader2 className="w-4 h-4 animate-spin" />
           ) : (
-            <Send className="w-4 h-4 translate-x-[-1px] translate-y-[1px]" />
+            <Send className="w-4 h-4 translate-x-px translate-y-px" />
           )}
         </button>
       </div>

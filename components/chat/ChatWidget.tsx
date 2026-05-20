@@ -1,86 +1,29 @@
 "use client";
 
 import { useState } from "react";
-import { MessageSquare, X, Bot } from "lucide-react";
-// Import dari komponen baru yang kamu buat
+import { MessageSquare, X } from "lucide-react";
+import { useChatbot } from "@/hook/useChatbot";
 import ChatMessages from "./ChatMessage";
-// Import API dan Schema
-import { chatAPI } from "@/lib/api";
 import type { ChatMessage } from "@/schemas";
 import ChatInput from "./ChatInput";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [imageBase64, setImageBase64] = useState<string | null>(null);
 
-  // 1. Update State menggunakan schema ChatMessage yang baru
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: "welcome",
-      role: "assistant",
-      content:
-        "Halo! Saya SAKABOT. Ada yang bisa saya bantu terkait KIP-Kuliah?",
-      timestamp: new Date().toISOString(),
-    },
-  ]);
+  const { messages, isLoading, input, handleInputChange, handleSubmit, stop } =
+    useChatbot(imageBase64);
 
-  const handleSendMessage = async (
-    text: string,
-    imageBase64?: string | null,
-  ) => {
-    // 2. Format pesan user sesuai schema baru
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      role: "user",
-      content: text || "📎 [Gambar dikirim]",
-      timestamp: new Date().toISOString(),
-      imageUrl: imageBase64 || undefined,
-    };
-
-    setMessages((prev) => [...prev, userMessage]);
-    setIsLoading(true);
-
-    try {
-      const response = await chatAPI.sendMessage(
-        text || "Tolong analisis gambar ini.",
-        imageBase64 ?? null,
-      );
-
-      const botReply =
-        response.jawaban ??
-        response.reply ??
-        response.message ??
-        response.response ??
-        response.data;
-
-      // 3. Format balasan bot sesuai schema baru
-      const botMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: botReply,
-        timestamp: new Date().toISOString(),
-      };
-
-      setMessages((prev) => [...prev, botMessage]);
-    } catch (error) {
-      console.error("Gagal mengirim pesan:", error);
-      const errorMessage: ChatMessage = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content:
-          "Maaf, SAKABOT sedang mengalami gangguan koneksi. Silakan coba lagi nanti.",
-        timestamp: new Date().toISOString(),
-      };
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  // Fungsi untuk meng-copy teks
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
+  };
+
+  const handleSendMessage = (image?: string | null) => {
+    if (image) setImageBase64(image);
+    handleSubmit({
+      preventDefault: () => {},
+    } as React.FormEvent<HTMLFormElement>);
   };
 
   return (
@@ -129,17 +72,6 @@ export default function ChatWidget() {
         {/* Header Chat */}
         <div className="bg-primary p-4 text-white flex items-center justify-between shadow-sm z-10 shrink-0">
           <div className="flex items-center gap-3">
-            {/* <div className="p-2  backdrop-blur-sm">
-              <Avatar className="size-8 shrink-0 mt-1 shadow-sm">
-                <AvatarImage
-                  alt="SAKABOT"
-                  src="https://api.dicebear.com/9.x/glass/svg?seed=alice"
-                />
-                <AvatarFallback className="bg-indigo-100 text-indigo-700 text-xs font-bold">
-                  SA
-                </AvatarFallback>
-              </Avatar>
-            </div> */}
             <div>
               <h3 className="font-bold text-sm tracking-wide">SAKABOT</h3>
               <div className="flex items-center gap-1.5 text-[10px] text-blue-100">
@@ -159,7 +91,7 @@ export default function ChatWidget() {
 
         <div className="flex-1 overflow-hidden flex flex-col px-4 relative bg-slate-50/50">
           <ChatMessages
-            messages={messages}
+            messages={messages as ChatMessage[]}
             isLoading={isLoading}
             onCopy={handleCopy}
           />
@@ -167,7 +99,13 @@ export default function ChatWidget() {
 
         {/* Footer Chat */}
         <div className="shrink-0 bg-white">
-          <ChatInput onSend={handleSendMessage} isLoading={isLoading} />
+          <ChatInput
+            input={input}
+            onInputChange={handleInputChange}
+            onSend={handleSendMessage}
+            isLoading={isLoading}
+            onStop={stop}
+          />
         </div>
       </div>
 

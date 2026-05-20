@@ -119,10 +119,15 @@ const MessageItem = memo(
 
           {/* Timestamp */}
           <span className="text-[10px] font-medium text-slate-400 mt-1 px-1">
-            {new Date(msg.timestamp).toLocaleTimeString("id-ID", {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
+            {msg.createdAt && !isNaN(new Date(msg.createdAt).getTime())
+              ? new Date(msg.createdAt).toLocaleTimeString("id-ID", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : new Date().toLocaleTimeString("id-ID", {
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })}
           </span>
         </div>
 
@@ -160,7 +165,10 @@ export default function ChatMessages({
   }, [safeMessages, isLoading]);
 
   return (
-    <div ref={containerRef} className="flex flex-col gap-5 py-6 scroll-smooth overflow-y-auto pr-2">
+    <div
+      ref={containerRef}
+      className="flex flex-col gap-5 py-6 scroll-smooth overflow-y-auto pr-2"
+    >
       <AnimatePresence initial={false}>
         {safeMessages.map((msg) => (
           <MessageItem key={msg.id} msg={msg} onCopy={onCopy} />

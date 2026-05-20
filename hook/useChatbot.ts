@@ -1,78 +1,50 @@
 'use client';
 
-import { useState } from 'react';
-import { chatAPI } from '@/lib/api';
-import { ChatMessageSchema, ChatMessage } from '@/schemas';
+import { ChatMessage } from '@/schemas';
+import { useChat } from 'ai/react';
+import type { Message } from 'ai';
 
-export function useChatbot() {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    ChatMessageSchema.parse({
-      id: '1',
-      role: 'assistant',
-      content:
-        'Halo! Saya SAKABOT, asisten virtual SAKTI. Ada yang bisa saya bantu terkait KIP-Kuliah hari ini?',
-      timestamp: new Date().toISOString(),
-    }),
-  ]);
-
-  const [inputMessage, setInputMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [conversationId, setConversationId] = useState<string>();
-
-  const sendMessage = async (message: string) => {
-    if (!message.trim() || isLoading) return;
-
-    // 🔹 User message (divalidasi Zod)
-    const userMessage = ChatMessageSchema.parse({
-      id: Date.now().toString(),
-      role: 'user',
-      content: message,
-      timestamp: new Date().toISOString(),
-    });
-
-    setMessages((prev) => [...prev, userMessage]);
-    setInputMessage('');
-    setIsLoading(true);
-
-    try {
-      const response = await chatAPI.sendMessage(message);
-
-      const assistantRaw = {
-        id: (Date.now() + 1).toString(),
+export function useChatbot(imageBase64?: string | null) {
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    isLoading,
+    setMessages,
+    stop,
+    setInput,
+  } = useChat({
+    api: '/api/chat',
+    body: {
+      data: {
+        imageBase64: imageBase64 || null,
+      },
+    },
+    initialMessages: [
+      {
+        id: '1',
         role: 'assistant',
-        // Backend returns one of: jawaban, reply, message
-        content: response.jawaban ?? response.reply ?? response.message ?? '',
-        timestamp: new Date().toISOString(),
-      };
-
-      const assistantMessage = ChatMessageSchema.parse(assistantRaw);
-
-      setMessages((prev) => [...prev, assistantMessage]);
-
-      if (response.conversation_id) {
-        setConversationId(response.conversation_id);
-      }
-    } catch (error) {
-      console.error('Error sending message:', error);
-
-      const errorMessage = ChatMessageSchema.parse({
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: 'Maaf, terjadi kesalahan. Silakan coba lagi.',
-        timestamp: new Date().toISOString(),
-      });
-
-      setMessages((prev) => [...prev, errorMessage]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+        content:
+          'Halo! Saya SAKABOT, asisten virtual SAKTI. Ada yang bisa saya bantu terkait KIP-Kuliah hari ini?',
+      },
+    ],
+    onFinish: (message: Message) => {
+      console.log('💬 Chat finished:', message.content);
+    },
+    onError: (error: Error) => {
+      console.error('❌ Chat error:', error);
+    },
+  });
 
   return {
-    messages,
-    inputMessage,
-    setInputMessage,
+    messages: messages as ChatMessage[],
+    input,
     isLoading,
-    sendMessage,
+    stop,
+    handleInputChange,
+    handleSubmit,
+    setMessages,
+    setInput,
   };
 }
