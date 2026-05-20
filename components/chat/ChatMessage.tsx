@@ -167,7 +167,7 @@ export default function ChatMessages({
   return (
     <div
       ref={containerRef}
-      className="flex flex-col gap-5 py-6 scroll-smooth overflow-y-auto pr-2"
+      className="flex-1 min-h-0 flex flex-col gap-5 py-6 scroll-smooth overflow-y-auto pr-2"
     >
       <AnimatePresence initial={false}>
         {safeMessages.map((msg) => (

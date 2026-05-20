@@ -89,7 +89,7 @@ export default function ChatWidget() {
           </button>
         </div>
 
-        <div className="flex-1 overflow-hidden flex flex-col px-4 relative bg-slate-50/50">
+        <div className="flex-1 min-h-0 overflow-hidden flex flex-col px-4 relative bg-slate-50/50">
           <ChatMessages
             messages={messages as ChatMessage[]}
             isLoading={isLoading}
