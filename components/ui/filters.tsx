@@ -7,7 +7,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { cn } from "@/lib/utils";
 import {
   Check, Circle, CircleCheck, CircleDashed, CircleX,
-  GraduationCap, Tag, UserCheck, X,
+  GraduationCap, Tag, UserCheck, X, ShieldCheck, ShieldAlert, TriangleAlert, Clock,
 } from "lucide-react";
 import { Dispatch, SetStateAction, useRef, useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
@@ -38,6 +38,8 @@ export enum FilterType {
   STATUS       = "Status",
   JALUR_MASUK  = "Jalur Masuk",
   PEWAWANCARA  = "Pewawancara",
+  // Monev
+  VALIDASI_MONEV = "Validasi",
 }
 
 export enum FilterOperator {
@@ -63,6 +65,13 @@ export enum JalurMasuk {
   UM   = "UM",
 }
 
+export enum ValidasiMonev {
+  SESUAI           = "Sesuai",
+  BELUM_MENGISI    = "Belum Mengisi",
+  MELEBIHI_BATAS   = "Melebihi Batas",
+  DATA_TIDAK_SESUAI = "Data Tidak Sesuai",
+}
+
 export type FilterOption = { name: string; icon?: React.ReactNode; label?: string };
 export type Filter = { id: string; type: FilterType; operator: FilterOperator; value: string[] };
 
@@ -81,15 +90,26 @@ const FilterIcon = ({ type }: { type: string }) => {
     case JalurMasuk.SNBP: return <span className="text-[9px] font-bold px-1 py-0.5 bg-blue-100 text-blue-700 rounded">SNBP</span>;
     case JalurMasuk.SNBT: return <span className="text-[9px] font-bold px-1 py-0.5 bg-purple-100 text-purple-700 rounded">SNBT</span>;
     case JalurMasuk.UM:   return <span className="text-[9px] font-bold px-1 py-0.5 bg-orange-100 text-orange-700 rounded">UM</span>;
+    // Monev
+    case FilterType.VALIDASI_MONEV:       return <ShieldCheck className="size-3.5 text-muted-foreground" />;
+    case ValidasiMonev.SESUAI:            return <CircleCheck className="size-3.5 text-emerald-500" />;
+    case ValidasiMonev.BELUM_MENGISI:     return <Clock className="size-3.5 text-amber-500" />;
+    case ValidasiMonev.MELEBIHI_BATAS:    return <ShieldAlert className="size-3.5 text-red-500" />;
+    case ValidasiMonev.DATA_TIDAK_SESUAI: return <TriangleAlert className="size-3.5 text-orange-500" />;
     default: return <Tag className="size-3.5" />;
   }
 };
 
-// ── Filter options ────────────────────────────────────────────────────────────
+// ── Filter options (Evaluasi) ─────────────────────────────────────────────────
 export const filterViewOptions: FilterOption[][] = [[
   { name: FilterType.HASIL_AKHIR,  icon: <FilterIcon type={FilterType.HASIL_AKHIR} /> },
   { name: FilterType.STATUS,       icon: <FilterIcon type={FilterType.STATUS} /> },
   { name: FilterType.JALUR_MASUK,  icon: <FilterIcon type={FilterType.JALUR_MASUK} /> },
+]];
+
+// ── Filter options (Monev) ────────────────────────────────────────────────────
+export const monevFilterViewOptions: FilterOption[][] = [[
+  { name: FilterType.VALIDASI_MONEV, icon: <FilterIcon type={FilterType.VALIDASI_MONEV} /> },
 ]];
 
 export const filterViewToFilterOptions: Record<FilterType, FilterOption[]> = {
@@ -97,6 +117,7 @@ export const filterViewToFilterOptions: Record<FilterType, FilterOption[]> = {
   [FilterType.STATUS]:      Object.values(StatusEvaluasi).map((v) => ({ name: v, icon: <FilterIcon type={v} /> })),
   [FilterType.JALUR_MASUK]: Object.values(JalurMasuk).map((v) => ({ name: v, icon: <FilterIcon type={v} /> })),
   [FilterType.PEWAWANCARA]: [],
+  [FilterType.VALIDASI_MONEV]: Object.values(ValidasiMonev).map((v) => ({ name: v, icon: <FilterIcon type={v} /> })),
 };
 
 // ── Operator dropdown ─────────────────────────────────────────────────────────
@@ -195,10 +216,6 @@ export default function Filters({ filters, setFilters }: { filters: Filter[]; se
             <FilterIcon type={filter.type} />
             {filter.type}
           </div>
-          <FilterOperatorDropdown
-            filterType={filter.type} operator={filter.operator} filterValues={filter.value}
-            setOperator={(op) => setFilters((prev) => prev.map((f) => f.id === filter.id ? { ...f, operator: op } : f))}
-          />
           <FilterValueCombobox
             filterType={filter.type} filterValues={filter.value}
             setFilterValues={(vals) => setFilters((prev) => prev.map((f) => f.id === filter.id ? { ...f, value: vals } : f))}

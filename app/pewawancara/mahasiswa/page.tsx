@@ -80,7 +80,7 @@ export default function PewawancaraMahasiswaPage() {
 
       {/* Header */}
       <div className="mb-5">
-        <h1 className="text-2xl font-extrabold text-primary font-headline">Daftar MahasiswaListItem</h1>
+        <h1 className="text-2xl font-extrabold text-primary font-headline">Daftar Mahasiswa</h1>
         <p className="text-muted-foreground text-sm mt-0.5">
           Jatah kamu: <span className="font-semibold text-on-surface">{jatahSelesai}/{jatahTotal}</span> selesai
         </p>
@@ -106,7 +106,7 @@ export default function PewawancaraMahasiswaPage() {
           {jatahSudahSelesai && (
             <p className="text-[11px] text-emerald-600 mt-2 flex items-center gap-1">
               <CheckCircle2 size={11} />
-              Semua jatah selesai — kamu bisa membantu wawancara MahasiswaListItem lain
+              Semua jatah selesai — kamu bisa membantu wawancara mahasiswa lain
             </p>
           )}
         </div>
@@ -183,7 +183,7 @@ export default function PewawancaraMahasiswaPage() {
       <p className="text-xs text-muted-foreground mb-4">
         {MODE_CONFIG.find((m) => m.key === mode)?.desc}
         {mode !== "saya" && (
-          <span className="ml-1 text-slate-400">· {total} MahasiswaListItem</span>
+          <span className="ml-1 text-slate-400">· {total} mahasiswa</span>
         )}
       </p>
 
@@ -214,7 +214,7 @@ export default function PewawancaraMahasiswaPage() {
             <div>
               <p className="text-sm font-bold text-amber-800">Fitur Terkunci</p>
               <p className="text-xs text-amber-700 mt-0.5">
-                Selesaikan semua wawancara jatahmu terlebih dahulu sebelum bisa melihat MahasiswaListItem lain.
+                Selesaikan semua wawancara jatahmu terlebih dahulu sebelum bisa melihat mahasiswa lain.
               </p>
               <p className="text-xs text-amber-600 mt-1 font-semibold">
                 Progress: {jatahSelesai} / {jatahTotal} selesai
@@ -304,13 +304,13 @@ export default function PewawancaraMahasiswaPage() {
             {mode === "saya" ? (
               <>
                 <User size={28} className="text-slate-200 mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">Belum ada MahasiswaListItem yang ditugaskan ke kamu.</p>
+                <p className="text-sm text-muted-foreground">Belum ada mahasiswa yang ditugaskan ke kamu.</p>
                 <p className="text-xs text-slate-400 mt-1">Tunggu admin melakukan distribusi setelah WAR selesai.</p>
               </>
             ) : mode === "hari_ini" ? (
               <>
                 <CalendarDays size={28} className="text-slate-200 mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">Tidak ada MahasiswaListItem terjadwal hari ini.</p>
+                <p className="text-sm text-muted-foreground">Tidak ada mahasiswa terjadwal hari ini.</p>
               </>
             ) : (
               <>
