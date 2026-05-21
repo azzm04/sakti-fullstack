@@ -9,6 +9,7 @@ import {
   ClipboardList, AlertCircle, CheckCircle2, Loader2,
   UserCheck, Eye,
 } from "lucide-react";
+import { toast } from "sonner";
 
 import type { Kandidat } from "@/schemas";
 
@@ -109,6 +110,14 @@ export default function EvaluasiDetailPage({ params }: { params: Promise<{ id: s
   }, [id]);
 
   async function handleSave() {
+    // Validasi: pastikan rekomendasi sudah dipilih
+    if (!form.hasil_akhir) {
+      toast.error("Data belum lengkap", {
+        description: "Pilih rekomendasi terlebih dahulu sebelum menyimpan.",
+      });
+      return;
+    }
+
     setSaveStatus("saving");
 
     // Ambil string teks dari opsi yang dipilih user
@@ -126,9 +135,19 @@ export default function EvaluasiDetailPage({ params }: { params: Promise<{ id: s
           is_draft: false // Tandai sudah bukan draft
         }),
       });
-      if (!res.ok) throw new Error();
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        toast.error("Data belum lengkap", {
+          description: errData.error || "Gagal menyimpan perubahan. Pastikan semua data sudah terisi.",
+        });
+        throw new Error(errData.error || "Gagal menyimpan");
+      }
       
       setSaveStatus("saved");
+      toast.success("Berhasil disimpan", {
+        description: "Rekomendasi evaluasi telah diperbarui.",
+      });
       setTimeout(() => setSaveStatus("idle"), 2500);
     } catch {
       setSaveStatus("error");

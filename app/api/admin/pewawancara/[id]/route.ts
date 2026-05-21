@@ -56,13 +56,13 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
     if (getErr) throw getErr;
 
-    // Hapus relasi dari slot_pewawancara terlebih dahulu
-    const { error: delSlotErr } = await supabaseAdmin
-      .from("slot_pewawancara")
+    // Hapus relasi dari kuota_pewawancara terlebih dahulu
+    const { error: delKuotaErr } = await supabaseAdmin
+      .from("kuota_pewawancara")
       .delete()
       .eq("pewawancara_id", id);
     
-    if (delSlotErr) throw delSlotErr;
+    if (delKuotaErr) throw delKuotaErr;
 
     // Hapus data dari hasil_wawancara yang referensi pewawancara ini
     const { error: delResultErr } = await supabaseAdmin

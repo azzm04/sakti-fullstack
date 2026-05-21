@@ -345,28 +345,47 @@ export const SesiWawancaraSchema = z.object({
 });
 export type SesiWawancara = z.infer<typeof SesiWawancaraSchema>;
 
-export const SlotPewawancaraSchema = z.object({
+export const KuotaPewawancaraSchema = z.object({
   id:            z.number(),
-  slot_ke:       z.number(),
+  kuota_ke:      z.number(),
   claimed_at:    z.string(),
   pewawancara_id: z.number(),
   pewawancara:   z.object({ nama: z.string(), email: z.string() }).nullable().optional(),
 });
-export type SlotPewawancara = z.infer<typeof SlotPewawancaraSchema>;
+export type KuotaPewawancara = z.infer<typeof KuotaPewawancaraSchema>;
 
 /* =========================
    WAR Status (pewawancara dashboard)
 ========================= */
+export const SesiListItemSchema = z.object({
+  id:                  z.number(),
+  tanggal:             z.string(),
+  kuota_pewawancara:   z.number(),
+  kuota_mahasiswa:     z.number(),
+  war_aktif:           z.boolean(),
+  war_dibuka_at:       z.string().nullable().optional(),
+  distribusi_done:     z.boolean().optional(),
+  kuota_terisi:        z.number(),
+  kuota_saya:          z.object({ kuota_ke: z.number(), claimed_at: z.string() }).nullable(),
+  kuota_list:          z.array(z.object({
+    kuota_ke:    z.number(),
+    pewawancara_id: z.number().optional(),
+    pewawancara: z.any().nullable().optional(),
+  })).optional(),
+});
+export type SesiListItem = z.infer<typeof SesiListItemSchema>;
+
 export const WarStatusSchema = z.object({
-  war_aktif:   z.boolean(),
-  slot_terisi: z.number(),
-  slot_saya:   z.object({ slot_ke: z.number(), claimed_at: z.string() }).nullable(),
-  sesi:        SesiWawancaraSchema.pick({
+  war_aktif:    z.boolean(),
+  kuota_terisi: z.number(),
+  kuota_saya:   z.object({ kuota_ke: z.number(), claimed_at: z.string() }).nullable(),
+  sesi:         SesiWawancaraSchema.pick({
     id: true, tanggal: true, kuota_pewawancara: true,
     kuota_mahasiswa: true, war_dibuka_at: true, distribusi_done: true,
   }).nullable(),
-  slots: z.array(z.object({
-    slot_ke:     z.number(),
+  sesi_list:    z.array(SesiListItemSchema).optional(),
+  kuota_list: z.array(z.object({
+    kuota_ke:    z.number(),
     pewawancara: z.object({ nama: z.string() }).nullable().optional(),
   })),
 });

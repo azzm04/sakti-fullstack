@@ -8,17 +8,18 @@ import {
   UserCheck, Users, Clock, Trash2, X
 } from "lucide-react";
 
-import type { SesiWawancara, SlotPewawancara } from "@/schemas";
+import type { SesiWawancara, KuotaPewawancara } from "@/schemas";
 
 export default function SesiWAR() {
   const today = new Date().toISOString().split("T")[0];
   const [tanggal, setTanggal] = useState(today);
   const [SesiWawancara, setSesi] = useState<SesiWawancara | null>(null);
-  const [slots, setSlots] = useState<SlotPewawancara[]>([]);
+  const [kuotaList, setKuotaList] = useState<KuotaPewawancara[]>([]);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState(false);
   const [distributing, setDistributing] = useState(false);
   const [deletingSlot, setDeletingSlot] = useState<number | null>(null);
+  const [offset, setOffset] = useState(0);
   
   // Modal states
   const [showBuatSesi, setShowBuatSesi] = useState(false);
@@ -37,7 +38,8 @@ export default function SesiWAR() {
       const res = await fetch(`/api/admin/SesiWawancara?tanggal=${tanggal}`);
       const json = await res.json();
       setSesi(json.SesiWawancara ?? null);
-      setSlots(json.slots ?? []);
+      setKuotaList(json.slots ?? []);
+      setOffset(json.offset ?? 0);
     } finally {
       setLoading(false);
     }
@@ -120,11 +122,11 @@ export default function SesiWAR() {
 
   async function handleDistribusi() {
     if (!SesiWawancara) return;
-    if (slots.length === 0) {
+    if (kuotaList.length === 0) {
       setMsg({ type: "err", text: "Belum ada pewawancara yang mengisi Slot" });
       return;
     }
-    if (!confirm(`Distribusikan mahasiswa ke ${slots.length} pewawancara?\nTindakan ini tidak bisa dibatalkan.`)) return;
+    if (!confirm(`Distribusikan mahasiswa ke ${kuotaList.length} pewawancara?\nTindakan ini tidak bisa dibatalkan.`)) return;
     
     setDistributing(true);
     try {
@@ -172,8 +174,8 @@ export default function SesiWAR() {
     }
   }
 
-  const slotPenuh = SesiWawancara
-    ? slots.length >= SesiWawancara.kuota_pewawancara
+  const kuotaPenuh = SesiWawancara
+    ? kuotaList.length >= SesiWawancara.kuota_pewawancara
     : false;
 
   return (
@@ -369,7 +371,7 @@ export default function SesiWAR() {
                 {!SesiWawancara.distribusi_done && (
                   <button
                     onClick={handleToggleWAR}
-                    disabled={toggling || slotPenuh}
+                    disabled={toggling || kuotaPenuh}
                     className={`flex items-center justify-center gap-2 px-6 py-3.5 text-sm font-bold rounded-2xl transition-all shadow-sm disabled:opacity-50 ${
                       SesiWawancara.war_aktif
                         ? "bg-white text-amber-600 hover:bg-amber-50"
@@ -388,7 +390,7 @@ export default function SesiWAR() {
                       : "Buka Sesi WAR"}
                   </button>
                 )}
-                {!SesiWawancara.distribusi_done && slots.length > 0 && (
+                {!SesiWawancara.distribusi_done && kuotaList.length > 0 && (
                   <div className="relative group">
                     <button
                       onClick={handleDistribusi}
@@ -429,7 +431,7 @@ export default function SesiWAR() {
                   Tingkat Keterisian:
                 </span>
                 <span className="text-2xl font-black text-indigo-600">
-                  {slots.length}{" "}
+                  {kuotaList.length}{" "}
                   <span className="text-slate-300 text-lg font-medium">
                     / {SesiWawancara.kuota_pewawancara}
                   </span>
@@ -440,10 +442,10 @@ export default function SesiWAR() {
             {/* Progress Bar Detail */}
             <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden mb-8 shadow-inner">
               <motion.div
-                className={`h-full rounded-full relative ${slotPenuh ? "bg-emerald-500" : "bg-indigo-500"}`}
+                className={`h-full rounded-full relative ${kuotaPenuh ? "bg-emerald-500" : "bg-indigo-500"}`}
                 initial={{ width: 0 }}
                 animate={{
-                  width: `${(slots.length / SesiWawancara.kuota_pewawancara) * 100}%`,
+                  width: `${(kuotaList.length / SesiWawancara.kuota_pewawancara) * 100}%`,
                 }}
                 transition={{ duration: 0.8, ease: "easeOut" }}
               >
@@ -463,7 +465,7 @@ export default function SesiWAR() {
               {Array.from(
                 { length: SesiWawancara.kuota_pewawancara },
                 (_, i) => {
-                  const SlotData = slots.find((s) => s.slot_ke === i + 1);
+                  const SlotData = kuotaList.find((s) => s.kuota_ke === i + 1);
                   return (
                     <div
                       key={i}
@@ -496,7 +498,7 @@ export default function SesiWAR() {
           </div>
 
           {/* Table Data Slots */}
-          {slots.length > 0 && (
+          {kuotaList.length > 0 && (
             <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="px-6 py-5 border-b border-slate-100">
                 <h3 className="font-bold text-slate-900">
@@ -525,7 +527,7 @@ export default function SesiWAR() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
-                    {slots.map((s) => {
+                    {kuotaList.map((s) => {
                       const step = SesiWawancara.kuota_pewawancara;
                       const urutan = Array.from(
                         {
@@ -533,8 +535,8 @@ export default function SesiWAR() {
                             SesiWawancara.kuota_mahasiswa / step,
                           ),
                         },
-                        (_, i) => s.slot_ke + i * step,
-                      ).filter((n) => n <= SesiWawancara.kuota_mahasiswa);
+                        (_, i) => offset + s.kuota_ke + i * step,
+                      ).filter((n) => n <= offset + SesiWawancara.kuota_mahasiswa);
                       const isDeleting = deletingSlot === s.id;
 
                       return (
@@ -544,7 +546,7 @@ export default function SesiWAR() {
                         >
                           <td className="px-6 py-4">
                             <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm">
-                              {s.slot_ke}
+                              {s.kuota_ke}
                             </div>
                           </td>
                           <td className="px-6 py-4">

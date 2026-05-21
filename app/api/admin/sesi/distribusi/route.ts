@@ -25,16 +25,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Distribusi sudah pernah dilakukan untuk sesi ini" }, { status: 409 });
     }
 
-    // 2. Ambil semua slot pewawancara yang terisi, urut by slot_ke
-    const { data: slots, error: slotErr } = await supabaseAdmin
-      .from("slot_pewawancara")
-      .select("slot_ke, pewawancara_id")
+    // 2. Ambil semua kuota pewawancara yang terisi, urut by kuota_ke
+    const { data: kuotaList, error: kuotaErr } = await supabaseAdmin
+      .from("kuota_pewawancara")
+      .select("kuota_ke, pewawancara_id")
       .eq("sesi_id", sesi_id)
-      .order("slot_ke", { ascending: true });
+      .order("kuota_ke", { ascending: true });
 
-    if (slotErr) throw slotErr;
-    if (!slots || slots.length === 0) {
-      return NextResponse.json({ error: "Belum ada pewawancara yang mengisi slot" }, { status: 400 });
+    if (kuotaErr) throw kuotaErr;
+    if (!kuotaList || kuotaList.length === 0) {
+      return NextResponse.json({ error: "Belum ada pewawancara yang mengisi kuota" }, { status: 400 });
     }
 
     // 3. Cari kandidat_id yang SUDAH di-assign di tabel hasil_wawancara
@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
     const assignments: {
       kandidat_id: number;
       pewawancara_id: number;
+      sesi_id: number;
       is_draft: boolean;
       created_at: string;
       updated_at: string;
@@ -76,12 +77,13 @@ export async function POST(req: NextRequest) {
     // Bagi rata mahasiswa ke pewawancara yang ada (Misal Mhs 1 ke P1, Mhs 2 ke P2, Mhs 21 ke P1)
     kandidats.forEach((mhs, index) => {
       // Modulo untuk memutar index pewawancara (0, 1, 2... kembali ke 0)
-      const pewawancaraIndex = index % slots.length; 
-      const slotTujuan = slots[pewawancaraIndex];
+      const pewawancaraIndex = index % kuotaList.length; 
+      const kuotaTujuan = kuotaList[pewawancaraIndex];
 
       assignments.push({
         kandidat_id: mhs.id,
-        pewawancara_id: slotTujuan.pewawancara_id,
+        pewawancara_id: kuotaTujuan.pewawancara_id,
+        sesi_id: sesi.id,
         is_draft: true, // Masih draft (menunggu pewawancara)
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
@@ -132,7 +134,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       total_assigned: assignments.length,
-      pewawancara_count: slots.length,
+      pewawancara_count: kuotaList.length,
     });
   } catch (err) {
     console.error("[POST /api/admin/sesi/distribusi]", err);

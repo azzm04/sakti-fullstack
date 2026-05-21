@@ -19,12 +19,14 @@ import {
 
 // Sesuaikan path import ini dengan instalasi shadcn kamu
 import { toast } from "sonner";
-import type { WarStatus } from "@/schemas";
+import type { WarStatus, SesiListItem } from "@/schemas";
 
 export default function PewawancaraDashboard() {
   const [status, setStatus] = useState<WarStatus | null>(null);
+  const [sesiList, setSesiList] = useState<SesiListItem[]>([]);
+  const [selectedSesiId, setSelectedSesiId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+  const [selectedKuota, setSelectedKuota] = useState<number | null>(null);
   const [claiming, setClaiming] = useState(false);
   const [unwarring, setUnwarring] = useState(false);
 
@@ -35,13 +37,25 @@ export default function PewawancaraDashboard() {
 
   const fetchStatus = useCallback(async () => {
     try {
-      const res = await fetch("/api/war");
+      const url = selectedSesiId ? `/api/war?sesi_id=${selectedSesiId}` : "/api/war";
+      const res = await fetch(url);
       const json = await res.json();
       setStatus(json);
+      // Simpan sesi_list dari response awal (tanpa sesi_id filter)
+      if (json.sesi_list && !selectedSesiId) {
+        setSesiList(json.sesi_list);
+        // Auto-select sesi pertama yang sudah diklaim, atau yang war_aktif
+        if (!selectedSesiId) {
+          const claimed = json.sesi_list.find((s: SesiListItem) => s.kuota_saya);
+          const aktif = json.sesi_list.find((s: SesiListItem) => s.war_aktif);
+          const target = claimed || aktif || json.sesi_list[0];
+          if (target) setSelectedSesiId(target.id);
+        }
+      }
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedSesiId]);
 
   useEffect(() => {
     fetchStatus();
@@ -50,10 +64,10 @@ export default function PewawancaraDashboard() {
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     // Poll setiap 5 detik jika:
-    // - WAR sedang aktif dan belum punya slot (rebutan slot)
+    // - WAR sedang aktif dan belum punya kuota (rebutan kuota)
     // - WAR belum aktif tapi ada sesi upcoming (menunggu admin buka)
     const shouldPoll =
-      (status?.war_aktif && !status.slot_saya) ||
+      (status?.war_aktif && !status.kuota_saya) ||
       (!status?.war_aktif && !!status?.sesi && !status?.sesi?.distribusi_done);
 
     if (shouldPoll) {
@@ -62,27 +76,27 @@ export default function PewawancaraDashboard() {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [status?.war_aktif, status?.slot_saya, status?.sesi, fetchStatus]);
+  }, [status?.war_aktif, status?.kuota_saya, status?.sesi, fetchStatus]);
 
   async function handleKlaim() {
-    if (!selectedSlot) return;
+    if (!selectedKuota) return;
     setClaiming(true);
     try {
       const res = await fetch("/api/war", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ slot_ke: selectedSlot }),
+        body: JSON.stringify({ kuota_ke: selectedKuota, sesi_id: selectedSesiId }),
       });
       const json = await res.json();
       if (res.ok) {
-        toast.success("Slot Berhasil Diklaim!", {
-          description: json.message || `Kamu mendapatkan slot #${selectedSlot}.`,
+        toast.success("Kuota Berhasil Diklaim!", {
+          description: json.message || `Kamu mendapatkan kuota #${selectedKuota}.`,
         });
-        setSelectedSlot(null);
+        setSelectedKuota(null);
         fetchStatus();
       } else {
         toast.error("Klaim Gagal", {
-          description: json.error ?? "Gagal klaim slot, mungkin sudah didului orang lain.",
+          description: json.error ?? "Gagal klaim kuota, mungkin sudah didului orang lain.",
         });
       }
     } finally {
@@ -93,17 +107,18 @@ export default function PewawancaraDashboard() {
   async function handleUnwar() {
     setUnwarring(true);
     try {
-      const res = await fetch("/api/war", { method: "DELETE" });
+      const url = selectedSesiId ? `/api/war?sesi_id=${selectedSesiId}` : "/api/war";
+      const res = await fetch(url, { method: "DELETE" });
       const json = await res.json();
       if (res.ok) {
-        toast.success("Slot Dibatalkan", {
-          description: json.message || "Slot kamu telah dikembalikan dan tersedia untuk pewawancara lain.",
+        toast.success("Kuota Dibatalkan", {
+          description: json.message || "Kuota kamu telah dikembalikan dan tersedia untuk pewawancara lain.",
         });
         setConfirmUnwar(false);
         fetchStatus();
       } else {
         toast.error("Gagal Membatalkan", {
-          description: json.error ?? "Terjadi kesalahan saat membatalkan slot.",
+          description: json.error ?? "Terjadi kesalahan saat membatalkan kuota.",
         });
       }
     } finally {
@@ -120,19 +135,27 @@ export default function PewawancaraDashboard() {
   }
 
   const sesi = status?.sesi;
-  const slotSaya = status?.slot_saya;
+  const kuotaSaya = status?.kuota_saya;
   const warAktif = status?.war_aktif ?? false;
-  const slotTerisi = status?.slot_terisi ?? 0;
+  const kuotaTerisi = status?.kuota_terisi ?? 0;
   const kuota = sesi?.kuota_pewawancara ?? 20;
-  const slotPenuh = slotTerisi >= kuota;
+  const kuotaPenuh = kuotaTerisi >= kuota;
 
-  const takenSlots = new Set((status?.slots ?? []).map((s) => s.slot_ke));
+  const takenKuota = new Set((status?.kuota_list ?? []).map((s) => s.kuota_ke));
 
-  function getMahasiswaForSlot(slotKe: number): number[] {
+  function getMahasiswaForKuota(kuotaKe: number): number[] {
     if (!sesi) return [];
+    // Hitung offset berdasarkan sesi-sesi sebelumnya
+    // Sesi diurutkan berdasarkan tanggal, offset = sum kuota_mahasiswa sesi sebelumnya
+    let offset = 0;
+    for (const s of sesiList) {
+      if (s.id === sesi.id) break;
+      offset += s.kuota_mahasiswa;
+    }
+    // Round-robin dalam sesi ini
     const result: number[] = [];
-    for (let n = slotKe; n <= sesi.kuota_mahasiswa; n += kuota) {
-      result.push(n);
+    for (let n = kuotaKe; n <= sesi.kuota_mahasiswa; n += kuota) {
+      result.push(offset + n);
     }
     return result;
   }
@@ -175,22 +198,69 @@ export default function PewawancaraDashboard() {
         </p>
       </div>
 
+      {/* Sesi Selector — tampilkan jika ada lebih dari 1 sesi */}
+      {sesiList.length > 1 && (
+        <div className="mb-5">
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Pilih Sesi Wawancara</p>
+          <div className="flex gap-2 flex-wrap">
+            {sesiList.map((s) => {
+              const isSelected = selectedSesiId === s.id;
+              const hasClaimed = !!s.kuota_saya;
+              const isFull = s.kuota_terisi >= s.kuota_pewawancara;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => { setSelectedSesiId(s.id); setSelectedKuota(null); setConfirmUnwar(false); }}
+                  className={`px-4 py-2.5 rounded-xl text-xs font-bold border-2 transition-all relative ${
+                    isSelected
+                      ? "bg-primary text-white border-primary shadow-md"
+                      : hasClaimed
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:border-emerald-400"
+                        : "bg-white text-slate-600 border-slate-200 hover:border-primary/50"
+                  }`}
+                >
+                  <span className="block">
+                    {new Date(s.tanggal + "T00:00:00").toLocaleDateString("id-ID", { weekday: "short", day: "numeric", month: "short" })}
+                  </span>
+                  <span className={`text-[10px] font-medium ${isSelected ? "text-white/70" : "text-slate-400"}`}>
+                    {s.kuota_terisi}/{s.kuota_pewawancara} kuota
+                  </span>
+                  {hasClaimed && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center">
+                      <CheckCircle2 size={10} className="text-white" />
+                    </span>
+                  )}
+                  {!hasClaimed && isFull && (
+                    <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                      <X size={10} className="text-white" />
+                    </span>
+                  )}
+                  {s.war_aktif && !hasClaimed && !isFull && (
+                    <span className="absolute -top-1 -right-1 w-3 h-3 bg-primary rounded-full animate-pulse" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {!sesi && (
         <div className="bg-card rounded-2xl border border-border shadow-sm p-10 text-center">
           <Clock size={36} className="text-muted-foreground/30 mx-auto mb-3" />
           <p className="font-semibold text-foreground mb-1">
-            Belum ada sesi wawancara hari ini
+            Belum ada sesi wawancara yang tersedia
           </p>
           <p className="text-sm text-muted-foreground">
-            Admin belum membuat sesi untuk hari ini. Cek kembali nanti.
+            Admin belum membuat sesi wawancara. Cek kembali nanti.
           </p>
         </div>
       )}
 
       {sesi && (
         <div className="space-y-4">
-          {/* ════ STATE 1: Sudah dapat slot ════ */}
-          {slotSaya && (
+          {/* ════ STATE 1: Sudah dapat kuota ════ */}
+          {kuotaSaya && (
             <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
               <div className="bg-primary px-6 py-4 flex items-center gap-3">
                 <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center">
@@ -198,24 +268,24 @@ export default function PewawancaraDashboard() {
                 </div>
                 <div>
                   <p className="text-white font-bold text-sm leading-none">
-                    Slot Berhasil Diklaim
+                    Kuota Berhasil Diklaim
                   </p>
                   <p className="text-white/70 text-xs mt-0.5">
                     Kamu sudah terdaftar sebagai pewawancara
                   </p>
                 </div>
                 <span className="ml-auto text-3xl font-extrabold text-white/90">
-                  #{slotSaya.slot_ke}
+                  #{kuotaSaya.kuota_ke}
                 </span>
               </div>
 
               <div className="p-5 space-y-5">
                 <div>
                   <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">
-                    Urutan mahasiswa yang akan kamu wawancara
+                    Jatah wawancara kamu ({getMahasiswaForKuota(kuotaSaya.kuota_ke).length} mahasiswa)
                   </p>
                   <div className="flex flex-wrap gap-1.5">
-                    {getMahasiswaForSlot(slotSaya.slot_ke).map((n) => (
+                    {getMahasiswaForKuota(kuotaSaya.kuota_ke).map((n) => (
                       <span
                         key={n}
                         className="text-xs font-bold px-2.5 py-1 bg-primary/10 text-primary rounded-lg border border-primary/20"
@@ -249,7 +319,7 @@ export default function PewawancaraDashboard() {
                         onClick={() => setConfirmUnwar(true)}
                         className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-destructive border border-destructive/20 bg-destructive/5 rounded-xl hover:bg-destructive/10 transition-all"
                       >
-                        <ZapOff size={13} /> UN-WAR — Batalkan Slot
+                        <ZapOff size={13} /> UN-WAR — Batalkan Kuota
                       </button>
                     ) : (
                       <motion.div
@@ -288,7 +358,7 @@ export default function PewawancaraDashboard() {
           )}
 
           {/* ════ STATE 1.5: Sesi ada tapi WAR belum dibuka ════ */}
-          {!slotSaya && !warAktif && sesi && !sesi.distribusi_done && (
+          {!kuotaSaya && !warAktif && sesi && !sesi.distribusi_done && (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
@@ -334,8 +404,8 @@ export default function PewawancaraDashboard() {
             </motion.div>
           )}
 
-          {/* ════ STATE 2: WAR aktif, belum punya slot ════ */}
-          {!slotSaya && warAktif && (
+          {/* ════ STATE 2: WAR aktif, belum punya kuota ════ */}
+          {!kuotaSaya && warAktif && (
             <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
               <div className="px-6 py-4 border-b border-border flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -349,36 +419,36 @@ export default function PewawancaraDashboard() {
                   </span>
                 </div>
                 <span className="text-xs text-muted-foreground font-medium">
-                  {kuota - slotTerisi} slot tersisa
+                  {kuota - kuotaTerisi} kuota tersisa
                 </span>
               </div>
 
               <div className="p-5 space-y-5">
                 <div>
                   <p className="font-bold text-foreground mb-0.5">
-                    Pilih slot yang kamu inginkan
+                    Pilih kuota yang kamu inginkan
                   </p>
                   <p className="text-sm text-muted-foreground flex items-center gap-1.5">
                     <MousePointerClick size={13} />
-                    Klik slot yang tersedia, lalu konfirmasi klaimmu
+                    Klik kuota yang tersedia, lalu konfirmasi klaimmu
                   </p>
                 </div>
 
                 <div>
                   <div className="grid grid-cols-5 sm:grid-cols-10 gap-2">
                     {Array.from({ length: kuota }, (_, i) => {
-                      const slotKe = i + 1;
-                      const isTaken = takenSlots.has(slotKe);
-                      const isSelected = selectedSlot === slotKe;
+                      const kuotaKe = i + 1;
+                      const isTaken = takenKuota.has(kuotaKe);
+                      const isSelected = selectedKuota === kuotaKe;
 
                       return (
                         <motion.button
-                          key={slotKe}
+                          key={kuotaKe}
                           whileHover={!isTaken ? { scale: 1.08 } : {}}
                           whileTap={!isTaken ? { scale: 0.95 } : {}}
                           onClick={() => {
                             if (isTaken) return;
-                            setSelectedSlot(isSelected ? null : slotKe);
+                            setSelectedKuota(isSelected ? null : kuotaKe);
                           }}
                           disabled={isTaken}
                           className={`
@@ -393,7 +463,7 @@ export default function PewawancaraDashboard() {
                             }
                           `}
                         >
-                          {slotKe}
+                          {kuotaKe}
                           {isTaken && (
                             <span className="absolute inset-0 flex items-center justify-center">
                               <span className="w-4 h-px bg-muted-foreground/30 rotate-45 block" />
@@ -421,7 +491,7 @@ export default function PewawancaraDashboard() {
                 </div>
 
                 <AnimatePresence>
-                  {selectedSlot && (
+                  {selectedKuota && (
                     <motion.div
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
@@ -431,11 +501,11 @@ export default function PewawancaraDashboard() {
                       <div className="rounded-xl bg-primary/5 border border-primary/20 p-4">
                         <p className="text-xs font-bold text-primary mb-2 flex items-center gap-1.5">
                           <Hash size={12} />
-                          Slot {selectedSlot} — Mahasiswa yang akan kamu
+                          Kuota {selectedKuota} — Mahasiswa yang akan kamu
                           tangani:
                         </p>
                         <div className="flex flex-wrap gap-1.5">
-                          {getMahasiswaForSlot(selectedSlot).map((n) => (
+                          {getMahasiswaForKuota(selectedKuota).map((n) => (
                             <span
                               key={n}
                               className="text-xs font-semibold px-2 py-0.5 bg-primary/15 text-primary rounded-lg"
@@ -450,14 +520,14 @@ export default function PewawancaraDashboard() {
                 </AnimatePresence>
 
                 <motion.button
-                  whileTap={selectedSlot ? { scale: 0.98 } : {}}
+                  whileTap={selectedKuota ? { scale: 0.98 } : {}}
                   onClick={handleKlaim}
-                  disabled={!selectedSlot || claiming}
+                  disabled={!selectedKuota || claiming}
                   className={`
                     w-full py-3.5 font-bold text-sm rounded-xl transition-all duration-200
                     flex items-center justify-center gap-2
                     ${
-                      selectedSlot && !claiming
+                      selectedKuota && !claiming
                         ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-md shadow-primary/20"
                         : "bg-muted text-muted-foreground cursor-not-allowed"
                     }
@@ -466,14 +536,14 @@ export default function PewawancaraDashboard() {
                   {claiming ? (
                     <>
                       <Loader2 size={16} className="animate-spin" /> Mengklaim
-                      Slot {selectedSlot}…
+                      Kuota {selectedKuota}…
                     </>
-                  ) : selectedSlot ? (
+                  ) : selectedKuota ? (
                     <>
-                      <Zap size={16} /> Klaim Slot #{selectedSlot}
+                      <Zap size={16} /> Klaim Kuota #{selectedKuota}
                     </>
                   ) : (
-                    <>Pilih slot di atas terlebih dahulu</>
+                    <>Pilih kuota di atas terlebih dahulu</>
                   )}
                 </motion.button>
               </div>
@@ -482,21 +552,21 @@ export default function PewawancaraDashboard() {
 
           {/* ════ STATE 3 & 4 (Penuh / Belum Dibuka) tetap sama strukturnya, saya potong untuk efisiensi ruang ════ */}
 
-          {/* ── Perbaikan: Progress bar slot (Tidak gepeng & Responsive) ── */}
+          {/* ── Perbaikan: Progress bar kuota (Tidak gepeng & Responsive) ── */}
           <div className="bg-card rounded-2xl border border-border shadow-sm p-5 sm:p-6 mt-4">
             <div className="flex items-center justify-between mb-3">
               <p className="text-sm font-bold text-foreground">
-                Status Keterisian
+                Status Kuota
               </p>
               <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-md">
-                {slotTerisi} / {kuota}
+                {kuotaTerisi} / {kuota}
               </span>
             </div>
 
             <div className="w-full h-2 sm:h-2.5 bg-muted rounded-full overflow-hidden mb-5">
               <motion.div
                 className="h-full bg-primary rounded-full"
-                animate={{ width: `${(slotTerisi / kuota) * 100}%` }}
+                animate={{ width: `${(kuotaTerisi / kuota) * 100}%` }}
                 transition={{ duration: 0.5, ease: "easeOut" }}
               />
             </div>
@@ -504,23 +574,23 @@ export default function PewawancaraDashboard() {
             {/* Perbaikan Grid: Menggunakan sm:grid-cols-10 untuk mobile-friendly dan tinggi elemen ditambah (h-3) */}
             <div className="grid grid-cols-5 sm:grid-cols-10 gap-2 sm:gap-1.5">
               {Array.from({ length: kuota }, (_, i) => {
-                const slotKe = i + 1;
-                const slot = status?.slots.find((s) => s.slot_ke === slotKe);
-                const isMine = slotSaya?.slot_ke === slotKe;
+                const kuotaKe = i + 1;
+                const kuotaItem = status?.kuota_list.find((s) => s.kuota_ke === kuotaKe);
+                const isMine = kuotaSaya?.kuota_ke === kuotaKe;
                 return (
                   <div
-                    key={slotKe}
+                    key={kuotaKe}
                     title={
-                      slot
+                      kuotaItem
                         ? isMine
-                          ? "Slot kamu"
-                          : (slot.pewawancara?.nama ?? "Terisi")
-                        : `Slot ${slotKe} — tersedia`
+                          ? "Kuota kamu"
+                          : (kuotaItem.pewawancara?.nama ?? "Terisi")
+                        : `Kuota ${kuotaKe} — tersedia`
                     }
                     className={`h-2.5 sm:h-3 w-full rounded-full transition-all duration-300 ${
                       isMine
                         ? "bg-primary shadow-[0_0_8px_rgba(var(--primary),0.5)]"
-                        : slot
+                        : kuotaItem
                           ? "bg-primary/40"
                           : "bg-muted border border-border/50"
                     }`}
@@ -529,8 +599,8 @@ export default function PewawancaraDashboard() {
               })}
             </div>
             <div className="flex items-center justify-between mt-3 text-[11px] text-muted-foreground font-medium">
-              <span>Slot 1</span>
-              <span>Slot {kuota}</span>
+              <span>Kuota 1</span>
+              <span>Kuota {kuota}</span>
             </div>
           </div>
         </div>

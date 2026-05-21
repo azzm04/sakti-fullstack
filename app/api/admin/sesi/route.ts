@@ -19,14 +19,23 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ sesi: null });
     }
 
-    // Ambil slot yang sudah terisi beserta nama pewawancara
-    const { data: slots } = await supabaseAdmin
-      .from("slot_pewawancara")
-      .select("id, slot_ke, claimed_at, pewawancara_id, pewawancara(id, nama, email)")
+    // Ambil kuota yang sudah terisi beserta nama pewawancara
+    const { data: kuotaList } = await supabaseAdmin
+      .from("kuota_pewawancara")
+      .select("id, kuota_ke, claimed_at, pewawancara_id, pewawancara(id, nama, email)")
       .eq("sesi_id", sesi.id)
-      .order("slot_ke", { ascending: true });
+      .order("kuota_ke", { ascending: true });
 
-    return NextResponse.json({ sesi, slots: slots ?? [] });
+    // Hitung offset: sum kuota_mahasiswa dari sesi-sesi sebelumnya (tanggal < sesi ini)
+    const { data: sesiSebelumnya } = await supabaseAdmin
+      .from("sesi_wawancara")
+      .select("kuota_mahasiswa")
+      .lt("tanggal", sesi.tanggal)
+      .order("tanggal", { ascending: true });
+
+    const offset = (sesiSebelumnya ?? []).reduce((sum, s) => sum + (s.kuota_mahasiswa ?? 0), 0);
+
+    return NextResponse.json({ sesi, slots: kuotaList ?? [], offset });
   } catch (err) {
     return NextResponse.json(
       { error: "Gagal mengambil sesi", detail: err instanceof Error ? err.message : String(err) },
@@ -107,7 +116,7 @@ export async function PATCH(req: NextRequest) {
   }
 }
 
-// DELETE — hapus slot pewawancara dari sesi (kick dari WAR)
+// DELETE — hapus kuota pewawancara dari sesi (kick dari WAR)
 export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
@@ -117,20 +126,20 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "slot_id wajib diisi" }, { status: 400 });
     }
 
-    // Ambil data slot sebelum dihapus
-    const { data: slot } = await supabaseAdmin
-      .from("slot_pewawancara")
+    // Ambil data kuota sebelum dihapus
+    const { data: kuotaItem } = await supabaseAdmin
+      .from("kuota_pewawancara")
       .select("id, pewawancara_id, sesi_id")
       .eq("id", slotId)
       .single();
 
-    if (!slot) {
-      return NextResponse.json({ error: "Slot tidak ditemukan" }, { status: 404 });
+    if (!kuotaItem) {
+      return NextResponse.json({ error: "Kuota tidak ditemukan" }, { status: 404 });
     }
 
-    // Hapus slot
+    // Hapus kuota
     const { error } = await supabaseAdmin
-      .from("slot_pewawancara")
+      .from("kuota_pewawancara")
       .delete()
       .eq("id", slotId);
 
@@ -140,20 +149,20 @@ export async function DELETE(req: NextRequest) {
     const { data: pw } = await supabaseAdmin
       .from("pewawancara")
       .select("total_assigned")
-      .eq("id", slot.pewawancara_id)
+      .eq("id", kuotaItem.pewawancara_id)
       .single();
 
     if (pw) {
       await supabaseAdmin
         .from("pewawancara")
         .update({ total_assigned: Math.max(0, (pw.total_assigned ?? 1) - 1) })
-        .eq("id", slot.pewawancara_id);
+        .eq("id", kuotaItem.pewawancara_id);
     }
 
     return NextResponse.json({ success: true });
   } catch (err) {
     return NextResponse.json(
-      { error: "Gagal menghapus slot", detail: err instanceof Error ? err.message : String(err) },
+      { error: "Gagal menghapus kuota", detail: err instanceof Error ? err.message : String(err) },
       { status: 500 }
     );
   }

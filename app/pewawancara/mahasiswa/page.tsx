@@ -13,9 +13,9 @@ import type { MahasiswaListItem, MahasiswaApiResponse } from "@/schemas";
 type Mode = "saya" | "hari_ini" | "semua";
 
 const MODE_CONFIG: { key: Mode; label: string; icon: React.ElementType; desc: string }[] = [
-  { key: "saya",     label: "Jatah Saya",  icon: User,         desc: "MahasiswaListItem yang ditugaskan ke kamu" },
-  { key: "hari_ini", label: "Hari Ini",    icon: CalendarDays, desc: "Semua MahasiswaListItem terjadwal hari ini" },
-  { key: "semua",    label: "Semua",       icon: Users,        desc: "Seluruh kandidat" },
+  { key: "saya",     label: "Jatah Saya",  icon: User,         desc: "Mahasiswa yang harus kamu wawancarai hari ini" },
+  { key: "hari_ini", label: "Hari Ini",    icon: CalendarDays, desc: "Semua mahasiswa yang dijadwalkan wawancara hari ini" },
+  { key: "semua",    label: "Semua",       icon: Users,        desc: "Seluruh pendaftar KIP-K" },
 ];
 
 export default function PewawancaraMahasiswaPage() {
@@ -30,12 +30,16 @@ export default function PewawancaraMahasiswaPage() {
   const [jatahTotal, setJatahTotal]     = useState(0);
   const [jatahSudahSelesai, setJatahSudahSelesai] = useState(false);
   const [locked, setLocked]     = useState(false);
+  const [canEdit, setCanEdit]   = useState(true);
+  const [sesiList, setSesiList] = useState<{ id: number; tanggal: string }[]>([]);
+  const [selectedSesiId, setSelectedSesiId] = useState<number | null>(null);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     setLocked(false);
     try {
       const params = new URLSearchParams({ mode, search, page: String(page) });
+      if (selectedSesiId) params.set("sesi_id", String(selectedSesiId));
       const res  = await fetch(`/api/pewawancara/mahasiswa?${params}`);
       const json: MahasiswaApiResponse = await res.json();
 
@@ -54,10 +58,12 @@ export default function PewawancaraMahasiswaPage() {
       setJatahSelesai(json.jatah_selesai ?? 0);
       setJatahTotal(json.jatah_total ?? 0);
       setJatahSudahSelesai(json.jatah_sudah_selesai ?? false);
+      setCanEdit((json as any).can_edit ?? true);
+      if ((json as any).sesi_list) setSesiList((json as any).sesi_list);
     } finally {
       setLoading(false);
     }
-  }, [mode, search, page]);
+  }, [mode, search, page, selectedSesiId]);
 
   useEffect(() => {
     const t = setTimeout(fetchData, search ? 400 : 0);
@@ -66,7 +72,7 @@ export default function PewawancaraMahasiswaPage() {
 
   useEffect(() => { setPage(1); }, [mode, search]);
 
-  const selesaiCount = data.filter((m) => m.rekomendasi && m.pewawancara).length;
+  const selesaiCount = data.filter((m) => m.rekomendasi && !m.is_draft).length;
   const progressPct  = jatahTotal > 0 ? Math.round((jatahSelesai / jatahTotal) * 100) : 0;
 
   return (
@@ -106,10 +112,53 @@ export default function PewawancaraMahasiswaPage() {
         </div>
       )}
 
+      {/* Sesi Selector */}
+      {sesiList.length > 1 && (
+        <div className="mb-5">
+          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Pilih Sesi</p>
+          <div className="flex gap-2 flex-wrap">
+            {sesiList.map((s) => {
+              const isSelected = selectedSesiId === s.id;
+              const tanggalHariIni = new Date().toISOString().split("T")[0];
+              const isFuture = s.tanggal > tanggalHariIni;
+              return (
+                <button
+                  key={s.id}
+                  onClick={() => { setSelectedSesiId(s.id); setPage(1); }}
+                  className={`px-3 py-2 rounded-xl text-xs font-bold border-2 transition-all ${
+                    isSelected
+                      ? "bg-primary text-white border-primary shadow-sm"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-primary/50"
+                  }`}
+                >
+                  {new Date(s.tanggal + "T00:00:00").toLocaleDateString("id-ID", { weekday: "short", day: "numeric", month: "short" })}
+                  {isFuture && <span className="ml-1 text-[9px] opacity-70">(preview)</span>}
+                </button>
+              );
+            })}
+            <button
+              onClick={() => { setSelectedSesiId(null); setPage(1); }}
+              className={`px-3 py-2 rounded-xl text-xs font-bold border-2 transition-all ${
+                !selectedSesiId
+                  ? "bg-primary text-white border-primary shadow-sm"
+                  : "bg-white text-slate-600 border-slate-200 hover:border-primary/50"
+              }`}
+            >
+              Hari Ini
+            </button>
+          </div>
+          {!canEdit && (
+            <p className="text-[11px] text-amber-600 mt-2 flex items-center gap-1">
+              <Clock size={11} /> Sesi ini belum bisa diisi — wawancara belum dimulai
+            </p>
+          )}
+        </div>
+      )}
+
       {/* Filter tabs */}
       <div className="flex gap-1 p-1 bg-white border border-border rounded-xl w-fit mb-5 shadow-sm">
         {MODE_CONFIG.map(({ key, label, icon: Icon }) => {
-          const isLocked = (key === "hari_ini" || key === "semua") && !jatahSudahSelesai;
+          const isLocked = key === "hari_ini" && !jatahSudahSelesai;
           return (
             <button
               key={key}
@@ -194,7 +243,7 @@ export default function PewawancaraMahasiswaPage() {
             </thead>
             <tbody className="divide-y divide-border">
               {data.map((m) => {
-                const done = !!(m.rekomendasi && m.pewawancara);
+                const done = !!(m.rekomendasi && !m.is_draft);
                 const isOwnJatah = m.pewawancara_id !== null;
                 return (
                   <tr key={m.id} className="hover:bg-slate-50/60 transition-colors">
@@ -225,15 +274,22 @@ export default function PewawancaraMahasiswaPage() {
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      {(mode === "saya" || !done) ? (
+                      {!done && canEdit ? (
                         <Link
                           href={`/pewawancara/mahasiswa/${m.id}`}
                           className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
                         >
-                          {done ? "Lihat" : "Isi Evaluasi"} <ChevronRight size={13} />
+                          Isi Evaluasi <ChevronRight size={13} />
+                        </Link>
+                      ) : done ? (
+                        <Link
+                          href={`/pewawancara/mahasiswa/${m.id}`}
+                          className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-primary hover:underline"
+                        >
+                          Lihat <ChevronRight size={13} />
                         </Link>
                       ) : (
-                        <span className="text-xs text-slate-300">—</span>
+                        <span className="text-xs text-slate-300">Belum bisa diisi</span>
                       )}
                     </td>
                   </tr>

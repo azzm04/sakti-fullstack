@@ -11,6 +11,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { toast } from "sonner";
 
 import type { Kandidat, MahasiswaEvaluasi } from "@/schemas";
 
@@ -317,6 +318,30 @@ export default function PewawancaraDetailPage({
     setForm((f) => ({ ...f, [key]: v }));
 
   async function handleSave() {
+    // Validasi field wajib sebelum simpan
+    const missing: string[] = [];
+    if (form.validasi_kks === null || form.validasi_kks === undefined) missing.push("Kepemilikan KKS");
+    if (form.validasi_kip === null || form.validasi_kip === undefined) missing.push("Kepemilikan KIP");
+    if (form.validasi_sktm === null || form.validasi_sktm === undefined) missing.push("Kepemilikan SKTM");
+    if (!form.ket_pekerjaan_ayah) missing.push("Pekerjaan Ayah (Riil)");
+    if (!form.ket_penghasilan_ayah && form.ket_penghasilan_ayah !== 0) missing.push("Penghasilan Ayah");
+    if (!form.ket_pekerjaan_ibu) missing.push("Pekerjaan Ibu (Riil)");
+    if (!form.ket_penghasilan_ibu && form.ket_penghasilan_ibu !== 0) missing.push("Penghasilan Ibu");
+    if (!form.jml_tanggungan_sebenarnya && form.jml_tanggungan_sebenarnya !== 0) missing.push("Jml. Tanggungan");
+    if (!form.validasi_orang_rumah && form.validasi_orang_rumah !== 0) missing.push("Jml. Orang Serumah");
+    if (!form.kepemilikan_rumah) missing.push("Status Kepemilikan Rumah");
+    if (!form.sumber_air) missing.push("Sumber Air");
+    if (!form.mck) missing.push("MCK");
+    if (!form.kondisi_rumah) missing.push("Kondisi Fisik Rumah");
+    if (!form.hasil_akhir) missing.push("Rekomendasi Akhir");
+
+    if (missing.length > 0) {
+      toast.error("Data belum lengkap", {
+        description: `Lengkapi: ${missing.slice(0, 3).join(", ")}${missing.length > 3 ? ` dan ${missing.length - 3} lainnya` : ""}`,
+      });
+      return;
+    }
+
     setSaveStatus("saving");
 
     const textRekomendasi =
@@ -330,25 +355,25 @@ export default function PewawancaraDetailPage({
         validasi_sktm: form.validasi_sktm,
         sosial_media: form.sosial_media,
         ket_pekerjaan_ayah: form.ket_pekerjaan_ayah,
-        ket_penghasilan_ayah: form.ket_penghasilan_ayah, // bigint/number
+        ket_penghasilan_ayah: form.ket_penghasilan_ayah,
         ket_pekerjaan_ibu: form.ket_pekerjaan_ibu,
-        ket_penghasilan_ibu: form.ket_penghasilan_ibu, // bigint/number
-        penghasilan_lain: form.penghasilan_lain, // bigint/number
-        jml_tanggungan_sebenarnya: form.jml_tanggungan_sebenarnya, // int
-        validasi_orang_rumah: form.validasi_orang_rumah, // int
-        kepemilikan_rumah: form.kepemilikan_rumah, // int enum
-        tahun_perolehan: form.tahun_perolehan, // string varchar
-        luas_tanah: form.luas_tanah, // float
-        luas_bangunan: form.luas_bangunan, // float
-        sumber_air: form.sumber_air, // int enum
-        mck: form.mck, // int enum
+        ket_penghasilan_ibu: form.ket_penghasilan_ibu,
+        penghasilan_lain: form.penghasilan_lain,
+        jml_tanggungan_sebenarnya: form.jml_tanggungan_sebenarnya,
+        validasi_orang_rumah: form.validasi_orang_rumah,
+        kepemilikan_rumah: form.kepemilikan_rumah,
+        tahun_perolehan: form.tahun_perolehan,
+        luas_tanah: form.luas_tanah,
+        luas_bangunan: form.luas_bangunan,
+        sumber_air: form.sumber_air,
+        mck: form.mck,
         aset: form.aset,
-        kondisi_rumah: form.kondisi_rumah, // string
-        jarak_pusat_kota: form.jarak_pusat_kota, // float
-        rekomendasi: textRekomendasi, // mapped to string
+        kondisi_rumah: form.kondisi_rumah,
+        jarak_pusat_kota: form.jarak_pusat_kota,
+        rekomendasi: textRekomendasi,
         alasan: form.alasan,
-        is_draft: false, // Menandai wawancara selesai
-        // Pewawancara ID sudah ada dari awal saat di-assign, API PATCH hanya boleh meng-update berdasar kandidat_id
+        is_draft: false,
+        pewawancara_id: kandidat?.pewawancara_id,
       };
 
       const res = await fetch(`/api/admin/evaluasi/${id}`, {
@@ -357,8 +382,18 @@ export default function PewawancaraDetailPage({
         body: JSON.stringify(payload),
       });
 
-      if (!res.ok) throw new Error();
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        toast.error("Gagal menyimpan", {
+          description: errData.error || "Terjadi kesalahan saat menyimpan data.",
+        });
+        throw new Error();
+      }
+
       setSaveStatus("saved");
+      toast.success("Laporan berhasil disimpan", {
+        description: "Data observasi lapangan telah tersimpan.",
+      });
       setTimeout(() => setSaveStatus("idle"), 2500);
     } catch {
       setSaveStatus("error");
