@@ -7,7 +7,7 @@ import { Toaster } from "sonner";
 
 const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-body", 
+  variable: "--font-body",
 });
 
 const manrope = Manrope({
@@ -16,9 +16,9 @@ const manrope = Manrope({
 });
 
 const montserrat = Montserrat({
-  subsets: ['latin'],
-  weight: ['400', '700'], // Optional: Specify weights to reduce bundle size
-  variable: '--font-montserrat', // Optional: For CSS variables
+  subsets: ["latin"],
+  weight: ["400", "700"], // Optional: Specify weights to reduce bundle size
+  variable: "--font-montserrat", // Optional: For CSS variables
 });
 
 export const metadata: Metadata = {
@@ -32,10 +32,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="id" className={montserrat.className}
-    >
-      <body className="min-h-full flex flex-col font-body">
+    <html lang="id" className={montserrat.className} suppressHydrationWarning>
+      <body
+        className="min-h-full flex flex-col font-body"
+        suppressHydrationWarning
+      >
         <LenisScroll />
         {children}
         <Toaster richColors position="top-right" />

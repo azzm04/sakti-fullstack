@@ -1,13 +1,12 @@
 "use client";
 
-import { memo, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Copy, CheckCircle2 } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { ChatMessage } from "@/schemas";
-// Pastikan path ini sesuai dengan letak komponen shadcn-mu
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const cn = (...args: (string | undefined | null | false)[]) =>
@@ -61,8 +60,8 @@ const MessageItem = memo(
           {/* Gambar Lampiran */}
           {msg.imageUrl && (
             <div className="mb-2 relative rounded-xl overflow-hidden border border-slate-200 shadow-sm max-w-[200px] bg-slate-100 flex items-center justify-center min-h-[100px]">
+              {/* eslint-disable-next-line @next/next/no-img-element -- base64/runtime image, next/image cannot optimize data URIs */}
               <img
-                // Perbaikan: Otomatis tambahkan prefix data URI jika belum ada
                 src={
                   msg.imageUrl.startsWith("data:") ||
                   msg.imageUrl.startsWith("http")
@@ -72,7 +71,6 @@ const MessageItem = memo(
                 alt="Lampiran"
                 className="w-full h-auto max-h-[250px] object-cover"
                 onError={(e) => {
-                  // Sembunyikan jika gambar tetap gagal dimuat (corrupt)
                   e.currentTarget.style.display = "none";
                 }}
               />
@@ -124,10 +122,7 @@ const MessageItem = memo(
                   hour: "2-digit",
                   minute: "2-digit",
                 })
-              : new Date().toLocaleTimeString("id-ID", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })}
+              : "--:--"}
           </span>
         </div>
 
@@ -160,14 +155,48 @@ export default function ChatMessages({
   // Auto-scroll ke bawah
   useEffect(() => {
     if (containerRef.current) {
-      containerRef.current.scrollTop = containerRef.current.scrollHeight;
+      containerRef.current.scrollTo({
+        top: containerRef.current.scrollHeight,
+        behavior: "smooth",
+      });
     }
   }, [safeMessages, isLoading]);
+
+  // Prevent scroll from leaking to parent/body on mobile
+  const handleTouchStart = useCallback(
+    (e: React.TouchEvent<HTMLDivElement>) => {
+      if (containerRef.current) {
+        containerRef.current.dataset.lastY = String(e.touches[0].clientY);
+      }
+    },
+    [],
+  );
+
+  const handleTouchMove = useCallback((e: React.TouchEvent<HTMLDivElement>) => {
+    const el = containerRef.current;
+    if (!el) return;
+    const { scrollTop, scrollHeight, clientHeight } = el;
+    const isAtTop = scrollTop <= 0;
+    const isAtBottom = scrollTop + clientHeight >= scrollHeight - 1;
+    const touchY = e.touches[0].clientY;
+    const lastY = Number(el.dataset.lastY || touchY);
+    const movingDown = touchY > lastY; // finger moving down = scroll up
+    el.dataset.lastY = String(touchY);
+
+    if ((isAtTop && movingDown) || (isAtBottom && !movingDown)) {
+      e.preventDefault();
+    }
+  }, []);
 
   return (
     <div
       ref={containerRef}
-      className="flex-1 min-h-0 flex flex-col gap-5 py-6 scroll-smooth overflow-y-auto pr-2"
+      data-lenis-prevent
+      className="flex-1 min-h-0 flex flex-col gap-5 py-6 overflow-y-auto overscroll-contain scroll-smooth"
+      style={{ WebkitOverflowScrolling: "touch" }}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onWheel={(e) => e.stopPropagation()}
     >
       <AnimatePresence initial={false}>
         {safeMessages.map((msg) => (

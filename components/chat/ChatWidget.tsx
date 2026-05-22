@@ -63,6 +63,7 @@ export default function ChatWidget() {
 
       {/* MINI CHAT WINDOW */}
       <div
+        data-lenis-prevent
         className={`absolute bottom-20 right-0 w-[350px] sm:w-[380px] bg-slate-50 rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden transition-all duration-300 origin-bottom-right ${
           isOpen
             ? "opacity-100 scale-100 visible h-[550px]"
@@ -89,7 +90,7 @@ export default function ChatWidget() {
           </button>
         </div>
 
-        <div className="flex-1 min-h-0 overflow-hidden flex flex-col px-4 relative bg-slate-50/50">
+        <div className="flex-1 min-h-0 flex flex-col px-4 relative bg-slate-50/50">
           <ChatMessages
             messages={messages as ChatMessage[]}
             isLoading={isLoading}
