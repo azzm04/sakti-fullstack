@@ -64,13 +64,47 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    // Tidak ada sesi_id → tampilkan overview semua sesi upcoming
-    // Ambil semua sesi dari hari ini ke depan
-    const { data: allSesi } = await supabaseAdmin
+    // Tidak ada sesi_id → tampilkan overview semua sesi upcoming + sesi yang masih aktif (war_aktif=true)
+    // Ambil sesi dari hari ini ke depan
+    const { data: upcomingSesi } = await supabaseAdmin
       .from("sesi_wawancara")
       .select("id, tanggal, kuota_pewawancara, kuota_mahasiswa, war_aktif, war_dibuka_at, distribusi_done")
       .gte("tanggal", tanggalHariIni)
       .order("tanggal", { ascending: true });
+
+    // Juga ambil sesi yang masih war_aktif meskipun tanggalnya sudah lewat
+    const { data: aktivSesi } = await supabaseAdmin
+      .from("sesi_wawancara")
+      .select("id, tanggal, kuota_pewawancara, kuota_mahasiswa, war_aktif, war_dibuka_at, distribusi_done")
+      .eq("war_aktif", true)
+      .lt("tanggal", tanggalHariIni);
+
+    // Juga ambil sesi lama di mana pewawancara ini sudah punya kuota (agar tetap terlihat)
+    let sesiDenganKuotaSaya: typeof upcomingSesi = [];
+    if (pw) {
+      const { data: myKuotaAll } = await supabaseAdmin
+        .from("kuota_pewawancara")
+        .select("sesi_id")
+        .eq("pewawancara_id", pw.id);
+
+      if (myKuotaAll && myKuotaAll.length > 0) {
+        const myKuotaSesiIds = myKuotaAll.map((k) => k.sesi_id);
+        const { data: sesiLama } = await supabaseAdmin
+          .from("sesi_wawancara")
+          .select("id, tanggal, kuota_pewawancara, kuota_mahasiswa, war_aktif, war_dibuka_at, distribusi_done")
+          .in("id", myKuotaSesiIds)
+          .lt("tanggal", tanggalHariIni)
+          .eq("war_aktif", false);
+        sesiDenganKuotaSaya = sesiLama ?? [];
+      }
+    }
+
+    // Gabungkan dan deduplikasi berdasarkan id
+    const sesiMap = new Map<number, (typeof upcomingSesi extends (infer T)[] | null ? T : never)>();
+    for (const s of [...(aktivSesi ?? []), ...(sesiDenganKuotaSaya ?? []), ...(upcomingSesi ?? [])]) {
+      if (!sesiMap.has(s.id)) sesiMap.set(s.id, s);
+    }
+    const allSesi = Array.from(sesiMap.values()).sort((a, b) => a.tanggal.localeCompare(b.tanggal));
 
     if (!allSesi || allSesi.length === 0) {
       return NextResponse.json({
