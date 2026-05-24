@@ -6,8 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import * as XLSX from "xlsx";
 import { CandidateData, ValidationSummary } from "@/schemas";
 import {UploadCloud} from "lucide-react";
-// Normalize header strings: collapse whitespace, trim, uppercase
-const normalize = (s: any) => String(s ?? "").replace(/\s+/g, " ").trim().toUpperCase();
+// Normalize header strings: collapse whitespace, replace underscores with spaces, trim, uppercase
+const normalize = (s: any) => String(s ?? "").replace(/[_\s]+/g, " ").trim().toUpperCase();
 
 // Module-level map — avoids useRef closure issues with Turbopack
 let _headerMap: Record<string, number> = {};
@@ -34,7 +34,7 @@ export default function UploadZone({ onDataUploaded, onSave, hasData, saveStatus
     const required: Array<{ label: string; keys: string[] }> = [
       { label: "NAMA",          keys: ["NAMA"] },
       { label: "NIK",           keys: ["NIK"] },
-      { label: "NO. HANDPHONE", keys: ["NO. HANDPHONE", "NO HANDPHONE", "NO HP"] },
+      { label: "NO. HANDPHONE", keys: ["NO. HANDPHONE", "NO HANDPHONE", "NO HP", "NO_HP"] },
       { label: "ALAMAT EMAIL",  keys: ["ALAMAT EMAIL", "EMAIL"] },
     ];
     const missingFields: string[] = [];
@@ -139,76 +139,47 @@ export default function UploadZone({ onDataUploaded, onSave, hasData, saveStatus
               no: index + 1,
 
               // Identitas & Pendaftaran
-              no_pendaftaran_kipk: get(row, "NO. PENDAFTARAN KIPK", "NO.PENDAFTARAN KIPK", "NO PENDAFTARAN KIPK", "PENDAFTARAN KIPK"),
+              no_pendaftaran_kipk: get(row, "NO. PENDAFTARAN KIPK", "NO.PENDAFTARAN KIPK", "NO PENDAFTARAN KIPK", "PENDAFTARAN KIPK", "NO_PENDAFTARAN_KIPK"),
+              no_bantuan_sosial:   get(row, "NO. BANTUAN SOSIAL", "NO BANTUAN SOSIAL", "NO. BANSOS", "NO BANSOS", "NO. KIP/KKS/SKTM", "NO_BANTUAN_SOSIAL"),
               nama:                get(row, "NAMA", "NAMA LENGKAP", "NAMA MAHASISWA"),
               prodi:               get(row, "PRODI", "JURUSAN", "PROGRAM STUDI", "PROGRAM STUDI/JURUSAN"),
               nik:                 get(row, "NIK"),
-              no_kartu_keluarga:   get(row, "NO. KARTU KELUARGA", "NO KARTU KELUARGA", "NO. KK", "NO KK"),
-              nik_kepala_keluarga: get(row, "NIK KEPALA KELUARGA"),
+              no_kartu_keluarga:   get(row, "NO. KARTU KELUARGA", "NO KARTU KELUARGA", "NO. KK", "NO KK", "NO_KARTU_KELUARGA"),
               nisn:                get(row, "NISN"),
 
-              // Status Sosial
-              status_dtks:   get(row, "STATUS DTKS", "STATUS DTSEN", "STATUS DATA TUNGGAL"),
-              validasi_dtks: get(row, "VALIDASI DTKS", "VALIDASI KKS", "VALIDASI DTSEN"),
-              status_p3ke:   get(row, "STATUS P3KE", "VALIDASI SKTM"),
-              validasi_p3ke: get(row, "VALIDASI P3KE"),
-              no_kip:        get(row, "NO. KIP", "NO KIP", "NO. BANSOS", "NO BANSOS", "NOMOR BANTUAN SOSIAL", "NO. KIP/KKS/SKTM"),
-              validasi_kip:  get(row, "VALIDASI KIP"),
-              no_kks:        get(row, "NO. KKS", "NO KKS"),
+              // Asal Sekolah & Status
+              asal_sekolah:        get(row, "ASAL SEKOLAH", "SEKOLAH ASAL", "NAMA SEKOLAH ASAL", "ASAL_SEKOLAH"),
+              status_dtsen:        get(row, "STATUS DTSEN", "STATUS DTKS", "STATUS DATA TUNGGAL", "STATUS_DTSEN"),
+              jumlah_tanggungan:   getNum(row, "JUMLAH TANGGUNGAN", "JUMLAH_TANGGUNGAN"),
+              jumlah_orang_rumah:  getNum(row, "JUMLAH ORANG RUMAH", "JUMLAH ORANG YANG TINGGAL DI RUMAH", "JUMLAH_ORANG_RUMAH"),
 
-              // Asal Sekolah
-              asal_sekolah:     get(row, "ASAL SEKOLAH", "SEKOLAH ASAL", "NAMA SEKOLAH ASAL"),
-              kab_kota_sekolah: get(row, "KAB/KOTA SEKOLAH", "KOTA", "KAB/KOTA", "KOTA/KABUPATEN ASAL"),
-              provinsi_sekolah: get(row, "PROVINSI SEKOLAH", "PROVINSI", "PROVINSI ASAL"),
+              // Data Orang Tua
+              pekerjaan_ayah:      get(row, "PEKERJAAN AYAH", "PEKERJAAN BAPAK", "PEKERJAAN BAPAK/WALI", "PEKERJAAN_AYAH"),
+              pekerjaan_ibu:       get(row, "PEKERJAAN IBU", "PEKERJAAN_IBU"),
+              penghasilan_ayah:    getNum(row, "PENGHASILAN AYAH", "PENGHASILAN BAPAK", "PENGHASILAN BAPAK/WALI", "KET. PENGHASILAN AYAH/BLN", "PENGHASILAN_AYAH"),
+              penghasilan_ibu:     getNum(row, "PENGHASILAN IBU", "KET. PENGHASILAN IBU/BLN", "PENGHASILAN_IBU"),
 
-              // Data Diri
-              tempat_lahir:   get(row, "TEMPAT LAHIR"),
-              tanggal_lahir:  get(row, "TANGGAL LAHIR"),
-              jenis_kelamin:  get(row, "JENIS KELAMIN"),
-              alamat_tinggal: get(row, "ALAMAT TINGGAL", "ALAMAT", "ALAMAT DOMISILI"),
-              no_hp:          get(row, "NO. TELP", "NO. HANDPHONE", "NO HANDPHONE", "NO HP", "NOMOR HP AKTIF", "NO. HP"),
-              email:          get(row, "ALAMAT EMAIL", "EMAIL", "ALAMAT EMAIL AKTIF"),
-              sosial_media:   get(row, "IG/TWITTER/TIKTOK", "ALAMAT IG/TWITTER/TIKTOK", "SOSIAL MEDIA", "KOORDINAT", "KOORDINAT TITIK LOKASI", "LINK GPS"),
+              // Lokasi & Alamat
+              kab_kota:            get(row, "KAB KOTA", "KAB/KOTA", "KOTA", "KOTA/KABUPATEN", "KAB_KOTA"),
+              provinsi:            get(row, "PROVINSI", "PROVINSI ASAL"),
+              alamat:              get(row, "ALAMAT", "ALAMAT TINGGAL", "ALAMAT DOMISILI"),
 
-              // Data Ayah
-              nama_ayah:            get(row, "NAMA AYAH", "NAMA BAPAK", "NAMA BAPAK/WALI"),
-              pekerjaan_ayah:       get(row, "PEKERJAAN AYAH", "PEKERJAAN BAPAK", "PEKERJAAN BAPAK/WALI"),
-              ket_pekerjaan_ayah:   get(row, "KET. PEKERJAAN AYAH", "VALIDASI KET. PEKERJAAN AYAH"),
-              penghasilan_ayah:     getNum(row, "KET. PENGHASILAN AYAH/BLN", "KET. PENGHASILAN AYAH/ BLN", "KET. PENGHASILAN AYAH", "PENGHASILAN BAPAK/WALI", "PENGHASILAN BAPAK"),
-              ket_penghasilan_ayah: get(row, "PENGHASILAN AYAH", "VALIDASI KET. PENGHASILAN AYAH/BLN"),
-              status_ayah:          get(row, "STATUS AYAH"),
+              // Ekonomi
+              pbb:                 getNum(row, "PBB", "PBB TERAKHIR", "JUMLAH PBB TERAKHIR DIBAYAR", "NOMINAL PER KAPITA"),
+              daya_listrik:        get(row, "DAYA LISTRIK", "SUMBER LISTRIK", "LISTRIK", "DAYA_LISTRIK"),
 
-              // Data Ibu
-              nama_ibu:            get(row, "NAMA IBU"),
-              pekerjaan_ibu:       get(row, "PEKERJAAN IBU"),
-              ket_pekerjaan_ibu:   get(row, "KET. PEKERJAAN IBU", "VALIDASI KET. PEKERJAAN IBU"),
-              penghasilan_ibu:     getNum(row, "KET. PENGHASILAN IBU/BLN", "KET. PENGHASILAN IBU/ BLN", "KET. PENGHASILAN IBU", "PENGHASILAN IBU"),
-              ket_penghasilan_ibu: get(row, "PENGHASILAN IBU", "VALIDASI KET. PENGHASILAN IBU/BLN"),
-              status_ibu:          get(row, "STATUS IBU"),
+              // Kontak
+              no_hp:               get(row, "NO. TELP", "NO. HANDPHONE", "NO HANDPHONE", "NO HP", "NOMOR HP AKTIF", "NO. HP", "NO_HP"),
+              email:               get(row, "ALAMAT EMAIL", "EMAIL", "ALAMAT EMAIL AKTIF"),
 
-              // Ekonomi Keluarga
-              wali:                      get(row, "WALI (JIKA ADA)", "WALI"),
-              penghasilan_lain:          getNum(row, "PENGHASILAN LAIN/BLN", "PENGHASILAN LAIN/ BLN", "PENGHASILAN LAIN", "VALIDASI PENGHASILAN LAIN/BLN"),
-              jumlah_tanggungan:         getNum(row, "JUMLAH TANGGUNGAN", "JUMLAH ORANG YANG TINGGAL DI RUMAH"),
-              jml_tanggungan_sebenarnya: getNum(row, "JML TANGGUNGAN SEBENARNYA", "VALIDASI JUMLAH TANGGUNGAN SEBENARNYA"),
-              nominal_per_kapita:        getNum(row, "NOMINAL PER KAPITA", "JUMLAH PBB TERAKHIR DIBAYAR", "PBB", "PBB TERAKHIR"),
+              // Koordinat
+              koordinat:           get(row, "KOORDINAT", "KOORDINAT TITIK LOKASI", "LINK GPS"),
+              latitude:            getNum(row, "LATITUDE"),
+              longitude:           getNum(row, "LONGITUDE"),
 
-              // Kondisi Tempat Tinggal
-              kepemilikan_rumah: get(row, "KEPEMILIKAN RUMAH"),
-              tahun_perolehan:   get(row, "TAHUN PEROLEHAN", "TAHUN PEROLEHAN RUMAH"),
-              sumber_listrik:    get(row, "SUMBER LISTRIK", "DAYA LISTRIK", "LISTRIK"),
-              luas_tanah:        getNum(row, "LUAS TANAH"),
-              luas_bangunan:     getNum(row, "LUAS BANGUNAN"),
-              sumber_air:        get(row, "SUMBER AIR", "SUMBER AIR MINUM"),
-              mck:               get(row, "MCK"),
-              kondisi_rumah:     get(row, "KONDISI RUMAH"),
-              jarak_pusat_kota:  getNum(row, "JARAK PUSAT KOTA (KM)", "JARAK PUSAT KOTA"),
-
-              // Hasil Wawancara
-              prestasi:    get(row, "PRESTASI", "ASET", "ASET YANG DIMILIKI"),
-              rekomendasi: get(row, "REKOMENDASI"),
-              alasan:      get(row, "ALASAN"),
-              pewawancara: get(row, "NAMA PEWAWANCARA", "PEWAWANCARA"),
+              // Jalur & Catatan
+              jalur_masuk:         get(row, "JALUR MASUK", "JALUR_MASUK"),
+              catatan_admin:       get(row, "CATATAN ADMIN", "CATATAN_ADMIN", "CATATAN"),
 
               hasErrors:     validation.hasErrors,
               missingFields: validation.missingFields,
@@ -440,7 +411,7 @@ export default function UploadZone({ onDataUploaded, onSave, hasData, saveStatus
           ) : (
             <>
               <span className="material-symbols-outlined text-[18px]">save</span>
-              Simpan ke Database
+              Simpan Data
             </>
           )}
         </button> */}

@@ -159,7 +159,8 @@ export const ContactFormSchema = z.object({
 export type ContactFormData = z.infer<typeof ContactFormSchema>;
 
 /* =========================
-   Import Data / Kandidat KIPK (Form Import)
+   Import Data / Kandidat (Form Import)
+   Sesuai tabel: public.kandidat
 ========================= */
 export const CandidateDataSchema = z.object({
   no: z.number().optional(),
@@ -185,9 +186,11 @@ export const CandidateDataSchema = z.object({
   daya_listrik:        z.string().default(""),
   no_hp:               z.string().default(""),
   email:               z.string().default(""),
-  koordinat:  z.string().default(""),
-  latitude:   z.number().default(0),
-  longitude:  z.number().default(0),
+  koordinat:           z.string().default(""),
+  latitude:            z.number().default(0),
+  longitude:           z.number().default(0),
+  jalur_masuk:         z.string().default(""),
+  catatan_admin:       z.string().default(""),
   // Validation flags (client-side only)
   hasErrors:     z.boolean().default(false),
   missingFields: z.array(z.string()).default([]),

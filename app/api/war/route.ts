@@ -226,7 +226,7 @@ export async function POST(req: NextRequest) {
     }
 
     if (!sesi) return NextResponse.json({ error: "Belum ada sesi wawancara yang tersedia" }, { status: 404 });
-    if (!sesi.war_aktif) return NextResponse.json({ error: "WAR belum dibuka oleh admin untuk sesi ini" }, { status: 403 });
+    if (!sesi.war_aktif) return NextResponse.json({ error: "Pemilihan Urutan Wawancara belum dibuka oleh admin untuk sesi ini" }, { status: 403 });
 
     const { data: pw } = await supabaseAdmin
       .from("pewawancara")

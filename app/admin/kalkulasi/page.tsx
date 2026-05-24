@@ -214,12 +214,7 @@ export default function KalkulasiPage() {
                   disabled={loading || !jalurTerpilih || !kuotaTerpilih}
                   className="w-full h-12.5 flex items-center justify-center gap-2 bg-slate-900 text-white text-sm font-semibold rounded-2xl hover:bg-indigo-600 focus:ring-4 focus:ring-indigo-500/20 disabled:opacity-50 disabled:hover:bg-slate-900 transition-all shadow-sm"
                 >
-                  {loading ? (
-                    <Loader2 size={18} className="animate-spin" />
-                  ) : (
-                    <Play size={18} className="fill-current" />
-                  )}
-                  {loading ? "Memproses..." : "Mulai Kalkulasi"}
+                  {loading ? "Memproses..." : "Kalkulasi"}
                 </button>
               </div>
             </div>

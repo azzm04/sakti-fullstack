@@ -11,7 +11,6 @@ import {
 import { type CandidateData, type ValidationSummary } from "@/schemas";
 import UploadZone from "@/components/admin/import/UploadZone";
 import DataPreviewTable from "@/components/admin/import/DataPreviewTable";
-import TipsCard from "@/components/admin/import/TipsCard";
 
 export type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -114,7 +113,7 @@ export default function ImportDataPage() {
                 Import Data Pendaftar
               </h1>
               <p className="text-slate-500 text-sm mt-2 max-w-2xl">
-                Unggah file Excel/CSV data pendaftar untuk memasukkannya ke dalam sistem dan memulai proses kalkulasi SMART-TOPSIS.
+                Unggah file Excel/CSV data pendaftar untuk memasukkannya ke dalam sistem.
               </p>
             </div>
 
@@ -218,7 +217,7 @@ export default function ImportDataPage() {
                   hasData={hasData}
                 />
                 
-                {!isSaved && <TipsCard />}
+                {!isSaved}
 
                 {/* Info Alert setelah Saved */}
                 {isSaved && (

@@ -357,7 +357,7 @@ export default function PewawancaraDashboard() {
             </div>
           )}
 
-          {/* ════ STATE 1.5: Sesi ada tapi WAR belum dibuka ════ */}
+          {/* ════ STATE 1.5: Sesi ada tapi PEMILIHAN URUTAN WAWANCARA belum dibuka ════ */}
           {!kuotaSaya && !warAktif && sesi && !sesi.distribusi_done && (
             <motion.div
               initial={{ opacity: 0, y: 8 }}
@@ -385,7 +385,7 @@ export default function PewawancaraDashboard() {
                     Sesi wawancara sudah dijadwalkan
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">
-                    Admin belum membuka WAR untuk sesi ini. Halaman akan otomatis
+                    Admin belum membuka Pemilihan Urutan Wawancara untuk sesi ini. Halaman akan otomatis
                     memperbarui setiap 5 detik.
                   </p>
                 </div>

@@ -52,15 +52,24 @@ export async function POST(req: NextRequest) {
       tanggal,
       kuota_pewawancara = 20,
       kuota_mahasiswa = 120,
+      jalur_masuk,
     } = body;
 
     if (!tanggal) {
       return NextResponse.json({ error: "Tanggal wajib diisi" }, { status: 400 });
     }
 
+    const insertData: Record<string, unknown> = {
+      tanggal,
+      kuota_pewawancara,
+      kuota_mahasiswa,
+      war_aktif: false,
+    };
+    if (jalur_masuk) insertData.jalur_masuk = jalur_masuk;
+
     const { data, error } = await supabaseAdmin
       .from("sesi_wawancara")
-      .insert({ tanggal, kuota_pewawancara, kuota_mahasiswa, war_aktif: false })
+      .insert(insertData)
       .select()
       .single();
 
@@ -116,14 +125,50 @@ export async function PATCH(req: NextRequest) {
   }
 }
 
-// DELETE — hapus kuota pewawancara dari sesi (kick dari WAR)
+// DELETE — hapus sesi atau hapus kuota pewawancara dari sesi (kick dari WAR)
 export async function DELETE(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const slotId = searchParams.get("slot_id");
+    const sesiId = searchParams.get("id");
 
+    // Hapus seluruh sesi
+    if (sesiId) {
+      // Cek apakah sesi sudah distribusi
+      const { data: sesi } = await supabaseAdmin
+        .from("sesi_wawancara")
+        .select("id, distribusi_done")
+        .eq("id", sesiId)
+        .single();
+
+      if (!sesi) {
+        return NextResponse.json({ error: "Sesi tidak ditemukan" }, { status: 404 });
+      }
+
+      if (sesi.distribusi_done) {
+        return NextResponse.json({ error: "Sesi yang sudah didistribusikan tidak bisa dihapus" }, { status: 400 });
+      }
+
+      // Hapus semua kuota_pewawancara terkait sesi ini
+      await supabaseAdmin
+        .from("kuota_pewawancara")
+        .delete()
+        .eq("sesi_id", sesiId);
+
+      // Hapus sesi
+      const { error } = await supabaseAdmin
+        .from("sesi_wawancara")
+        .delete()
+        .eq("id", sesiId);
+
+      if (error) throw error;
+
+      return NextResponse.json({ success: true, message: "Sesi berhasil dihapus" });
+    }
+
+    // Hapus satu slot kuota pewawancara
     if (!slotId) {
-      return NextResponse.json({ error: "slot_id wajib diisi" }, { status: 400 });
+      return NextResponse.json({ error: "slot_id atau id wajib diisi" }, { status: 400 });
     }
 
     // Ambil data kuota sebelum dihapus

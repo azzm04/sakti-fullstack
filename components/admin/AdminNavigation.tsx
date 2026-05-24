@@ -18,8 +18,8 @@ import {
 const navItems = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/import", label: "Import Data", icon: Upload },
-  { href: "/admin/pewawancara", label: "Pewawancara", icon: UserCheck },
-  { href: "/admin/evaluasi", label: "Evaluasi", icon: ClipboardList },
+  { href: "/admin/wawancara", label: "Wawancara", icon: UserCheck },
+  { href: "/admin/evaluasi", label: "Evaluasi Hasil Wawancara", icon: ClipboardList },
   { href: "/admin/kalkulasi", label: "Kalkulasi", icon: ClipboardList },
   { href: "/admin/monev", label: "Monev", icon: BookMarked },
 ]

@@ -285,7 +285,7 @@ export default function SesiWAR() {
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-500 opacity-75"></span>
                         <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
                       </span>
-                      WAR SEDANG AKTIF
+                      PEMILIHAN URUTAN WAWANCARA SEDANG AKTIF
                     </span>
                   ) : SesiWawancara.distribusi_done ? (
                     <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-100 px-3 py-1.5 rounded-full border border-emerald-200">
@@ -293,7 +293,7 @@ export default function SesiWAR() {
                     </span>
                   ) : (
                     <span className="flex items-center gap-1.5 text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
-                      <ZapOff size={14} /> WAR BELUM DIBUKA
+                      <ZapOff size={14} /> PEMILIHAN URUTAN WAWANCARA BELUM DIBUKA
                     </span>
                   )}
                 </div>
@@ -386,8 +386,8 @@ export default function SesiWAR() {
                       <Zap size={18} className="text-amber-400" />
                     )}
                     {SesiWawancara.war_aktif
-                      ? "Tutup Sesi WAR"
-                      : "Buka Sesi WAR"}
+                      ? "Tutup Pemilihan Urutan Pewawancara"
+                      : "Buka Pemilihan Urutan Pewawancara"}
                   </button>
                 )}
                 {!SesiWawancara.distribusi_done && kuotaList.length > 0 && (
@@ -735,7 +735,7 @@ export default function SesiWAR() {
         )}
       </AnimatePresence>
 
-      {/* Modal Konfirmasi Buka WAR */}
+      {/* Modal Konfirmasi Buka Pemilihan Urutan Wawancara */}
       <AnimatePresence>
         {showConfirmWar && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 backdrop-blur-sm px-4">
@@ -782,7 +782,7 @@ export default function SesiWAR() {
                   {toggling ? (
                     <Loader2 size={16} className="animate-spin" />
                   ) : (
-                    "Ya, Buka WAR"
+                    "Ya, Buka Pemilihan Urutan Wawancara"
                   )}
                 </button>
               </div>

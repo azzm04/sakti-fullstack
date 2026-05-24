@@ -79,6 +79,8 @@ export async function POST(req: NextRequest) {
       koordinat:                 row.koordinat,
       latitude:                  row.latitude,
       longitude:                 row.longitude,
+      jalur_masuk:               row.jalur_masuk,
+      catatan_admin:             row.catatan_admin,
     }));
 
     const { error: insertError } = await supabase
@@ -121,9 +123,10 @@ export async function GET(req: NextRequest) {
     let query = supabase
       .from("kandidat")
       .select(
-        "id, no, no_pendaftaran_kipk, nama, prodi, nik, no_hp, email, " +
+        "id, no, no_pendaftaran_kipk, no_bantuan_sosial, nama, prodi, nik, no_hp, email, " +
         "penghasilan_ayah, penghasilan_ibu, jumlah_tanggungan, pbb, " +
-        "rekomendasi, pewawancara, import_batch_id, created_at, skor_total, ranking",
+        "jalur_masuk, catatan_admin, import_batch_id, created_at, skor_total, ranking, " +
+        "status_seleksi, hasil_seleksi",
         { count: "exact" }
       )
       .order("no", { ascending: true })

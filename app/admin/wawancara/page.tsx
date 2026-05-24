@@ -19,6 +19,7 @@ import {
   RefreshCw,
   AlertTriangle,
 } from "lucide-react";
+import SesiOverview from "@/components/admin/wawancara/SesiOverview";
 
 interface Pewawancara {
   id: number;
@@ -68,7 +69,7 @@ export default function PewawancaraPage() {
           Pewawancara
         </h1>
         <p className="text-slate-500 text-sm mt-1">
-          Kelola pewawancara dan sesi WAR harian
+          Kelola pewawancara dan Pemilihan Urutan Pewawancara harian
         </p>
       </div>
 
@@ -76,7 +77,7 @@ export default function PewawancaraPage() {
         {(
           [
             { key: "daftar", label: "Daftar Pewawancara", icon: Users },
-            { key: "sesi", label: "Sesi WAR", icon: Zap },
+            { key: "sesi", label: "Pemilihan Urutan Pewawancara", icon: Zap },
           ] as { key: Tab; label: string; icon: React.ElementType }[]
         ).map(({ key, label, icon: Icon }) => (
           <button
@@ -444,7 +445,12 @@ function SesiWAR() {
   const [formSesi, setFormSesi] = useState({
     kuota_pewawancara: "20",
     kuota_mahasiswa: "120",
+    jalur_masuk: "SNBT",
+    tanggal_mulai: "",
+    tanggal_selesai: "",
   });
+  const [kandidatCount, setKandidatCount] = useState<number | null>(null);
+  const [loadingCount, setLoadingCount] = useState(false);
   const [editForm, setEditForm] = useState({
     kuota_pewawancara: "",
     kuota_mahasiswa: "",
@@ -454,6 +460,13 @@ function SesiWAR() {
   const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(
     null,
   );
+  const [confirmModal, setConfirmModal] = useState<{
+    open: boolean;
+    title: string;
+    description: string;
+    variant: "warning" | "danger" | "info";
+    onConfirm: () => void;
+  }>({ open: false, title: "", description: "", variant: "warning", onConfirm: () => {} });
 
   const fetchSesi = useCallback(async () => {
     setLoading(true);
@@ -481,25 +494,73 @@ function SesiWAR() {
 
   async function handleBuatSesi() {
     setSavingSesi(true);
+    setMsg(null);
     try {
-      const res = await fetch("/api/admin/sesi", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tanggal,
-          kuota_pewawancara: parseInt(formSesi.kuota_pewawancara),
-          kuota_mahasiswa: parseInt(formSesi.kuota_mahasiswa),
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) {
-        setMsg({ type: "err", text: json.error });
-        return;
+      const { tanggal_mulai, tanggal_selesai, jalur_masuk, kuota_pewawancara } = formSesi;
+
+      // Jika rentang tanggal diisi → batch create
+      if (tanggal_mulai && tanggal_selesai) {
+        const res = await fetch("/api/admin/sesi/batch", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tanggal_mulai,
+            tanggal_selesai,
+            jalur_masuk,
+            kuota_pewawancara: parseInt(kuota_pewawancara),
+            total_mahasiswa: kandidatCount ?? undefined,
+          }),
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          setMsg({ type: "err", text: json.error });
+          return;
+        }
+        setShowBuatSesi(false);
+        setMsg({
+          type: "ok",
+          text: `${json.created} sesi berhasil dibuat (${json.total_mahasiswa} mahasiswa / ${json.jumlah_hari} hari).`,
+        });
+        setTimeout(() => setMsg(null), 5000);
+        // Set tanggal ke hari pertama sesi yang dibuat
+        setTanggal(tanggal_mulai);
+        fetchSesi();
+      } else {
+        // Single day (fallback ke tanggal yang dipilih di date picker)
+        const res = await fetch("/api/admin/sesi", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            tanggal,
+            kuota_pewawancara: parseInt(kuota_pewawancara),
+            kuota_mahasiswa: parseInt(formSesi.kuota_mahasiswa),
+            jalur_masuk,
+          }),
+        });
+        const json = await res.json();
+        if (!res.ok) {
+          setMsg({ type: "err", text: json.error });
+          return;
+        }
+        setShowBuatSesi(false);
+        fetchSesi();
       }
-      setShowBuatSesi(false);
-      fetchSesi();
     } finally {
       setSavingSesi(false);
+    }
+  }
+
+  // Fetch kandidat count saat jalur_masuk berubah
+  async function fetchKandidatCount(jalur: string) {
+    setLoadingCount(true);
+    try {
+      const res = await fetch(`/api/admin/sesi/count-kandidat?jalur_masuk=${encodeURIComponent(jalur)}`);
+      const json = await res.json();
+      if (res.ok) {
+        setKandidatCount(json.total_belum_assign ?? json.total ?? 0);
+      }
+    } finally {
+      setLoadingCount(false);
     }
   }
 
@@ -542,13 +603,26 @@ function SesiWAR() {
   async function handleToggleWAR() {
     if (!sesi) return;
     const newState = !sesi.war_aktif;
-    if (
-      newState &&
-      !confirm(
-        `Buka WAR untuk ${new Date(tanggal).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long" })}?\nPewawancara akan bisa klaim kuota sekarang.`,
-      )
-    )
+
+    if (newState) {
+      // Buka WAR → tampilkan modal konfirmasi
+      setConfirmModal({
+        open: true,
+        title: "Buka Pemilihan Urutan Wawancara?",
+        description: `Sesi ${new Date(tanggal).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })} akan dibuka. Pewawancara akan bisa klaim kuota sekarang.`,
+        variant: "warning",
+        onConfirm: () => executeToggleWAR(true),
+      });
       return;
+    }
+
+    // Tutup WAR → langsung eksekusi
+    executeToggleWAR(false);
+  }
+
+  async function executeToggleWAR(newState: boolean) {
+    if (!sesi) return;
+    setConfirmModal((c) => ({ ...c, open: false }));
     setToggling(true);
     try {
       const res = await fetch("/api/admin/sesi", {
@@ -565,8 +639,8 @@ function SesiWAR() {
       setMsg({
         type: "ok",
         text: newState
-          ? "WAR dibuka! Pewawancara bisa klaim kuota."
-          : "WAR ditutup.",
+          ? "Pemilihan urutan dibuka! Pewawancara bisa klaim kuota."
+          : "Pemilihan urutan ditutup.",
       });
       setTimeout(() => setMsg(null), 3000);
     } finally {
@@ -580,12 +654,18 @@ function SesiWAR() {
       setMsg({ type: "err", text: "Belum ada pewawancara yang mengisi kuota" });
       return;
     }
-    if (
-      !confirm(
-        `Distribusikan mahasiswa ke ${kuotaList.length} pewawancara?\nTindakan ini tidak bisa dibatalkan.`,
-      )
-    )
-      return;
+    setConfirmModal({
+      open: true,
+      title: "Distribusikan Mahasiswa?",
+      description: `${kuotaList.length} pewawancara akan menerima tugas wawancara. Setiap pewawancara mendapat ±${Math.ceil(sesi.kuota_mahasiswa / kuotaList.length)} mahasiswa. Tindakan ini tidak bisa dibatalkan.`,
+      variant: "info",
+      onConfirm: executeDistribusi,
+    });
+  }
+
+  async function executeDistribusi() {
+    if (!sesi) return;
+    setConfirmModal((c) => ({ ...c, open: false }));
     setDistributing(true);
     try {
       const res = await fetch("/api/admin/sesi/distribusi", {
@@ -610,8 +690,46 @@ function SesiWAR() {
 
   const kuotaPenuh = sesi ? kuotaList.length >= sesi.kuota_pewawancara : false;
 
+  async function handleDeleteSesi() {
+    if (!sesi) return;
+    if (sesi.distribusi_done) {
+      setMsg({ type: "err", text: "Sesi yang sudah didistribusikan tidak bisa dihapus." });
+      return;
+    }
+    setConfirmModal({
+      open: true,
+      title: "Hapus Sesi Wawancara?",
+      description: `Sesi ${new Date(tanggal).toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long" })} akan dihapus permanen. Semua kuota pewawancara yang sudah diklaim juga akan dihapus.`,
+      variant: "danger",
+      onConfirm: executeDeleteSesi,
+    });
+  }
+
+  async function executeDeleteSesi() {
+    if (!sesi) return;
+    setConfirmModal((c) => ({ ...c, open: false }));
+    try {
+      const res = await fetch(`/api/admin/sesi?id=${sesi.id}`, {
+        method: "DELETE",
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setMsg({ type: "err", text: json.error ?? "Gagal menghapus sesi" });
+        return;
+      }
+      setMsg({ type: "ok", text: "Sesi berhasil dihapus." });
+      setTimeout(() => setMsg(null), 3000);
+      fetchSesi();
+    } catch {
+      setMsg({ type: "err", text: "Gagal menghapus sesi" });
+    }
+  }
+
   return (
     <>
+      {/* Sesi Overview Panel */}
+      <SesiOverview onSelectTanggal={setTanggal} activeTanggal={tanggal} />
+
       {/* Date picker */}
       <div className="flex items-center gap-3 mb-6">
         <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-sm">
@@ -668,10 +786,14 @@ function SesiWAR() {
             Belum ada sesi untuk tanggal ini
           </p>
           <p className="text-xs text-slate-400 mb-5">
-            Buat sesi terlebih dahulu sebelum membuka WAR
+            Buat sesi terlebih dahulu sebelum membuka pemilihan urutan pewawancara
           </p>
           <button
-            onClick={() => setShowBuatSesi(true)}
+            onClick={() => {
+              setFormSesi((f) => ({ ...f, tanggal_mulai: tanggal, tanggal_selesai: tanggal }));
+              fetchKandidatCount(formSesi.jalur_masuk);
+              setShowBuatSesi(true);
+            }}
             className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors"
           >
             <Plus size={15} /> Buat Sesi
@@ -695,7 +817,7 @@ function SesiWAR() {
                 <div className="flex items-center gap-2 mb-1">
                   {sesi.war_aktif ? (
                     <span className="flex items-center gap-1.5 text-xs font-bold text-amber-700 bg-amber-100 px-2.5 py-1 rounded-full animate-pulse">
-                      <Zap size={11} /> WAR SEDANG BERLANGSUNG
+                      <Zap size={11} /> PEMILIHAN URUTAN WAWANCARA SEDANG BERLANGSUNG
                     </span>
                   ) : sesi.distribusi_done ? (
                     <span className="flex items-center gap-1.5 text-xs font-bold text-emerald-700 bg-emerald-100 px-2.5 py-1 rounded-full">
@@ -703,7 +825,7 @@ function SesiWAR() {
                     </span>
                   ) : (
                     <span className="flex items-center gap-1.5 text-xs font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded-full">
-                      <ZapOff size={11} /> WAR BELUM DIBUKA
+                      <ZapOff size={11} /> PEMILIHAN URUTAN WAWANCARA BELUM DIBUKA
                     </span>
                   )}
                 </div>
@@ -743,6 +865,14 @@ function SesiWAR() {
                       <Pencil size={11} /> Edit Kuota
                     </button>
                   )}
+                  {!sesi.distribusi_done && (
+                    <button
+                      onClick={handleDeleteSesi}
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-red-500 hover:text-red-700 transition-colors"
+                    >
+                      <Trash2 size={11} /> Hapus Sesi
+                    </button>
+                  )}
                 </div>
               </div>
 
@@ -764,7 +894,7 @@ function SesiWAR() {
                     ) : (
                       <Zap size={14} />
                     )}
-                    {sesi.war_aktif ? "Tutup WAR" : "Buka WAR"}
+                    {sesi.war_aktif ? "Tutup Pemilihan Urutan Wawancara" : "Buka Pemilihan Urutan Wawancara"}
                   </button>
                 )}
                 {!sesi.distribusi_done && kuotaList.length > 0 && (
@@ -942,7 +1072,7 @@ function SesiWAR() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-2xl border border-slate-100 shadow-xl p-6 max-w-sm w-full mx-4"
+              className="bg-white rounded-2xl border border-slate-100 shadow-xl p-6 max-w-md w-full mx-4"
             >
               <div className="flex items-center justify-between mb-5">
                 <div>
@@ -950,24 +1080,112 @@ function SesiWAR() {
                     Buat Sesi Wawancara
                   </h3>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    {new Date(tanggal).toLocaleDateString("id-ID", {
-                      weekday: "long",
-                      day: "numeric",
-                      month: "long",
-                      year: "numeric",
-                    })}
+                    Pilih jalur masuk dan rentang tanggal
                   </p>
                 </div>
                 <button
                   onClick={() => setShowBuatSesi(false)}
                   className="p-1.5 rounded-lg hover:bg-slate-100"
-                  title="logo X"
+                  title="Tutup"
                 >
                   <X size={16} className="text-slate-400" />
                 </button>
               </div>
 
               <div className="space-y-4">
+                {/* Jalur Masuk */}
+                <div>
+                  <label className="block text-xs font-semibold text-slate-500 mb-1.5">
+                    Jalur Masuk <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={formSesi.jalur_masuk}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setFormSesi((f) => ({ ...f, jalur_masuk: val }));
+                      fetchKandidatCount(val);
+                    }}
+                    className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-primary bg-slate-50"
+                  >
+                    <option value="SNBT">SNBT</option>
+                    <option value="SNBP">SNBP</option>
+                    <option value="UM">UM (Ujian Mandiri)</option>
+                  </select>
+                  {kandidatCount !== null && (
+                    <p className="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+                      <Users size={11} />
+                      {loadingCount ? "Menghitung..." : (
+                        <>Total kandidat <b className="text-primary">{formSesi.jalur_masuk}</b>: <b className="text-slate-800">{kandidatCount}</b> mahasiswa</>
+                      )}
+                    </p>
+                  )}
+                </div>
+
+                {/* Rentang Tanggal */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1.5">
+                      Tanggal Mulai <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={formSesi.tanggal_mulai}
+                      onChange={(e) =>
+                        setFormSesi((f) => ({ ...f, tanggal_mulai: e.target.value }))
+                      }
+                      className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-primary bg-slate-50"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-500 mb-1.5">
+                      Tanggal Selesai <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="date"
+                      value={formSesi.tanggal_selesai}
+                      min={formSesi.tanggal_mulai || undefined}
+                      onChange={(e) =>
+                        setFormSesi((f) => ({ ...f, tanggal_selesai: e.target.value }))
+                      }
+                      className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-primary bg-slate-50"
+                    />
+                  </div>
+                </div>
+
+                {/* Preview distribusi */}
+                {formSesi.tanggal_mulai && formSesi.tanggal_selesai && kandidatCount !== null && kandidatCount > 0 && (() => {
+                  const start = new Date(formSesi.tanggal_mulai);
+                  const end = new Date(formSesi.tanggal_selesai);
+                  if (end < start) return null;
+                  const jumlahHari = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                  const perHari = Math.floor(kandidatCount / jumlahHari);
+                  const sisa = kandidatCount % jumlahHari;
+
+                  return (
+                    <div className="px-3 py-2.5 bg-primary/5 border border-primary/10 rounded-xl">
+                      <p className="text-[11px] font-semibold text-primary mb-1.5">
+                        Distribusi Otomatis ({jumlahHari} hari)
+                      </p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {Array.from({ length: jumlahHari }, (_, i) => {
+                          const kuota = perHari + (i < sisa ? 1 : 0);
+                          const d = new Date(start);
+                          d.setDate(d.getDate() + i);
+                          return (
+                            <span key={i} className="text-[10px] font-bold px-2 py-1 bg-white border border-primary/20 rounded-lg text-slate-700">
+                              {d.toLocaleDateString("id-ID", { day: "numeric", month: "short" })}: <span className="text-primary">{kuota}</span>
+                            </span>
+                          );
+                        })}
+                      </div>
+                      <p className="text-[10px] text-slate-500 mt-1.5">
+                        Total: {kandidatCount} mahasiswa (maks tidak melebihi jumlah kandidat)
+                      </p>
+                    </div>
+                  );
+                })()}
+
+                {/* Kuota Pewawancara */}
                 <div>
                   <label className="block text-xs font-semibold text-slate-500 mb-1.5">
                     Kuota Pewawancara / hari
@@ -977,7 +1195,6 @@ function SesiWAR() {
                     min={1}
                     max={50}
                     value={formSesi.kuota_pewawancara}
-                    title="input kuota"
                     onChange={(e) =>
                       setFormSesi((f) => ({
                         ...f,
@@ -986,34 +1203,19 @@ function SesiWAR() {
                     }
                     className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-primary bg-slate-50"
                   />
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    Jumlah kuota WAR yang tersedia (default: 20)
-                  </p>
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold text-slate-500 mb-1.5">
-                    Kuota Mahasiswa / hari
-                  </label>
-                  <input
-                    type="number"
-                    min={1}
-                    title="input kuota"
-                    onChange={(e) =>
-                      setFormSesi((f) => ({
-                        ...f,
-                        kuota_mahasiswa: e.target.value,
-                      }))
-                    }
-                    className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-primary bg-slate-50"
-                  />
-                  <p className="text-[11px] text-slate-400 mt-1">
-                    Tiap pewawancara akan mewawancarai ±
-                    {Math.ceil(
-                      parseInt(formSesi.kuota_mahasiswa || "120") /
-                        parseInt(formSesi.kuota_pewawancara || "20"),
-                    )}{" "}
-                    mahasiswa
-                  </p>
+                  {formSesi.tanggal_mulai && formSesi.tanggal_selesai && kandidatCount !== null && kandidatCount > 0 && (() => {
+                    const start = new Date(formSesi.tanggal_mulai);
+                    const end = new Date(formSesi.tanggal_selesai);
+                    if (end < start) return null;
+                    const jumlahHari = Math.floor((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                    const perHari = Math.ceil(kandidatCount / jumlahHari);
+                    const perPewawancara = Math.ceil(perHari / parseInt(formSesi.kuota_pewawancara || "1"));
+                    return (
+                      <p className="text-[11px] text-slate-400 mt-1">
+                        Tiap pewawancara ≈ <b className="text-slate-700">{perPewawancara}</b> mahasiswa/hari
+                      </p>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -1026,7 +1228,7 @@ function SesiWAR() {
                 </button>
                 <button
                   onClick={handleBuatSesi}
-                  disabled={savingSesi}
+                  disabled={savingSesi || !formSesi.tanggal_mulai || !formSesi.tanggal_selesai || !kandidatCount}
                   className="flex-1 py-2.5 text-sm font-semibold bg-primary text-white rounded-xl hover:bg-primary/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
                 >
                   {savingSesi && <Loader2 size={14} className="animate-spin" />}
@@ -1138,6 +1340,71 @@ function SesiWAR() {
                 >
                   {savingEdit && <Loader2 size={14} className="animate-spin" />}
                   Simpan
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Custom Confirmation Modal */}
+      <AnimatePresence>
+        {confirmModal.open && (
+          <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              transition={{ type: "spring", duration: 0.3, bounce: 0.2 }}
+              className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 border border-slate-100"
+            >
+              {/* Icon */}
+              <div className="flex justify-center mb-4">
+                <div className={`w-14 h-14 rounded-full flex items-center justify-center ${
+                  confirmModal.variant === "danger" ? "bg-red-100" :
+                  confirmModal.variant === "warning" ? "bg-amber-100" :
+                  "bg-blue-100"
+                }`}>
+                  {confirmModal.variant === "danger" ? (
+                    <Trash2 size={24} className="text-red-600" />
+                  ) : confirmModal.variant === "warning" ? (
+                    <Zap size={24} className="text-amber-600" />
+                  ) : (
+                    <Play size={24} className="text-blue-600" />
+                  )}
+                </div>
+              </div>
+
+              {/* Content */}
+              <div className="text-center mb-6">
+                <h3 className="text-lg font-bold text-slate-900 mb-2">
+                  {confirmModal.title}
+                </h3>
+                <p className="text-sm text-slate-500 leading-relaxed">
+                  {confirmModal.description}
+                </p>
+              </div>
+
+              {/* Actions */}
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setConfirmModal((c) => ({ ...c, open: false }))}
+                  className="flex-1 py-2.5 text-sm font-semibold border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-700 transition-all"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={confirmModal.onConfirm}
+                  className={`flex-1 py-2.5 text-sm font-semibold text-white rounded-xl transition-all flex items-center justify-center gap-2 ${
+                    confirmModal.variant === "danger"
+                      ? "bg-red-500 hover:bg-red-600"
+                      : confirmModal.variant === "warning"
+                      ? "bg-amber-500 hover:bg-amber-600"
+                      : "bg-primary hover:bg-primary/90"
+                  }`}
+                >
+                  {confirmModal.variant === "danger" ? "Hapus" :
+                   confirmModal.variant === "warning" ? "Ya, Buka" : "Lanjutkan"}
                 </button>
               </div>
             </motion.div>

@@ -2,7 +2,28 @@
 
 import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
+import {
+  useReactTable,
+  getCoreRowModel,
+  getSortedRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+  flexRender,
+  createColumnHelper,
+  type SortingState,
+  type ColumnDef,
+  type VisibilityState,
+} from '@tanstack/react-table';
 import { CandidateData } from '@/schemas';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
+import {
+  Table2, FileText, Database, CheckCircle2, AlertTriangle,
+  Eye, EyeOff, Save, Search, X, ArrowUpDown, ArrowUp, ArrowDown,
+  Info, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
+  Lightbulb, ShieldCheck, ShieldX, Clock,
+} from 'lucide-react';
 
 interface Props {
   data: CandidateData[];
@@ -12,174 +33,264 @@ interface Props {
   hasData?: boolean;
 }
 
-type ColumnKey = keyof CandidateData;
-type SortDirection = 'asc' | 'desc' | null;
+const columnHelper = createColumnHelper<CandidateData>();
+
+// Format currency
+const formatCurrency = (value: number) =>
+  new Intl.NumberFormat('id-ID', {
+    style: 'currency',
+    currency: 'IDR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(value);
+
+// Status badge component
+function StatusBadge({ status }: { status: string }) {
+  if (!status) return <span className="text-muted-foreground/50">—</span>;
+
+  const config: Record<string, { bg: string; Icon: typeof ShieldCheck }> = {
+    'Tersertifikasi':       { bg: 'bg-emerald-100 text-emerald-700 border-emerald-200', Icon: ShieldCheck },
+    'Tidak Tersertifikasi': { bg: 'bg-red-100 text-red-700 border-red-200', Icon: ShieldX },
+    'Proses Verifikasi':    { bg: 'bg-amber-100 text-amber-700 border-amber-200', Icon: Clock },
+  };
+
+  const badge = config[status];
+  if (!badge) return <span className="text-xs text-muted-foreground">{status}</span>;
+
+  const { Icon } = badge;
+  return (
+    <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold border ${badge.bg}`}>
+      <Icon size={12} />
+      {status}
+    </span>
+  );
+}
+
+// Cell renderer for empty values
+function CellValue({ value, isNumber }: { value: any; isNumber?: boolean }) {
+  if (value === null || value === undefined || value === '' || (isNumber && value === 0)) {
+    return <span className="text-muted-foreground/50">—</span>;
+  }
+  if (isNumber && typeof value === 'number') {
+    return <span className="font-medium text-foreground">{formatCurrency(value)}</span>;
+  }
+  return <>{value}</>;
+}
 
 export default function DataPreviewTable({ data, fileName, onSave, saveStatus = "idle", hasData = false }: Props) {
   const [showAllColumns, setShowAllColumns] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [sortColumn, setSortColumn] = useState<ColumnKey | null>(null);
-  const [sortDirection, setSortDirection] = useState<SortDirection>(null);
-  const [page, setPage] = useState(1);
-  const PAGE_SIZE = 100;
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [globalFilter, setGlobalFilter] = useState('');
 
-  // Kolom utama — selalu tampil
-  const basicColumns = [
-    { key: 'no' as ColumnKey,                  label: 'No',                        width: 'w-14',          sortable: true  },
-    { key: 'no_pendaftaran_kipk' as ColumnKey, label: 'No. Pendaftaran KIPK',       width: 'min-w-[200px]', sortable: false },
-    { key: 'nama' as ColumnKey,                label: 'Nama Lengkap',               width: 'min-w-[200px]', sortable: true  },
-    { key: 'prodi' as ColumnKey,               label: 'Jurusan',                    width: 'min-w-[180px]', sortable: true  },
-    { key: 'nik' as ColumnKey,                 label: 'NIK',                        width: 'min-w-[160px]', sortable: false },
-    { key: 'no_hp' as ColumnKey,               label: 'No. HP Aktif',               width: 'min-w-[140px]', sortable: false },
-    { key: 'email' as ColumnKey,               label: 'Alamat Email Aktif',         width: 'min-w-[220px]', sortable: false },
-  ];
-
-  // Kolom detail — tampil saat "Semua Kolom" aktif
-  const extendedColumns = [
-    { key: 'no_kartu_keluarga' as ColumnKey,          label: 'No. Kartu Keluarga',                  width: 'min-w-[170px]', sortable: false },
-    { key: 'nisn' as ColumnKey,                       label: 'NISN',                                width: 'min-w-[130px]', sortable: false },
-    { key: 'no_kip' as ColumnKey,                     label: 'No. Bantuan Sosial (KIP/KKS/SKTM)',   width: 'min-w-[220px]', sortable: false },
-    { key: 'validasi_kip' as ColumnKey,               label: 'Validasi KIP',                        width: 'min-w-[120px]', sortable: false },
-    { key: 'no_kks' as ColumnKey,                     label: 'No. KKS',                             width: 'min-w-[140px]', sortable: false },
-    { key: 'validasi_dtks' as ColumnKey,              label: 'Validasi KKS',                        width: 'min-w-[120px]', sortable: false },
-    { key: 'status_dtks' as ColumnKey,                label: 'Status DTSEN',                        width: 'min-w-[130px]', sortable: true  },
-    { key: 'status_p3ke' as ColumnKey,                label: 'Validasi SKTM',                       width: 'min-w-[130px]', sortable: false },
-    { key: 'asal_sekolah' as ColumnKey,               label: 'Nama Sekolah Asal',                   width: 'min-w-[180px]', sortable: false },
-    { key: 'kab_kota_sekolah' as ColumnKey,           label: 'Kota/Kab. Asal',                      width: 'min-w-[150px]', sortable: true  },
-    { key: 'provinsi_sekolah' as ColumnKey,           label: 'Provinsi Asal',                       width: 'min-w-[140px]', sortable: true  },
-    { key: 'alamat_tinggal' as ColumnKey,             label: 'Alamat Domisili',                     width: 'min-w-[200px]', sortable: false },
-    { key: 'sosial_media' as ColumnKey,               label: 'Akun IG/Twitter/TikTok',              width: 'min-w-[170px]', sortable: false },
-    { key: 'jenis_kelamin' as ColumnKey,              label: 'Jenis Kelamin',                       width: 'min-w-[120px]', sortable: true  },
-    { key: 'tempat_lahir' as ColumnKey,               label: 'Tempat Lahir',                        width: 'min-w-[140px]', sortable: false },
-    { key: 'tanggal_lahir' as ColumnKey,              label: 'Tanggal Lahir',                       width: 'min-w-[130px]', sortable: false },
-    { key: 'nama_ayah' as ColumnKey,                  label: 'Nama Bapak/Wali',                     width: 'min-w-[160px]', sortable: false },
-    { key: 'pekerjaan_ayah' as ColumnKey,             label: 'Pekerjaan Bapak/Wali',                width: 'min-w-[170px]', sortable: false },
-    { key: 'ket_pekerjaan_ayah' as ColumnKey,         label: 'Validasi Ket. Pekerjaan Ayah',        width: 'min-w-[200px]', sortable: false },
-    { key: 'penghasilan_ayah' as ColumnKey,           label: 'Penghasilan Bapak/Wali',              width: 'min-w-[170px]', isNumber: true, sortable: true },
-    { key: 'ket_penghasilan_ayah' as ColumnKey,       label: 'Validasi Ket. Penghasilan Ayah/bln',  width: 'min-w-[220px]', sortable: false },
-    { key: 'status_ayah' as ColumnKey,                label: 'Status Ayah',                         width: 'min-w-[120px]', sortable: false },
-    { key: 'nama_ibu' as ColumnKey,                   label: 'Nama Ibu',                            width: 'min-w-[160px]', sortable: false },
-    { key: 'pekerjaan_ibu' as ColumnKey,              label: 'Pekerjaan Ibu',                       width: 'min-w-[160px]', sortable: false },
-    { key: 'ket_pekerjaan_ibu' as ColumnKey,          label: 'Validasi Ket. Pekerjaan Ibu',         width: 'min-w-[200px]', sortable: false },
-    { key: 'penghasilan_ibu' as ColumnKey,            label: 'Penghasilan Ibu',                     width: 'min-w-[160px]', isNumber: true, sortable: true },
-    { key: 'ket_penghasilan_ibu' as ColumnKey,        label: 'Validasi Ket. Penghasilan Ibu/bln',   width: 'min-w-[220px]', sortable: false },
-    { key: 'status_ibu' as ColumnKey,                 label: 'Status Ibu',                          width: 'min-w-[120px]', sortable: false },
-    { key: 'wali' as ColumnKey,                       label: 'Wali (jika ada)',                     width: 'min-w-[140px]', sortable: false },
-    { key: 'penghasilan_lain' as ColumnKey,           label: 'Validasi Penghasilan Lain/bln',       width: 'min-w-[200px]', isNumber: true, sortable: true },
-    { key: 'jumlah_tanggungan' as ColumnKey,          label: 'Jumlah Tanggungan',                   width: 'min-w-[150px]', sortable: true  },
-    { key: 'jml_tanggungan_sebenarnya' as ColumnKey,  label: 'Validasi Jml. Tanggungan Sebenarnya', width: 'min-w-[230px]', sortable: true  },
-    { key: 'nominal_per_kapita' as ColumnKey,         label: 'Jumlah PBB Terakhir Dibayar',         width: 'min-w-[200px]', isNumber: true, sortable: true },
-    { key: 'kepemilikan_rumah' as ColumnKey,          label: 'Kepemilikan Rumah',                   width: 'min-w-[150px]', sortable: false },
-    { key: 'tahun_perolehan' as ColumnKey,            label: 'Tahun Perolehan Rumah',               width: 'min-w-[170px]', sortable: false },
-    { key: 'sumber_listrik' as ColumnKey,             label: 'Daya Listrik',                        width: 'min-w-[120px]', sortable: false },
-    { key: 'luas_tanah' as ColumnKey,                 label: 'Luas Tanah',                          width: 'min-w-[110px]', sortable: true  },
-    { key: 'luas_bangunan' as ColumnKey,              label: 'Luas Bangunan',                       width: 'min-w-[120px]', sortable: true  },
-    { key: 'sumber_air' as ColumnKey,                 label: 'Sumber Air Minum',                    width: 'min-w-[140px]', sortable: false },
-    { key: 'mck' as ColumnKey,                        label: 'MCK',                                 width: 'min-w-[100px]', sortable: false },
-    { key: 'kondisi_rumah' as ColumnKey,              label: 'Kondisi Rumah',                       width: 'min-w-[140px]', sortable: false },
-    { key: 'jarak_pusat_kota' as ColumnKey,           label: 'Jarak Pusat Kota (KM)',               width: 'min-w-[160px]', sortable: true  },
-    { key: 'prestasi' as ColumnKey,                   label: 'Aset (Elektronik/Kendaraan)',         width: 'min-w-[200px]', sortable: false },
-    { key: 'rekomendasi' as ColumnKey,                label: 'Rekomendasi',                         width: 'min-w-[150px]', sortable: true  },
-    { key: 'alasan' as ColumnKey,                     label: 'Alasan',                              width: 'min-w-[180px]', sortable: false },
-    { key: 'pewawancara' as ColumnKey,                label: 'Nama Pewawancara',                    width: 'min-w-[160px]', sortable: false },
-  ];
-
-  const displayColumns = showAllColumns ? [...basicColumns, ...extendedColumns] : basicColumns;
-
-  // Format currency
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(value);
-  };
-
-  // Get cell value with formatting
-  const getCellValue = (row: any, key: string, isNumber?: boolean) => {
-    const value = row[key];
-    
-    if (!value || value === '' || value === 0) {
-      return (
-        <span className="inline-flex items-center gap-1 text-error italic text-[11px] font-medium">
-          <span className="material-symbols-outlined text-[14px]">error</span>
-          Data Kosong
+  // Define all columns
+  const columns = useMemo<ColumnDef<CandidateData, any>[]>(() => [
+    columnHelper.accessor('no', {
+      header: 'No',
+      cell: (info) => (
+        <span className="font-bold text-primary">{info.getValue()}</span>
+      ),
+      size: 60,
+    }),
+    columnHelper.accessor('no_pendaftaran_kipk', {
+      header: 'No. Pendaftaran KIPK',
+      cell: (info) => <CellValue value={info.getValue()} />,
+      size: 180,
+    }),
+    columnHelper.accessor('no_bantuan_sosial', {
+      header: 'No. Bantuan Sosial',
+      cell: (info) => <CellValue value={info.getValue()} />,
+      size: 160,
+    }),
+    columnHelper.accessor('nama', {
+      header: 'Nama Lengkap',
+      cell: (info) => (
+        <span className="font-semibold text-foreground">{info.getValue() || '—'}</span>
+      ),
+      size: 200,
+    }),
+    columnHelper.accessor('prodi', {
+      header: 'Program Studi',
+      cell: (info) => <CellValue value={info.getValue()} />,
+      size: 160,
+    }),
+    columnHelper.accessor('nik', {
+      header: 'NIK',
+      cell: (info) => (
+        <span className="font-mono text-xs text-muted-foreground">
+          <CellValue value={info.getValue()} />
         </span>
-      );
+      ),
+      size: 160,
+    }),
+    columnHelper.accessor('nisn', {
+      header: 'NISN',
+      cell: (info) => (
+        <span className="font-mono text-xs text-muted-foreground">
+          <CellValue value={info.getValue()} />
+        </span>
+      ),
+      size: 120,
+    }),
+    columnHelper.accessor('asal_sekolah', {
+      header: 'Asal Sekolah',
+      cell: (info) => <CellValue value={info.getValue()} />,
+      size: 180,
+    }),
+    columnHelper.accessor('jalur_masuk', {
+      header: 'Jalur Masuk',
+      cell: (info) => {
+        const val = info.getValue();
+        if (!val) return <span className="text-muted-foreground/50">—</span>;
+        return (
+          <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-semibold bg-primary/10 text-primary border border-primary/20">
+            {val}
+          </span>
+        );
+      },
+      size: 110,
+    }),
+    columnHelper.accessor('no_hp', {
+      header: 'No. HP',
+      cell: (info) => <CellValue value={info.getValue()} />,
+      size: 140,
+    }),
+    columnHelper.accessor('email', {
+      header: 'Email',
+      cell: (info) => <CellValue value={info.getValue()} />,
+      size: 200,
+    }),
+    // Extended columns
+    columnHelper.accessor('no_kartu_keluarga', {
+      header: 'No. Kartu Keluarga',
+      cell: (info) => <CellValue value={info.getValue()} />,
+      size: 170,
+    }),
+    columnHelper.accessor('status_dtsen', {
+      header: 'Status DTSEN',
+      cell: (info) => <StatusBadge status={info.getValue()} />,
+      size: 170,
+    }),
+    columnHelper.accessor('jumlah_tanggungan', {
+      header: 'Jml. Tanggungan',
+      cell: (info) => <CellValue value={info.getValue()} />,
+      size: 130,
+    }),
+    columnHelper.accessor('jumlah_orang_rumah', {
+      header: 'Jml. Orang Rumah',
+      cell: (info) => <CellValue value={info.getValue()} />,
+      size: 140,
+    }),
+    columnHelper.accessor('pekerjaan_ayah', {
+      header: 'Pekerjaan Ayah',
+      cell: (info) => <CellValue value={info.getValue()} />,
+      size: 150,
+    }),
+    columnHelper.accessor('pekerjaan_ibu', {
+      header: 'Pekerjaan Ibu',
+      cell: (info) => <CellValue value={info.getValue()} />,
+      size: 150,
+    }),
+    columnHelper.accessor('penghasilan_ayah', {
+      header: 'Penghasilan Ayah',
+      cell: (info) => <CellValue value={info.getValue()} isNumber />,
+      size: 150,
+    }),
+    columnHelper.accessor('penghasilan_ibu', {
+      header: 'Penghasilan Ibu',
+      cell: (info) => <CellValue value={info.getValue()} isNumber />,
+      size: 150,
+    }),
+    columnHelper.accessor('kab_kota', {
+      header: 'Kab/Kota',
+      cell: (info) => <CellValue value={info.getValue()} />,
+      size: 140,
+    }),
+    columnHelper.accessor('provinsi', {
+      header: 'Provinsi',
+      cell: (info) => <CellValue value={info.getValue()} />,
+      size: 140,
+    }),
+    columnHelper.accessor('alamat', {
+      header: 'Alamat',
+      cell: (info) => <CellValue value={info.getValue()} />,
+      size: 220,
+    }),
+    columnHelper.accessor('pbb', {
+      header: 'PBB',
+      cell: (info) => <CellValue value={info.getValue()} isNumber />,
+      size: 140,
+    }),
+    columnHelper.accessor('daya_listrik', {
+      header: 'Daya Listrik',
+      cell: (info) => <CellValue value={info.getValue()} />,
+      size: 110,
+    }),
+    columnHelper.accessor('koordinat', {
+      header: 'Koordinat',
+      cell: (info) => <CellValue value={info.getValue()} />,
+      size: 170,
+    }),
+    columnHelper.accessor('latitude', {
+      header: 'Latitude',
+      cell: (info) => <CellValue value={info.getValue()} />,
+      size: 100,
+    }),
+    columnHelper.accessor('longitude', {
+      header: 'Longitude',
+      cell: (info) => <CellValue value={info.getValue()} />,
+      size: 100,
+    }),
+    columnHelper.accessor('catatan_admin', {
+      header: 'Catatan Admin',
+      cell: (info) => <CellValue value={info.getValue()} />,
+      size: 160,
+    }),
+  ], []);
+
+  // Column visibility based on toggle
+  const columnVisibility: VisibilityState = useMemo(() => {
+    if (showAllColumns) {
+      return {} as VisibilityState;
     }
-    
-    if (isNumber && typeof value === 'number') {
-      return <span className="font-semibold text-on-surface">{formatCurrency(value)}</span>;
-    }
-    
-    return value;
-  };
+    return {
+      no_kartu_keluarga: false,
+      status_dtsen: false,
+      jumlah_tanggungan: false,
+      jumlah_orang_rumah: false,
+      pekerjaan_ayah: false,
+      pekerjaan_ibu: false,
+      penghasilan_ayah: false,
+      penghasilan_ibu: false,
+      kab_kota: false,
+      provinsi: false,
+      alamat: false,
+      pbb: false,
+      daya_listrik: false,
+      koordinat: false,
+      latitude: false,
+      longitude: false,
+      catatan_admin: false,
+    } as VisibilityState;
+  }, [showAllColumns]);
 
-  // Get status badge
-  const getStatusBadge = (status: string) => {
-    const badges: Record<string, { bg: string; text: string; icon: string }> = {
-      'Sudah': { bg: 'bg-gradient-to-r from-green-500 to-emerald-500', text: 'text-white', icon: 'check_circle' },
-      'Belum': { bg: 'bg-gradient-to-r from-amber-500 to-orange-500', text: 'text-white', icon: 'pending' },
-      'Lolos': { bg: 'bg-gradient-to-r from-blue-500 to-cyan-500', text: 'text-white', icon: 'verified' },
-      'Tidak Lolos': { bg: 'bg-gradient-to-r from-red-500 to-rose-500', text: 'text-white', icon: 'cancel' },
-    };
-
-    const badge = badges[status] || { bg: 'bg-surface-container-high', text: 'text-on-surface', icon: 'label' };
-
-    return (
-      <span className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-bold ${badge.bg} ${badge.text} shadow-sm`}>
-        <span className="material-symbols-outlined text-[14px]">{badge.icon}</span>
-        {status}
-      </span>
-    );
-  };
-
-  // Search & filter
-  const filteredData = useMemo(() => {
-    let result = data;
-
-    // Search
-    if (searchQuery.trim()) {
-      result = result.filter((row) =>
-        Object.values(row).some((val) =>
-          String(val).toLowerCase().includes(searchQuery.toLowerCase())
-        )
-      );
-    }
-
-    // Sort
-    if (sortColumn && sortDirection) {
-      result = [...result].sort((a, b) => {
-        const aVal = a[sortColumn];
-        const bVal = b[sortColumn];
-        
-        if (typeof aVal === 'number' && typeof bVal === 'number') {
-          return sortDirection === 'asc' ? aVal - bVal : bVal - aVal;
-        }
-        
-        return sortDirection === 'asc'
-          ? String(aVal).localeCompare(String(bVal))
-          : String(bVal).localeCompare(String(aVal));
-      });
-    }
-
-    return result;
-  }, [data, searchQuery, sortColumn, sortDirection]);
-
-  const totalPages = Math.ceil(filteredData.length / PAGE_SIZE);
-  const pageData = filteredData.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-  // Handle sort
-  const handleSort = (column: ColumnKey) => {
-    if (sortColumn === column) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : sortDirection === 'desc' ? null : 'asc');
-      if (sortDirection === 'desc') setSortColumn(null);
-    } else {
-      setSortColumn(column);
-      setSortDirection('asc');
-    }
-  };
+  const table = useReactTable({
+    data,
+    columns,
+    state: {
+      sorting,
+      globalFilter,
+      columnVisibility,
+    },
+    onSortingChange: setSorting,
+    onGlobalFilterChange: setGlobalFilter,
+    getCoreRowModel: getCoreRowModel(),
+    getSortedRowModel: getSortedRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+    initialState: {
+      pagination: { pageSize: 50 },
+    },
+  });
 
   const errorCount = data.filter(d => d.hasErrors).length;
   const validCount = data.length - errorCount;
@@ -190,45 +301,41 @@ export default function DataPreviewTable({ data, fileName, onSave, saveStatus = 
       animate={{ opacity: 1, y: 0 }}
       className="relative"
     >
-      {/* Modern Card Container with Glassmorphism */}
-      <div className="bg-gradient-to-br from-surface-container-lowest via-surface-container-low to-surface-container rounded-2xl shadow-2xl shadow-primary/5 overflow-hidden border border-outline-variant/20 backdrop-blur-xl">
-        
-        {/* Header Section */}
-        <div className="relative bg-gradient-to-br from-primary/5 via-tertiary/5 to-transparent px-6 py-5 border-b border-outline-variant/30">
-          {/* Decorative Background Pattern */}
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGRlZnM+PHBhdHRlcm4gaWQ9ImdyaWQiIHdpZHRoPSI2MCIgaGVpZ2h0PSI2MCIgcGF0dGVyblVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+PHBhdGggZD0iTSAxMCAwIEwgMCAwIDAgMTAiIGZpbGw9Im5vbmUiIHN0cm9rZT0iIzAwMCIgc3Ryb2tlLW9wYWNpdHk9IjAuMDMiIHN0cm9rZS13aWR0aD0iMSIvPjwvcGF0dGVybj48L2RlZnM+PHJlY3Qgd2lkdGg9IjEwMCUiIGhlaWdodD0iMTAwJSIgZmlsbD0idXJsKCNncmlkKSIvPjwvc3ZnPg==')] opacity-50"></div>
-          
-          <div className="relative flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+      <div className="bg-tertiary rounded-2xl shadow-xl shadow-primary/5 overflow-hidden border border-border">
+
+        {/* Header */}
+        <div className="px-6 py-5 border-b border-border bg-muted/30">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-tertiary flex items-center justify-center shadow-lg shadow-primary/30">
-                  <span className="material-symbols-outlined text-white text-xl">table_chart</span>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-lg shadow-primary/30">
+                  <Table2 size={20} className="text-primary-foreground" />
                 </div>
                 <div>
-                  <h4 className="text-lg font-extrabold text-on-surface font-headline tracking-tight">
+                  <h4 className="text-lg font-extrabold text-foreground tracking-tight">
                     Data Preview
                   </h4>
-                  <p className="text-[11px] text-on-surface-variant font-medium flex items-center gap-1.5">
-                    <span className="material-symbols-outlined text-[14px]">description</span>
+                  <p className="text-[11px] text-muted-foreground font-medium flex items-center gap-1.5">
+                    <FileText size={12} />
                     {fileName}
                   </p>
                 </div>
               </div>
 
-              {/* Stats Row */}
-              <div className="flex items-center gap-3 mt-3">
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-primary/10 rounded-lg border border-primary/20">
-                  <span className="material-symbols-outlined text-primary text-sm">dataset</span>
-                  <span className="text-xs font-bold text-primary">{data.length} Rows</span>
+              {/* Stats */}
+              <div className="flex items-center gap-2.5 flex-wrap">
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/10 rounded-lg border border-primary/20">
+                  <Database size={13} className="text-primary" />
+                  <span className="text-xs font-bold text-primary">{data.length} Baris</span>
                 </div>
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-green-500/10 rounded-lg border border-green-500/20">
-                  <span className="material-symbols-outlined text-green-600 text-sm">check_circle</span>
-                  <span className="text-xs font-bold text-green-700">{validCount} Valid</span>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-lg border border-emerald-200">
+                  <CheckCircle2 size={13} className="text-emerald-600" />
+                  <span className="text-xs font-bold text-emerald-700">{validCount} Valid</span>
                 </div>
                 {errorCount > 0 && (
-                  <div className="flex items-center gap-2 px-3 py-1.5 bg-error/10 rounded-lg border border-error/20">
-                    <span className="material-symbols-outlined text-error text-sm">error</span>
-                    <span className="text-xs font-bold text-error">{errorCount} Incomplete</span>
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-muted rounded-lg border border-border">
+                    <Info size={13} className="text-muted-foreground" />
+                    <span className="text-xs font-bold text-secondary">{errorCount} Belum Lengkap</span>
                   </div>
                 )}
               </div>
@@ -238,209 +345,190 @@ export default function DataPreviewTable({ data, fileName, onSave, saveStatus = 
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => setShowAllColumns(!showAllColumns)}
-                className="group px-4 py-2.5 bg-primary from-primary to-tertiary text-white text-xs font-bold rounded-xl hover:shadow-lg hover:shadow-primary/30 transition-all duration-300 flex items-center gap-2 active:scale-95"
+                className="px-4 py-2.5 bg-primary text-primary-foreground text-xs font-bold rounded-xl hover:bg-primary/90 transition-all duration-200 flex items-center gap-2 active:scale-95"
               >
-                <span className="material-symbols-outlined text-sm group-hover:rotate-12 transition-transform">
-                  {showAllColumns ? 'visibility_off' : 'visibility'}
-                </span>
+                {showAllColumns ? <EyeOff size={14} /> : <Eye size={14} />}
                 {showAllColumns ? 'Kolom Dasar' : 'Semua Kolom'}
               </button>
 
               <button
                 onClick={onSave}
                 disabled={!hasData || saveStatus === "saving" || saveStatus === "saved"}
-                className={`px-4 py-2.5 text-xs font-bold rounded-xl transition-all duration-300 flex items-center gap-2 active:scale-95 ${
+                className={`px-4 py-2.5 text-xs font-bold rounded-xl transition-all duration-200 flex items-center gap-2 active:scale-95 ${
                   saveStatus === "saved" ? "bg-emerald-500 text-white" :
-                  saveStatus === "saving" ? "bg-primary/70 text-white cursor-wait" :
-                  saveStatus === "error" ? "bg-red-500 text-white" :
-                  hasData ? "bg-primary text-white hover:shadow-lg hover:shadow-primary/30" :
-                  "bg-surface-container-high text-on-surface-variant cursor-not-allowed border border-outline-variant/30"
+                  saveStatus === "saving" ? "bg-primary/70 text-primary-foreground cursor-wait" :
+                  saveStatus === "error" ? "bg-destructive text-destructive-foreground" :
+                  hasData ? "bg-secondary text-secondary-foreground hover:bg-secondary/90" :
+                  "bg-muted text-muted-foreground cursor-not-allowed border border-border"
                 }`}
               >
                 {saveStatus === "saving"
                   ? <div className="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  : <span className="material-symbols-outlined text-sm">{saveStatus === "saved" ? "check_circle" : saveStatus === "error" ? "error" : "save"}</span>
+                  : saveStatus === "saved" ? <CheckCircle2 size={14} />
+                  : saveStatus === "error" ? <AlertTriangle size={14} />
+                  : <Save size={14} />
                 }
-                {saveStatus === "saving" ? "Menyimpan..." : saveStatus === "saved" ? "Tersimpan" : saveStatus === "error" ? "Gagal" : "Simpan ke Database"}
+                {saveStatus === "saving" ? "Menyimpan..." : saveStatus === "saved" ? "Tersimpan" : saveStatus === "error" ? "Gagal" : "Simpan Data"}
               </button>
             </div>
           </div>
 
-          {/* Search Bar */}
-          <motion.div 
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            className="mt-4"
-          >
-            <div className="relative">
-              <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant text-xl">
-                search
-              </span>
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Cari berdasarkan nama, NIM, prodi, atau data lainnya..."
-                className="w-full pl-12 pr-4 py-3 bg-surface-container-lowest/80 backdrop-blur-sm border border-outline-variant/30 rounded-xl text-sm text-on-surface placeholder:text-on-surface-variant focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/50 transition-all"
-              />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center bg-error/10 hover:bg-error/20 rounded-full transition-colors"
-                >
-                  <span className="material-symbols-outlined text-error text-sm">close</span>
-                </button>
-              )}
-            </div>
-          </motion.div>
+          {/* Search */}
+          <div className="mt-4 relative">
+            <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              value={globalFilter ?? ''}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              placeholder="Cari berdasarkan nama, NIK, prodi, atau data lainnya..."
+              className="w-full pl-12 pr-10 py-3 bg-tertiary border border-input rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/30 focus:border-ring transition-all"
+            />
+            {globalFilter && (
+              <button
+                onClick={() => setGlobalFilter('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-6 h-6 flex items-center justify-center bg-muted hover:bg-muted/80 rounded-full transition-colors"
+              >
+                <X size={12} className="text-muted-foreground" />
+              </button>
+            )}
+          </div>
         </div>
 
-        {/* Table Section */}
+        {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full border-collapse">
-            <thead className="sticky top-0 z-10">
-              <tr className="bg-gradient-to-r from-surface-container-low to-surface-container border-b-2 border-primary/10">
-                {displayColumns.map((col) => (
-                  <th
-                    key={String(col.key)}
-                    className={`px-6 py-4 text-left ${col.width}`}
+          <Table>
+            <TableHeader>
+              {table.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id} className="bg-muted/50 hover:bg-muted/50 border-b border-border">
+                  {headerGroup.headers.map((header) => (
+                    <TableHead
+                      key={header.id}
+                      className="px-4 py-3 whitespace-nowrap"
+                      style={{ minWidth: header.getSize() }}
+                    >
+                      {header.isPlaceholder ? null : (
+                        <button
+                          className="flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-wider text-secondary hover:text-primary transition-colors"
+                          onClick={header.column.getToggleSortingHandler()}
+                        >
+                          {flexRender(header.column.columnDef.header, header.getContext())}
+                          {{
+                            asc: <ArrowUp size={12} className="text-primary" />,
+                            desc: <ArrowDown size={12} className="text-primary" />,
+                          }[header.column.getIsSorted() as string] ?? (
+                            header.column.getCanSort() ? <ArrowUpDown size={11} className="text-muted-foreground/50" /> : null
+                          )}
+                        </button>
+                      )}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {table.getRowModel().rows.length ? (
+                table.getRowModel().rows.map((row) => (
+                  <TableRow
+                    key={row.id}
+                    className={
+                      row.original.hasErrors
+                        ? 'bg-muted/30 hover:bg-muted/50'
+                        : 'hover:bg-muted/30'
+                    }
                   >
-                    {col.sortable ? (
-                      <button
-                        onClick={() => handleSort(col.key)}
-                        className="group flex items-center gap-2 text-[11px] font-extrabold uppercase tracking-wider text-on-surface-variant hover:text-primary transition-colors"
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell
+                        key={cell.id}
+                        className="px-4 py-3 text-sm text-foreground/80 whitespace-nowrap"
                       >
-                        {col.label}
-                        <span className={`material-symbols-outlined text-sm transition-all ${
-                          sortColumn === col.key
-                            ? 'text-primary opacity-100'
-                            : 'opacity-0 group-hover:opacity-50'
-                        }`}>
-                          {sortColumn === col.key && sortDirection === 'desc' ? 'arrow_downward' : 'arrow_upward'}
-                        </span>
-                      </button>
-                    ) : (
-                      <span className="text-[11px] font-extrabold uppercase tracking-wider text-on-surface-variant">
-                        {col.label}
-                      </span>
-                    )}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-
-            <tbody className="divide-y divide-outline-variant/20">
-                {pageData.map((row, idx) => (
-                  <tr
-                    key={row.no || idx}
-                    className={`transition-colors ${
-                      row.hasErrors
-                        ? 'bg-error/5 hover:bg-error/10 border-l-4 border-error'
-                        : 'hover:bg-primary/5 border-l-4 border-transparent hover:border-primary/30'
-                    }`}
-                  >
-                    {/* Columns */}
-                    {displayColumns.map((col) => (
-                      <td
-                        key={String(col.key)}
-                        className={`px-6 py-4 text-sm ${
-                          col.key === 'no' ? 'font-bold text-primary' : ''
-                        } ${
-                          col.key === 'nama' ? 'font-bold text-on-surface' : ''
-                        } ${
-                          col.key === 'nik' ? 'text-on-surface-variant font-mono text-xs' : ''
-                        }`}
-                      >
-                        {col.key === 'rekomendasi' ? (
-                          getStatusBadge(row[col.key] as string)
-                        ) : col.key === 'no' ? (
-                          <div className="flex items-center gap-2">
-                            {row.hasErrors && (
-                              <span className="material-symbols-outlined text-error text-sm animate-pulse">
-                                warning
-                              </span>
-                            )}
-                            {row.no}
-                          </div>
-                        ) : (
-                          getCellValue(row, String(col.key), (col as any).isNumber)
-                        )}
-                      </td>
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
                     ))}
-                  </tr>
-                ))}
-            </tbody>
-          </table>
+                  </TableRow>
+                ))
+              ) : (
+                <TableRow>
+                  <TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">
+                    Tidak ada data ditemukan.
+                  </TableCell>
+                </TableRow>
+              )}
+            </TableBody>
+          </Table>
         </div>
 
-        {/* Footer */}
-        <div className="bg-gradient-to-r from-surface-container-low to-surface-container px-6 py-4 border-t border-outline-variant/30">
+        {/* Footer / Pagination */}
+        <div className="bg-muted/30 px-6 py-4 border-t border-border">
           <div className="flex items-center justify-between flex-wrap gap-3">
-            <p className="text-xs text-on-surface-variant font-medium flex items-center gap-2">
-              <span className="material-symbols-outlined text-sm">info</span>
+            <p className="text-xs text-muted-foreground font-medium flex items-center gap-2">
+              <Info size={14} />
               Menampilkan{' '}
-              <span className="font-bold text-primary">{(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filteredData.length)}</span>
+              <span className="font-bold text-foreground">
+                {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}
+                –
+                {Math.min(
+                  (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+                  table.getFilteredRowModel().rows.length
+                )}
+              </span>
               {' '}dari{' '}
-              <span className="font-bold text-primary">{filteredData.length}</span> baris
-              {searchQuery && ' (terfilter)'}
+              <span className="font-bold text-foreground">{table.getFilteredRowModel().rows.length}</span> baris
+              {globalFilter && ' (terfilter)'}
             </p>
 
-            {totalPages > 1 && (
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => setPage(1)}
-                  disabled={page === 1}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:bg-primary/10 disabled:opacity-30 transition-colors"
-                >
-                  <span className="material-symbols-outlined text-sm">first_page</span>
-                </button>
-                <button
-                  onClick={() => setPage((p) => Math.max(1, p - 1))}
-                  disabled={page === 1}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:bg-primary/10 disabled:opacity-30 transition-colors"
-                >
-                  <span className="material-symbols-outlined text-sm">chevron_left</span>
-                </button>
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => table.setPageIndex(0)}
+                disabled={!table.getCanPreviousPage()}
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-primary/10 hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronsLeft size={16} />
+              </button>
+              <button
+                onClick={() => table.previousPage()}
+                disabled={!table.getCanPreviousPage()}
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-primary/10 hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft size={16} />
+              </button>
 
-                <span className="px-3 py-1 text-xs font-bold text-primary bg-primary/10 rounded-lg">
-                  {page} / {totalPages}
-                </span>
+              <span className="px-3 py-1 text-xs font-bold text-primary bg-primary/10 rounded-lg border border-primary/20">
+                {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
+              </span>
 
-                <button
-                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                  disabled={page === totalPages}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:bg-primary/10 disabled:opacity-30 transition-colors"
-                >
-                  <span className="material-symbols-outlined text-sm">chevron_right</span>
-                </button>
-                <button
-                  onClick={() => setPage(totalPages)}
-                  disabled={page === totalPages}
-                  className="w-8 h-8 flex items-center justify-center rounded-lg text-on-surface-variant hover:bg-primary/10 disabled:opacity-30 transition-colors"
-                >
-                  <span className="material-symbols-outlined text-sm">last_page</span>
-                </button>
-              </div>
-            )}
+              <button
+                onClick={() => table.nextPage()}
+                disabled={!table.getCanNextPage()}
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-primary/10 hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronRight size={16} />
+              </button>
+              <button
+                onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                disabled={!table.getCanNextPage()}
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-muted-foreground hover:bg-primary/10 hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronsRight size={16} />
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Floating Action Hint */}
+      {/* Info hint for incomplete data */}
       {errorCount > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="mt-4 p-4 bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-amber-500 rounded-xl flex items-start gap-3"
+          className="mt-4 p-4 bg-muted/50 border border-border rounded-xl flex items-start gap-3"
         >
-          <span className="material-symbols-outlined text-amber-600 text-xl mt-0.5">lightbulb</span>
+          <Lightbulb size={20} className="text-secondary mt-0.5 shrink-0" />
           <div>
-            <h5 className="text-sm font-bold text-amber-900 mb-1">Perhatian: Data Tidak Lengkap</h5>
-            <p className="text-xs text-amber-800">
-              Terdapat <span className="font-bold">{errorCount} data</span> yang belum lengkap. 
-              Anda masih bisa menyimpan, namun data tersebut akan ditandai untuk verifikasi manual.
+            <h5 className="text-sm font-bold text-foreground mb-1">Info: Beberapa Data Belum Lengkap</h5>
+            <p className="text-xs text-muted-foreground">
+              Terdapat <span className="font-bold text-foreground">{errorCount} data</span> yang belum lengkap (kolom wajib kosong).
+              Anda tetap bisa menyimpan — data tersebut akan ditandai untuk verifikasi manual.
             </p>
           </div>
         </motion.div>
