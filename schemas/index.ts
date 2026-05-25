@@ -297,6 +297,29 @@ export const HasilWawancaraBaseSchema = z.object({
 export type HasilWawancaraBase = z.infer<typeof HasilWawancaraBaseSchema>;
 
 /* =========================
+   Helper: Status Wawancara
+   Mapping is_draft → label yang mudah dipahami
+========================= */
+export type StatusWawancara = "Belum Diwawancarai" | "Sudah Diwawancarai" | "Belum Ditugaskan";
+
+export function getStatusWawancara(isDraft: boolean | null | undefined, pewawancaraId?: number | null): StatusWawancara {
+  if (pewawancaraId === null || pewawancaraId === undefined) return "Belum Ditugaskan";
+  if (isDraft === false) return "Sudah Diwawancarai";
+  return "Belum Diwawancarai";
+}
+
+export function getStatusWawancaraColor(status: StatusWawancara) {
+  switch (status) {
+    case "Sudah Diwawancarai":
+      return { bg: "bg-emerald-50", text: "text-emerald-700", border: "border-emerald-200" };
+    case "Belum Diwawancarai":
+      return { bg: "bg-amber-50", text: "text-amber-700", border: "border-amber-200" };
+    case "Belum Ditugaskan":
+      return { bg: "bg-slate-50", text: "text-slate-500", border: "border-slate-200" };
+  }
+}
+
+/* =========================
    Pewawancara Data (Partial untuk Join)
 ========================= */
 export const PewawancaraDataSchema = z.object({

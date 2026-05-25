@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import type { MahasiswaListItem, MahasiswaApiResponse } from "@/schemas";
+import { getStatusWawancara, getStatusWawancaraColor } from "@/schemas";
 
 type Mode = "saya" | "hari_ini" | "semua";
 
@@ -72,7 +73,7 @@ export default function PewawancaraMahasiswaPage() {
 
   useEffect(() => { setPage(1); }, [mode, search]);
 
-  const selesaiCount = data.filter((m) => m.rekomendasi && !m.is_draft).length;
+  const selesaiCount = data.filter((m) => getStatusWawancara(m.is_draft, m.pewawancara_id) === "Sudah Diwawancarai").length;
   const progressPct  = jatahTotal > 0 ? Math.round((jatahSelesai / jatahTotal) * 100) : 0;
 
   return (
@@ -243,7 +244,9 @@ export default function PewawancaraMahasiswaPage() {
             </thead>
             <tbody className="divide-y divide-border">
               {data.map((m) => {
-                const done = !!(m.rekomendasi && !m.is_draft);
+                const status = getStatusWawancara(m.is_draft, m.pewawancara_id);
+                const statusColor = getStatusWawancaraColor(status);
+                const done = status === "Sudah Diwawancarai";
                 const isOwnJatah = m.pewawancara_id !== null;
                 return (
                   <tr key={m.id} className="hover:bg-slate-50/60 transition-colors">
@@ -264,12 +267,12 @@ export default function PewawancaraMahasiswaPage() {
                     </td>
                     <td className="px-4 py-3">
                       {done ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                          <CheckCircle2 size={11} /> Selesai
+                        <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${statusColor.bg} ${statusColor.text} ${statusColor.border}`}>
+                          <CheckCircle2 size={11} /> {status}
                         </span>
                       ) : (
-                        <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                          <Clock size={11} /> Belum
+                        <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${statusColor.bg} ${statusColor.text} ${statusColor.border}`}>
+                          <Clock size={11} /> {status}
                         </span>
                       )}
                     </td>

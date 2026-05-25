@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/command";
 
 import type { MahasiswaEvaluasi, EvaluasiApiResponse } from "@/schemas";
+import { getStatusWawancara, getStatusWawancaraColor } from "@/schemas";
 
 export type EvaluasiStatus = "selesai" | "belum";
 
@@ -420,6 +421,8 @@ export default function EvaluasiClient({ initialData }: EvaluasiClientProps) {
               <tbody className="divide-y divide-border">
                 {filteredData.map((m, idx) => {
                   const status = getStatus(m);
+                  const statusWawancara = getStatusWawancara(m.is_draft, m.pewawancara_id);
+                  const statusColor = getStatusWawancaraColor(statusWawancara);
                   return (
                     <tr
                       key={m.id}
@@ -450,15 +453,10 @@ export default function EvaluasiClient({ initialData }: EvaluasiClientProps) {
                         {hasilAkhirBadge(m.hasil_akhir)}
                       </td>
                       <td className="px-4 py-3">
-                        {status === "selesai" ? (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                            <CheckCircle2 size={11} /> Selesai
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
-                            <Clock size={11} /> Menunggu
-                          </span>
-                        )}
+                        <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${statusColor.bg} ${statusColor.text} ${statusColor.border}`}>
+                          {statusWawancara === "Sudah Diwawancarai" ? <CheckCircle2 size={11} /> : <Clock size={11} />}
+                          {statusWawancara}
+                        </span>
                       </td>
                       <td className="px-4 py-3 text-xs text-on-surface">
                         {m.jalur_masuk || (

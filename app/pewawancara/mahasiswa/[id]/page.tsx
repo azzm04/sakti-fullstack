@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
 import type { Kandidat, MahasiswaEvaluasi } from "@/schemas";
+import { getStatusWawancara, getStatusWawancaraColor } from "@/schemas";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -391,7 +392,7 @@ export default function PewawancaraDetailPage({
       }
 
       setSaveStatus("saved");
-      toast.success("Laporan berhasil disimpan", {
+      toast.success("Data Hasil Wawancara berhasil disimpan", {
         description: "Data observasi lapangan telah tersimpan.",
       });
       setTimeout(() => setSaveStatus("idle"), 2500);
@@ -488,6 +489,17 @@ export default function PewawancaraDetailPage({
                 <span>{kandidat.prodi}</span>
                 <span>•</span>
                 <span>{kandidat.jalur_masuk || "—"}</span>
+                <span>•</span>
+                {(() => {
+                  const statusW = getStatusWawancara(kandidat.is_draft, kandidat.pewawancara_id);
+                  const colorW = getStatusWawancaraColor(statusW);
+                  return (
+                    <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${colorW.bg} ${colorW.text} ${colorW.border}`}>
+                      {statusW === "Sudah Diwawancarai" ? <CheckCircle2 size={11} /> : null}
+                      {statusW}
+                    </span>
+                  );
+                })()}
               </div>
             </div>
 

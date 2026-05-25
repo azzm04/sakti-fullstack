@@ -13,8 +13,8 @@ import {
 } from "lucide-react";
 
 const navItems = [
-  { href: "/pewawancara",           label: "Dashboard", icon: LayoutDashboard },
-  { href: "/pewawancara/mahasiswa", label: "Mahasiswa", icon: ClipboardList   },
+  { href: "/pewawancara",           label: "Pemilihan Sesi", icon: LayoutDashboard },
+  { href: "/pewawancara/mahasiswa", label: "Verifikasi Wawancara", icon: ClipboardList   },
 ];
 
 const sidebarVariants: Variants = {
