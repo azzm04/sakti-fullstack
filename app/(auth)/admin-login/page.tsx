@@ -1,60 +1,59 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Eye, EyeOff, ShieldCheck } from "lucide-react"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 
 export default function AdminLoginPage() {
-  const [adminId, setAdminId] = useState("")
-  const [password, setPassword] = useState("")
-  const [showPassword, setShowPassword] = useState(false)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState("")
-  const router = useRouter()
+  const [adminId, setAdminId] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const router = useRouter();
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setLoading(true)
-    setError("")
+    e.preventDefault();
+    setLoading(true);
+    setError("");
 
     const res = await fetch("/api/auth/admin/login", {
       method: "POST",
       body: JSON.stringify({ adminId, password }),
       headers: { "Content-Type": "application/json" },
-    })
+    });
 
-    const data = await res.json()
+    const data = await res.json();
 
     if (!res.ok) {
-      setError(data.error)
-      setLoading(false)
-      return
+      setError(data.error);
+      setLoading(false);
+      return;
     }
 
-    router.push("/admin")
-    router.refresh()
+    router.push("/admin");
+    router.refresh();
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50 font-body">
+    <div className="min-h-screen flex items-center justify-center bg-background font-body">
       <div className="w-full max-w-sm px-4">
-
         {/* Brand */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 bg-primary/10 rounded-2xl mb-4">
             <ShieldCheck className="w-7 h-7 text-primary" />
           </div>
           <h1 className="text-3xl font-headline font-extrabold text-primary">SAKTI</h1>
-          <p className="text-sm text-slate-500 mt-1">Panel Administrator DIRMAWA</p>
+          <p className="text-sm text-muted-foreground mt-1">Panel Administrator DIRMAWA</p>
         </div>
 
         <form
           onSubmit={handleSubmit}
-          className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 space-y-4"
+          className="bg-tertiary p-8 rounded-2xl shadow-sm border border-border space-y-4"
         >
           <div>
-            <h2 className="text-lg font-semibold text-slate-800">Masuk sebagai Admin</h2>
-            <p className="text-sm text-slate-500 mt-0.5">
+            <h2 className="text-lg font-semibold text-foreground">Masuk sebagai Admin</h2>
+            <p className="text-sm text-muted-foreground mt-0.5">
               Gunakan kredensial administrator Anda
             </p>
           </div>
@@ -63,7 +62,7 @@ export default function AdminLoginPage() {
           <div>
             <label
               htmlFor="adminId"
-              className="block text-sm font-medium text-slate-700 mb-1.5"
+              className="block text-sm font-medium text-secondary mb-1.5"
             >
               Admin ID
             </label>
@@ -75,7 +74,7 @@ export default function AdminLoginPage() {
               placeholder="username"
               required
               autoComplete="username"
-              className="w-full border border-slate-300 rounded-xl px-4 py-2.5 text-sm
+              className="w-full border border-border rounded-xl px-4 py-2.5 text-sm
                 focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary
                 transition-colors"
             />
@@ -85,7 +84,7 @@ export default function AdminLoginPage() {
           <div>
             <label
               htmlFor="password"
-              className="block text-sm font-medium text-slate-700 mb-1.5"
+              className="block text-sm font-medium text-secondary mb-1.5"
             >
               Password
             </label>
@@ -98,15 +97,16 @@ export default function AdminLoginPage() {
                 placeholder="••••••••"
                 required
                 autoComplete="current-password"
-                className="w-full border border-slate-300 rounded-xl px-4 py-2.5 pr-11 text-sm
+                className="w-full border border-border rounded-xl px-4 py-2.5 pr-11 text-sm
                   focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary
                   transition-colors"
               />
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400
-                  hover:text-slate-600 transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground
+                  hover:text-foreground transition-colors"
+                aria-label={showPassword ? "Sembunyikan password" : "Tampilkan password"}
               >
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
@@ -115,7 +115,7 @@ export default function AdminLoginPage() {
 
           {/* Error */}
           {error && (
-            <p className="text-red-500 text-xs bg-red-50 px-3 py-2 rounded-lg">
+            <p className="text-destructive text-xs bg-destructive/10 px-3 py-2 rounded-lg">
               {error}
             </p>
           )}
@@ -124,7 +124,7 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-primary text-white py-2.5 rounded-xl text-sm font-semibold
+            className="w-full bg-primary text-primary-foreground py-2.5 rounded-xl text-sm font-semibold
               hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed
               transition-colors"
           >
@@ -133,7 +133,7 @@ export default function AdminLoginPage() {
         </form>
 
         {/* Link ke login mahasiswa */}
-        <p className="text-center text-xs text-slate-400 mt-6">
+        <p className="text-center text-xs text-muted-foreground mt-6">
           Bukan admin?{" "}
           <a href="/login" className="text-primary hover:underline font-medium">
             Login sebagai mahasiswa
@@ -141,5 +141,5 @@ export default function AdminLoginPage() {
         </p>
       </div>
     </div>
-  )
+  );
 }
