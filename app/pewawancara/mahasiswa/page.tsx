@@ -1,47 +1,41 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import Link from "next/link";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  Search, ChevronRight, CheckCircle2, Clock, Loader2,
-  User, CalendarDays, Users, Lock, AlertTriangle,
-} from "lucide-react";
-
 import type { MahasiswaListItem, MahasiswaApiResponse } from "@/schemas";
-import { getStatusWawancara, getStatusWawancaraColor } from "@/schemas";
-
-type Mode = "saya" | "hari_ini" | "semua";
-
-const MODE_CONFIG: { key: Mode; label: string; icon: React.ElementType; desc: string }[] = [
-  { key: "saya",     label: "Jatah Saya",  icon: User,         desc: "Mahasiswa yang harus kamu wawancarai hari ini" },
-  { key: "hari_ini", label: "Hari Ini",    icon: CalendarDays, desc: "Semua mahasiswa yang dijadwalkan wawancara hari ini" },
-  { key: "semua",    label: "Semua",       icon: Users,        desc: "Seluruh pendaftar KIP-K" },
-];
+import {
+  JatahProgressBar,
+  SesiFilter,
+  ModeFilterTabs,
+  SearchInput,
+  LockedAlert,
+  MahasiswaTable,
+} from "@/components/pewawancara/mahasiswa";
+import type { Mode } from "@/components/pewawancara/mahasiswa";
 
 export default function PewawancaraMahasiswaPage() {
-  const [mode, setMode]         = useState<Mode>("saya");
-  const [data, setData]         = useState<MahasiswaListItem[]>([]);
-  const [total, setTotal]       = useState(0);
-  const [loading, setLoading]   = useState(true);
-  const [search, setSearch]     = useState("");
-  const [page, setPage]         = useState(1);
+  const [mode, setMode] = useState<Mode>("saya");
+  const [data, setData] = useState<MahasiswaListItem[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [jatahSelesai, setJatahSelesai] = useState(0);
-  const [jatahTotal, setJatahTotal]     = useState(0);
+  const [jatahTotal, setJatahTotal] = useState(0);
   const [jatahSudahSelesai, setJatahSudahSelesai] = useState(false);
-  const [locked, setLocked]     = useState(false);
-  const [canEdit, setCanEdit]   = useState(true);
+  const [locked, setLocked] = useState(false);
+  const [canEdit, setCanEdit] = useState(true);
   const [sesiList, setSesiList] = useState<{ id: number; tanggal: string }[]>([]);
   const [selectedSesiId, setSelectedSesiId] = useState<number | null>(null);
 
+  // ── Data Fetching ──
   const fetchData = useCallback(async () => {
     setLoading(true);
     setLocked(false);
     try {
       const params = new URLSearchParams({ mode, search, page: String(page) });
       if (selectedSesiId) params.set("sesi_id", String(selectedSesiId));
-      const res  = await fetch(`/api/pewawancara/mahasiswa?${params}`);
+      const res = await fetch(`/api/pewawancara/mahasiswa?${params}`);
       const json: MahasiswaApiResponse = await res.json();
 
       if (res.status === 403 && json.locked) {
@@ -73,280 +67,52 @@ export default function PewawancaraMahasiswaPage() {
 
   useEffect(() => { setPage(1); }, [mode, search]);
 
-  const selesaiCount = data.filter((m) => getStatusWawancara(m.is_draft, m.pewawancara_id) === "Sudah Diwawancarai").length;
-  const progressPct  = jatahTotal > 0 ? Math.round((jatahSelesai / jatahTotal) * 100) : 0;
-
+  // ── Render ──
   return (
     <div className="p-6 md:p-8">
-
       {/* Header */}
       <div className="mb-5">
         <h1 className="text-2xl font-extrabold text-primary font-headline">Daftar Mahasiswa</h1>
         <p className="text-muted-foreground text-sm mt-0.5">
-          Jatah kamu: <span className="font-semibold text-on-surface">{jatahSelesai}/{jatahTotal}</span> selesai
+          Jatah kamu: <span className="font-semibold text-foreground">{jatahSelesai}/{jatahTotal}</span> selesai
         </p>
       </div>
 
-      {/* Progress jatah sendiri */}
-      {jatahTotal > 0 && (
-        <div className="bg-white rounded-2xl border border-border shadow-sm p-4 mb-5">
-          <div className="flex items-center justify-between mb-2">
-            <p className="text-xs font-semibold text-muted-foreground">Progress Jatah Saya</p>
-            <span className={`text-xs font-bold ${jatahSudahSelesai ? "text-emerald-600" : "text-primary"}`}>
-              {progressPct}%
-            </span>
-          </div>
-          <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
-            <motion.div
-              className={`h-full rounded-full ${jatahSudahSelesai ? "bg-emerald-500" : "bg-primary"}`}
-              initial={{ width: 0 }}
-              animate={{ width: `${progressPct}%` }}
-              transition={{ duration: 0.5 }}
-            />
-          </div>
-          {jatahSudahSelesai && (
-            <p className="text-[11px] text-emerald-600 mt-2 flex items-center gap-1">
-              <CheckCircle2 size={11} />
-              Semua jatah selesai — kamu bisa membantu wawancara mahasiswa lain
-            </p>
-          )}
-        </div>
-      )}
+      <JatahProgressBar
+        jatahSelesai={jatahSelesai}
+        jatahTotal={jatahTotal}
+        jatahSudahSelesai={jatahSudahSelesai}
+      />
 
-      {/* Sesi Selector */}
-      {sesiList.length > 1 && (
-        <div className="mb-5">
-          <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-2">Pilih Sesi</p>
-          <div className="flex gap-2 flex-wrap">
-            {sesiList.map((s) => {
-              const isSelected = selectedSesiId === s.id;
-              const tanggalHariIni = new Date().toISOString().split("T")[0];
-              const isFuture = s.tanggal > tanggalHariIni;
-              return (
-                <button
-                  key={s.id}
-                  onClick={() => { setSelectedSesiId(s.id); setPage(1); }}
-                  className={`px-3 py-2 rounded-xl text-xs font-bold border-2 transition-all ${
-                    isSelected
-                      ? "bg-primary text-white border-primary shadow-sm"
-                      : "bg-white text-slate-600 border-slate-200 hover:border-primary/50"
-                  }`}
-                >
-                  {new Date(s.tanggal + "T00:00:00").toLocaleDateString("id-ID", { weekday: "short", day: "numeric", month: "short" })}
-                  {isFuture && <span className="ml-1 text-[9px] opacity-70">(preview)</span>}
-                </button>
-              );
-            })}
-            <button
-              onClick={() => { setSelectedSesiId(null); setPage(1); }}
-              className={`px-3 py-2 rounded-xl text-xs font-bold border-2 transition-all ${
-                !selectedSesiId
-                  ? "bg-primary text-white border-primary shadow-sm"
-                  : "bg-white text-slate-600 border-slate-200 hover:border-primary/50"
-              }`}
-            >
-              Hari Ini
-            </button>
-          </div>
-          {!canEdit && (
-            <p className="text-[11px] text-amber-600 mt-2 flex items-center gap-1">
-              <Clock size={11} /> Sesi ini belum bisa diisi — wawancara belum dimulai
-            </p>
-          )}
-        </div>
-      )}
+      <SesiFilter
+        sesiList={sesiList}
+        selectedSesiId={selectedSesiId}
+        onSelect={(id) => { setSelectedSesiId(id); setPage(1); }}
+        canEdit={canEdit}
+      />
 
-      {/* Filter tabs */}
-      <div className="flex gap-1 p-1 bg-white border border-border rounded-xl w-fit mb-5 shadow-sm">
-        {MODE_CONFIG.map(({ key, label, icon: Icon }) => {
-          const isLocked = key === "hari_ini" && !jatahSudahSelesai;
-          return (
-            <button
-              key={key}
-              onClick={() => !isLocked && setMode(key)}
-              title={isLocked ? "Selesaikan jatahmu terlebih dahulu" : label}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                mode === key
-                  ? "bg-primary text-white shadow-sm"
-                  : isLocked
-                  ? "text-slate-300 cursor-not-allowed"
-                  : "text-slate-500 hover:text-slate-700 hover:bg-slate-50"
-              }`}
-            >
-              {isLocked ? <Lock size={12} /> : <Icon size={13} />}
-              {label}
-            </button>
-          );
-        })}
-      </div>
+      <ModeFilterTabs
+        mode={mode}
+        onModeChange={setMode}
+        jatahSudahSelesai={jatahSudahSelesai}
+        total={total}
+      />
 
-      {/* Deskripsi mode aktif */}
-      <p className="text-xs text-muted-foreground mb-4">
-        {MODE_CONFIG.find((m) => m.key === mode)?.desc}
-        {mode !== "saya" && (
-          <span className="ml-1 text-slate-400">· {total} mahasiswa</span>
-        )}
-      </p>
+      <SearchInput value={search} onChange={setSearch} />
 
-      {/* Search */}
-      <div className="relative mb-4 max-w-md">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-        <input
-          type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Cari nama atau no. pendaftaran..."
-          className="w-full pl-9 pr-3 py-2.5 text-sm border border-border rounded-xl bg-white focus:outline-none focus:border-primary transition-all"
-        />
-      </div>
+      <LockedAlert locked={locked} jatahSelesai={jatahSelesai} jatahTotal={jatahTotal} />
 
-      {/* Locked state */}
-      <AnimatePresence>
-        {locked && (
-          <motion.div
-            initial={{ opacity: 0, y: 6 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className="bg-amber-50 border border-amber-200 rounded-2xl p-5 mb-4 flex items-start gap-3"
-          >
-            <div className="w-9 h-9 rounded-xl bg-amber-100 flex items-center justify-center shrink-0">
-              <Lock size={16} className="text-amber-600" />
-            </div>
-            <div>
-              <p className="text-sm font-bold text-amber-800">Fitur Terkunci</p>
-              <p className="text-xs text-amber-700 mt-0.5">
-                Selesaikan semua wawancara jatahmu terlebih dahulu sebelum bisa melihat mahasiswa lain.
-              </p>
-              <p className="text-xs text-amber-600 mt-1 font-semibold">
-                Progress: {jatahSelesai} / {jatahTotal} selesai
-              </p>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      {/* Table */}
-      <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
-        {loading ? (
-          <div className="flex items-center justify-center py-16 gap-2 text-muted-foreground">
-            <Loader2 size={16} className="animate-spin" /> Memuat...
-          </div>
-        ) : (
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-slate-50 border-b border-border">
-                {["No Urut", "Nama", "Prodi", "Pewawancara", "Status", "Aksi"].map((h) => (
-                  <th key={h} className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-                    {h}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {data.map((m) => {
-                const status = getStatusWawancara(m.is_draft, m.pewawancara_id);
-                const statusColor = getStatusWawancaraColor(status);
-                const done = status === "Sudah Diwawancarai";
-                const isOwnJatah = m.pewawancara_id !== null;
-                return (
-                  <tr key={m.id} className="hover:bg-slate-50/60 transition-colors">
-                    <td className="px-4 py-3">
-                      <span className="text-xs font-bold font-mono text-slate-500">#{m.no}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <p className="font-semibold text-on-surface">{m.nama}</p>
-                      <p className="text-[11px] text-muted-foreground font-mono">{m.no_pendaftaran_kipk}</p>
-                    </td>
-                    <td className="px-4 py-3 text-xs text-muted-foreground max-w-[160px] truncate">{m.prodi}</td>
-                    <td className="px-4 py-3">
-                      {m.pewawancara ? (
-                        <p className="text-xs text-slate-600 truncate max-w-[120px]">{m.pewawancara}</p>
-                      ) : (
-                        <span className="text-slate-300 text-xs">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      {done ? (
-                        <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${statusColor.bg} ${statusColor.text} ${statusColor.border}`}>
-                          <CheckCircle2 size={11} /> {status}
-                        </span>
-                      ) : (
-                        <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${statusColor.bg} ${statusColor.text} ${statusColor.border}`}>
-                          <Clock size={11} /> {status}
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3">
-                      {!done && canEdit ? (
-                        <Link
-                          href={`/pewawancara/mahasiswa/${m.id}`}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline"
-                        >
-                          Isi Evaluasi <ChevronRight size={13} />
-                        </Link>
-                      ) : done ? (
-                        <Link
-                          href={`/pewawancara/mahasiswa/${m.id}`}
-                          className="inline-flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-primary hover:underline"
-                        >
-                          Lihat <ChevronRight size={13} />
-                        </Link>
-                      ) : (
-                        <span className="text-xs text-slate-300">Belum bisa diisi</span>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        )}
-
-        {!loading && !locked && data.length === 0 && (
-          <div className="py-12 text-center">
-            {mode === "saya" ? (
-              <>
-                <User size={28} className="text-slate-200 mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">Belum ada mahasiswa yang ditugaskan ke kamu.</p>
-                <p className="text-xs text-slate-400 mt-1">Tunggu admin melakukan distribusi setelah WAR selesai.</p>
-              </>
-            ) : mode === "hari_ini" ? (
-              <>
-                <CalendarDays size={28} className="text-slate-200 mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">Tidak ada mahasiswa terjadwal hari ini.</p>
-              </>
-            ) : (
-              <>
-                <Users size={28} className="text-slate-200 mx-auto mb-2" />
-                <p className="text-sm text-muted-foreground">Belum ada data kandidat.</p>
-              </>
-            )}
-          </div>
-        )}
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="px-4 py-3 border-t border-border flex items-center justify-between">
-            <p className="text-xs text-muted-foreground">Halaman {page} dari {totalPages} · {total} total</p>
-            <div className="flex gap-1">
-              <button
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                disabled={page === 1}
-                className="px-3 py-1.5 text-xs border border-border rounded-lg disabled:opacity-40 hover:bg-muted transition-colors"
-              >
-                ← Prev
-              </button>
-              <button
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages}
-                className="px-3 py-1.5 text-xs border border-border rounded-lg disabled:opacity-40 hover:bg-muted transition-colors"
-              >
-                Next →
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+      <MahasiswaTable
+        data={data}
+        loading={loading}
+        locked={locked}
+        canEdit={canEdit}
+        mode={mode}
+        page={page}
+        totalPages={totalPages}
+        total={total}
+        onPageChange={setPage}
+      />
     </div>
   );
 }

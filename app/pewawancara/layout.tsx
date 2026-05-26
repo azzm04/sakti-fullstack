@@ -136,13 +136,13 @@ export default function PewawancaraLayout({ children }: { children: React.ReactN
             variants={sidebarVariants}
             initial="hidden"
             animate="visible"
-            className="hidden md:flex sticky top-0 h-screen w-60 flex-col bg-white border-r border-border shrink-0"
+            className="hidden md:flex sticky top-0 h-screen w-60 flex-col bg-tertiary border-r border-border shrink-0"
           >
             <SidebarContent />
           </motion.aside>
 
           {/* Mobile Topbar */}
-          <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 bg-white border-b border-border">
+          <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 bg-tertiary border-b border-border">
             <span className="text-xl font-extrabold font-headline text-primary">SAKTI</span>
             <motion.button
               whileTap={{ scale: 0.9 }}
@@ -170,7 +170,7 @@ export default function PewawancaraLayout({ children }: { children: React.ReactN
                   initial="hidden"
                   animate="visible"
                   exit="exit"
-                  className="relative w-64 bg-white h-full shadow-xl flex flex-col"
+                  className="relative w-64 bg-tertiary h-full shadow-xl flex flex-col"
                 >
                   <motion.button
                     whileTap={{ scale: 0.9 }}
