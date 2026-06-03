@@ -846,7 +846,7 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                 </>
               ) : (
                 <>
-                  <ScanSearch size={16} /> Pindai foto KK{" "}
+                  <ScanSearch size={16} /> Pindai Foto{" "}
                 </>
               )}
             </button>

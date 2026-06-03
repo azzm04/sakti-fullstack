@@ -52,7 +52,7 @@ export default function LayananSection() {
             <MessageSquare className="w-8 h-8" />
           </div>
           <h3 className="text-xl font-bold text-primary mb-3">
-            Asisten Virtual Cerdas
+            Layanan Informasi berbasis Kecerdasan Buatan
           </h3>
           <p className="text-slate-500 text-sm">
             Tanya jawab seputar regulasi dan panduan KIP-K 24/7 melalui Chatbot

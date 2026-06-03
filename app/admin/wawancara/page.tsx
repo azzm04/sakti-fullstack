@@ -76,7 +76,7 @@ export default function PewawancaraPage() {
       <div className="flex gap-1 p-1 bg-white border border-slate-200 rounded-xl w-fit mb-6 shadow-sm">
         {(
           [
-            { key: "daftar", label: "Daftar Pewawancara", icon: Users },
+            { key: "daftar", label: "Daftar Pengguna", icon: Users },
             { key: "sesi", label: "Pemilihan Urutan Pewawancara", icon: Zap },
           ] as { key: Tab; label: string; icon: React.ElementType }[]
         ).map(({ key, label, icon: Icon }) => (

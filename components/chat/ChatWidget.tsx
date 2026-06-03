@@ -57,7 +57,7 @@ export default function ChatWidget() {
           </div>
         </div>
         <p className="text-xs text-slate-500 leading-relaxed mb-4">
-          Halo! Ada yang bisa saya bantu terkait pendaftaran KIP-Kuliah?
+          Halo! Ada yang bisa saya bantu terkait KIP-Kuliah?
         </p>
       </div>
 
