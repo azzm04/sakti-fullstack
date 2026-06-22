@@ -13,6 +13,7 @@ import {
   UserCheck,
   ClipboardList,
   BookMarked,
+  BarChart2,
 } from "lucide-react"
 
 const navItems = [
@@ -22,6 +23,7 @@ const navItems = [
   { href: "/admin/evaluasi", label: "Evaluasi Hasil Wawancara", icon: ClipboardList },
   { href: "/admin/kalkulasi", label: "Kalkulasi", icon: ClipboardList },
   { href: "/admin/monev", label: "Monev", icon: BookMarked },
+  { href: "/admin/analitik", label: "Analitik Seleksi", icon: BarChart2 },
 ]
 
 const sidebarVariants: Variants = {

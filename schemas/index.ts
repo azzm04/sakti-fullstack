@@ -123,7 +123,7 @@ export type LoginPayload = z.infer<typeof LoginSchema>;
 // OTP Flow — bisa pakai email pribadi atau SSO
 export const SendOtpSchema = z.object({
   email: z.string().email("Format email tidak valid"),
-  nama: z.string().optional(), // wajib untuk jalur email pribadi
+  nama: z.string().optional(),
 });
 export type SendOtpPayload = z.infer<typeof SendOtpSchema>;
 
@@ -160,37 +160,64 @@ export type ContactFormData = z.infer<typeof ContactFormSchema>;
 
 /* =========================
    Import Data / Kandidat (Form Import)
-   Sesuai tabel: public.kandidat
+   Sesuai tabel: public.kandidat (skema baru)
 ========================= */
 export const CandidateDataSchema = z.object({
-  no: z.number().optional(),
+  no:                  z.number().optional(),
+  // Identitas pendaftaran
   no_pendaftaran_kipk: z.string().default(""),
-  no_bantuan_sosial:   z.string().default(""),
-  nama:                z.string().default(""),
-  prodi:               z.string().default(""),
+  no_kip:              z.string().default(""),
+  no_kks:              z.string().default(""),
+  nama_pendaftar:      z.string().default(""),
+  prodi_pendaftar:     z.string().default(""),
   nik:                 z.string().default(""),
   no_kartu_keluarga:   z.string().default(""),
+  nik_kepala_keluarga: z.string().default(""),
   nisn:                z.string().default(""),
+  // Status sosial
+  status_dtks:         z.string().default(""),
+  validasi_dtks:       z.string().default(""),
+  status_p3ke:         z.string().default(""),
+  validasi_p3ke:       z.string().default(""),
+  validasi_kip:        z.string().default(""),
+  validasi_kks:        z.string().default(""),
+  // Sekolah asal
   asal_sekolah:        z.string().default(""),
-  status_dtsen:        z.string().default(""),
-  jumlah_tanggungan:   z.number().nonnegative().default(0),
-  jumlah_orang_rumah:  z.number().nonnegative().default(0),
-  pekerjaan_ayah:      z.string().default(""),
-  pekerjaan_ibu:       z.string().default(""),
-  penghasilan_ayah:    z.number().nonnegative().default(0),
-  penghasilan_ibu:     z.number().nonnegative().default(0),
-  kab_kota:            z.string().default(""),
-  provinsi:            z.string().default(""),
+  kab_kota_sekolah:    z.string().default(""),
+  provinsi_sekolah:    z.string().default(""),
+  // Data pribadi
+  tempat_lahir:        z.string().default(""),
+  tanggal_lahir:       z.string().default(""),
+  jenis_kelamin:       z.string().default(""),
   alamat:              z.string().default(""),
-  pbb:                 z.number().nonnegative().default(0),
-  daya_listrik:        z.string().default(""),
   no_hp:               z.string().default(""),
   email:               z.string().default(""),
-  koordinat:           z.string().default(""),
-  latitude:            z.number().default(0),
-  longitude:           z.number().default(0),
+  // Orang tua – Ayah
+  pekerjaan_ayah:      z.string().default(""),
+  ket_pekerjaan_ayah:  z.string().default(""),
+  penghasilan_ayah:    z.number().nonnegative().default(0),
+  status_ayah:         z.string().default(""),
+  // Orang tua – Ibu
+  pekerjaan_ibu:       z.string().default(""),
+  ket_pekerjaan_ibu:   z.string().default(""),
+  penghasilan_ibu:     z.number().nonnegative().default(0),
+  status_ibu:          z.string().default(""),
+  // Ekonomi
+  penghasilan_lain:    z.number().nonnegative().default(0),
+  jumlah_tanggungan:   z.number().nonnegative().default(0),
+  jumlah_orang_rumah:  z.number().nonnegative().default(0),
+  nominal_per_kapita:  z.number().nonnegative().default(0),
+  // Rumah
+  kepemilikan_rumah:   z.string().default(""),
+  sumber_listrik:      z.string().default(""),
+  sumber_air:          z.string().default(""),
+  mck:                 z.string().default(""),
+  // Lokasi & jarak
+  kab_kota:            z.string().default(""),
+  provinsi:            z.string().default(""),
+  jarak_pusat_kota:    z.number().nonnegative().default(0),
+  // Jalur masuk
   jalur_masuk:         z.string().default(""),
-  catatan_admin:       z.string().default(""),
   // Validation flags (client-side only)
   hasErrors:     z.boolean().default(false),
   missingFields: z.array(z.string()).default([]),
@@ -220,42 +247,59 @@ export const StatusFilterSchema = z.enum([
 export type StatusFilter = z.infer<typeof StatusFilterSchema>;
 
 /* =========================
-   Kandidat DB (Base Table: kandidat)
+   Kandidat DB (Base Table: kandidat — skema baru)
 ========================= */
 export const KandidatBaseSchema = z.object({
   id:                  z.union([z.string(), z.number()]),
   import_batch_id:     z.number().nullable().optional(),
   no:                  z.number().nullable().optional(),
   no_pendaftaran_kipk: z.string().nullable().optional(),
-  no_bantuan_sosial:   z.string().nullable().optional(),
-  nama:                z.string().nullable().optional(),
-  prodi:               z.string().nullable().optional(),
+  no_kip:              z.string().nullable().optional(),
+  no_kks:              z.string().nullable().optional(),
+  nama_pendaftar:      z.string().nullable().optional(),
+  prodi_pendaftar:     z.string().nullable().optional(),
   nik:                 z.string().nullable().optional(),
   no_kartu_keluarga:   z.string().nullable().optional(),
+  nik_kepala_keluarga: z.string().nullable().optional(),
   nisn:                z.string().nullable().optional(),
+  status_dtks:         z.string().nullable().optional(),
+  validasi_dtks:       z.string().nullable().optional(),
+  status_p3ke:         z.string().nullable().optional(),
+  validasi_p3ke:       z.string().nullable().optional(),
+  validasi_kip:        z.string().nullable().optional(),
+  validasi_kks:        z.string().nullable().optional(),
   asal_sekolah:        z.string().nullable().optional(),
-  status_dtsen:        z.string().nullable().optional(),
-  jumlah_tanggungan:   z.number().nullable().optional(),
-  jumlah_orang_rumah:  z.number().nullable().optional(),
-  pekerjaan_ayah:      z.string().nullable().optional(),
-  pekerjaan_ibu:       z.string().nullable().optional(),
-  penghasilan_ayah:    z.union([z.string(), z.number()]).nullable().optional(),
-  penghasilan_ibu:     z.union([z.string(), z.number()]).nullable().optional(),
-  kab_kota:            z.string().nullable().optional(),
-  provinsi:            z.string().nullable().optional(),
+  kab_kota_sekolah:    z.string().nullable().optional(),
+  provinsi_sekolah:    z.string().nullable().optional(),
+  tempat_lahir:        z.string().nullable().optional(),
+  tanggal_lahir:       z.string().nullable().optional(),
+  jenis_kelamin:       z.string().nullable().optional(),
   alamat:              z.string().nullable().optional(),
-  pbb:                 z.number().nullable().optional(),
-  daya_listrik:        z.string().nullable().optional(),
   no_hp:               z.string().nullable().optional(),
   email:               z.string().nullable().optional(),
-  koordinat:           z.string().nullable().optional(),
-  latitude:            z.number().nullable().optional(),
-  longitude:           z.number().nullable().optional(),
+  pekerjaan_ayah:      z.string().nullable().optional(),
+  ket_pekerjaan_ayah:  z.string().nullable().optional(),
+  penghasilan_ayah:    z.union([z.string(), z.number()]).nullable().optional(),
+  status_ayah:         z.string().nullable().optional(),
+  pekerjaan_ibu:       z.string().nullable().optional(),
+  ket_pekerjaan_ibu:   z.string().nullable().optional(),
+  penghasilan_ibu:     z.union([z.string(), z.number()]).nullable().optional(),
+  status_ibu:          z.string().nullable().optional(),
+  penghasilan_lain:    z.number().nullable().optional(),
+  jumlah_tanggungan:   z.number().nullable().optional(),
+  jumlah_orang_rumah:  z.number().nullable().optional(),
+  nominal_per_kapita:  z.number().nullable().optional(),
+  kepemilikan_rumah:   z.string().nullable().optional(),
+  sumber_listrik:      z.string().nullable().optional(),
+  sumber_air:          z.string().nullable().optional(),
+  mck:                 z.string().nullable().optional(),
+  kab_kota:            z.string().nullable().optional(),
+  provinsi:            z.string().nullable().optional(),
+  jarak_pusat_kota:    z.number().nullable().optional(),
+  jalur_masuk:         z.string().nullable().optional(),
   skor_total:          z.number().nullable().optional(),
   ranking:             z.number().nullable().optional(),
   status_seleksi:      z.string().nullable().optional(),
-  catatan_admin:       z.string().nullable().optional(),
-  jalur_masuk:         z.string().nullable().optional(),
   hasil_seleksi:       z.string().nullable().optional(),
   created_at:          z.string().nullable().optional(),
   updated_at:          z.string().nullable().optional(),
@@ -333,8 +377,8 @@ export const PewawancaraDataSchema = z.object({
    Mahasiswa Evaluasi / Kandidat (API Response Merged)
 ========================= */
 export const MahasiswaEvaluasiSchema = KandidatBaseSchema.merge(HasilWawancaraBaseSchema).extend({
-  hasil_akhir:      z.number().nullable().optional(), // Mapping untuk UI
-  pewawancara:      z.string().nullable().optional(), // Nama pewawancara
+  hasil_akhir:      z.number().nullable().optional(),
+  pewawancara:      z.string().nullable().optional(),
   pewawancara_data: PewawancaraDataSchema.nullable().optional(),
   status_wawancara: z.string().default("pending"),
 });
