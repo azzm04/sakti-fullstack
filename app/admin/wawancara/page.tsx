@@ -22,14 +22,18 @@ import {
 import SesiOverview from "@/components/admin/wawancara/SesiOverview";
 
 interface Pewawancara {
-  id: number;
-  email: string;
-  nama: string | null;
-  sso_id: string | null;
+   id: number;
+  user_id: string;
+  admin_id: string;
+  nama: string;
   total_assigned: number;
   total_completed: number;
-  is_active: boolean;
   created_at: string;
+  users: {
+    id: string;
+    email_sso: string;
+    status_akun: string;
+  };
 }
 
 interface Sesi {
@@ -141,7 +145,7 @@ function DaftarPewawancara() {
 
   function openEdit(p: Pewawancara) {
     setEditing(p);
-    setForm({ email: p.email, nama: p.nama ?? "" });
+    setForm({ email: p.users?.email_sso ?? "", nama: p.nama ?? "" });
     setFormError("");
     setShowModal(true);
   }
@@ -178,7 +182,7 @@ function DaftarPewawancara() {
     await fetch(`/api/admin/pewawancara/${p.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ is_active: !p.is_active }),
+      body: JSON.stringify({ status_akun: p.users?.status_akun === "AKTIF" ? "NON_AKTIF" : "AKTIF" }),
     });
     fetchData();
   }
@@ -186,7 +190,7 @@ function DaftarPewawancara() {
   async function handleDelete(p: Pewawancara) {
     if (
       !confirm(
-        `Hapus pewawancara ${p.nama ?? p.email}?\nAkses login mereka juga akan dinonaktifkan.`,
+        `Hapus pewawancara ${p.nama ?? p.users?.email_sso}?\nAkses login mereka juga akan dinonaktifkan.`,
       )
     )
       return;
@@ -201,12 +205,12 @@ function DaftarPewawancara() {
           { label: "Total", value: total, color: "text-primary" },
           {
             label: "Aktif",
-            value: data.filter((p) => p.is_active).length,
+            value: data.filter((p) => p.users?.status_akun === "AKTIF").length,
             color: "text-emerald-600",
           },
           {
             label: "Non-aktif",
-            value: data.filter((p) => !p.is_active).length,
+            value: data.filter((p) => p.users?.status_akun !== "AKTIF").length,
             color: "text-slate-400",
           },
         ].map(({ label, value, color }) => (
@@ -277,11 +281,11 @@ function DaftarPewawancara() {
                     <p className="font-semibold text-slate-800">
                       {p.nama ?? "—"}
                     </p>
-                    <p className="text-[11px] text-slate-400">{p.email}</p>
+                    <p className="text-[11px] text-slate-400">{p.users?.email_sso ?? "—"}</p>
                   </td>
                   <td className="px-4 py-3">
                     <span className="text-[11px] font-bold font-mono px-2 py-0.5 bg-slate-100 text-slate-500 rounded-lg">
-                      {p.sso_id ?? "—"}
+                      {p.users?.id ?? "—"}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-xs font-semibold text-slate-600">
@@ -294,12 +298,12 @@ function DaftarPewawancara() {
                     <button
                       onClick={() => handleToggleActive(p)}
                       className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border transition-colors ${
-                        p.is_active
+                        p.users?.status_akun === "AKTIF"
                           ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
                           : "bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100"
                       }`}
                     >
-                      {p.is_active ? (
+                      {p.users?.status_akun === "AKTIF" ? (
                         <>
                           <CheckCircle2 size={10} /> Aktif
                         </>
@@ -554,7 +558,9 @@ function SesiWAR() {
   async function fetchKandidatCount(jalur: string) {
     setLoadingCount(true);
     try {
-      const res = await fetch(`/api/admin/sesi/count-kandidat?jalur_masuk=${encodeURIComponent(jalur)}`);
+      const res = await fetch(`/api/admin/sesi/count-kandidat?jalur_masuk=${encodeURIComponent(jalur)}`,{
+        cache: "no-store"
+      });
       const json = await res.json();
       if (res.ok) {
         setKandidatCount(json.total_belum_assign ?? json.total ?? 0);
@@ -1100,6 +1106,7 @@ function SesiWAR() {
                   </label>
                   <select
                     value={formSesi.jalur_masuk}
+                    title="Jalur masuk"
                     onChange={(e) => {
                       const val = e.target.value;
                       setFormSesi((f) => ({ ...f, jalur_masuk: val }));
@@ -1107,8 +1114,10 @@ function SesiWAR() {
                     }}
                     className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-primary bg-slate-50"
                   >
-                    <option value="SNBT">SNBT</option>
-                    <option value="SNBP">SNBP</option>
+                    <option value="SNBT ELIGIBLE">SNBT (Eligible)</option>
+                    <option value="SNBT NON ELIGIBLE">SNBT (Non-Eligible)</option>
+                    <option value="SNBP ELIGIBLE">SNBP (Eligible)</option>
+                    <option value="SNBP NON ELIGIBLE">SNBP (Non-Eligible)</option>
                     <option value="UM">UM (Ujian Mandiri)</option>
                   </select>
                   {kandidatCount !== null && (
@@ -1130,6 +1139,7 @@ function SesiWAR() {
                     <input
                       type="date"
                       value={formSesi.tanggal_mulai}
+                      title="Tanggal mulai"
                       onChange={(e) =>
                         setFormSesi((f) => ({ ...f, tanggal_mulai: e.target.value }))
                       }
@@ -1142,6 +1152,7 @@ function SesiWAR() {
                     </label>
                     <input
                       type="date"
+                      title="tanggal"
                       value={formSesi.tanggal_selesai}
                       min={formSesi.tanggal_mulai || undefined}
                       onChange={(e) =>
@@ -1195,6 +1206,7 @@ function SesiWAR() {
                     min={1}
                     max={50}
                     value={formSesi.kuota_pewawancara}
+                    title="Kuota pewawancara"
                     onChange={(e) =>
                       setFormSesi((f) => ({
                         ...f,
@@ -1290,6 +1302,7 @@ function SesiWAR() {
                     min={Math.max(1, kuotaList.length)}
                     max={50}
                     value={editForm.kuota_pewawancara}
+                    title="kuota pewawancara"
                     onChange={(e) =>
                       setEditForm((f) => ({
                         ...f,
@@ -1307,6 +1320,7 @@ function SesiWAR() {
                     type="number"
                     min={1}
                     value={editForm.kuota_mahasiswa}
+                    title="kuota mahasiswa"
                     onChange={(e) =>
                       setEditForm((f) => ({
                         ...f,

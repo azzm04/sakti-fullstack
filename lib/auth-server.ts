@@ -18,14 +18,17 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
       return null
     }
 
-    // Verify JWT token on server
     const secret = new TextEncoder().encode(process.env.JWT_SECRET || "")
     const { payload } = await jwtVerify(token, secret)
 
+    // Admin token pakai `sub` sebagai id (lihat route admin login)
+    // User token pakai `id` secara langsung
+    const id = (payload.sub ?? payload.id) as string
+
     return {
-      id: payload.id as string,
+      id,
       nama: payload.nama as string,
-      email: payload.email as string,
+      email: (payload.email ?? payload.adminId ?? "") as string,
       role: payload.role as AuthUser["role"],
     }
   } catch (error) {

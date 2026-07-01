@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { jwtVerify } from "jose";
 
+
 // ── Helper: ambil pewawancara dari JWT ────────────────────────────────────────
 async function getPewawancaraFromToken(req: NextRequest) {
   const token = req.cookies.get("sakti_token")?.value;
@@ -9,12 +10,31 @@ async function getPewawancaraFromToken(req: NextRequest) {
   try {
     const secret = new TextEncoder().encode(process.env.JWT_SECRET);
     const { payload } = await jwtVerify(token, secret);
-    const email = payload.email as string;
-    const { data: pw } = await supabaseAdmin
+    const userId = payload.sub as string;
+
+    let { data: pw } = await supabaseAdmin
       .from("pewawancara")
       .select("id, is_active")
-      .eq("email", email)
+      .eq("user_id", userId)
       .maybeSingle();
+
+    // Fallback: cari via email jika user_id tidak match
+    if (!pw && payload.email) {
+      const { data: userRow } = await supabaseAdmin
+        .from("users")
+        .select("id")
+        .eq("email_sso", payload.email as string)
+        .maybeSingle();
+      if (userRow) {
+        const { data: pwByUser } = await supabaseAdmin
+          .from("pewawancara")
+          .select("id, is_active")
+          .eq("user_id", userRow.id)
+          .maybeSingle();
+        pw = pwByUser;
+      }
+    }
+
     return pw ?? null;
   } catch {
     return null;
@@ -35,32 +55,43 @@ export async function GET(req: NextRequest) {
     if (sesiIdParam) {
       const { data: sesi, error } = await supabaseAdmin
         .from("sesi_wawancara")
-        .select("id, tanggal, kuota_pewawancara, kuota_mahasiswa, war_aktif, war_dibuka_at, distribusi_done")
+        .select(
+          "id, tanggal, kuota_pewawancara, kuota_mahasiswa, war_aktif, war_dibuka_at, distribusi_done",
+        )
         .eq("id", Number(sesiIdParam))
         .single();
 
       if (error || !sesi) {
-        return NextResponse.json({ error: "Sesi tidak ditemukan" }, { status: 404 });
+        return NextResponse.json(
+          { error: "Sesi tidak ditemukan" },
+          { status: 404 },
+        );
       }
 
       const { data: kuotaList } = await supabaseAdmin
         .from("kuota_pewawancara")
-        .select("id, kuota_ke, claimed_at, pewawancara_id, pewawancara(nama, email)")
+        .select(
+          "id, kuota_ke, claimed_at, pewawancara_id, pewawancara(nama, email)",
+        )
         .eq("sesi_id", sesi.id)
         .order("kuota_ke", { ascending: true });
 
       let kuotaSaya = null;
       if (pw) {
         const found = (kuotaList ?? []).find((s) => s.pewawancara_id === pw.id);
-        if (found) kuotaSaya = { kuota_ke: found.kuota_ke, claimed_at: found.claimed_at };
+        if (found)
+          kuotaSaya = {
+            kuota_ke: found.kuota_ke,
+            claimed_at: found.claimed_at,
+          };
       }
 
       return NextResponse.json({
-        war_aktif:    sesi.war_aktif,
+        war_aktif: sesi.war_aktif,
         sesi,
-        kuota_list:   kuotaList ?? [],
+        kuota_list: kuotaList ?? [],
         kuota_terisi: (kuotaList ?? []).length,
-        kuota_saya:   kuotaSaya,
+        kuota_saya: kuotaSaya,
       });
     }
 
@@ -68,14 +99,18 @@ export async function GET(req: NextRequest) {
     // Ambil sesi dari hari ini ke depan
     const { data: upcomingSesi } = await supabaseAdmin
       .from("sesi_wawancara")
-      .select("id, tanggal, kuota_pewawancara, kuota_mahasiswa, war_aktif, war_dibuka_at, distribusi_done")
+      .select(
+        "id, tanggal, kuota_pewawancara, kuota_mahasiswa, war_aktif, war_dibuka_at, distribusi_done",
+      )
       .gte("tanggal", tanggalHariIni)
       .order("tanggal", { ascending: true });
 
     // Juga ambil sesi yang masih war_aktif meskipun tanggalnya sudah lewat
     const { data: aktivSesi } = await supabaseAdmin
       .from("sesi_wawancara")
-      .select("id, tanggal, kuota_pewawancara, kuota_mahasiswa, war_aktif, war_dibuka_at, distribusi_done")
+      .select(
+        "id, tanggal, kuota_pewawancara, kuota_mahasiswa, war_aktif, war_dibuka_at, distribusi_done",
+      )
       .eq("war_aktif", true)
       .lt("tanggal", tanggalHariIni);
 
@@ -91,7 +126,9 @@ export async function GET(req: NextRequest) {
         const myKuotaSesiIds = myKuotaAll.map((k) => k.sesi_id);
         const { data: sesiLama } = await supabaseAdmin
           .from("sesi_wawancara")
-          .select("id, tanggal, kuota_pewawancara, kuota_mahasiswa, war_aktif, war_dibuka_at, distribusi_done")
+          .select(
+            "id, tanggal, kuota_pewawancara, kuota_mahasiswa, war_aktif, war_dibuka_at, distribusi_done",
+          )
           .in("id", myKuotaSesiIds)
           .lt("tanggal", tanggalHariIni)
           .eq("war_aktif", false);
@@ -100,11 +137,20 @@ export async function GET(req: NextRequest) {
     }
 
     // Gabungkan dan deduplikasi berdasarkan id
-    const sesiMap = new Map<number, (typeof upcomingSesi extends (infer T)[] | null ? T : never)>();
-    for (const s of [...(aktivSesi ?? []), ...(sesiDenganKuotaSaya ?? []), ...(upcomingSesi ?? [])]) {
+    const sesiMap = new Map<
+      number,
+      typeof upcomingSesi extends (infer T)[] | null ? T : never
+    >();
+    for (const s of [
+      ...(aktivSesi ?? []),
+      ...(sesiDenganKuotaSaya ?? []),
+      ...(upcomingSesi ?? []),
+    ]) {
       if (!sesiMap.has(s.id)) sesiMap.set(s.id, s);
     }
-    const allSesi = Array.from(sesiMap.values()).sort((a, b) => a.tanggal.localeCompare(b.tanggal));
+    const allSesi = Array.from(sesiMap.values()).sort((a, b) =>
+      a.tanggal.localeCompare(b.tanggal),
+    );
 
     if (!allSesi || allSesi.length === 0) {
       return NextResponse.json({
@@ -118,7 +164,8 @@ export async function GET(req: NextRequest) {
     }
 
     // Ambil semua kuota milik pewawancara ini di sesi-sesi upcoming
-    let kuotaSayaMap: Record<number, { kuota_ke: number; claimed_at: string }> = {};
+    const kuotaSayaMap: Record<number, { kuota_ke: number; claimed_at: string }> =
+      {};
     if (pw) {
       const sesiIds = allSesi.map((s) => s.id);
       const { data: myKuota } = await supabaseAdmin
@@ -128,7 +175,10 @@ export async function GET(req: NextRequest) {
         .in("sesi_id", sesiIds);
 
       for (const s of myKuota ?? []) {
-        kuotaSayaMap[s.sesi_id] = { kuota_ke: s.kuota_ke, claimed_at: s.claimed_at };
+        kuotaSayaMap[s.sesi_id] = {
+          kuota_ke: s.kuota_ke,
+          claimed_at: s.claimed_at,
+        };
       }
     }
 
@@ -140,10 +190,10 @@ export async function GET(req: NextRequest) {
       .in("sesi_id", sesiIds)
       .order("kuota_ke", { ascending: true });
 
-    const kuotaBySesi: Record<number, any[]> = {};
+    const kuotaBySesi: Record<number, NonNullable<typeof allKuota>> = {};
     for (const kuota of allKuota ?? []) {
       if (!kuotaBySesi[kuota.sesi_id]) kuotaBySesi[kuota.sesi_id] = [];
-      kuotaBySesi[kuota.sesi_id].push(kuota);
+      kuotaBySesi[kuota.sesi_id]!.push(kuota);
     }
 
     const sesiList = allSesi.map((s) => ({
@@ -154,20 +204,36 @@ export async function GET(req: NextRequest) {
     }));
 
     // Untuk backward compatibility: juga return sesi pertama yang aktif atau yang sudah diklaim
-    const sesiAktif = sesiList.find((s) => s.kuota_saya) || sesiList.find((s) => s.war_aktif) || sesiList[0];
+    const sesiAktif =
+      sesiList.find((s) => s.kuota_saya) ||
+      sesiList.find((s) => s.war_aktif) ||
+      sesiList[0];
 
     return NextResponse.json({
-      war_aktif:    sesiAktif?.war_aktif ?? false,
-      sesi:         sesiAktif ? { id: sesiAktif.id, tanggal: sesiAktif.tanggal, kuota_pewawancara: sesiAktif.kuota_pewawancara, kuota_mahasiswa: sesiAktif.kuota_mahasiswa, war_aktif: sesiAktif.war_aktif, war_dibuka_at: sesiAktif.war_dibuka_at, distribusi_done: sesiAktif.distribusi_done } : null,
-      sesi_list:    sesiList,
-      kuota_list:   sesiAktif?.kuota_list ?? [],
+      war_aktif: sesiAktif?.war_aktif ?? false,
+      sesi: sesiAktif
+        ? {
+            id: sesiAktif.id,
+            tanggal: sesiAktif.tanggal,
+            kuota_pewawancara: sesiAktif.kuota_pewawancara,
+            kuota_mahasiswa: sesiAktif.kuota_mahasiswa,
+            war_aktif: sesiAktif.war_aktif,
+            war_dibuka_at: sesiAktif.war_dibuka_at,
+            distribusi_done: sesiAktif.distribusi_done,
+          }
+        : null,
+      sesi_list: sesiList,
+      kuota_list: sesiAktif?.kuota_list ?? [],
       kuota_terisi: sesiAktif?.kuota_terisi ?? 0,
-      kuota_saya:   sesiAktif?.kuota_saya ?? null,
+      kuota_saya: sesiAktif?.kuota_saya ?? null,
     });
   } catch (err) {
     return NextResponse.json(
-      { error: "Gagal mengambil status WAR", detail: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
+      {
+        error: "Gagal mengambil status WAR",
+        detail: err instanceof Error ? err.message : String(err),
+      },
+      { status: 500 },
     );
   }
 }
@@ -177,21 +243,33 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const token = req.cookies.get("sakti_token")?.value;
-    if (!token) return NextResponse.json({ error: "Tidak terautentikasi" }, { status: 401 });
+    if (!token)
+      return NextResponse.json(
+        { error: "Tidak terautentikasi" },
+        { status: 401 },
+      );
 
     const secret = new TextEncoder().encode(process.env.JWT_SECRET);
     const { payload } = await jwtVerify(token, secret);
     if (payload.role !== "PEWAWANCARA") {
-      return NextResponse.json({ error: "Hanya pewawancara yang bisa klaim kuota" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Hanya pewawancara yang bisa klaim kuota" },
+        { status: 403 },
+      );
     }
 
-    const email = payload.email as string;
+    const userId = payload.sub as string;
+
     const body = await req.json().catch(() => ({}));
     const requestedKuota = body.kuota_ke as number | undefined;
     const requestedSesiId = body.sesi_id as number | undefined;
 
     // Cari sesi target
-    let sesi: any = null;
+    let sesi: {
+      id: number;
+      war_aktif: boolean;
+      kuota_pewawancara: number;
+    } | null = null;
 
     if (requestedSesiId) {
       // Klaim di sesi tertentu
@@ -225,17 +303,71 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (!sesi) return NextResponse.json({ error: "Belum ada sesi wawancara yang tersedia" }, { status: 404 });
-    if (!sesi.war_aktif) return NextResponse.json({ error: "Pemilihan Urutan Wawancara belum dibuka oleh admin untuk sesi ini" }, { status: 403 });
+    if (!sesi)
+      return NextResponse.json(
+        { error: "Belum ada sesi wawancara yang tersedia" },
+        { status: 404 },
+      );
+    if (!sesi.war_aktif)
+      return NextResponse.json(
+        {
+          error:
+            "Pemilihan Urutan Wawancara belum dibuka oleh admin untuk sesi ini",
+        },
+        { status: 403 },
+      );
 
-    const { data: pw } = await supabaseAdmin
+    // Cari pewawancara via user_id dari JWT
+    let { data: pw } = await supabaseAdmin
       .from("pewawancara")
       .select("id, is_active")
-      .eq("email", email)
+      .eq("user_id", userId)
       .maybeSingle();
 
-    if (!pw) return NextResponse.json({ error: "Data pewawancara tidak ditemukan" }, { status: 404 });
-    if (!pw.is_active) return NextResponse.json({ error: "Akun pewawancara tidak aktif" }, { status: 403 });
+    // Fallback: cari via email di users jika user_id tidak match
+    // (terjadi jika pewawancara.user_id belum di-set atau UUID berbeda)
+    if (!pw) {
+      const emailFromJwt = payload.email as string | undefined;
+      if (emailFromJwt) {
+        const { data: userRow } = await supabaseAdmin
+          .from("users")
+          .select("id")
+          .eq("email_sso", emailFromJwt)
+          .maybeSingle();
+
+        if (userRow) {
+          const { data: pwByUser } = await supabaseAdmin
+            .from("pewawancara")
+            .select("id, is_active")
+            .eq("user_id", userRow.id)
+            .maybeSingle();
+          pw = pwByUser;
+
+          // Sinkronisasi: update user_id di pewawancara agar next request langsung match
+          if (pw && userRow.id !== userId) {
+            await supabaseAdmin
+              .from("users")
+              .update({ id: undefined }) // tidak bisa update PK, biarkan saja
+              .eq("id", userRow.id);
+            // Cukup log saja — admin perlu update pewawancara.user_id
+            console.warn(
+              `[WAR] pewawancara ditemukan via email fallback. JWT sub=${userId} tapi users.id=${userRow.id}. Perlu sinkronisasi.`,
+            );
+          }
+        }
+      }
+    }
+
+    if (!pw)
+      return NextResponse.json(
+        { error: "Data pewawancara tidak ditemukan" },
+        { status: 404 },
+      );
+    if (!pw.is_active)
+      return NextResponse.json(
+        { error: "Akun pewawancara tidak aktif" },
+        { status: 403 },
+      );
 
     // Cek sudah punya kuota di sesi ini
     const { data: existing } = await supabaseAdmin
@@ -247,7 +379,8 @@ export async function POST(req: NextRequest) {
 
     if (existing) {
       return NextResponse.json({
-        success: true, already: true,
+        success: true,
+        already: true,
         kuota_ke: existing.kuota_ke,
         message: `Kamu sudah mendapatkan kuota ${existing.kuota_ke} di sesi ini`,
       });
@@ -267,8 +400,10 @@ export async function POST(req: NextRequest) {
 
     if (kuota_ke < 1 || kuota_ke > sesi.kuota_pewawancara) {
       return NextResponse.json(
-        { error: `Kuota ${kuota_ke} tidak valid. Kuota tersedia: 1-${sesi.kuota_pewawancara}` },
-        { status: 400 }
+        {
+          error: `Kuota ${kuota_ke} tidak valid. Kuota tersedia: 1-${sesi.kuota_pewawancara}`,
+        },
+        { status: 400 },
       );
     }
 
@@ -283,7 +418,7 @@ export async function POST(req: NextRequest) {
     if (existingKuota) {
       return NextResponse.json(
         { error: `Kuota ${kuota_ke} sudah diambil oleh pewawancara lain` },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -295,7 +430,10 @@ export async function POST(req: NextRequest) {
 
     if (insertErr) {
       if (insertErr.code === "23505") {
-        return NextResponse.json({ error: "Kuota baru saja diambil orang lain, coba lagi" }, { status: 409 });
+        return NextResponse.json(
+          { error: "Kuota baru saja diambil orang lain, coba lagi" },
+          { status: 409 },
+        );
       }
       throw insertErr;
     }
@@ -320,8 +458,11 @@ export async function POST(req: NextRequest) {
     });
   } catch (err) {
     return NextResponse.json(
-      { error: "Gagal klaim kuota", detail: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
+      {
+        error: "Gagal klaim kuota",
+        detail: err instanceof Error ? err.message : String(err),
+      },
+      { status: 500 },
     );
   }
 }
@@ -331,7 +472,11 @@ export async function POST(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     const token = req.cookies.get("sakti_token")?.value;
-    if (!token) return NextResponse.json({ error: "Tidak terautentikasi" }, { status: 401 });
+    if (!token)
+      return NextResponse.json(
+        { error: "Tidak terautentikasi" },
+        { status: 401 },
+      );
 
     const secret = new TextEncoder().encode(process.env.JWT_SECRET);
     const { payload } = await jwtVerify(token, secret);
@@ -339,12 +484,15 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Akses ditolak" }, { status: 403 });
     }
 
-    const email = payload.email as string;
+    const userId = payload.sub as string;
     const { searchParams } = new URL(req.url);
     const sesiIdParam = searchParams.get("sesi_id");
 
     // Cari sesi target
-    let sesi: any = null;
+    let sesi: {
+      id: number;
+      distribusi_done: boolean;
+    } | null = null;
 
     if (sesiIdParam) {
       const { data } = await supabaseAdmin
@@ -376,22 +524,33 @@ export async function DELETE(req: NextRequest) {
       }
     }
 
-    if (!sesi) return NextResponse.json({ error: "Tidak ada sesi yang tersedia" }, { status: 404 });
+    if (!sesi)
+      return NextResponse.json(
+        { error: "Tidak ada sesi yang tersedia" },
+        { status: 404 },
+      );
 
     if (sesi.distribusi_done) {
       return NextResponse.json(
-        { error: "Tidak bisa membatalkan kuota — distribusi mahasiswa sudah dilakukan" },
-        { status: 409 }
+        {
+          error:
+            "Tidak bisa membatalkan kuota — distribusi mahasiswa sudah dilakukan",
+        },
+        { status: 409 },
       );
     }
 
     const { data: pw } = await supabaseAdmin
       .from("pewawancara")
-      .select("id, total_assigned")
-      .eq("email", email)
+      .select("id, is_active, total_assigned")
+      .eq("user_id", userId)
       .maybeSingle();
 
-    if (!pw) return NextResponse.json({ error: "Data pewawancara tidak ditemukan" }, { status: 404 });
+    if (!pw)
+      return NextResponse.json(
+        { error: "Data pewawancara tidak ditemukan" },
+        { status: 404 },
+      );
 
     const { data: kuotaItem } = await supabaseAdmin
       .from("kuota_pewawancara")
@@ -400,7 +559,11 @@ export async function DELETE(req: NextRequest) {
       .eq("pewawancara_id", pw.id)
       .maybeSingle();
 
-    if (!kuotaItem) return NextResponse.json({ error: "Kamu tidak memiliki kuota di sesi ini" }, { status: 404 });
+    if (!kuotaItem)
+      return NextResponse.json(
+        { error: "Kamu tidak memiliki kuota di sesi ini" },
+        { status: 404 },
+      );
 
     const { error: delErr } = await supabaseAdmin
       .from("kuota_pewawancara")
@@ -416,12 +579,16 @@ export async function DELETE(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Kuota berhasil dibatalkan. Kuota kamu sekarang tersedia untuk pewawancara lain.",
+      message:
+        "Kuota berhasil dibatalkan. Kuota kamu sekarang tersedia untuk pewawancara lain.",
     });
   } catch (err) {
     return NextResponse.json(
-      { error: "Gagal membatalkan kuota", detail: err instanceof Error ? err.message : String(err) },
-      { status: 500 }
+      {
+        error: "Gagal membatalkan kuota",
+        detail: err instanceof Error ? err.message : String(err),
+      },
+      { status: 500 },
     );
   }
 }

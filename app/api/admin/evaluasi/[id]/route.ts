@@ -16,7 +16,8 @@ export async function GET(
         *,
         hasil_wawancara (
           *,
-          pewawancara:pewawancara_id ( id, nama, email, sso_id )
+          detail_ekonomi_wawancara ( * ),
+          pewawancara:pewawancara_id ( id, nama )
         )
       `)
       .eq("id", id)
@@ -29,43 +30,45 @@ export async function GET(
       throw error;
     }
 
-    // Handle format Supabase (bisa berupa Array atau Object)
     const hw = Array.isArray(row.hasil_wawancara) ? row.hasil_wawancara[0] : row.hasil_wawancara;
     const pewawancaraData = Array.isArray(hw?.pewawancara) ? hw?.pewawancara[0] : hw?.pewawancara;
+    const dew = Array.isArray(hw?.detail_ekonomi_wawancara)
+      ? hw?.detail_ekonomi_wawancara[0]
+      : hw?.detail_ekonomi_wawancara;
 
     const flattenedData = {
       ...row,
-      hasil_wawancara: undefined, // Bersihkan data nested asli
-      
-      // Flatten field hasil_wawancara
+      hasil_wawancara: undefined,
       hasil_wawancara_id: hw?.id,
-      validasi_kks: hw?.validasi_kks,
-      validasi_kip: hw?.validasi_kip,
-      validasi_sktm: hw?.validasi_sktm,
       sosial_media: hw?.sosial_media,
-      ket_pekerjaan_ayah: hw?.ket_pekerjaan_ayah,
+      det_pekerjaan_ayah: hw?.det_pekerjaan_ayah,
       ket_penghasilan_ayah: hw?.ket_penghasilan_ayah,
-      ket_pekerjaan_ibu: hw?.ket_pekerjaan_ibu,
+      det_pekerjaan_ibu: hw?.det_pekerjaan_ibu,
       ket_penghasilan_ibu: hw?.ket_penghasilan_ibu,
       penghasilan_lain: hw?.penghasilan_lain,
-      jml_tanggungan_sebenarnya: hw?.jml_tanggungan_sebenarnya,
+      jumlah_orang_rumah: hw?.jumlah_orang_rumah,
       validasi_orang_rumah: hw?.validasi_orang_rumah,
       kepemilikan_rumah: hw?.kepemilikan_rumah,
-      tahun_perolehan: hw?.tahun_perolehan,
-      luas_tanah: hw?.luas_tanah,
-      luas_bangunan: hw?.luas_bangunan,
-      sumber_air: hw?.sumber_air,
-      mck: hw?.mck,
-      aset: hw?.aset,
-      kondisi_rumah: hw?.kondisi_rumah,
-      jarak_pusat_kota: hw?.jarak_pusat_kota,
+      kepemilikan_kendaraan: hw?.kepemilikan_kendaraan,
+      kepemilikan_elektronik: hw?.kepemilikan_elektronik,
+      kelayakan_rumah: hw?.kelayakan_rumah,
       rekomendasi: hw?.rekomendasi,
       alasan: hw?.alasan,
+      status_wawancara: hw?.status_wawancara,
       pewawancara_id: hw?.pewawancara_id,
       is_draft: hw?.is_draft,
       interviewed_at: hw?.interviewed_at,
-      
-      // Mapping Data Tambahan untuk Frontend
+      hasil_akhir: hw?.hasil_akhir ?? null,
+      catatan_admin: hw?.catatan_admin ?? null,
+      // dari detail_ekonomi_wawancara
+      luas_tanah: dew?.luas_tanah,
+      luas_bangunan: dew?.luas_bangunan,
+      daya_listrik: dew?.daya_listrik,
+      sumber_air: dew?.sumber_air,
+      mck: dew?.mck,
+      jml_tanggungan_sebenarnya: dew?.jml_tanggungan_sebenarnya,
+      tahun_perolehan: dew?.tahun_perolehan,
+      // pewawancara
       pewawancara: pewawancaraData?.nama || null,
       pewawancara_data: pewawancaraData || null,
     };
@@ -96,31 +99,31 @@ export async function PATCH(
       .single();
 
     const payload = {
-      validasi_kks:               body.validasi_kks,
-      validasi_kip:               body.validasi_kip,
-      validasi_sktm:              body.validasi_sktm,
       sosial_media:               body.sosial_media,
-      ket_pekerjaan_ayah:         body.ket_pekerjaan_ayah,
+      det_pekerjaan_ayah:         body.det_pekerjaan_ayah,
       ket_penghasilan_ayah:       body.ket_penghasilan_ayah,
-      ket_pekerjaan_ibu:          body.ket_pekerjaan_ibu,
+      det_pekerjaan_ibu:          body.det_pekerjaan_ibu,
       ket_penghasilan_ibu:        body.ket_penghasilan_ibu,
       penghasilan_lain:           body.penghasilan_lain,
-      jml_tanggungan_sebenarnya:  body.jml_tanggungan_sebenarnya,
+      jumlah_orang_rumah:         body.jumlah_orang_rumah,
       validasi_orang_rumah:       body.validasi_orang_rumah,
       kepemilikan_rumah:          body.kepemilikan_rumah,
-      tahun_perolehan:            body.tahun_perolehan,
-      luas_tanah:                 body.luas_tanah,
-      luas_bangunan:              body.luas_bangunan,
-      sumber_air:                 body.sumber_air,
-      mck:                        body.mck,
-      aset:                       body.aset,
-      kondisi_rumah:              body.kondisi_rumah,
-      jarak_pusat_kota:           body.jarak_pusat_kota,
+      kelayakan_rumah:            body.kelayakan_rumah,
       rekomendasi:                body.rekomendasi,
       alasan:                     body.alasan,
       is_draft:                   body.is_draft ?? false,
       interviewed_at:             new Date().toISOString(),
       updated_at:                 new Date().toISOString(),
+      // Auto-set hasil_akhir untuk Layak/Tidak Layak
+      // Untuk Dipertimbangkan: pakai nilai dari body (diisi admin), atau null
+      hasil_akhir: (() => {
+        if (body.rekomendasi === "Layak") return "Diusulkan";
+        if (body.rekomendasi === "Tidak Layak") return "Tidak Diusulkan";
+        // Untuk "Layak Dipertimbangkan" / "Tidak Layak Dipertimbangkan":
+        // admin bisa override via body.hasil_akhir
+        return body.hasil_akhir ?? null;
+      })(),
+      catatan_admin: body.catatan_admin ?? null,
     };
 
     let error;
@@ -141,18 +144,18 @@ export async function PATCH(
         const { data: kandidatRow } = await supabaseAdmin
           .from("kandidat")
           .select("pewawancara_id")
-          .eq("id", Number(id))
+          .eq("id", id)
           .single();
 
         pewawancaraId = kandidatRow?.pewawancara_id;
       }
 
       if (!pewawancaraId) {
-        // Fallback: lookup dari tabel wawancara_assignment
+        // Lookup dari assignment
         const { data: assignment } = await supabaseAdmin
           .from("wawancara_assignment")
           .select("pewawancara_id")
-          .eq("kandidat_id", Number(id))
+          .eq("kandidat_id", id)
           .order("created_at", { ascending: false })
           .limit(1)
           .single();
@@ -169,7 +172,7 @@ export async function PATCH(
 
       ({ error } = await supabaseAdmin
         .from("hasil_wawancara")
-        .insert({ ...payload, kandidat_id: Number(id), pewawancara_id: pewawancaraId }));
+        .insert({ ...payload, kandidat_id: id, pewawancara_id: pewawancaraId }));
     }
 
     if (error) throw error;

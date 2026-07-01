@@ -26,6 +26,7 @@ interface Props {
   onSave: () => void;
   hasData: boolean;
   saveStatus?: "idle" | "saving" | "saved" | "error";
+  jalurMasuk?: string;
 }
 
 export default function UploadZone({
@@ -33,6 +34,7 @@ export default function UploadZone({
   onSave,
   hasData,
   saveStatus = "idle",
+  jalurMasuk = "",
 }: Props) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -353,7 +355,7 @@ export default function UploadZone({
       <div
         {...getRootProps()}
         className={`p-8 rounded-2xl border-2 border-dashed transition-all cursor-pointer
-          ${isDragActive ? "border-indigo-500 bg-indigo-50/50" : "border-slate-200 hover:border-indigo-400 hover:bg-slate-50"}
+          ${isDragActive ? "border-primary bg-primary/5" : "border-border hover:border-primary/40 hover:bg-muted/40"}
           ${isProcessing ? "opacity-50 pointer-events-none" : ""}
         `}
       >
@@ -362,20 +364,20 @@ export default function UploadZone({
         <div className="flex flex-col items-center justify-center text-center">
           <motion.div
             animate={isDragActive ? { scale: 1.1 } : { scale: 1 }}
-            className="w-16 h-16 bg-indigo-50 rounded-2xl flex items-center justify-center mb-4"
+            className="w-16 h-16 bg-primary/8 rounded-2xl flex items-center justify-center mb-4"
           >
             {isProcessing ? (
-              <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
             ) : (
-              <UploadCloud size={28} className="text-indigo-500" />
+              <UploadCloud size={28} className="text-primary" />
             )}
           </motion.div>
 
-          <h3 className="text-base font-bold text-slate-800 mb-1">
+          <h3 className="text-base font-bold text-foreground mb-1">
             {isProcessing ? "Memproses File..." : "Drag & Drop File"}
           </h3>
 
-          <p className="text-xs text-slate-500 mb-5 px-2">
+          <p className="text-xs text-muted-foreground mb-5 px-2">
             {isDragActive
               ? "Lepaskan file di sini..."
               : "Unggah file Excel atau CSV data pendaftar KIP-K"}
@@ -384,13 +386,13 @@ export default function UploadZone({
           {!isProcessing && (
             <button
               type="button"
-              className="px-5 py-2 text-sm font-semibold bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors"
+              className="px-5 py-2 text-sm font-semibold bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-colors"
             >
               Pilih File
             </button>
           )}
 
-          <p className="mt-4 text-[10px] text-slate-400">
+          <p className="mt-4 text-[10px] text-muted-foreground">
             .xlsx · .xls · .csv · maks. 10MB
           </p>
 
@@ -413,38 +415,49 @@ export default function UploadZone({
       </div>
 
       {/* Info format kolom */}
-      <div className="mt-4 p-3 bg-slate-50 border border-slate-200 rounded-xl">
-        <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1.5">
+      <div className="mt-4 p-3 bg-muted/40 border border-border rounded-xl">
+        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
           Kolom wajib di file
         </p>
         <div className="flex flex-wrap gap-1.5">
           {["Nama Siswa2", "No. Pendaftaran KIP", "NIK", "Alamat Email"].map((col) => (
             <span
               key={col}
-              className="text-[10px] font-medium px-2 py-0.5 bg-white border border-slate-200 rounded text-slate-600"
+              className="text-[10px] font-medium px-2 py-0.5 bg-white border border-border rounded text-secondary"
             >
               {col}
             </span>
           ))}
         </div>
-        <p className="mt-2 text-[10px] text-slate-400">
+        <p className="mt-2 text-[10px] text-muted-foreground">
           Header CSV harus sesuai dengan format file{" "}
           <em>Data Verifikasi Validasi SNBT Eligible</em>.
         </p>
       </div>
 
-      {/* Tombol simpan (jika perlu ditampilkan di sini) */}
+      {/* Tombol simpan */}
       {hasData && saveStatus !== "saved" && (
         <button
           onClick={onSave}
-          disabled={saveStatus === "saving"}
-          className={`mt-4 w-full py-2.5 rounded-xl text-sm font-semibold transition-all
+          disabled={saveStatus === "saving" || !jalurMasuk}
+          className={`mt-4 w-full py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2
             ${saveStatus === "saving"
-              ? "bg-indigo-400 text-white cursor-wait"
-              : "bg-indigo-600 text-white hover:bg-indigo-700"
+              ? "bg-primary/60 text-primary-foreground cursor-wait"
+              : !jalurMasuk
+              ? "bg-muted text-muted-foreground cursor-not-allowed"
+              : "bg-primary text-primary-foreground hover:bg-primary/90"
             }`}
         >
-          {saveStatus === "saving" ? "Menyimpan..." : "Simpan ke Database"}
+          {saveStatus === "saving" ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+              Menyimpan...
+            </>
+          ) : !jalurMasuk ? (
+            "← Pilih jalur masuk dulu"
+          ) : (
+            <>Simpan — {jalurMasuk}</>
+          )}
         </button>
       )}
     </>

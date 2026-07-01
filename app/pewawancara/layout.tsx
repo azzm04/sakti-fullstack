@@ -53,14 +53,14 @@ export default function PewawancaraLayout({ children }: { children: React.ReactN
             MAHASISWA_KIPK: "/mahasiswa",
             ADMIN_DIRMAWA: "/admin",
           };
-          const redirectPath = roleRoutes[data.role] || "/login";
+          const redirectPath = roleRoutes[data.role] || "/pewawancara-login";
           router.push(redirectPath);
           return;
         }
         
         setLoading(false);
       } catch {
-        router.push("/login");
+        router.push("/pewawancara-login");
       }
     };
 
@@ -69,7 +69,7 @@ export default function PewawancaraLayout({ children }: { children: React.ReactN
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/login");
+    router.push("/pewawancara-login");
     router.refresh();
   }
 

@@ -9,21 +9,22 @@ interface Props {
 
 export default function KonsistensiCard({ data }: Props) {
   const akurasi = Math.round(data.akurasi_model * 100)
-  const gaugeData = [{ value: akurasi, fill: "#6366f1" }]
+  // Gunakan warna primary (#001349) untuk gauge
+  const gaugeData = [{ value: akurasi, fill: "#001349" }]
 
   const metrik = [
-    { label: "Precision (Diusulkan)", value: (data.precision_diusulkan * 100).toFixed(1) + "%" },
-    { label: "Recall (Diusulkan)",    value: (data.recall_diusulkan    * 100).toFixed(1) + "%" },
-    { label: "F1-Score (Diusulkan)",  value: (data.f1_diusulkan        * 100).toFixed(1) + "%" },
-    { label: "Kasus Ambigu",         value: `${data.jumlah_kasus_ambigu} / ${data.jumlah_total_uji}` },
+    { label: "Kekuatan Pola (Diusulkan)", value: (data.precision_diusulkan * 100).toFixed(1) + "%" },
+    { label: "Recall (Diusulkan)",         value: (data.recall_diusulkan    * 100).toFixed(1) + "%" },
+    { label: "F1-Score (Diusulkan)",        value: (data.f1_diusulkan        * 100).toFixed(1) + "%" },
+    { label: "Tidak Konsisten dengan Pola", value: `${data.jumlah_kasus_ambigu} / ${data.jumlah_total_uji}` },
   ]
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-      <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-1">
+    <div className="bg-white rounded-2xl border border-border shadow-sm p-6">
+      <h3 className="text-sm font-bold text-foreground uppercase tracking-wider mb-1">
         Konsistensi Model
       </h3>
-      <p className="text-xs text-slate-400 mb-4">
+      <p className="text-xs text-muted-foreground mb-4">
         Tingkat akurasi & metrik evaluasi Decision Tree
       </p>
 
@@ -50,8 +51,8 @@ export default function KonsistensiCard({ data }: Props) {
             </RadialBarChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-3xl font-extrabold text-indigo-600">{akurasi}%</span>
-            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mt-0.5">
+            <span className="text-3xl font-extrabold text-primary">{akurasi}%</span>
+            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mt-0.5">
               Akurasi
             </span>
           </div>
@@ -61,35 +62,58 @@ export default function KonsistensiCard({ data }: Props) {
       <div className="space-y-2">
         {metrik.map(({ label, value }) => (
           <div key={label} className="flex items-center justify-between text-xs">
-            <span className="text-slate-500">{label}</span>
-            <span className="font-bold text-slate-700">{value}</span>
+            <span className="text-muted-foreground">{label}</span>
+            <span className="font-bold text-foreground">{value}</span>
           </div>
         ))}
       </div>
 
       {/* Confusion Matrix */}
-      <div className="mt-4 pt-4 border-t border-slate-100">
-        <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">
+      <div className="mt-4 pt-4 border-t border-border">
+        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
           Confusion Matrix
         </p>
-        <div className="grid grid-cols-2 gap-1 text-center text-[11px]">
-          <div className="bg-slate-50 rounded-lg p-2">
-            <p className="text-slate-400">TN</p>
-            <p className="font-bold text-slate-700">{data.confusion_matrix[0][0]}</p>
-          </div>
-          <div className="bg-red-50 rounded-lg p-2">
-            <p className="text-red-300">FP</p>
-            <p className="font-bold text-red-500">{data.confusion_matrix[0][1]}</p>
-          </div>
-          <div className="bg-amber-50 rounded-lg p-2">
-            <p className="text-amber-300">FN</p>
-            <p className="font-bold text-amber-500">{data.confusion_matrix[1][0]}</p>
-          </div>
-          <div className="bg-emerald-50 rounded-lg p-2">
-            <p className="text-emerald-400">TP</p>
-            <p className="font-bold text-emerald-600">{data.confusion_matrix[1][1]}</p>
-          </div>
-        </div>
+        {data.confusion_matrix ? (
+          <>
+            {/* Label sumbu */}
+            <div className="flex text-[10px] text-muted-foreground mb-1 pl-16">
+              <span className="flex-1 text-center">Prediksi: Tidak</span>
+              <span className="flex-1 text-center">Prediksi: Iya</span>
+            </div>
+            <div className="flex gap-2">
+              {/* Label aktual vertikal */}
+              <div className="flex flex-col justify-around text-[10px] text-muted-foreground w-14 text-right pr-2 shrink-0">
+                <span>Aktual: Tidak</span>
+                <span>Aktual: Iya</span>
+              </div>
+              {/* Grid 2x2 */}
+              <div className="flex-1 grid grid-cols-2 gap-2">
+                <div className="bg-muted rounded-xl p-4 text-center">
+                  <p className="text-[11px] font-semibold text-muted-foreground mb-1">TN</p>
+                  <p className="text-2xl font-extrabold text-foreground">{data.confusion_matrix[0][0]}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">Benar Tolak</p>
+                </div>
+                <div className="bg-destructive/8 rounded-xl p-4 text-center">
+                  <p className="text-[11px] font-semibold text-destructive/60 mb-1">FP</p>
+                  <p className="text-2xl font-extrabold text-destructive">{data.confusion_matrix[0][1]}</p>
+                  <p className="text-[10px] text-destructive/60 mt-1">Salah Lolos</p>
+                </div>
+                <div className="bg-amber-50 rounded-xl p-4 text-center">
+                  <p className="text-[11px] font-semibold text-amber-500 mb-1">FN</p>
+                  <p className="text-2xl font-extrabold text-amber-600">{data.confusion_matrix[1][0]}</p>
+                  <p className="text-[10px] text-amber-500 mt-1">Salah Tolak</p>
+                </div>
+                <div className="bg-emerald-50 rounded-xl p-4 text-center">
+                  <p className="text-[11px] font-semibold text-emerald-500 mb-1">TP</p>
+                  <p className="text-2xl font-extrabold text-emerald-600">{data.confusion_matrix[1][1]}</p>
+                  <p className="text-[10px] text-emerald-500 mt-1">Benar Lolos</p>
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <p className="text-xs text-muted-foreground text-center py-2">Data tidak tersedia</p>
+        )}
       </div>
     </div>
   )

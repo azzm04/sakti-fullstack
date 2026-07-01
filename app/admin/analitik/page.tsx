@@ -9,45 +9,56 @@ import GeografisChart from "@/components/admin/analitik/GeografisChart"
 import RuleExtraction from "@/components/admin/analitik/RuleExtraction"
 import KasusAmbigu from "@/components/admin/analitik/KasusAmbigu"
 import ModelInfoCard from "@/components/admin/analitik/ModelInfoCard"
+import InsightNaratif from "@/components/admin/analitik/InsightNaratif"
 
-async function getAnalitikData(): Promise<DashboardAnalitikData | null> {
+async function getAnalitikData(): Promise<{ data: DashboardAnalitikData | null; error: string | null }> {
+  const baseUrl =
+    process.env.NEXT_PUBLIC_FASTAPI_URL ||
+    process.env.NEXT_PUBLIC_API_URL ||
+    "http://localhost:8001"
+  const url = `${baseUrl}/api/v1/analitik/dashboard`
+
   try {
-    const baseUrl = process.env.NEXT_PUBLIC_FASTAPI_URL || process.env.NEXT_PUBLIC_APP_URL || "http://localhost:8000"
-    const res = await fetch(`${baseUrl}/api/v1/analitik/dashboard`, {
-      cache: "no-store",
-    })
-    if (!res.ok) return null
-    return res.json()
-  } catch {
-    return null
+    const res = await fetch(url, { cache: "no-store" })
+    if (!res.ok) {
+      const errorBody = await res.json().catch(() => ({}))
+      const msg = errorBody.pesan || `Gagal mengambil data (Status: ${res.status})`
+      console.error("[analitik] fetch error:", res.status, errorBody)
+      return { data: null, error: msg }
+    }
+    const data = await res.json()
+    return { data, error: null }
+  } catch (err) {
+    console.error("[analitik] server tidak dapat dijangkau:", err)
+    return { data: null, error: "Server analitik tidak dapat dijangkau. Pastikan FastAPI berjalan." }
   }
 }
 
 export default async function AnalitikPage() {
-  const data = await getAnalitikData()
+  const { data, error } = await getAnalitikData()
 
   return (
-    <div className="p-4 md:p-8 min-h-screen bg-slate-50/50">
+    <div className="p-4 md:p-8 min-h-screen bg-background">
       <div className="max-w-7xl mx-auto space-y-8">
 
-        {/* ── Header ── */}
+        {/* Header */}
         <div>
-          <nav className="flex items-center gap-2 text-xs font-medium text-slate-400 mb-3">
+          <nav className="flex items-center gap-2 text-xs font-medium text-muted-foreground mb-3">
             <span>Dashboard</span>
-            <span className="text-slate-300">/</span>
-            <span className="text-slate-900">Analitik Seleksi</span>
+            <span>/</span>
+            <span className="text-foreground font-semibold">Analitik Seleksi</span>
           </nav>
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-slate-900 tracking-tight">
+              <h1 className="text-2xl md:text-3xl font-extrabold text-primary tracking-tight font-headline">
                 Dashboard Analitik
               </h1>
-              <p className="text-slate-500 text-sm mt-1">
+              <p className="text-muted-foreground text-sm mt-1">
                 Hasil analisis model Decision Tree terhadap data seleksi KIP-Kuliah.
               </p>
             </div>
             {data && (
-              <div className="shrink-0 flex items-center gap-1.5 text-xs font-medium text-indigo-600 bg-indigo-50 border border-indigo-100 rounded-xl px-3 py-2">
+              <div className="shrink-0 flex items-center gap-1.5 text-xs font-medium text-primary bg-primary/8 border border-primary/15 rounded-xl px-3 py-2">
                 <Sparkles size={12} />
                 Diproses dalam {(data.waktu_proses_ms / 1000).toFixed(1)}s
               </div>
@@ -55,75 +66,73 @@ export default async function AnalitikPage() {
           </div>
         </div>
 
-        {/* ── Error State ── */}
+        {/* Error State */}
         {!data && (
-          <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-3xl border border-slate-200">
-            <div className="w-14 h-14 bg-red-50 rounded-2xl flex items-center justify-center mb-4">
-              <AlertCircle size={28} className="text-red-400" />
+          <div className="flex flex-col items-center justify-center py-24 text-center bg-white rounded-3xl border border-border">
+            <div className="w-14 h-14 bg-destructive/8 rounded-2xl flex items-center justify-center mb-4">
+              <AlertCircle size={28} className="text-destructive" />
             </div>
-            <h3 className="font-bold text-slate-800 text-lg mb-1">
+            <h3 className="font-bold text-foreground text-lg mb-1">
               Gagal memuat data analitik
             </h3>
-            <p className="text-slate-500 text-sm max-w-sm">
-              Pastikan server FastAPI berjalan dan endpoint{" "}
-              <code className="font-mono text-xs bg-slate-100 px-1.5 py-0.5 rounded">
-                /api/v1/analitik/dashboard
-              </code>{" "}
-              dapat diakses.
+            <p className="text-muted-foreground text-sm max-w-sm">
+              {error ?? (
+                <>
+                  Pastikan server FastAPI berjalan dan endpoint{" "}
+                  <code className="font-mono text-xs bg-muted px-1.5 py-0.5 rounded">
+                    /api/v1/analitik/dashboard
+                  </code>{" "}
+                  dapat diakses.
+                </>
+              )}
             </p>
           </div>
         )}
 
         {data && (
           <>
-            {/* ── Kartu Ringkasan ── */}
-            <KartuRingkasan
-              ringkasan={data.ringkasan}
-              konsistensi={data.konsistensi}
-            />
+            {/* Kartu Ringkasan */}
+            <KartuRingkasan ringkasan={data.ringkasan} konsistensi={data.konsistensi} />
 
-            {/* ── Baris 2: Feature Importance + Konsistensi + Model Info ── */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="md:col-span-1">
-                <FeatureImportanceChart data={data.feature_importance} />
-              </div>
-              <div className="md:col-span-1">
-                <KonsistensiCard data={data.konsistensi} />
-              </div>
-              <div className="md:col-span-1">
-                <ModelInfoCard data={data.model_info} />
-              </div>
+            {/* Insight Naratif */}
+            <InsightNaratif data={data} />
+
+            {/* Feature Importance + Konsistensi — 2 kolom, lebih lega */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <FeatureImportanceChart data={data.feature_importance} />
+              <KonsistensiCard data={data.konsistensi} />
             </div>
 
-            {/* ── Baris 3: Distribusi P3KE + Kondisi Rumah ── */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* 3 Distribusi vertikal — grid 3 kolom */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <DistribusiChart
                 data={data.distribusi_p3ke}
                 title="Distribusi per Status P3KE"
-                subtitle="Jumlah kandidat diusulkan vs tidak per kategori P3KE"
+                subtitle="Diusulkan vs tidak per kategori P3KE"
               />
               <DistribusiChart
                 data={data.distribusi_kondisi_rumah}
                 title="Distribusi per Kondisi Rumah"
-                subtitle="Jumlah kandidat diusulkan vs tidak per kondisi tempat tinggal"
+                subtitle="Diusulkan vs tidak per kondisi tempat tinggal"
               />
-            </div>
-
-            {/* ── Distribusi DTKS + Geografis ── */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <DistribusiChart
                 data={data.distribusi_dtks}
                 title="Distribusi Data DTKS"
-                subtitle="Kandidat terdaftar vs belum terdata dalam DTKS"
+                subtitle="Terdaftar vs belum terdata dalam DTKS"
               />
-              <GeografisChart data={data.distribusi_geografis} />
             </div>
 
-            {/* ── Rule Extraction ── */}
+            {/* Distribusi Geografis — full width agar nama provinsi terbaca */}
+            <GeografisChart data={data.distribusi_geografis} />
+
+            {/* Rule Extraction */}
             <RuleExtraction rules={data.rule_nodes} />
 
-            {/* ── Kasus Ambigu ── */}
+            {/* Keputusan Tidak Konsisten */}
             <KasusAmbigu data={data.kasus_ambigu} />
+
+            {/* Model Info — accordion untuk pengguna teknis */}
+            <ModelInfoCard data={data.model_info} />
           </>
         )}
       </div>

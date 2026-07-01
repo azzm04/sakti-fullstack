@@ -31,6 +31,7 @@ interface Props {
   onSave?: () => void;
   saveStatus?: "idle" | "saving" | "saved" | "error";
   hasData?: boolean;
+  jalurMasuk?: string;
 }
 
 const columnHelper = createColumnHelper<CandidateData>();

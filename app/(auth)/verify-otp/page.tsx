@@ -39,10 +39,17 @@ export default function VerifyOtpPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
+  // "pewawancara" | "mahasiswa" — menentukan endpoint resend yang tepat
+  const [loginFlow, setLoginFlow] = useState<"pewawancara" | "mahasiswa">("mahasiswa");
 
   useEffect(() => {
     const urlEmail = searchParams.get("email");
     const sessionEmail = sessionStorage.getItem("otp_email");
+    const flow =
+      searchParams.get("flow") ??
+      sessionStorage.getItem("otp_flow") ??
+      "mahasiswa";
+    setLoginFlow(flow === "pewawancara" ? "pewawancara" : "mahasiswa");
 
     if (urlEmail) {
       setEmail(urlEmail);
@@ -82,6 +89,7 @@ export default function VerifyOtpPage() {
       }
 
       sessionStorage.removeItem("otp_email");
+      sessionStorage.removeItem("otp_flow");
       setSuccess("Verifikasi Berhasil! Mengalihkan...");
 
       setTimeout(() => {
@@ -105,8 +113,13 @@ export default function VerifyOtpPage() {
     setSuccess("");
     setLoading(true);
 
+    const resendEndpoint =
+      loginFlow === "pewawancara"
+        ? "/api/auth/pewawancara/login"
+        : "/api/auth/login";
+
     try {
-      const res = await fetch("/api/auth/login", {
+      const res = await fetch(resendEndpoint, {
         method: "POST",
         body: JSON.stringify({ email }),
         headers: { "Content-Type": "application/json" },
@@ -132,13 +145,15 @@ export default function VerifyOtpPage() {
     }
   }
 
+  const backHref = loginFlow === "pewawancara" ? "/pewawancara-login" : "/login";
+
   return (
     <AuthLayout
       branding={
         <AuthBranding
           title="Keamanan Akun & Verifikasi OTP"
           subtitle="Universitas Diponegoro"
-          description="Sebagai langkah keamanan dan validasi identitas, kami telah mengirimkan kode otentikasi 6-digit (OTP) ke email SSO Anda. Silakan masukkan kode tersebut untuk memverifikasi kepemilikan akun dan melanjutkan akses ke dalam portal SAKTI."
+          description="Sebagai langkah keamanan dan validasi identitas, kami telah mengirimkan kode otentikasi 6-digit (OTP) ke email Anda. Silakan masukkan kode tersebut untuk memverifikasi kepemilikan akun dan melanjutkan akses ke dalam portal SAKTI."
         />
       }
     >
@@ -240,7 +255,7 @@ export default function VerifyOtpPage() {
 
           <div className="pt-6 border-t border-border flex justify-center text-xs text-muted-foreground">
             <Link
-              href="/login"
+              href={backHref}
               className="hover:text-primary transition-colors flex items-center gap-1 font-medium"
             >
               ← Kembali ke Halaman Login

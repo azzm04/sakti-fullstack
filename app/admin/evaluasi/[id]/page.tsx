@@ -11,7 +11,8 @@ async function getKandidatDetail(id: string): Promise<Kandidat | null> {
         *,
         hasil_wawancara (
           *,
-          pewawancara:pewawancara_id ( id, nama, email, sso_id )
+          detail_ekonomi_wawancara ( * ),
+          pewawancara:pewawancara_id ( id, nama )
         )
       `)
       .eq("id", id)
@@ -28,36 +29,45 @@ async function getKandidatDetail(id: string): Promise<Kandidat | null> {
     const pewawancaraData = Array.isArray(hw?.pewawancara)
       ? hw?.pewawancara[0]
       : hw?.pewawancara;
+    const dew = Array.isArray(hw?.detail_ekonomi_wawancara)
+      ? hw?.detail_ekonomi_wawancara[0]
+      : hw?.detail_ekonomi_wawancara;
 
     return {
       ...row,
+      nama: (row as Record<string, unknown>).nama_pendaftar,
       hasil_wawancara: undefined,
       hasil_wawancara_id: hw?.id,
-      validasi_kks: hw?.validasi_kks,
-      validasi_kip: hw?.validasi_kip,
-      validasi_sktm: hw?.validasi_sktm,
       sosial_media: hw?.sosial_media,
-      ket_pekerjaan_ayah: hw?.ket_pekerjaan_ayah,
+      det_pekerjaan_ayah: hw?.det_pekerjaan_ayah,
       ket_penghasilan_ayah: hw?.ket_penghasilan_ayah,
-      ket_pekerjaan_ibu: hw?.ket_pekerjaan_ibu,
+      det_pekerjaan_ibu: hw?.det_pekerjaan_ibu,
       ket_penghasilan_ibu: hw?.ket_penghasilan_ibu,
       penghasilan_lain: hw?.penghasilan_lain,
-      jml_tanggungan_sebenarnya: hw?.jml_tanggungan_sebenarnya,
+      jumlah_orang_rumah: hw?.jumlah_orang_rumah,
       validasi_orang_rumah: hw?.validasi_orang_rumah,
       kepemilikan_rumah: hw?.kepemilikan_rumah,
-      tahun_perolehan: hw?.tahun_perolehan,
-      luas_tanah: hw?.luas_tanah,
-      luas_bangunan: hw?.luas_bangunan,
-      sumber_air: hw?.sumber_air,
-      mck: hw?.mck,
-      aset: hw?.aset,
-      kondisi_rumah: hw?.kondisi_rumah,
-      jarak_pusat_kota: hw?.jarak_pusat_kota,
+      kepemilikan_kendaraan: hw?.kepemilikan_kendaraan,
+      kepemilikan_elektronik: hw?.kepemilikan_elektronik,
+      kelayakan_rumah: hw?.kelayakan_rumah,
       rekomendasi: hw?.rekomendasi,
       alasan: hw?.alasan,
+      status_wawancara: hw?.status_wawancara,
       pewawancara_id: hw?.pewawancara_id,
       is_draft: hw?.is_draft,
       interviewed_at: hw?.interviewed_at,
+      hasil_akhir: hw?.hasil_akhir ?? null,
+      catatan_admin: hw?.catatan_admin ?? null,
+      // dari detail_ekonomi_wawancara
+      luas_tanah: dew?.luas_tanah,
+      luas_bangunan: dew?.luas_bangunan,
+      daya_listrik: dew?.daya_listrik,
+      sumber_air: dew?.sumber_air,
+      mck: dew?.mck,
+      jml_tanggungan_sebenarnya: dew?.jml_tanggungan_sebenarnya,
+      tahun_perolehan: dew?.tahun_perolehan,
+      penghasilan_lain_dew: dew?.penghasilan_lain,
+      // pewawancara
       pewawancara: pewawancaraData?.nama || null,
       pewawancara_data: pewawancaraData || null,
     } as unknown as Kandidat;

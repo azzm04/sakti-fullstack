@@ -337,13 +337,46 @@ export const HasilWawancaraBaseSchema = z.object({
   alasan:                    z.string().nullable().optional(),
   is_draft:                  z.boolean().nullable().optional(),
   interviewed_at:            z.string().nullable().optional(),
+  hasil_akhir:               z.string().nullable().optional(),
+  catatan_admin:             z.string().nullable().optional(),
 });
 export type HasilWawancaraBase = z.infer<typeof HasilWawancaraBaseSchema>;
 
 /* =========================
-   Helper: Status Wawancara
-   Mapping is_draft → label yang mudah dipahami
+   Rekomendasi & Hasil Akhir Wawancara
 ========================= */
+export const REKOMENDASI_OPTIONS = [
+  "Layak",
+  "Layak Dipertimbangkan",
+  "Tidak Layak Dipertimbangkan",
+  "Tidak Layak",
+] as const;
+export type RekomendasiWawancara = typeof REKOMENDASI_OPTIONS[number];
+
+export const HASIL_AKHIR_OPTIONS = ["Diusulkan", "Tidak Diusulkan"] as const;
+export type HasilAkhir = typeof HASIL_AKHIR_OPTIONS[number];
+
+/** Rekomendasi yang butuh review admin sebelum hasil akhir bisa ditentukan */
+export const REKOMENDASI_PERLU_REVIEW: RekomendasiWawancara[] = [
+  "Layak Dipertimbangkan",
+  "Tidak Layak Dipertimbangkan",
+];
+
+/** Auto-resolve: rekomendasi yang langsung menghasilkan hasil_akhir tanpa review admin */
+export function autoHasilAkhir(rekomendasi: string | null | undefined): HasilAkhir | null {
+  if (rekomendasi === "Layak") return "Diusulkan";
+  if (rekomendasi === "Tidak Layak") return "Tidak Diusulkan";
+  return null; // Perlu review admin
+}
+
+export function isPerluReview(rekomendasi: string | null | undefined): boolean {
+  return (
+    rekomendasi === "Layak Dipertimbangkan" ||
+    rekomendasi === "Tidak Layak Dipertimbangkan"
+  );
+}
+
+
 export type StatusWawancara = "Belum Diwawancarai" | "Sudah Diwawancarai" | "Belum Ditugaskan";
 
 export function getStatusWawancara(isDraft: boolean | null | undefined, pewawancaraId?: number | null): StatusWawancara {
@@ -377,7 +410,8 @@ export const PewawancaraDataSchema = z.object({
    Mahasiswa Evaluasi / Kandidat (API Response Merged)
 ========================= */
 export const MahasiswaEvaluasiSchema = KandidatBaseSchema.merge(HasilWawancaraBaseSchema).extend({
-  hasil_akhir:      z.number().nullable().optional(),
+  hasil_akhir:      z.string().nullable().optional(),
+  catatan_admin:    z.string().nullable().optional(),
   pewawancara:      z.string().nullable().optional(),
   pewawancara_data: PewawancaraDataSchema.nullable().optional(),
   status_wawancara: z.string().default("pending"),

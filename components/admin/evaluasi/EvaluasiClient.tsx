@@ -39,75 +39,55 @@ import {
 } from "@/components/ui/command";
 
 import type { MahasiswaEvaluasi, EvaluasiApiResponse } from "@/schemas";
-import { getStatusWawancara, getStatusWawancaraColor } from "@/schemas";
+import { getStatusWawancara, getStatusWawancaraColor, isPerluReview } from "@/schemas";
 
 export type EvaluasiStatus = "selesai" | "belum";
 
 function isEvaluasiSelesai(m: MahasiswaEvaluasi): boolean {
-  const isFilled = (
-    val: string | number | boolean | null | undefined,
-  ): boolean => {
-    return val !== null && val !== undefined && val !== "";
-  };
-
-  return !!(
-    isFilled(m.hasil_akhir) &&
-    isFilled(m.pewawancara) &&
-    isFilled(m.jalur_masuk) &&
-    m.validasi_kks !== null &&
-    m.validasi_kks !== undefined &&
-    m.validasi_kip !== null &&
-    m.validasi_kip !== undefined &&
-    m.validasi_sktm !== null &&
-    m.validasi_sktm !== undefined &&
-    isFilled(m.sosial_media) &&
-    isFilled(m.ket_pekerjaan_ayah) &&
-    isFilled(m.ket_penghasilan_ayah) &&
-    isFilled(m.ket_pekerjaan_ibu) &&
-    isFilled(m.ket_penghasilan_ibu) &&
-    (m.jml_tanggungan_sebenarnya ?? 0) > 0 &&
-    (m.validasi_orang_rumah ?? 0) > 0 &&
-    isFilled(m.kepemilikan_rumah) &&
-    isFilled(m.tahun_perolehan) &&
-    (m.luas_tanah ?? 0) > 0 &&
-    (m.luas_bangunan ?? 0) > 0 &&
-    isFilled(m.sumber_air) &&
-    isFilled(m.mck) &&
-    isFilled(m.kondisi_rumah) &&
-    (m.jarak_pusat_kota ?? 0) > 0
-  );
+  // Selesai = sudah ada rekomendasi dan hasil_akhir terisi
+  return !!(m.rekomendasi && m.hasil_akhir && m.is_draft === false);
 }
 
 function getStatus(m: MahasiswaEvaluasi): EvaluasiStatus {
   return isEvaluasiSelesai(m) ? "selesai" : "belum";
 }
 
-function hasilAkhirBadge(v: number | null | undefined) {
-  if (!v)
+function hasilAkhirBadge(rekomendasi: string | null | undefined, hasilAkhir: string | null | undefined) {
+  // Jika belum ada data sama sekali
+  if (!rekomendasi && !hasilAkhir) {
+    return <span className="text-muted-foreground italic text-xs">Belum diisi</span>;
+  }
+
+  // Badge Perlu Review (Dipertimbangkan tanpa hasil akhir)
+  if (isPerluReview(rekomendasi) && !hasilAkhir) {
     return (
-      <span className="text-muted-foreground italic text-xs">Belum diisi</span>
+      <span className="text-[11px] font-bold px-2 py-0.5 rounded-full border bg-amber-50 text-amber-700 border-amber-200 flex items-center gap-1 w-fit">
+        <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse inline-block" />
+        Perlu Review
+      </span>
     );
-  const map: Record<number, { label: string; cls: string }> = {
-    1: {
-      label: "Layak",
-      cls: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    },
-    2: {
-      label: "Dipertimbangkan",
-      cls: "bg-amber-50 text-amber-700 border-amber-200",
-    },
-    3: { label: "Tidak Layak", cls: "bg-red-50 text-red-700 border-red-200" },
-  };
-  const item = map[v];
-  if (!item)
-    return <span className="text-muted-foreground italic text-xs">—</span>;
-  return (
-    <span
-      className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${item.cls}`}
-    >
-      {item.label}
-    </span>
-  );
+  }
+
+  // Tampilkan hasil_akhir jika sudah ada
+  if (hasilAkhir) {
+    const isDisusulkan = hasilAkhir === "Diusulkan";
+    return (
+      <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${
+        isDisusulkan
+          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+          : "bg-red-50 text-red-700 border-red-200"
+      }`}>
+        {hasilAkhir}
+      </span>
+    );
+  }
+
+  // Tampilkan rekomendasi sementara jika hasil_akhir belum ada
+  const lower = String(rekomendasi).toLowerCase();
+  if (lower.includes("tidak layak")) {
+    return <span className="text-[11px] font-bold px-2 py-0.5 rounded-full border bg-red-50 text-red-600 border-red-200">{rekomendasi}</span>;
+  }
+  return <span className="text-[11px] font-bold px-2 py-0.5 rounded-full border bg-slate-100 text-slate-600 border-slate-200">{rekomendasi}</span>;
 }
 
 interface EvaluasiClientProps {
@@ -124,6 +104,11 @@ export default function EvaluasiClient({ initialData }: EvaluasiClientProps) {
   const [totalPages, setTotalPages] = useState(initialData.totalPages);
   const [totalSelesai, setTotalSelesai] = useState(initialData.totalSelesai);
   const [totalBelum, setTotalBelum] = useState(initialData.totalBelum);
+
+  // Hitung perlu review dari data yang sudah di-load
+  const totalPerluReview = data.filter(
+    (m) => isPerluReview(m.rekomendasi) && !m.hasil_akhir
+  ).length;
   const [filters, setFilters] = useState<Filter[]>([]);
   const [filterOpen, setFilterOpen] = useState(false);
   const [selectedView, setSelectedView] = useState<FilterType | null>(null);
@@ -157,12 +142,10 @@ export default function EvaluasiClient({ initialData }: EvaluasiClientProps) {
       if (!f.value?.length) continue;
 
       if (f.type === FilterType.HASIL_AKHIR) {
-        const hasilMap: Record<string, number> = {
-          Layak: 1,
-          Dipertimbangkan: 2,
-          "Tidak Layak": 3,
-        };
-        const match = f.value.some((v) => hasilMap[v] === m.hasil_akhir);
+        const match = f.value.some((v) =>
+          v === m.hasil_akhir ||
+          (v === "Perlu Review" && isPerluReview(m.rekomendasi) && !m.hasil_akhir)
+        );
         if (!match) return false;
       }
       if (f.type === FilterType.STATUS) {
@@ -211,27 +194,14 @@ export default function EvaluasiClient({ initialData }: EvaluasiClientProps) {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {[
-          {
-            label: "Total Mahasiswa",
-            value: total,
-            color: "text-primary",
-            bg: "bg-primary/8",
-          },
-          {
-            label: "Sudah Dievaluasi",
-            value: totalSelesai,
-            color: "text-emerald-600",
-            bg: "bg-emerald-50",
-          },
-          {
-            label: "Belum Dievaluasi",
-            value: totalBelum,
-            color: "text-amber-600",
-            bg: "bg-amber-50",
-          },
-        ].map(({ label, value, color, bg }) => (
+          { label: "Total Mahasiswa",  value: total,           color: "text-primary",    bg: "bg-primary/8"   },
+          { label: "Sudah Dievaluasi", value: totalSelesai,    color: "text-emerald-600", bg: "bg-emerald-50"  },
+          { label: "Belum Dievaluasi", value: totalBelum,      color: "text-slate-500",   bg: "bg-slate-50"    },
+          { label: "Perlu Review",     value: totalPerluReview, color: "text-amber-600",  bg: "bg-amber-50",
+            note: "Layak/Tidak Layak Dipertimbangkan" },
+        ].map(({ label, value, color, bg, note }) => (
           <motion.div
             key={label}
             initial={{ opacity: 0, y: 8 }}
@@ -239,9 +209,8 @@ export default function EvaluasiClient({ initialData }: EvaluasiClientProps) {
             className={`${bg} rounded-2xl border border-border p-4 shadow-sm`}
           >
             <p className="text-xs text-muted-foreground mb-1">{label}</p>
-            <p className={`text-2xl font-extrabold font-headline ${color}`}>
-              {value}
-            </p>
+            <p className={`text-2xl font-extrabold font-headline ${color}`}>{value}</p>
+            {note && <p className="text-[10px] text-muted-foreground mt-0.5">{note}</p>}
           </motion.div>
         ))}
       </div>
@@ -404,6 +373,7 @@ export default function EvaluasiClient({ initialData }: EvaluasiClientProps) {
                     "Nama",
                     "Prodi",
                     "Pewawancara",
+                    "Rekomendasi",
                     "Hasil Akhir",
                     "Status",
                     "Jalur Masuk",
@@ -444,13 +414,30 @@ export default function EvaluasiClient({ initialData }: EvaluasiClientProps) {
                       </td>
                       <td className="px-4 py-3 text-xs text-on-surface">
                         {m.pewawancara || (
-                          <span className="text-muted-foreground italic">
-                            —
-                          </span>
+                          <span className="text-muted-foreground italic">—</span>
                         )}
                       </td>
+                      {/* Rekomendasi pewawancara */}
                       <td className="px-4 py-3">
-                        {hasilAkhirBadge(m.hasil_akhir)}
+                        {m.rekomendasi ? (
+                          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${
+                            m.rekomendasi === "Layak"
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              : m.rekomendasi === "Tidak Layak"
+                              ? "bg-red-50 text-red-600 border-red-200"
+                              : m.rekomendasi === "Layak Dipertimbangkan"
+                              ? "bg-teal-50 text-teal-700 border-teal-200"
+                              : "bg-amber-50 text-amber-700 border-amber-200"
+                          }`}>
+                            {m.rekomendasi}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground italic text-xs">—</span>
+                        )}
+                      </td>
+                      {/* Hasil Akhir */}
+                      <td className="px-4 py-3">
+                        {hasilAkhirBadge(m.rekomendasi, m.hasil_akhir)}
                       </td>
                       <td className="px-4 py-3">
                         <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border ${statusColor.bg} ${statusColor.text} ${statusColor.border}`}>

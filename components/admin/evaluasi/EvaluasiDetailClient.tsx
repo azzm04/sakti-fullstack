@@ -12,13 +12,50 @@ import {
 import { toast } from "sonner";
 
 import type { Kandidat } from "@/schemas";
+import { isPerluReview, autoHasilAkhir } from "@/schemas";
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
+const REKOMENDASI_OPTIONS = [
+  {
+    label: "Layak",
+    value: "Layak",
+    active: "bg-emerald-500 text-white border-emerald-500",
+    inactive: "bg-white text-muted-foreground border-border hover:border-emerald-400",
+  },
+  {
+    label: "Layak Dipertimbangkan",
+    value: "Layak Dipertimbangkan",
+    active: "bg-teal-500 text-white border-teal-500",
+    inactive: "bg-white text-muted-foreground border-border hover:border-teal-400",
+  },
+  {
+    label: "Tidak Layak Dipertimbangkan",
+    value: "Tidak Layak Dipertimbangkan",
+    active: "bg-amber-500 text-white border-amber-500",
+    inactive: "bg-white text-muted-foreground border-border hover:border-amber-400",
+  },
+  {
+    label: "Tidak Layak",
+    value: "Tidak Layak",
+    active: "bg-red-500 text-white border-red-500",
+    inactive: "bg-white text-muted-foreground border-border hover:border-red-400",
+  },
+];
+
 const HASIL_AKHIR_OPTIONS = [
-  { label: "Layak",           value: 1, text_db: "Layak",           active: "bg-emerald-500 text-white border-emerald-500", inactive: "bg-white text-muted-foreground border-border hover:border-emerald-400" },
-  { label: "Dipertimbangkan", value: 2, text_db: "Dipertimbangkan", active: "bg-amber-500 text-white border-amber-500",    inactive: "bg-white text-muted-foreground border-border hover:border-amber-400"   },
-  { label: "Tidak Layak",     value: 3, text_db: "Tidak Layak",     active: "bg-red-500 text-white border-red-500",        inactive: "bg-white text-muted-foreground border-border hover:border-red-400"     },
+  {
+    label: "Diusulkan",
+    value: "Diusulkan",
+    active: "bg-emerald-500 text-white border-emerald-500",
+    inactive: "bg-white text-muted-foreground border-border hover:border-emerald-400",
+  },
+  {
+    label: "Tidak Diusulkan",
+    value: "Tidak Diusulkan",
+    active: "bg-red-500 text-white border-red-500",
+    inactive: "bg-white text-muted-foreground border-border hover:border-red-400",
+  },
 ];
 
 const fmt = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", minimumFractionDigits: 0 });
@@ -78,40 +115,44 @@ interface EvaluasiDetailClientProps {
 export default function EvaluasiDetailClient({ kandidat, id }: EvaluasiDetailClientProps) {
   const router = useRouter();
 
-  // Mapping Teks Rekomendasi dari DB ke Nomor UI (1,2,3)
-  const initialHasil = (() => {
-    const rekDb = kandidat.rekomendasi?.toLowerCase() || "";
-    if (rekDb.includes("tidak")) return 3;
-    if (rekDb.includes("pertimbang")) return 2;
-    if (rekDb.includes("layak")) return 1;
-    return null;
-  })();
-
   const [form, setForm] = useState({
-    hasil_akhir: initialHasil,
-    rekomendasi_teks: kandidat.rekomendasi || "",
+    rekomendasi: kandidat.rekomendasi || "",
+    hasil_akhir: (kandidat.hasil_akhir as string) || "",
+    catatan_admin: kandidat.catatan_admin || "",
     alasan: kandidat.alasan || "",
   });
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [showDelete, setShowDelete] = useState(false);
 
+  const perluReview = isPerluReview(form.rekomendasi);
+  const autoHasil = autoHasilAkhir(form.rekomendasi);
+
   async function handleSave() {
-    if (!form.hasil_akhir) {
+    if (!form.rekomendasi) {
       toast.error("Data belum lengkap", {
         description: "Pilih rekomendasi terlebih dahulu sebelum menyimpan.",
       });
       return;
     }
 
+    // Jika "Dipertimbangkan", admin harus memilih hasil akhir dulu
+    if (perluReview && !form.hasil_akhir) {
+      toast.error("Hasil Akhir belum dipilih", {
+        description: "Karena rekomendasi ini perlu ditinjau, Admin harus menentukan Hasil Akhir.",
+      });
+      return;
+    }
+
     setSaveStatus("saving");
-    const textRekomendasi = HASIL_AKHIR_OPTIONS.find(o => o.value === form.hasil_akhir)?.text_db || null;
 
     try {
       const res = await fetch(`/api/admin/evaluasi/${id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          rekomendasi: textRekomendasi,
+          rekomendasi: form.rekomendasi,
+          hasil_akhir: autoHasil ?? form.hasil_akhir,
+          catatan_admin: form.catatan_admin,
           alasan: form.alasan,
           is_draft: false,
         }),
@@ -153,7 +194,7 @@ export default function EvaluasiDetailClient({ kandidat, id }: EvaluasiDetailCli
           <span className="text-muted-foreground">›</span>
           <Link href="/admin/evaluasi" className="text-muted-foreground hover:text-primary transition-colors">Evaluasi</Link>
           <span className="text-muted-foreground">›</span>
-          <span className="text-primary truncate max-w-[200px]">{kandidat.nama}</span>
+          <span className="text-primary truncate max-w-[200px]">{kandidat.nama_pendaftar}</span>
         </nav>
 
         <div className="flex items-start justify-between gap-4 flex-wrap">
@@ -161,11 +202,11 @@ export default function EvaluasiDetailClient({ kandidat, id }: EvaluasiDetailCli
             <Link href="/admin/evaluasi" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-primary mb-2 transition-colors">
               <ArrowLeft size={13} /> Kembali ke daftar
             </Link>
-            <h2 className="text-3xl font-extrabold text-primary tracking-tight font-headline">{kandidat.nama}</h2>
+            <h2 className="text-3xl font-extrabold text-primary tracking-tight font-headline">{kandidat.nama_pendaftar}</h2>
             <div className="flex items-center gap-3 mt-1">
               <p className="text-muted-foreground text-sm font-mono">{kandidat.no_pendaftaran_kipk}</p>
               <span className="text-slate-300">·</span>
-              <p className="text-muted-foreground text-sm">{kandidat.prodi}</p>
+              <p className="text-muted-foreground text-sm">{kandidat.prodi_pendaftar}</p>
             </div>
           </div>
 
@@ -241,7 +282,8 @@ export default function EvaluasiDetailClient({ kandidat, id }: EvaluasiDetailCli
                 <SectionHeader title="Identitas" />
                 <div className="grid grid-cols-2 gap-3">
                   <ReadField label="No. Pendaftaran KIPK"   value={kandidat.no_pendaftaran_kipk} />
-                  <ReadField label="No. Bantuan Sosial"     value={kandidat.no_bantuan_sosial}   />
+                  <ReadField label="No. KIP"     value={kandidat.no_kip}   />
+                  <ReadField label="No. KKS"     value={kandidat.no_kks}   />
                   <ReadField label="NIK"                    value={kandidat.nik}                 />
                   <ReadField label="No. Kartu Keluarga"     value={kandidat.no_kartu_keluarga}   />
                   <ReadField label="NISN"                   value={kandidat.nisn}                />
@@ -254,7 +296,7 @@ export default function EvaluasiDetailClient({ kandidat, id }: EvaluasiDetailCli
               <div>
                 <SectionHeader title="Status Sosial Ekonomi" />
                 <div className="grid grid-cols-2 gap-3">
-                  <ReadField label="Status DTSEN"           value={kandidat.status_dtsen}        />
+                  <ReadField label="Status DTSEN"           value={kandidat.status_p3ke}        />
                   <ReadField label="Jumlah Tanggungan"      value={kandidat.jumlah_tanggungan}  />
                   <ReadField label="Orang Tinggal di Rumah" value={kandidat.jumlah_orang_rumah} />
                 </div>
@@ -351,7 +393,7 @@ export default function EvaluasiDetailClient({ kandidat, id }: EvaluasiDetailCli
             </motion.div>
           )}
 
-          {/* Form admin — bisa edit rekomendasi & catatan */}
+          {/* Form admin — rekomendasi & hasil akhir */}
           <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
             className="bg-white rounded-2xl border border-border shadow-sm p-6">
             <div className="flex items-center gap-2 mb-5">
@@ -360,37 +402,96 @@ export default function EvaluasiDetailClient({ kandidat, id }: EvaluasiDetailCli
               </div>
               <div>
                 <h3 className="font-bold text-on-surface text-sm">Rekomendasi Wawancara</h3>
-                <p className="text-[11px] text-muted-foreground">Override rekomendasi wawancara berdasarkan keputusan panitia.</p>
+                <p className="text-[11px] text-muted-foreground">Rekomendasi pewawancara berdasarkan keputusan panitia.</p>
               </div>
             </div>
 
             <div className="space-y-5">
+              {/* Pilih Rekomendasi (4 opsi) */}
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
                   Rekomendasi <span className="text-red-500">*</span>
                 </label>
                 <div className="flex gap-2 flex-wrap">
-                  {HASIL_AKHIR_OPTIONS.map((opt) => (
+                  {REKOMENDASI_OPTIONS.map((opt) => (
                     <button key={opt.value} type="button"
-                      onClick={() => setForm((f) => ({ ...f, hasil_akhir: opt.value }))}
+                      onClick={() => setForm((f) => ({
+                        ...f,
+                        rekomendasi: opt.value,
+                        // Reset hasil_akhir saat rekomendasi berubah
+                        hasil_akhir: autoHasilAkhir(opt.value) ?? "",
+                      }))}
                       className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
-                        form.hasil_akhir === opt.value ? opt.active : opt.inactive
+                        form.rekomendasi === opt.value ? opt.active : opt.inactive
                       }`}>
                       {opt.label}
                     </button>
                   ))}
                 </div>
-                {form.hasil_akhir && (
+                {form.rekomendasi && (
                   <p className="text-[11px] text-muted-foreground mt-1.5">
-                    Dipilih: <span className="font-semibold">{HASIL_AKHIR_OPTIONS.find((o) => o.value === form.hasil_akhir)?.label}</span>
+                    Dipilih: <span className="font-semibold">{form.rekomendasi}</span>
                   </p>
                 )}
               </div>
+
+              {/* Hasil Akhir — auto jika Layak/Tidak Layak, manual jika Dipertimbangkan */}
+              <div className={`rounded-xl p-4 border ${perluReview ? "border-amber-200 bg-amber-50" : "border-slate-100 bg-slate-50"}`}>
+                <label className="block text-xs font-semibold text-muted-foreground mb-1.5">
+                  Hasil Akhir{perluReview && <span className="text-amber-600 ml-1">— Perlu Keputusan Admin</span>}
+                </label>
+                {perluReview ? (
+                  <>
+                    <p className="text-xs text-amber-700 mb-3">
+                      Rekomendasi <strong>{form.rekomendasi}</strong> memerlukan tinjauan langsung. Pilih hasil akhir setelah meninjau data wawancara.
+                    </p>
+                    <div className="flex gap-2">
+                      {HASIL_AKHIR_OPTIONS.map((opt) => (
+                        <button key={opt.value} type="button"
+                          onClick={() => setForm((f) => ({ ...f, hasil_akhir: opt.value }))}
+                          className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                            form.hasil_akhir === opt.value ? opt.active : opt.inactive
+                          }`}>
+                          {opt.label}
+                        </button>
+                      ))}
+                    </div>
+                    {form.hasil_akhir && (
+                      <p className="text-[11px] text-muted-foreground mt-1.5">
+                        Hasil Akhir: <span className="font-semibold">{form.hasil_akhir}</span>
+                      </p>
+                    )}
+                  </>
+                ) : (
+                  <div className={`inline-flex items-center gap-1.5 text-xs font-bold px-3 py-1.5 rounded-lg ${
+                    autoHasil === "Diusulkan"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : autoHasil === "Tidak Diusulkan"
+                      ? "bg-red-100 text-red-700"
+                      : "bg-slate-100 text-slate-500"
+                  }`}>
+                    {autoHasil ?? "Pilih rekomendasi dulu"}
+                  </div>
+                )}
+              </div>
+
+              {/* Catatan Admin */}
               <div>
                 <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Catatan Admin</label>
+                <textarea value={form.catatan_admin}
+                  onChange={(e) => setForm((f) => ({ ...f, catatan_admin: e.target.value }))}
+                  placeholder="Catatan tambahan untuk keputusan ini..."
+                  rows={3}
+                  className="w-full px-3 py-2.5 text-sm border border-border rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-slate-50 resize-none transition-all"
+                />
+              </div>
+
+              {/* Alasan (dari pewawancara) */}
+              <div>
+                <label className="block text-xs font-semibold text-muted-foreground mb-1.5">Alasan Pewawancara</label>
                 <textarea value={form.alasan}
                   onChange={(e) => setForm((f) => ({ ...f, alasan: e.target.value }))}
-                  placeholder="Isi alasan jika Anda mengubah rekomendasi dari pewawancara..."
+                  placeholder="Alasan dari pewawancara..."
                   rows={4}
                   className="w-full px-3 py-2.5 text-sm border border-border rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 bg-slate-50 resize-none transition-all"
                 />
@@ -412,7 +513,7 @@ export default function EvaluasiDetailClient({ kandidat, id }: EvaluasiDetailCli
               <h3 className="font-bold text-on-surface">Hapus Hasil Wawancara?</h3>
             </div>
             <p className="text-sm text-muted-foreground mb-5">
-              Data laporan lapangan untuk <span className="font-semibold text-on-surface">{kandidat.nama}</span> akan dihapus permanen.
+              Data laporan lapangan untuk <span className="font-semibold text-on-surface">{kandidat.nama_pendaftar}</span> akan dihapus permanen.
             </p>
             <div className="flex gap-2">
               <button onClick={() => setShowDelete(false)}

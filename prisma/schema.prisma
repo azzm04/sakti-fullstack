@@ -4,175 +4,521 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider = "postgresql"
 }
 
-// ─── WHITELIST SSO ────────────────────────────────────────
-// Diisi oleh Admin via upload Excel
-model SsoWhitelist {
-  id           String   @id @default(cuid())
-  email        String   @unique
-  nama         String
-  role         Role     @default(MAHASISWA_KIPK)
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  user         User?
-
-  @@map("sso_whitelist")
-}
-
-// ─── USER ─────────────────────────────────────────────────
-// Dibuat otomatis saat mahasiswa pertama kali login OTP
 model User {
-  id          String       @id @default(cuid())
-  email       String       @unique
-  nama        String
-  nim         String?      @unique
-  prodi       String?
-  fakultas    String?
-  role        Role
-  telegramId  String?      @unique
-  whitelistId String       @unique
-  whitelist   SsoWhitelist @relation(fields: [whitelistId], references: [id])
-  otpTokens   OtpToken[]
-  chatHistory ChatHistory[]
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+  id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                 String                 @unique @map("email_sso") @db.VarChar(255)
+  role                  role_enum
+  statusAkun            status_akun_enum       @default(AKTIF) @map("status_akun")
+  createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime               @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  penerimaKipk          PenerimaKipk?
+  pewawancara           Pewawancara[]
+  tokenAktivasiTelegram TokenAktivasiTelegram?
 
   @@map("users")
 }
 
-// ─── OTP TOKEN ────────────────────────────────────────────
+model AdminUser {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  adminId     String        @unique(map: "admin_users_adminid_key") @map("admin_id") @db.VarChar(100)
+  password    String        @db.VarChar(255)
+  nama        String        @db.VarChar(150)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
+  pewawancara Pewawancara[]
+
+  @@map("admin_users")
+}
+
 model OtpToken {
-  id        String   @id @default(cuid())
+  id        String   @id @default(uuid())
   userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  code      String   // bcrypt hashed
-  expiresAt DateTime // 5 menit dari createdAt
+  code      String
+  expiresAt DateTime
   used      Boolean  @default(false)
   createdAt DateTime @default(now())
 
   @@map("otp_tokens")
 }
 
-// ─── ADMIN DIRMAWA ────────────────────────────────────────
-// Login pakai adminId + password, bukan OTP
-model AdminUser {
-  id        String   @id @default(cuid())
-  adminId   String   @unique
-  password  String   // bcrypt hashed
-  nama      String
-  createdAt DateTime @default(now())
+model TokenAktivasiTelegram {
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @unique @map("user_id") @db.Uuid
+  token     String   @unique @db.VarChar(255)
+  expiresAt DateTime @map("expires_at") @db.Timestamp(6)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@map("admin_users")
+  @@map("token_aktivasi_telegram")
 }
 
-// ─── CHAT HISTORY ─────────────────────────────────────────
+model PenerimaKipk {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId         String   @unique @map("user_id") @db.Uuid
+  lolosSeleksiId String?  @map("lolos_seleksi_id") @db.Uuid
+  nim            String?  @db.VarChar(30)
+  nama           String?  @db.VarChar(150)
+  prodi          String?  @db.VarChar(100)
+  angkatan       Int?     @db.SmallInt
+  telegramId     BigInt?  @map("telegram_id")
+  monevSubmitted Boolean  @default(false) @map("monev_submitted")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@map("penerima_kipk")
+}
+
+model Pewawancara {
+  id                   BigInt                 @id @default(autoincrement())
+  totalAssigned        Int?                   @default(0) @map("total_assigned")
+  totalCompleted       Int?                   @default(0) @map("total_completed")
+  createdAt            DateTime?              @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime?              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  adminId              String?                @map("admin_id") @db.Uuid
+  userId               String?                @map("user_id") @db.Uuid
+  nama                 String?
+  isActive             Boolean?               @default(true) @map("is_active")
+  hasil_wawancara      hasil_wawancara[]
+  hasil_wawancara_lama hasil_wawancara_lama[]
+  kuota_pewawancara    kuota_pewawancara[]
+  admin                AdminUser?             @relation(fields: [adminId], references: [id], onDelete: Restrict, onUpdate: NoAction)
+  user                 User?                  @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  slotSesi             SlotSesi[]
+  wawancara_assignment wawancara_assignment[]
+
+  @@map("pewawancara")
+}
+
+model SesiWawancara {
+  id                   BigInt                 @id @default(autoincrement())
+  tanggal              DateTime               @unique @db.Date
+  kuotaPewawancara     Int                    @default(20) @map("kuota_pewawancara")
+  kuotaMahasiswa       Int                    @default(120) @map("kuota_mahasiswa")
+  warAktif             Boolean                @default(false) @map("war_aktif")
+  warDibukaAt          DateTime?              @map("war_dibuka_at") @db.Timestamptz(6)
+  warDitutupAt         DateTime?              @map("war_ditutup_at") @db.Timestamptz(6)
+  distribusiDone       Boolean                @default(false) @map("distribusi_done")
+  createdAt            DateTime?              @default(now()) @map("created_at") @db.Timestamptz(6)
+  jalurMasuk           String?                @map("jalur_masuk")
+  hasil_wawancara_lama hasil_wawancara_lama[]
+  kuota_pewawancara    kuota_pewawancara[]
+  slotSesi             SlotSesi[]
+
+  @@index([tanggal], map: "idx_sesi_tanggal")
+  @@map("sesi_wawancara")
+}
+
+model SlotSesi {
+  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sesiId        BigInt        @map("sesi_id")
+  pewawancaraId BigInt        @map("pewawancara_id")
+  slotKe        Int           @map("slot_ke") @db.SmallInt
+  claimedAt     DateTime?     @map("claimed_at") @db.Timestamp(6)
+  pewawancara   Pewawancara   @relation(fields: [pewawancaraId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  sesi          SesiWawancara @relation(fields: [sesiId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([sesiId, pewawancaraId], map: "slot_sesi_sesi_pewawancara_key")
+  @@unique([sesiId, slotKe], map: "slot_sesi_sesi_slot_key")
+  @@map("slot_sesi")
+}
+
 model ChatHistory {
   id        String   @id @default(cuid())
-  userId    String?  // null = pengguna umum
-  user      User?    @relation(fields: [userId], references: [id])
+  userId    String?
   sessionId String
-  role      String   // "user" | "assistant"
-  content   String   @db.Text
+  role      String
+  content   String
   imageUrl  String?
   createdAt DateTime @default(now())
 
   @@map("chat_history")
 }
 
-// ─── MONEV SCHEDULE ───────────────────────────────────────
 model MonevSchedule {
-  id          String     @id @default(cuid())
-  tipeMonev   TipeMonev  @map("tipe_monev")
-  label       String     @db.VarChar(100)
-  waktuMulai  DateTime?  @map("waktu_mulai")
-  deadline    DateTime
-  isActive    Boolean    @default(true) @map("is_active")
-  createdAt   DateTime   @default(now()) @map("created_at")
-  updatedAt   DateTime   @updatedAt @map("updated_at")
-
-  notificationLogs NotificationLog[]
+  id                String              @id @default(cuid())
+  label             String
+  deadline          DateTime
+  isActive          Boolean             @default(true)
+  createdAt         DateTime            @default(now())
+  tipeMonev         tipe_monev          @default(Evaluasi_Ekonomi) @map("tipe_monev")
+  waktuMulai        DateTime?           @map("waktu_mulai") @db.Timestamptz(6)
+  updatedAt         DateTime?           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  monev_submissions monev_submissions[]
+  notification_logs NotificationLog[]
 
   @@map("monev_schedules")
 }
 
-enum TipeMonev {
-  Evaluasi_Ekonomi  @map("Evaluasi Ekonomi")
-  Evaluasi_Akademik @map("Evaluasi Akademik")
-  Evaluasi_Sosial   @map("Evaluasi Sosial")
-  Evaluasi_Akhir    @map("Evaluasi Akhir")
-}
-
-// ─── NOTIFICATION LOG ─────────────────────────────────────
 model NotificationLog {
   id              String        @id @default(cuid())
   monevScheduleId String
-  monevSchedule   MonevSchedule @relation(fields: [monevScheduleId], references: [id])
   triggerDay      Int
   totalSent       Int           @default(0)
   totalFailed     Int           @default(0)
   sentAt          DateTime      @default(now())
+  monev_schedules MonevSchedule @relation(fields: [monevScheduleId], references: [id])
 
   @@map("notification_logs")
 }
 
-// ─── ENUM ROLE ────────────────────────────────────────────
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model detail_ekonomi_wawancara {
+  id                        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  hasil_wawancara_id        String          @db.Uuid
+  penghasilan_lain          Int?
+  jml_tanggungan_sebenarnya Int?            @db.SmallInt
+  tahun_perolehan           Int?            @db.SmallInt
+  luas_tanah                Float?
+  luas_bangunan             Float?
+  daya_listrik              Int?            @db.SmallInt
+  sumber_air                Int?            @db.SmallInt
+  mck                       Int?            @db.SmallInt
+  created_at                DateTime        @default(now()) @db.Timestamp(6)
+  updated_at                DateTime        @default(now()) @db.Timestamp(6)
+  hasil_wawancara           hasil_wawancara @relation(fields: [hasil_wawancara_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model hasil_analitik_dt {
+  id                       BigInt      @id @default(autoincrement())
+  impor_data_id            String?     @db.Uuid
+  tahun_seleksi            Int         @db.SmallInt
+  jalur_masuk              String
+  total_pendaftar          Int         @db.SmallInt
+  total_diusulkan          Int         @db.SmallInt
+  total_tidak_diusulkan    Int         @db.SmallInt
+  pct_diusulkan            Float
+  pct_tidak_diusulkan      Float
+  akurasi_model            Float
+  konsistensi_pct          Float
+  pct_kasus_ambigu         Float
+  jumlah_kasus_ambigu      Int         @db.SmallInt
+  jumlah_data_uji          Int         @db.SmallInt
+  precision_diusulkan      Float?
+  recall_diusulkan         Float?
+  f1_diusulkan             Float?
+  precision_tidak          Float?
+  recall_tidak             Float?
+  f1_tidak                 Float?
+  confusion_matrix         Json?
+  akurasi_latih            Float
+  cv_accuracy              Float
+  best_params              Json
+  jumlah_fitur             Int         @db.SmallInt
+  jumlah_data_latih        Int         @db.SmallInt
+  waktu_proses_ms          Float?
+  rule_text                String
+  rule_nodes               Json
+  fitur_importance         Json
+  kasus_ambigu_detail      Json
+  distribusi_p3ke          Json
+  distribusi_kondisi_rumah Json
+  distribusi_dtks          Json
+  distribusi_geografis     Json
+  analyzed_at              DateTime?   @default(now()) @db.Timestamptz(6)
+  impor_data               impor_data? @relation(fields: [impor_data_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([tahun_seleksi, jalur_masuk])
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model hasil_wawancara {
+  id                       String                     @id(map: "hasil_wawancara_pkey1") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  kandidat_id              String                     @db.Uuid
+  dokumen_pendukung        String?
+  sosial_media             String?                    @db.VarChar(255)
+  det_pekerjaan_ayah       String?
+  ket_penghasilan_ayah     Int?
+  det_pekerjaan_ibu        String?
+  ket_penghasilan_ibu      Int?
+  penghasilan_lain         Int?
+  validasi_orang_rumah     Int?                       @db.SmallInt
+  kepemilikan_kendaraan    String?
+  kepemilikan_elektronik   String?
+  kelayakan_rumah          Boolean?
+  rekomendasi              String?
+  alasan                   String?
+  status_wawancara         String?
+  is_draft                 Boolean?                   @default(true)
+  hasil_akhir              String?
+  catatan_admin            String?
+  interviewed_at           DateTime?                  @db.Timestamp(6)
+  created_at               DateTime                   @default(now()) @db.Timestamp(6)
+  updated_at               DateTime                   @default(now()) @db.Timestamp(6)
+  kepemilikan_rumah        Int?                       @db.SmallInt
+  jumlah_orang_rumah       Int?                       @db.SmallInt
+  pewawancara_id           BigInt?
+  detail_ekonomi_wawancara detail_ekonomi_wawancara[]
+  pewawancara              Pewawancara?               @relation(fields: [pewawancara_id], references: [id], onUpdate: NoAction, map: "fk_hasil_wawancara_pewawancara")
+  kandidat                 kandidat                   @relation(fields: [kandidat_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "hasil_wawancara_kandidat_id_fkey1")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model hasil_wawancara_lama {
+  id                        BigInt         @id(map: "hasil_wawancara_pkey") @default(autoincrement())
+  kandidat_id               BigInt         @unique(map: "hasil_wawancara_kandidat_id_unique")
+  pewawancara_id            BigInt
+  validasi_kks              Boolean?
+  validasi_kip              Boolean?
+  validasi_sktm             Boolean?
+  sosial_media              String?
+  ket_pekerjaan_ayah        String?
+  ket_penghasilan_ayah      BigInt?        @default(0)
+  ket_pekerjaan_ibu         String?
+  ket_penghasilan_ibu       BigInt?        @default(0)
+  penghasilan_lain          BigInt?        @default(0)
+  jml_tanggungan_sebenarnya Int?           @default(0)
+  validasi_orang_rumah      Int?           @default(0)
+  kepemilikan_rumah         Int?
+  tahun_perolehan           String?        @db.VarChar(4)
+  luas_tanah                Float?         @default(0)
+  luas_bangunan             Float?         @default(0)
+  sumber_air                Int?
+  mck                       Int?
+  aset                      String?
+  kondisi_rumah             String?        @db.VarChar(50)
+  jarak_pusat_kota          Float?         @default(0)
+  rekomendasi               String?        @db.VarChar(50)
+  alasan                    String?
+  is_draft                  Boolean        @default(true)
+  interviewed_at            DateTime?      @db.Timestamptz(6)
+  created_at                DateTime       @default(now()) @db.Timestamptz(6)
+  updated_at                DateTime       @default(now()) @db.Timestamptz(6)
+  sesi_id                   BigInt?
+  kandidat_lama             kandidat_lama  @relation(fields: [kandidat_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "hasil_wawancara_kandidat_id_fkey")
+  pewawancara               Pewawancara    @relation(fields: [pewawancara_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "hasil_wawancara_pewawancara_id_fkey")
+  sesi_wawancara            SesiWawancara? @relation(fields: [sesi_id], references: [id], onUpdate: NoAction, map: "hasil_wawancara_sesi_id_fkey")
+
+  @@index([sesi_id], map: "idx_hasil_wawancara_sesi_id")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model impor_data {
+  id                String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  admin_id          String              @db.Uuid
+  jenis_impor       String
+  file_name         String?             @db.VarChar(255)
+  total_rows        Int?
+  valid_rows        Int?
+  error_rows        Int?
+  dup_rows          Int?
+  tahun_seleksi     Int?                @db.SmallInt
+  created_at        DateTime            @default(now()) @db.Timestamp(6)
+  hasil_analitik_dt hasil_analitik_dt[]
+  kandidat          kandidat[]
+  lolos_seleksi     lolos_seleksi[]
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model jadwal_wawancara_kandidat {
+  id               BigInt   @id @default(autoincrement())
+  kandidat_id      String   @db.Uuid
+  slod_id          String?  @db.Uuid
+  status_kehadiran String?
+  created_at       DateTime @default(now()) @db.Timestamp(6)
+  updated_at       DateTime @default(now()) @db.Timestamp(6)
+  kandidat         kandidat @relation(fields: [kandidat_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model kandidat {
+  id                        String                      @id(map: "kandidat_pkey1") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  impor_data_id             String?                     @db.Uuid
+  no                        Int?
+  no_pendaftaran_kipk       String?                     @db.VarChar(50)
+  no_kip                    String?                     @db.VarChar(50)
+  no_kks                    String?                     @db.VarChar(50)
+  nama_pendaftar            String?                     @db.VarChar(150)
+  prodi_pendaftar           String?                     @db.VarChar(100)
+  nik                       String?                     @db.VarChar(50)
+  no_kartu_keluarga         String?                     @db.VarChar(50)
+  nisn                      String?                     @db.VarChar(30)
+  asal_sekolah              String?                     @db.VarChar(150)
+  jumlah_tanggungan         Int?                        @db.SmallInt
+  pekerjaan_ayah            String?                     @db.VarChar(150)
+  pekerjaan_ibu             String?                     @db.VarChar(150)
+  penghasilan_ayah          Int?
+  penghasilan_ibu           Int?
+  kab_kota                  String?                     @db.VarChar(100)
+  provinsi                  String?                     @db.VarChar(100)
+  alamat                    String?                     @db.VarChar(255)
+  no_hp                     String?                     @db.VarChar(30)
+  email                     String?                     @db.VarChar(255)
+  created_at                DateTime                    @default(now()) @db.Timestamp(6)
+  updated_at                DateTime                    @default(now()) @db.Timestamp(6)
+  jalur_masuk               String?                     @db.VarChar(100)
+  jenis_kelamin             String?                     @db.VarChar(20)
+  nik_kepala_keluarga       String?                     @db.VarChar(50)
+  status_dtks               String?                     @db.VarChar(50)
+  status_p3ke               String?                     @db.VarChar(50)
+  tempat_lahir              String?                     @db.VarChar(100)
+  tanggal_lahir             DateTime?                   @db.Date
+  jarak_pusat_kota          Decimal?                    @db.Decimal
+  hasil_wawancara           hasil_wawancara[]
+  jadwal_wawancara_kandidat jadwal_wawancara_kandidat[]
+  impor_data                impor_data?                 @relation(fields: [impor_data_id], references: [id], onUpdate: NoAction)
+}
+
+model kandidat_lama {
+  id                   BigInt                 @id(map: "kandidat_pkey") @default(autoincrement())
+  import_batch_id      BigInt?
+  no                   Int?
+  no_pendaftaran_kipk  String?
+  no_bantuan_sosial    String?
+  nama                 String?
+  prodi                String?
+  nik                  String?
+  no_kartu_keluarga    String?
+  nisn                 String?
+  asal_sekolah         String?
+  status_dtsen         String?
+  jumlah_tanggungan    Int?
+  jumlah_orang_rumah   Int?
+  pekerjaan_ayah       String?
+  pekerjaan_ibu        String?
+  penghasilan_ayah     String?                @default(dbgenerated("0"))
+  penghasilan_ibu      String?                @default(dbgenerated("0"))
+  kab_kota             String?
+  provinsi             String?
+  alamat               String?
+  pbb                  BigInt?                @default(0)
+  daya_listrik         String?
+  no_hp                String?
+  email                String?
+  koordinat            String?
+  latitude             Float?
+  longitude            Float?
+  skor_total           Float?                 @default(0)
+  ranking              Int?
+  created_at           DateTime?              @default(now()) @db.Timestamptz(6)
+  status_seleksi       String?
+  catatan_admin        String?
+  updated_at           DateTime?              @default(now()) @db.Timestamptz(6)
+  jalur_masuk          String?
+  hasil_seleksi        String?
+  hasil_wawancara_lama hasil_wawancara_lama?
+  wawancara_assignment wawancara_assignment[]
+}
+
+model kuota_pewawancara {
+  id             BigInt        @id(map: "slot_pewawancara_pkey") @default(autoincrement())
+  sesi_id        BigInt
+  kuota_ke       Int
+  pewawancara_id BigInt
+  claimed_at     DateTime?     @default(now()) @db.Timestamptz(6)
+  pewawancara    Pewawancara   @relation(fields: [pewawancara_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "slot_pewawancara_pewawancara_id_fkey")
+  sesi_wawancara SesiWawancara @relation(fields: [sesi_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "slot_pewawancara_sesi_id_fkey")
+
+  @@unique([sesi_id, pewawancara_id], map: "slot_pewawancara_sesi_id_pewawancara_id_key")
+  @@unique([sesi_id, kuota_ke], map: "slot_pewawancara_sesi_id_slot_ke_key")
+  @@index([pewawancara_id], map: "idx_slot_pewawancara")
+  @@index([sesi_id], map: "idx_slot_sesi")
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model lolos_seleksi {
+  id            String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  impor_data_id String?     @db.Uuid
+  nomor_sk      String?     @db.VarChar(100)
+  tanggal_sk    DateTime?   @db.Date
+  created_at    DateTime    @default(now()) @db.Timestamp(6)
+  impor_data    impor_data? @relation(fields: [impor_data_id], references: [id], onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model monev_submissions {
+  id                         BigInt        @id @default(autoincrement())
+  user_id                    String
+  monev_schedule_id          String
+  pekerjaan_ayah             String?       @db.VarChar(100)
+  url_bukti_pekerjaan_ayah   String?       @db.VarChar(255)
+  penghasilan_ayah           BigInt?
+  url_bukti_penghasilan_ayah String?       @db.VarChar(255)
+  pekerjaan_ibu              String?       @db.VarChar(100)
+  url_bukti_pekerjaan_ibu    String?       @db.VarChar(255)
+  penghasilan_ibu            BigInt?
+  url_bukti_penghasilan_ibu  String?       @db.VarChar(255)
+  penghasilan_lain           BigInt?       @default(0)
+  url_bukti_penghasilan_lain String?       @db.VarChar(255)
+  jumlah_tanggungan          Int?
+  url_scan_kk                String        @db.VarChar(255)
+  hasil_deteksi_yolo         Int?
+  status_anomali             Boolean?      @default(false)
+  waktu_lapor                DateTime?     @default(now()) @db.Timestamptz(6)
+  monev_schedules            MonevSchedule @relation(fields: [monev_schedule_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model pengumuman_seleksi {
+  id               String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  admin_id         String   @db.Uuid
+  judul_pengumuman String?  @db.VarChar(255)
+  isi_teks         String?
+  file_dokumen_url String?  @db.VarChar(255)
+  created_at       DateTime @default(now()) @db.Timestamp(6)
+  updated_at       DateTime @default(now()) @db.Timestamp(6)
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model sso_whitelist {
+  id        String   @id
+  email     String   @unique
+  nama      String
+  role      Role     @default(MAHASISWA_KIPK)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime
+  prodi     String?
+  fakultas  String?
+  nim       String?  @unique
+}
+
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model telegram_activation_tokens {
+  id        String   @id
+  userId    String   @unique
+  token     String   @unique
+  expiresAt DateTime @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+}
+
+model wawancara_assignment {
+  id             BigInt        @id @default(autoincrement())
+  kandidat_id    BigInt
+  pewawancara_id BigInt
+  blok           Int?
+  status         String?       @default("pending")
+  scheduled_at   DateTime?     @db.Timestamptz(6)
+  completed_at   DateTime?     @db.Timestamptz(6)
+  created_at     DateTime?     @default(now()) @db.Timestamptz(6)
+  kandidat_lama  kandidat_lama @relation(fields: [kandidat_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  pewawancara    Pewawancara   @relation(fields: [pewawancara_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
 enum Role {
   MAHASISWA_KIPK
   PEWAWANCARA
   ADMIN_DIRMAWA
 }
 
-// ─── PEWAWANCARA ──────────────────────────────────────────
-// Tabel pewawancara terpisah (dari skenario BAB 2.5)
-// Berbeda dengan User — pewawancara punya blok penugasan
-model Pewawancara {
-  id              BigInt    @id @default(autoincrement())
-  email           String    @unique
-  nama            String?
-  ssoId           String?   @map("sso_id")
-  blokPenugasan   Int?      @map("blok_penugasan")
-  totalAssigned   Int       @default(0) @map("total_assigned")
-  totalCompleted  Int       @default(0) @map("total_completed")
-  isActive        Boolean   @default(true) @map("is_active")
-  createdAt       DateTime  @default(now()) @map("created_at")
-
-  assignments     WawancaraAssignment[]
-
-  @@map("pewawancara")
+enum role_enum {
+  MAHASISWA_KIPK
+  PEWAWANCARA
+  ADMIN_DIRMAWA
 }
 
-// ─── WAWANCARA ASSIGNMENT ─────────────────────────────────
-// Relasi kandidat ↔ pewawancara
-model WawancaraAssignment {
-  id             BigInt    @id @default(autoincrement())
-  kandidatId     BigInt    @map("kandidat_id")
-  pewawancaraId  BigInt    @map("pewawancara_id")
-  blok           Int?
-  status         String    @default("pending") // pending | completed | cancelled
-  scheduledAt    DateTime? @map("scheduled_at")
-  completedAt    DateTime? @map("completed_at")
-  createdAt      DateTime  @default(now()) @map("created_at")
-
-  pewawancara    Pewawancara @relation(fields: [pewawancaraId], references: [id])
-
-  @@map("wawancara_assignment")
+enum status_akun_enum {
+  AKTIF
+  NONAKTIF
+  PENDING
 }
 
-// ─── TOPSIS WEIGHTS ───────────────────────────────────────
-// Bobot kriteria TOPSIS yang bisa diset admin per periode
-model TopsisWeights {
-  id                  BigInt   @id @default(autoincrement())
-  periode             String?  // e.g. "2026-SNBP"
-  penghasilanWeight   Float    @default(0.3)  @map("penghasilan_weight")
-  tanggunganWeight    Float    @default(0.2)  @map("tanggungan_weight")
-  jarakWeight         Float    @default(0.15) @map("jarak_weight")
-  kondisiRumahWeight  Float    @default(0.15) @map("kondisi_rumah_weight")
-  wawancaraWeight     Float    @default(0.2)  @map("wawancara_weight")
-  createdAt           DateTime @default(now()) @map("created_at")
-
-  @@map("topsis_weights")
+enum tipe_monev {
+  Evaluasi_Ekonomi  @map("Evaluasi Ekonomi")
+  Evaluasi_Akademik @map("Evaluasi Akademik")
+  Evaluasi_Sosial   @map("Evaluasi Sosial")
+  Evaluasi_Akhir    @map("Evaluasi Akhir")
 }

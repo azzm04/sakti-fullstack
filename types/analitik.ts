@@ -4,6 +4,7 @@ export interface FeatureImportanceItem {
   fitur: string
   importance: number
   pct: number
+  berkontribusi?: boolean
 }
 
 export interface KasusAmbigu {
