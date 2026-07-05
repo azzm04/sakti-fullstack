@@ -46,60 +46,64 @@ export default function InsightNaratif({ data }: Props) {
     body: string
   }[] = []
 
+  // 1. Insight Faktor Penentu Utama (Warna Slate/Abu-abu kebiruan lembut)
   if (topFitur.length > 0) {
     const top = topFitur[0]
     insights.push({
       icon: Lightbulb,
-      colorIcon: "text-primary",
-      colorTitle: "text-primary",
-      bg: "bg-primary/5",
-      border: "border-primary/15",
+      colorIcon: "text-slate-700",
+      colorTitle: "text-slate-800",
+      bg: "bg-slate-50",
+      border: "border-slate-200",
       title: "Faktor Penentu Utama",
       body: `Keputusan pewawancara paling dipengaruhi oleh ${top.fitur} (${top.pct}% kontribusi)${topFitur[1] ? `, diikuti ${topFitur[1].fitur} (${topFitur[1].pct}%)` : ""}${topFitur[2] ? ` dan ${topFitur[2].fitur} (${topFitur[2].pct}%)` : ""}. Faktor ekonomi mendominasi pola keputusan ini.`,
     })
   }
 
+  // 2. Insight Pola Penolakan (Warna Rose/Merah Muda lembut)
   if (thresholdPenghasilan && thresholdTanggungan) {
     insights.push({
       icon: TrendingDown,
-      colorIcon: "text-destructive",
-      colorTitle: "text-destructive",
-      bg: "bg-destructive/5",
-      border: "border-destructive/15",
+      colorIcon: "text-rose-500",
+      colorTitle: "text-rose-600",
+      bg: "bg-rose-50/50",
+      border: "border-rose-100",
       title: "Pola Tidak Diusulkan",
       body: `Pewawancara cenderung TIDAK mengusulkan jika penghasilan ayah melebihi ${fmtRp(thresholdPenghasilan)} dan jumlah tanggungan ≤ ${Math.round(thresholdTanggungan)} orang. Ini mencerminkan persepsi bahwa keluarga dengan penghasilan tinggi dan tanggungan sedikit dianggap mampu secara ekonomi.`,
     })
   } else if (aturanTolak.length > 0) {
     insights.push({
       icon: TrendingDown,
-      colorIcon: "text-destructive",
-      colorTitle: "text-destructive",
-      bg: "bg-destructive/5",
-      border: "border-destructive/15",
+      colorIcon: "text-rose-500",
+      colorTitle: "text-rose-600",
+      bg: "bg-rose-50/50",
+      border: "border-rose-100",
       title: "Pola Tidak Diusulkan",
       body: `Ditemukan ${aturanTolak.length} pola keputusan penolakan. Kondisi utama: ${aturanTolak[0].kondisi.split("&")[0].trim()}.`,
     })
   }
 
+  // 3. Insight Kasus Ambigu (Warna Amber/Kuning lembut)
   if (safeAmbigu.length > 0) {
     insights.push({
       icon: AlertTriangle,
-      colorIcon: "text-amber-600",
+      colorIcon: "text-amber-500",
       colorTitle: "text-amber-700",
-      bg: "bg-amber-50",
-      border: "border-amber-200",
+      bg: "bg-amber-50/50",
+      border: "border-amber-200/60",
       title: `${safeAmbigu.length} Keputusan Tidak Konsisten dengan Pola`,
       body: `${ambiguMestiDisusulkan} dari ${safeAmbigu.length} keputusan tidak konsisten: kandidat yang TIDAK diusulkan pewawancara padahal pola umum data mengarah ke "Diusulkan". Ini bisa mengindikasikan pertimbangan subjektif di luar data yang perlu ditinjau lebih lanjut.`,
     })
   }
 
+  // 4. Insight Konsistensi Model (Warna Emerald/Hijau lembut)
   if (ringkasan.pct_diusulkan >= 85) {
     insights.push({
       icon: CheckCircle2,
-      colorIcon: "text-emerald-600",
+      colorIcon: "text-emerald-500",
       colorTitle: "text-emerald-700",
-      bg: "bg-emerald-50",
-      border: "border-emerald-200",
+      bg: "bg-emerald-50/50",
+      border: "border-emerald-200/60",
       title: "Konsistensi Keputusan Baik",
       body: `${ringkasan.pct_diusulkan}% kandidat diusulkan. Model Decision Tree berhasil menjelaskan 90% pola keputusan ini, menunjukkan pewawancara cukup konsisten dalam menggunakan kriteria yang sama.`,
     })
@@ -108,29 +112,31 @@ export default function InsightNaratif({ data }: Props) {
   if (insights.length === 0) return null
 
   return (
-    <div className="bg-white rounded-2xl border border-border shadow-sm p-6">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-8 h-8 rounded-xl bg-primary/8 flex items-center justify-center">
-          <Lightbulb size={15} className="text-primary" />
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 lg:p-8">
+      {/* Header Panel */}
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center border border-slate-200 shrink-0">
+          <Lightbulb size={20} className="text-slate-700" strokeWidth={2} />
         </div>
-        <div>
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
-            Ringkasan Analitik pola keputusan pewawancara
-          </h3>
-          {/* <p className="text-xs text-muted-foreground">
-            Ringkasan pola keputusan pewawancara
-          </p> */}
-        </div>
+        <h3 className="text-[15px] font-extrabold text-slate-800 uppercase tracking-wide">
+          Ringkasan Analitik Pola Keputusan Pewawancara
+        </h3>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {/* Grid Cards */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {insights.map(({ icon: Icon, colorIcon, colorTitle, bg, border, title, body }, i) => (
-          <div key={i} className={`${bg} border ${border} rounded-xl p-4`}>
-            <div className="flex items-center gap-2 mb-2">
-              <Icon size={14} className={colorIcon} />
-              <p className={`text-xs font-bold ${colorTitle}`}>{title}</p>
+          <div 
+            key={i} 
+            className={`${bg} border ${border} rounded-2xl p-5 transition-colors hover:bg-opacity-80`}
+          >
+            <div className="flex items-center gap-2.5 mb-2.5">
+              <Icon size={18} className={colorIcon} strokeWidth={2.5} />
+              <h4 className={`text-sm font-bold ${colorTitle}`}>{title}</h4>
             </div>
-            <p className="text-xs text-foreground/70 leading-relaxed">{body}</p>
+            <p className="text-[13px] text-slate-600 leading-relaxed font-medium">
+              {body}
+            </p>
           </div>
         ))}
       </div>

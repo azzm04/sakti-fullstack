@@ -78,6 +78,7 @@ export interface DashboardAnalitikData {
   status: string
   pesan: string
   waktu_proses_ms: number
+  sumber?: string   // "computed" | "cache"
   ringkasan: Ringkasan
   feature_importance: FeatureImportanceItem[]
   konsistensi: Konsistensi

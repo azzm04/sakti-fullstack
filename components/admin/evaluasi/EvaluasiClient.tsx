@@ -11,6 +11,7 @@ import {
   Loader2,
   ListFilter,
   X,
+  TriangleAlert,
 } from "lucide-react";
 import { nanoid } from "nanoid";
 import Filters, {
@@ -21,6 +22,7 @@ import Filters, {
   filterViewOptions,
   filterViewToFilterOptions,
   FilterOption,
+  RekomendasiWawancara,
 } from "@/components/ui/filters";
 import { Button } from "@/components/ui/button";
 import {
@@ -148,6 +150,10 @@ export default function EvaluasiClient({ initialData }: EvaluasiClientProps) {
         );
         if (!match) return false;
       }
+      if (f.type === FilterType.REKOMENDASI) {
+        const match = f.value.some((v) => v === m.rekomendasi);
+        if (!match) return false;
+      }
       if (f.type === FilterType.STATUS) {
         const selesai = isEvaluasiSelesai(m);
         const match = f.value.some((v) =>
@@ -235,6 +241,33 @@ export default function EvaluasiClient({ initialData }: EvaluasiClientProps) {
         <div className="flex items-center gap-2 flex-wrap shrink-0">
           <Filters filters={filters} setFilters={setFilters} />
 
+          {/* Shortcut: Perlu Review — langsung filter Layak/Tidak Layak Dipertimbangkan */}
+          {totalPerluReview > 0 && !filters.some(
+            (f) => f.type === FilterType.REKOMENDASI &&
+              f.value.includes(RekomendasiWawancara.LAYAK_DIPERTIMBANGKAN)
+          ) && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-8 text-xs rounded-lg px-3 border-amber-300 text-amber-700 bg-amber-50 hover:bg-amber-100 hover:border-amber-400 gap-1.5"
+              onClick={() => setFilters((prev) => [
+                ...prev.filter((f) => f.type !== FilterType.REKOMENDASI),
+                {
+                  id: nanoid(),
+                  type: FilterType.REKOMENDASI,
+                  operator: FilterOperator.IS_ANY_OF,
+                  value: [
+                    RekomendasiWawancara.LAYAK_DIPERTIMBANGKAN,
+                    RekomendasiWawancara.TIDAK_LAYAK_DIPERTIMBANGKAN,
+                  ],
+                },
+              ])}
+            >
+              <TriangleAlert className="size-3 text-amber-500" />
+              Perlu Review ({totalPerluReview})
+            </Button>
+          )}
+
           {filters.filter((f) => f.value?.length > 0).length > 0 && (
             <Button
               variant="outline"
@@ -290,15 +323,26 @@ export default function EvaluasiClient({ initialData }: EvaluasiClientProps) {
                               value={f.name}
                               className="group text-muted-foreground flex gap-2 items-center"
                               onSelect={(val) => {
-                                setFilters((prev) => [
-                                  ...prev,
-                                  {
-                                    id: nanoid(),
-                                    type: selectedView,
-                                    operator: FilterOperator.IS,
-                                    value: [val],
-                                  },
-                                ]);
+                                setFilters((prev) => {
+                                  // Jika tipe sudah ada, update nilai saja (tidak duplikat)
+                                  const existing = prev.find((f) => f.type === selectedView)
+                                  if (existing) {
+                                    return prev.map((f) =>
+                                      f.type === selectedView
+                                        ? { ...f, value: [...new Set([...f.value, val])] }
+                                        : f
+                                    )
+                                  }
+                                  return [
+                                    ...prev,
+                                    {
+                                      id: nanoid(),
+                                      type: selectedView,
+                                      operator: FilterOperator.IS,
+                                      value: [val],
+                                    },
+                                  ]
+                                });
                                 setTimeout(() => {
                                   setSelectedView(null);
                                   setFilterInput("");
@@ -316,10 +360,17 @@ export default function EvaluasiClient({ initialData }: EvaluasiClientProps) {
                       </CommandGroup>
                     ) : (
                       filterViewOptions.map(
-                        (group: FilterOption[], idx: number) => (
+                        (group: FilterOption[], idx: number) => {
+                          // Sembunyikan tipe filter yang sudah ada (mencegah duplikat)
+                          const activeTypes = new Set(filters.map((f) => f.type))
+                          const availableGroup = group.filter(
+                            (f) => !activeTypes.has(f.name as FilterType)
+                          )
+                          if (availableGroup.length === 0) return null
+                          return (
                           <div key={idx}>
                             <CommandGroup>
-                              {group.map((f: FilterOption) => (
+                              {availableGroup.map((f: FilterOption) => (
                                 <CommandItem
                                   key={f.name}
                                   value={f.name}
@@ -340,7 +391,8 @@ export default function EvaluasiClient({ initialData }: EvaluasiClientProps) {
                               <CommandSeparator />
                             )}
                           </div>
-                        ),
+                          )
+                        },
                       )
                     )}
                   </CommandList>
@@ -403,14 +455,14 @@ export default function EvaluasiClient({ initialData }: EvaluasiClientProps) {
                       </td>
                       <td className="px-4 py-3">
                         <p className="font-semibold text-on-surface text-sm">
-                          {m.nama}
+                          {m.nama_pendaftar}
                         </p>
                         <p className="text-[11px] text-muted-foreground font-mono">
                           {m.no_pendaftaran_kipk}
                         </p>
                       </td>
-                      <td className="px-4 py-3 text-xs text-muted-foreground max-w-[180px] truncate">
-                        {m.prodi}
+                      <td className="px-4 py-3 text-xs font-semibold text-muted-foreground max-w-[180px] truncate">
+                        {m.prodi_pendaftar}
                       </td>
                       <td className="px-4 py-3 text-xs text-on-surface">
                         {m.pewawancara || (

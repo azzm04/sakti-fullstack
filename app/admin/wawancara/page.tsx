@@ -255,10 +255,8 @@ function DaftarPewawancara() {
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100">
                 {[
-                  "Nama / Email",
-                  "ID",
-                  "Assigned",
-                  "Selesai",
+                  "Nama",
+                  "Email",
                   "Status",
                   "Aksi",
                 ].map((h) => (
@@ -281,18 +279,10 @@ function DaftarPewawancara() {
                     <p className="font-semibold text-slate-800">
                       {p.nama ?? "—"}
                     </p>
-                    <p className="text-[11px] text-slate-400">{p.users?.email_sso ?? "—"}</p>
+                    
                   </td>
                   <td className="px-4 py-3">
-                    <span className="text-[11px] font-bold font-mono px-2 py-0.5 bg-slate-100 text-slate-500 rounded-lg">
-                      {p.users?.id ?? "—"}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-xs font-semibold text-slate-600">
-                    {p.total_assigned}
-                  </td>
-                  <td className="px-4 py-3 text-xs font-semibold text-emerald-600">
-                    {p.total_completed}
+                      <p className="text-[11px] font-semibold text-slate-800">{p.users?.email_sso ?? "—"}</p>
                   </td>
                   <td className="px-4 py-3">
                     <button

@@ -1,44 +1,44 @@
 "use client"
 
+import { useState } from "react"
 import { RadialBarChart, RadialBar, ResponsiveContainer, PolarAngleAxis } from "recharts"
-import type { Konsistensi } from "@/types/analitik"
+import { ChevronDown, ChevronUp, CheckCircle2, AlertTriangle } from "lucide-react"
+import type { Konsistensi, ModelInfo } from "@/types/analitik"
 
 interface Props {
   data: Konsistensi
+  modelInfo?: ModelInfo
 }
 
-export default function KonsistensiCard({ data }: Props) {
-  const akurasi = Math.round(data.akurasi_model * 100)
-  // Gunakan warna primary (#001349) untuk gauge
-  const gaugeData = [{ value: akurasi, fill: "#001349" }]
+export default function KonsistensiCard({ data, modelInfo }: Props) {
+  const [showTeknis, setShowTeknis] = useState(false)
 
-  const metrik = [
-    { label: "Kekuatan Pola (Diusulkan)", value: (data.precision_diusulkan * 100).toFixed(1) + "%" },
-    { label: "Recall (Diusulkan)",         value: (data.recall_diusulkan    * 100).toFixed(1) + "%" },
-    { label: "F1-Score (Diusulkan)",        value: (data.f1_diusulkan        * 100).toFixed(1) + "%" },
-    { label: "Tidak Konsisten dengan Pola", value: `${data.jumlah_kasus_ambigu} / ${data.jumlah_total_uji}` },
-  ]
+  const akurasi        = Math.round(data.akurasi_model * 100)
+  const jumlahUji      = data.jumlah_total_uji
+  const konsisten      = jumlahUji - data.jumlah_kasus_ambigu
+  const tidakKonsisten = data.jumlah_kasus_ambigu
+  const gaugeData      = [{ value: akurasi, fill: "#001349" }]
+
+  // Ambil max_depth dari best_params jika tersedia
+  const maxDepth = modelInfo?.best_params?.max_depth ?? modelInfo?.best_params?.["max_depth"]
 
   return (
     <div className="bg-white rounded-2xl border border-border shadow-sm p-6">
       <h3 className="text-sm font-bold text-foreground uppercase tracking-wider mb-1">
         Konsistensi Model
       </h3>
-      <p className="text-xs text-muted-foreground mb-4">
-        Tingkat akurasi & metrik evaluasi Decision Tree
+      <p className="text-xs text-muted-foreground mb-5">
+        Seberapa konsisten pola keputusan pewawancara
       </p>
 
-      <div className="flex flex-col items-center mb-4">
-        <div className="relative w-40 h-40">
+      {/* Gauge */}
+      <div className="flex flex-col items-center mb-5">
+        <div className="relative w-36 h-36">
           <ResponsiveContainer width="100%" height="100%">
             <RadialBarChart
-              cx="50%"
-              cy="50%"
-              innerRadius="70%"
-              outerRadius="100%"
-              barSize={14}
-              startAngle={90}
-              endAngle={-270}
+              cx="50%" cy="50%"
+              innerRadius="70%" outerRadius="100%"
+              barSize={14} startAngle={90} endAngle={-270}
               data={gaugeData}
             >
               <PolarAngleAxis type="number" domain={[0, 100]} angleAxisId={0} tick={false} />
@@ -53,68 +53,85 @@ export default function KonsistensiCard({ data }: Props) {
           <div className="absolute inset-0 flex flex-col items-center justify-center">
             <span className="text-3xl font-extrabold text-primary">{akurasi}%</span>
             <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mt-0.5">
-              Akurasi
+              Konsisten
             </span>
           </div>
         </div>
       </div>
 
-      <div className="space-y-2">
-        {metrik.map(({ label, value }) => (
-          <div key={label} className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">{label}</span>
-            <span className="font-bold text-foreground">{value}</span>
+      {/* Ringkasan plain-language */}
+      <div className="space-y-2.5 mb-5">
+        <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3">
+          <CheckCircle2 size={18} className="text-emerald-500 shrink-0" />
+          <div>
+            <p className="text-sm font-bold text-emerald-800">
+              {konsisten} keputusan konsisten
+            </p>
+            <p className="text-xs text-emerald-600">
+              Sesuai dengan pola umum dari {jumlahUji} kasus yang diuji
+            </p>
           </div>
-        ))}
-      </div>
+        </div>
 
-      {/* Confusion Matrix */}
-      <div className="mt-4 pt-4 border-t border-border">
-        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
-          Confusion Matrix
-        </p>
-        {data.confusion_matrix ? (
-          <>
-            {/* Label sumbu */}
-            <div className="flex text-[10px] text-muted-foreground mb-1 pl-16">
-              <span className="flex-1 text-center">Prediksi: Tidak</span>
-              <span className="flex-1 text-center">Prediksi: Iya</span>
+        {tidakKonsisten > 0 && (
+          <div className="flex items-center gap-3 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
+            <AlertTriangle size={18} className="text-amber-500 shrink-0" />
+            <div>
+              <p className="text-sm font-bold text-amber-800">
+                {tidakKonsisten} keputusan perlu ditinjau
+              </p>
+              <p className="text-xs text-amber-600">
+                Berbeda dari pola umum — mungkin ada pertimbangan di luar data
+              </p>
             </div>
-            <div className="flex gap-2">
-              {/* Label aktual vertikal */}
-              <div className="flex flex-col justify-around text-[10px] text-muted-foreground w-14 text-right pr-2 shrink-0">
-                <span>Aktual: Tidak</span>
-                <span>Aktual: Iya</span>
-              </div>
-              {/* Grid 2x2 */}
-              <div className="flex-1 grid grid-cols-2 gap-2">
-                <div className="bg-muted rounded-xl p-4 text-center">
-                  <p className="text-[11px] font-semibold text-muted-foreground mb-1">TN</p>
-                  <p className="text-2xl font-extrabold text-foreground">{data.confusion_matrix[0][0]}</p>
-                  <p className="text-[10px] text-muted-foreground mt-1">Benar Tolak</p>
-                </div>
-                <div className="bg-destructive/8 rounded-xl p-4 text-center">
-                  <p className="text-[11px] font-semibold text-destructive/60 mb-1">FP</p>
-                  <p className="text-2xl font-extrabold text-destructive">{data.confusion_matrix[0][1]}</p>
-                  <p className="text-[10px] text-destructive/60 mt-1">Salah Lolos</p>
-                </div>
-                <div className="bg-amber-50 rounded-xl p-4 text-center">
-                  <p className="text-[11px] font-semibold text-amber-500 mb-1">FN</p>
-                  <p className="text-2xl font-extrabold text-amber-600">{data.confusion_matrix[1][0]}</p>
-                  <p className="text-[10px] text-amber-500 mt-1">Salah Tolak</p>
-                </div>
-                <div className="bg-emerald-50 rounded-xl p-4 text-center">
-                  <p className="text-[11px] font-semibold text-emerald-500 mb-1">TP</p>
-                  <p className="text-2xl font-extrabold text-emerald-600">{data.confusion_matrix[1][1]}</p>
-                  <p className="text-[10px] text-emerald-500 mt-1">Benar Lolos</p>
-                </div>
-              </div>
-            </div>
-          </>
-        ) : (
-          <p className="text-xs text-muted-foreground text-center py-2">Data tidak tersedia</p>
+          </div>
         )}
       </div>
+
+      {/* Toggle detail teknis */}
+      <button
+        onClick={() => setShowTeknis((v) => !v)}
+        className="w-full flex items-center justify-between text-xs font-semibold text-muted-foreground hover:text-foreground border border-border rounded-xl px-4 py-2.5 hover:bg-muted/40 transition-colors"
+      >
+        <span>Lihat Detail Teknis</span>
+        {showTeknis ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+      </button>
+
+      {/* Detail teknis — parameter model saja, tanpa metrik ML */}
+      {showTeknis && (
+        <div className="mt-3 pt-3 border-t border-border">
+          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
+            Parameter Model
+          </p>
+          <div className="space-y-1.5 text-xs">
+            {[
+              {
+                label: "Algoritma",
+                value: `${modelInfo?.algoritma ?? "Decision Tree"}${maxDepth ? ` (kedalaman ${maxDepth})` : ""}`,
+              },
+              {
+                label: "Data Latih",
+                value: modelInfo?.jumlah_data_train ? `${modelInfo.jumlah_data_train} data` : "—",
+              },
+              {
+                label: "Data Uji",
+                value: modelInfo?.jumlah_data_test ? `${modelInfo.jumlah_data_test} data` : "—",
+              },
+              {
+                label: "Akurasi Cross-Validation",
+                value: modelInfo?.cv_accuracy
+                  ? `${(modelInfo.cv_accuracy * 100).toFixed(2)}%`
+                  : `${(data.cv_accuracy * 100).toFixed(2)}%`,
+              },
+            ].map(({ label, value }) => (
+              <div key={label} className="flex items-center justify-between">
+                <span className="text-muted-foreground">{label}</span>
+                <span className="font-bold text-foreground text-right max-w-[60%]">{value}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

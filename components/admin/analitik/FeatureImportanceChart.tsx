@@ -75,8 +75,8 @@ export default function FeatureImportanceChart({ data }: Props) {
     )
   }
 
-  // Sedikit penyesuaian tinggi agar tidak terlalu renggang
-  const chartHeight = active.length * 36 + inactive.length * 24 + 16
+  // PENYESUAIAN: Menambah spasi per item agar label interval={0} tidak bertumpuk
+  const chartHeight = active.length * 40 + inactive.length * 28 + 40
 
   return (
     <div className="bg-white rounded-2xl border border-border shadow-sm p-6">
@@ -94,11 +94,11 @@ export default function FeatureImportanceChart({ data }: Props) {
         Kontribusi tiap fitur terhadap hasil prediksi model
       </p>
 
-      <ResponsiveContainer width="100%" height={Math.max(200, chartHeight)}>
+      <ResponsiveContainer width="100%" height={Math.max(300, chartHeight)}>
         <BarChart
           layout="vertical"
           data={displayed}
-          margin={{ top: 0, right: 40, left: 0, bottom: 0 }}
+          margin={{ top: 10, right: 50, left: 0, bottom: 0 }} // Right margin ditambah agar teks % tidak terpotong
         >
           <CartesianGrid horizontal={false} strokeDasharray="3 3" stroke="#f1f5f9" />
           <XAxis
@@ -111,7 +111,8 @@ export default function FeatureImportanceChart({ data }: Props) {
           <YAxis
             dataKey="fitur"
             type="category"
-            width={180} // DIKURANGI DARI 350: Memberikan ruang lebih besar untuk grafik Bar
+            width={180}
+            interval={0} // KUNCI PERBAIKAN: Memaksa semua label Y dirender tanpa di-skip
             tick={({ x, y, payload, index }: {
               x: number; y: number
               payload: { value: string }
@@ -121,7 +122,6 @@ export default function FeatureImportanceChart({ data }: Props) {
               const isInactive = item?.berkontribusi === false || item?.importance === 0
               return (
                 <g transform={`translate(${x},${y})`}>
-                  {/* Nama fitur saja, teks penjelas dihapus agar bersih */}
                   <text
                     x={-8} 
                     y={0} 
@@ -156,7 +156,7 @@ export default function FeatureImportanceChart({ data }: Props) {
                 const item = displayed[index as number]
                 if (!item) return null
                 const isInactive = item.berkontribusi === false || item.importance === 0
-                if (isInactive) return null // Jangan tampilkan angka persen untuk fitur tidak aktif
+                if (isInactive) return null 
                 
                 const xPos = (x as number) + (width as number) + 8
                 const yPos = (y as number) + (height as number) / 2 + 4
@@ -171,7 +171,6 @@ export default function FeatureImportanceChart({ data }: Props) {
         </BarChart>
       </ResponsiveContainer>
 
-      {/* Legend dipertahankan karena ini adalah indikator yang tepat */}
       {inactive.length > 0 && (
         <div className="mt-4 pt-4 border-t border-border flex items-center gap-5 text-[11px] text-muted-foreground">
           <span className="flex items-center gap-2">

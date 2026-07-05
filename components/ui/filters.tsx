@@ -35,6 +35,7 @@ export const AnimateChangeInHeight: React.FC<AnimateChangeInHeightProps> = ({ ch
 // ── Filter Types untuk SAKTI Evaluasi ─────────────────────────────────────────
 export enum FilterType {
   HASIL_AKHIR  = "Hasil Akhir",
+  REKOMENDASI  = "Rekomendasi",
   STATUS       = "Status",
   JALUR_MASUK  = "Jalur Masuk",
   PEWAWANCARA  = "Pewawancara",
@@ -49,9 +50,16 @@ export enum FilterOperator {
 }
 
 export enum HasilAkhir {
-  LAYAK           = "Layak",
-  DIPERTIMBANGKAN = "Dipertimbangkan",
-  TIDAK_LAYAK     = "Tidak Layak",
+  DIUSULKAN         = "Diusulkan",
+  TIDAK_DIUSULKAN   = "Tidak Diusulkan",
+  PERLU_REVIEW      = "Perlu Review",
+}
+
+export enum RekomendasiWawancara {
+  LAYAK                        = "Layak",
+  LAYAK_DIPERTIMBANGKAN        = "Layak Dipertimbangkan",
+  TIDAK_LAYAK_DIPERTIMBANGKAN  = "Tidak Layak Dipertimbangkan",
+  TIDAK_LAYAK                  = "Tidak Layak",
 }
 
 export enum StatusEvaluasi {
@@ -60,8 +68,10 @@ export enum StatusEvaluasi {
 }
 
 export enum JalurMasuk {
-  SNBP = "SNBP",
-  SNBT = "SNBT",
+  SNBP_Eligible = "SNBP Eligible",
+  SNBP_Non_Eligible = "SNBT Non-Eligible",
+  SNBT_Eligible = "SNBT Eligible",
+  SNBT_Non_Eligible = "SNBT Non-Eligible",
   UM   = "UM",
 }
 
@@ -79,16 +89,23 @@ export type Filter = { id: string; type: FilterType; operator: FilterOperator; v
 const FilterIcon = ({ type }: { type: string }) => {
   switch (type) {
     case FilterType.HASIL_AKHIR:  return <CircleDashed className="size-3.5 text-muted-foreground" />;
+    case FilterType.REKOMENDASI:  return <Circle className="size-3.5 text-muted-foreground" />;
     case FilterType.STATUS:       return <CircleCheck className="size-3.5 text-muted-foreground" />;
     case FilterType.JALUR_MASUK:  return <GraduationCap className="size-3.5 text-muted-foreground" />;
     case FilterType.PEWAWANCARA:  return <UserCheck className="size-3.5 text-muted-foreground" />;
-    case HasilAkhir.LAYAK:           return <CircleCheck className="size-3.5 text-emerald-500" />;
-    case HasilAkhir.DIPERTIMBANGKAN: return <Circle className="size-3.5 text-amber-500" />;
-    case HasilAkhir.TIDAK_LAYAK:     return <CircleX className="size-3.5 text-red-500" />;
+    case HasilAkhir.DIUSULKAN:       return <CircleCheck className="size-3.5 text-emerald-500" />;
+    case HasilAkhir.TIDAK_DIUSULKAN: return <CircleX className="size-3.5 text-red-500" />;
+    case HasilAkhir.PERLU_REVIEW:    return <TriangleAlert className="size-3.5 text-amber-500" />;
+    case RekomendasiWawancara.LAYAK:                       return <CircleCheck className="size-3.5 text-emerald-500" />;
+    case RekomendasiWawancara.LAYAK_DIPERTIMBANGKAN:       return <Circle className="size-3.5 text-teal-500" />;
+    case RekomendasiWawancara.TIDAK_LAYAK_DIPERTIMBANGKAN: return <Circle className="size-3.5 text-amber-500" />;
+    case RekomendasiWawancara.TIDAK_LAYAK:                 return <CircleX className="size-3.5 text-red-500" />;
     case StatusEvaluasi.SELESAI: return <CircleCheck className="size-3.5 text-emerald-500" />;
     case StatusEvaluasi.BELUM:   return <CircleDashed className="size-3.5 text-amber-500" />;
-    case JalurMasuk.SNBP: return <span className="text-[9px] font-bold px-1 py-0.5 bg-blue-100 text-blue-700 rounded">SNBP</span>;
-    case JalurMasuk.SNBT: return <span className="text-[9px] font-bold px-1 py-0.5 bg-purple-100 text-purple-700 rounded">SNBT</span>;
+    case JalurMasuk.SNBP_Eligible: return <span className="text-[9px] font-bold px-1 py-0.5 bg-blue-100 text-blue-700 rounded">SNBP Eligible</span>;
+    case JalurMasuk.SNBP_Non_Eligible: return <span className="text-[9px] font-bold px-1 py-0.5 bg-blue-100 text-blue-700 rounded">SNBP Non-Eligible</span>;
+    case JalurMasuk.SNBT_Eligible: return <span className="text-[9px] font-bold px-1 py-0.5 bg-purple-100 text-purple-700 rounded">SNBT Eligible</span>;
+    case JalurMasuk.SNBT_Non_Eligible: return <span className="text-[9px] font-bold px-1 py-0.5 bg-purple-100 text-purple-700 rounded">SNBT Non-Eligible</span>;
     case JalurMasuk.UM:   return <span className="text-[9px] font-bold px-1 py-0.5 bg-orange-100 text-orange-700 rounded">UM</span>;
     // Monev
     case FilterType.VALIDASI_MONEV:       return <ShieldCheck className="size-3.5 text-muted-foreground" />;
@@ -103,6 +120,7 @@ const FilterIcon = ({ type }: { type: string }) => {
 // ── Filter options (Evaluasi) ─────────────────────────────────────────────────
 export const filterViewOptions: FilterOption[][] = [[
   { name: FilterType.HASIL_AKHIR,  icon: <FilterIcon type={FilterType.HASIL_AKHIR} /> },
+  { name: FilterType.REKOMENDASI,  icon: <FilterIcon type={FilterType.REKOMENDASI} /> },
   { name: FilterType.STATUS,       icon: <FilterIcon type={FilterType.STATUS} /> },
   { name: FilterType.JALUR_MASUK,  icon: <FilterIcon type={FilterType.JALUR_MASUK} /> },
 ]];
@@ -114,6 +132,7 @@ export const monevFilterViewOptions: FilterOption[][] = [[
 
 export const filterViewToFilterOptions: Record<FilterType, FilterOption[]> = {
   [FilterType.HASIL_AKHIR]: Object.values(HasilAkhir).map((v) => ({ name: v, icon: <FilterIcon type={v} /> })),
+  [FilterType.REKOMENDASI]: Object.values(RekomendasiWawancara).map((v) => ({ name: v, icon: <FilterIcon type={v} /> })),
   [FilterType.STATUS]:      Object.values(StatusEvaluasi).map((v) => ({ name: v, icon: <FilterIcon type={v} /> })),
   [FilterType.JALUR_MASUK]: Object.values(JalurMasuk).map((v) => ({ name: v, icon: <FilterIcon type={v} /> })),
   [FilterType.PEWAWANCARA]: [],

@@ -41,6 +41,7 @@ export default function DistribusiChart({ data, title, subtitle }: Props) {
               tick={{ fontSize: 11, fill: "#64748b" }}
               axisLine={false}
               tickLine={false}
+              interval={0}
             />
             <YAxis
               tick={{ fontSize: 11, fill: "#94a3b8" }}
@@ -61,7 +62,6 @@ export default function DistribusiChart({ data, title, subtitle }: Props) {
                 value === "diusulkan" ? "Diusulkan" : "Tidak Diusulkan"
               }
             />
-            {/* primary untuk diusulkan, destructive untuk tidak */}
             <Bar dataKey="diusulkan" fill="#001349" radius={[4, 4, 0, 0]} />
             <Bar dataKey="tidak_diusulkan" fill="#ef4444" radius={[4, 4, 0, 0]} />
           </BarChart>

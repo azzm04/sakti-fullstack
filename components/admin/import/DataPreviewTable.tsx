@@ -11,7 +11,6 @@ import {
   flexRender,
   createColumnHelper,
   type SortingState,
-  type ColumnDef,
   type VisibilityState,
 } from "@tanstack/react-table";
 import { CandidateData } from "@/schemas";
@@ -46,25 +45,25 @@ const formatRupiah = (value: number) =>
 
 function CellValue({ value, isNumber }: { value: unknown; isNumber?: boolean }) {
   if (value === null || value === undefined || value === "" || (isNumber && value === 0)) {
-    return <span className="text-slate-300">—</span>;
+    return <span className="text-muted-foreground/50">—</span>;
   }
   if (isNumber && typeof value === "number") {
-    return <span className="font-medium text-slate-700">{formatRupiah(value)}</span>;
+    return <span className="font-medium text-foreground">{formatRupiah(value)}</span>;
   }
   return <>{String(value)}</>;
 }
 
 function P3KEBadge({ status }: { status: string }) {
-  if (!status) return <span className="text-slate-300">—</span>;
+  if (!status) return <span className="text-muted-foreground/50">—</span>;
   const isDesil = status.toLowerCase().includes("desil");
   const isBelum = status.toLowerCase().includes("belum");
   return (
     <span
       className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold border ${
         isBelum
-          ? "bg-slate-50 text-slate-500 border-slate-200"
+          ? "bg-muted text-muted-foreground border-border"
           : isDesil
-          ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+          ? "bg-primary/8 text-primary border-primary/20"
           : "bg-emerald-50 text-emerald-700 border-emerald-200"
       }`}
     >
@@ -74,7 +73,7 @@ function P3KEBadge({ status }: { status: string }) {
 }
 
 function DTKSBadge({ status }: { status: string }) {
-  if (!status) return <span className="text-slate-300">—</span>;
+  if (!status) return <span className="text-muted-foreground/50">—</span>;
   const terdata = status.toLowerCase() === "terdata";
   return (
     <span
@@ -100,20 +99,20 @@ export default function DataPreviewTable({
   const [sorting, setSorting] = useState<SortingState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
 
-  const columns = useMemo<ColumnDef<CandidateData, unknown>[]>(
+  const columns = useMemo(
     () => [
       // ── Kolom selalu tampil ───────────────────────────────────────────────
       columnHelper.accessor("no", {
         header: "No",
         cell: (info) => (
-          <span className="font-bold text-indigo-600">{info.getValue() as number}</span>
+          <span className="font-bold text-primary">{info.getValue() as number}</span>
         ),
         size: 55,
       }),
       columnHelper.accessor("no_pendaftaran_kipk", {
         header: "No. Pendaftaran KIP",
         cell: (info) => (
-          <span className="font-mono text-xs text-slate-600">
+          <span className="font-mono text-xs text-muted-foreground">
             <CellValue value={info.getValue()} />
           </span>
         ),
@@ -122,7 +121,7 @@ export default function DataPreviewTable({
       columnHelper.accessor("nama_pendaftar", {
         header: "Nama Pendaftar",
         cell: (info) => (
-          <span className="font-semibold text-slate-800">{String(info.getValue() || "—")}</span>
+          <span className="font-semibold text-foreground">{String(info.getValue() || "—")}</span>
         ),
         size: 210,
       }),
@@ -134,7 +133,7 @@ export default function DataPreviewTable({
       columnHelper.accessor("nik", {
         header: "NIK",
         cell: (info) => (
-          <span className="font-mono text-xs text-slate-500">
+          <span className="font-mono text-xs text-muted-foreground">
             <CellValue value={info.getValue()} />
           </span>
         ),
@@ -143,7 +142,7 @@ export default function DataPreviewTable({
       columnHelper.accessor("nisn", {
         header: "NISN",
         cell: (info) => (
-          <span className="font-mono text-xs text-slate-500">
+          <span className="font-mono text-xs text-muted-foreground">
             <CellValue value={info.getValue()} />
           </span>
         ),
@@ -188,7 +187,7 @@ export default function DataPreviewTable({
         header: "Jarak (KM)",
         cell: (info) => {
           const v = info.getValue() as number;
-          return v ? <span>{v} km</span> : <span className="text-slate-300">—</span>;
+          return v ? <span>{v} km</span> : <span className="text-muted-foreground/50">—</span>;
         },
         size: 100,
       }),
@@ -207,7 +206,7 @@ export default function DataPreviewTable({
       columnHelper.accessor("no_kartu_keluarga", {
         header: "No. KK",
         cell: (info) => (
-          <span className="font-mono text-xs text-slate-500">
+          <span className="font-mono text-xs text-muted-foreground">
             <CellValue value={info.getValue()} />
           </span>
         ),
@@ -216,7 +215,7 @@ export default function DataPreviewTable({
       columnHelper.accessor("nik_kepala_keluarga", {
         header: "NIK Kepala KK",
         cell: (info) => (
-          <span className="font-mono text-xs text-slate-500">
+          <span className="font-mono text-xs text-muted-foreground">
             <CellValue value={info.getValue()} />
           </span>
         ),
@@ -346,9 +345,9 @@ export default function DataPreviewTable({
         header: "Jalur Masuk",
         cell: (info) => {
           const val = info.getValue() as string;
-          if (!val) return <span className="text-slate-300">—</span>;
+          if (!val) return <span className="text-muted-foreground/50">—</span>;
           return (
-            <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+            <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-semibold bg-primary/8 text-primary border border-primary/20">
               {val}
             </span>
           );
@@ -415,19 +414,19 @@ export default function DataPreviewTable({
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative">
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-sm overflow-hidden">
+      <div className="bg-white rounded-3xl border border-border shadow-sm overflow-hidden">
 
         {/* ── Header ── */}
-        <div className="px-6 py-5 border-b border-slate-100">
+        <div className="px-6 py-5 border-b border-border/50">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-600 flex items-center justify-center shadow-md shadow-indigo-200">
+                <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-sm">
                   <Table2 size={20} className="text-white" />
                 </div>
                 <div>
-                  <h4 className="text-lg font-extrabold text-slate-900">Data Preview</h4>
-                  <p className="text-[11px] text-slate-400 flex items-center gap-1.5">
+                  <h4 className="text-lg font-extrabold text-foreground">Data Preview</h4>
+                  <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
                     <FileText size={11} />
                     {fileName}
                   </p>
@@ -436,9 +435,9 @@ export default function DataPreviewTable({
 
               {/* Stats */}
               <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 rounded-lg border border-indigo-100">
-                  <Database size={12} className="text-indigo-600" />
-                  <span className="text-xs font-bold text-indigo-700">{data.length} Baris</span>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/8 rounded-lg border border-primary/20">
+                  <Database size={12} className="text-primary" />
+                  <span className="text-xs font-bold text-primary">{data.length} Baris</span>
                 </div>
                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-lg border border-emerald-100">
                   <CheckCircle2 size={12} className="text-emerald-600" />
@@ -457,7 +456,7 @@ export default function DataPreviewTable({
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => setShowAllColumns(!showAllColumns)}
-                className="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-all flex items-center gap-2"
+                className="px-4 py-2.5 bg-muted hover:bg-muted/80 text-foreground text-xs font-bold rounded-xl transition-all flex items-center gap-2"
               >
                 {showAllColumns ? <EyeOff size={14} /> : <Eye size={14} />}
                 {showAllColumns ? "Kolom Dasar" : "Semua Kolom"}
@@ -468,10 +467,10 @@ export default function DataPreviewTable({
                 disabled={!hasData || saveStatus === "saving" || saveStatus === "saved"}
                 className={`px-4 py-2.5 text-xs font-bold rounded-xl transition-all flex items-center gap-2
                   ${saveStatus === "saved" ? "bg-emerald-500 text-white" :
-                    saveStatus === "saving" ? "bg-indigo-400 text-white cursor-wait" :
-                    saveStatus === "error" ? "bg-red-500 text-white" :
-                    hasData ? "bg-indigo-600 hover:bg-indigo-700 text-white" :
-                    "bg-slate-100 text-slate-400 cursor-not-allowed"
+                    saveStatus === "saving" ? "bg-primary/60 text-white cursor-wait" :
+                    saveStatus === "error" ? "bg-destructive text-white" :
+                    hasData ? "bg-primary hover:bg-primary/90 text-white" :
+                    "bg-muted text-muted-foreground cursor-not-allowed"
                   }`}
               >
                 {saveStatus === "saving" ? (
@@ -492,20 +491,20 @@ export default function DataPreviewTable({
 
           {/* Search */}
           <div className="mt-4 relative">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
               value={globalFilter ?? ""}
               onChange={(e) => setGlobalFilter(e.target.value)}
               placeholder="Cari nama, NIK, prodi, email, status P3KE..."
-              className="w-full pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-sm text-slate-700 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-400 transition-all"
+              className="w-full pl-10 pr-10 py-2.5 bg-muted border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
             />
             {globalFilter && (
               <button
                 onClick={() => setGlobalFilter("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center bg-slate-200 hover:bg-slate-300 rounded-full transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center bg-muted hover:bg-border rounded-full transition-colors"
               >
-                <X size={11} className="text-slate-600" />
+                <X size={11} className="text-muted-foreground" />
               </button>
             )}
           </div>
@@ -516,7 +515,7 @@ export default function DataPreviewTable({
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id} className="bg-slate-50 border-b border-slate-100 hover:bg-slate-50">
+                <TableRow key={headerGroup.id} className="bg-muted border-b border-border/50 hover:bg-muted">
                   {headerGroup.headers.map((header) => (
                     <TableHead
                       key={header.id}
@@ -525,16 +524,16 @@ export default function DataPreviewTable({
                     >
                       {header.isPlaceholder ? null : (
                         <button
-                          className="flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-slate-500 hover:text-indigo-600 transition-colors"
+                          className="flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors"
                           onClick={header.column.getToggleSortingHandler()}
                         >
                           {flexRender(header.column.columnDef.header, header.getContext())}
                           {{
-                            asc: <ArrowUp size={11} className="text-indigo-500" />,
-                            desc: <ArrowDown size={11} className="text-indigo-500" />,
+                            asc: <ArrowUp size={11} className="text-primary" />,
+                            desc: <ArrowDown size={11} className="text-primary" />,
                           }[header.column.getIsSorted() as string] ?? (
                             header.column.getCanSort() ? (
-                              <ArrowUpDown size={10} className="text-slate-300" />
+                              <ArrowUpDown size={10} className="text-muted-foreground/50" />
                             ) : null
                           )}
                         </button>

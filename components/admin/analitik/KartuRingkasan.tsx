@@ -16,53 +16,64 @@ export default function KartuRingkasan({ ringkasan, konsistensi }: Props) {
       value: ringkasan.total_pendaftar.toLocaleString("id-ID"),
       sub: ringkasan.tahun_seleksi ? `Seleksi ${ringkasan.tahun_seleksi}` : "Semua tahun",
       icon: Users,
-      color: "text-primary",
-      bg: "bg-primary/8",
+      iconColor: "text-blue-600",
+      iconBg: "bg-blue-50",
     },
     {
       label: "Diusulkan",
-      value: `${ringkasan.total_diusulkan.toLocaleString("id-ID")}`,
-      sub: `${ringkasan.pct_diusulkan}% dari total`,
+      value: ringkasan.total_diusulkan.toLocaleString("id-ID"),
+      sub: `${ringkasan.pct_diusulkan}% dari total pendaftar`,
       icon: CheckCircle2,
-      color: "text-emerald-600",
-      bg: "bg-emerald-50",
+      iconColor: "text-emerald-600",
+      iconBg: "bg-emerald-50",
     },
     {
       label: "Tidak Diusulkan",
-      value: `${ringkasan.total_tidak_diusulkan.toLocaleString("id-ID")}`,
-      sub: `${ringkasan.pct_tidak_diusulkan}% dari total`,
+      value: ringkasan.total_tidak_diusulkan.toLocaleString("id-ID"),
+      sub: `${ringkasan.pct_tidak_diusulkan}% dari total pendaftar`,
       icon: XCircle,
-      color: "text-destructive",
-      bg: "bg-destructive/8",
+      iconColor: "text-rose-600",
+      iconBg: "bg-rose-50",
     },
     {
       label: "Konsistensi Model",
       value: `${konsistensi.pct_dapat_dijelaskan}%`,
       sub: `Akurasi ${(konsistensi.akurasi_model * 100).toFixed(1)}%`,
       icon: Brain,
-      color: "text-primary",
-      bg: "bg-primary/8",
+      iconColor: "text-violet-600",
+      iconBg: "bg-violet-50",
     },
   ]
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-      {kartu.map(({ label, value, sub, icon: Icon, color, bg }, i) => (
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      {kartu.map(({ label, value, sub, icon: Icon, iconColor, iconBg }, i) => (
         <motion.div
           key={label}
-          initial={{ opacity: 0, y: 10 }}
+          initial={{ opacity: 0, y: 15 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.06 }}
-          className="bg-white rounded-2xl border border-border shadow-sm p-5"
+          transition={{ delay: i * 0.08, ease: "easeOut", duration: 0.4 }}
+          className="group bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md hover:border-slate-300 transition-all duration-300 p-6 flex flex-col justify-between"
         >
-          <div className="flex items-center justify-between mb-3">
-            <p className="text-xs font-medium text-muted-foreground">{label}</p>
-            <div className={`w-8 h-8 rounded-xl ${bg} flex items-center justify-center`}>
-              <Icon size={15} className={color} />
+          {/* Bagian Atas: Label & Ikon */}
+          <div className="flex items-start justify-between mb-4">
+            <p className="text-sm font-semibold text-slate-500 group-hover:text-slate-700 transition-colors">
+              {label}
+            </p>
+            <div className={`w-10 h-10 rounded-xl ${iconBg} flex items-center justify-center shrink-0`}>
+              <Icon size={20} className={iconColor} strokeWidth={2.5} />
             </div>
           </div>
-          <p className={`text-2xl font-extrabold leading-none ${color}`}>{value}</p>
-          <p className="text-[11px] text-muted-foreground mt-1.5">{sub}</p>
+          
+          {/* Bagian Bawah: Angka & Sub-teks */}
+          <div>
+            <h4 className="text-3xl font-extrabold text-slate-800 tracking-tight">
+              {value}
+            </h4>
+            <p className="text-[12px] text-slate-500 mt-1.5 font-medium">
+              {sub}
+            </p>
+          </div>
         </motion.div>
       ))}
     </div>
