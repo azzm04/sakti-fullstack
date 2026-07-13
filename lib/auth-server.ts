@@ -28,7 +28,7 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
     return {
       id,
       nama: payload.nama as string,
-      email: (payload.email ?? payload.adminId ?? "") as string,
+      email: (payload.email ?? payload.username ?? "") as string,
       role: payload.role as AuthUser["role"],
     }
   } catch (error) {

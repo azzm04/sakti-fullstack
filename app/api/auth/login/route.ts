@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
     await sendOtpEmail(
       normalizedEmail,
       otp,
-      user.pewawancara?.nama || "Mahasiswa",
+      user.pewawancara?.[0]?.nama || "Mahasiswa",
     );
 
     return NextResponse.json({

@@ -136,9 +136,9 @@ export const VerifyOtpSchema = z.object({
 });
 export type VerifyOtpPayload = z.infer<typeof VerifyOtpSchema>;
 
-// Admin login — pakai adminId + password
+// Admin login — pakai username + password
 export const AdminLoginSchema = z.object({
-  adminId: z.string().min(1, "Admin ID wajib diisi"),
+  username: z.string().min(1, "Username wajib diisi"),
   password: z.string().min(1, "Password wajib diisi"),
 });
 export type AdminLoginPayload = z.infer<typeof AdminLoginSchema>;

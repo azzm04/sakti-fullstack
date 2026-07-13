@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ShieldCheck } from "lucide-react";
 
 export default function AdminLoginPage() {
-  const [adminId, setAdminId] = useState("");
+  const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -19,7 +19,7 @@ export default function AdminLoginPage() {
 
     const res = await fetch("/api/auth/admin/login", {
       method: "POST",
-      body: JSON.stringify({ adminId, password }),
+      body: JSON.stringify({ username, password }),
       headers: { "Content-Type": "application/json" },
     });
 
@@ -58,19 +58,19 @@ export default function AdminLoginPage() {
             </p>
           </div>
 
-          {/* Admin ID */}
+          {/* Username */}
           <div>
             <label
-              htmlFor="adminId"
+              htmlFor="username"
               className="block text-sm font-medium text-secondary mb-1.5"
             >
-              Admin ID
+              Username
             </label>
             <input
-              id="adminId"
+              id="username"
               type="text"
-              value={adminId}
-              onChange={(e) => setAdminId(e.target.value)}
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
               placeholder="username"
               required
               autoComplete="username"

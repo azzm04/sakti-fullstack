@@ -54,12 +54,12 @@ export const authAPI = {
     return res.json();
   },
 
-  // POST /api/auth/admin/login — { adminId, password }
-  adminLogin: async (adminId: string, password: string) => {
+  // POST /api/auth/admin/login — { username, password }
+  adminLogin: async (username: string, password: string) => {
     const res = await fetch("/api/auth/admin/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ adminId, password }),
+      body: JSON.stringify({ username, password }),
     });
     return res.json();
   },

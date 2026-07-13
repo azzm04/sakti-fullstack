@@ -11,21 +11,21 @@ export async function POST(req: NextRequest) {
     const result = AdminLoginSchema.safeParse(body)
     if (!result.success) {
       return NextResponse.json(
-        { error: result.error.errors[0].message },
+        { error: result.error.issues[0].message },
         { status: 400 }
       )
     }
 
-    const { adminId, password } = result.data
+    const { username, password } = result.data
 
     // Cari admin di database
     const admin = await prisma.adminUser.findUnique({
-      where: { adminId },
+      where: { username },
     })
 
     if (!admin) {
       return NextResponse.json(
-        { error: "Admin ID atau password salah" },
+        { error: "Username atau password salah" },
         { status: 401 }
       )
     }
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
     const valid = await bcrypt.compare(password, admin.password)
     if (!valid) {
       return NextResponse.json(
-        { error: "Admin ID atau password salah" },
+        { error: "Username atau password salah" },
         { status: 401 }
       )
     }
@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
     const jwt = await new SignJWT({
       sub: admin.id,
       role: "ADMIN_DIRMAWA",
-      adminId: admin.adminId,
+      username: admin.username,
       nama: admin.nama,
     })
       .setProtectedHeader({ alg: "HS256" })

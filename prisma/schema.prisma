@@ -14,6 +14,7 @@ model User {
   statusAkun            status_akun_enum       @default(AKTIF) @map("status_akun")
   createdAt             DateTime               @default(now()) @map("created_at") @db.Timestamp(6)
   updatedAt             DateTime               @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  otp_tokens            OtpToken[]
   penerimaKipk          PenerimaKipk?
   pewawancara           Pewawancara[]
   tokenAktivasiTelegram TokenAktivasiTelegram?
@@ -23,7 +24,7 @@ model User {
 
 model AdminUser {
   id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  adminId     String        @unique(map: "admin_users_adminid_key") @map("admin_id") @db.VarChar(100)
+  username    String        @unique(map: "admin_users_adminid_key") @db.VarChar(100)
   password    String        @db.VarChar(255)
   nama        String        @db.VarChar(150)
   createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
@@ -33,12 +34,12 @@ model AdminUser {
 }
 
 model OtpToken {
-  id        String   @id @default(uuid())
-  userId    String
+  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String   @db.Uuid
   code      String
   expiresAt DateTime
-  used      Boolean  @default(false)
   createdAt DateTime @default(now())
+  users     User     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("otp_tokens")
 }
@@ -243,14 +244,14 @@ model hasil_wawancara {
   alasan                   String?
   status_wawancara         String?
   is_draft                 Boolean?                   @default(true)
-  hasil_akhir              String?
-  catatan_admin            String?
   interviewed_at           DateTime?                  @db.Timestamp(6)
   created_at               DateTime                   @default(now()) @db.Timestamp(6)
   updated_at               DateTime                   @default(now()) @db.Timestamp(6)
   kepemilikan_rumah        Int?                       @db.SmallInt
   jumlah_orang_rumah       Int?                       @db.SmallInt
   pewawancara_id           BigInt?
+  hasil_akhir              String?
+  catatan_admin            String?
   detail_ekonomi_wawancara detail_ekonomi_wawancara[]
   pewawancara              Pewawancara?               @relation(fields: [pewawancara_id], references: [id], onUpdate: NoAction, map: "fk_hasil_wawancara_pewawancara")
   kandidat                 kandidat                   @relation(fields: [kandidat_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "hasil_wawancara_kandidat_id_fkey1")

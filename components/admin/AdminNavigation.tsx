@@ -63,24 +63,36 @@ export default function AdminNavigation({ adminName = "Admin" }: AdminNavigation
     window.location.href = "/admin-login"
   }
 
+  const initials = adminName
+    .split(" ")
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase()
+
   const SidebarContent = () => (
-    <div className="flex flex-col h-full">
-      <div className="px-6 pt-8 pb-1">
-        <span className="text-2xl font-extrabold font-headline text-primary">
-          SAKTI
-        </span>
-      </div>
-      <div className="px-6 pb-6 pt-1">
-        <p className="font-headline font-bold text-primary text-sm leading-tight">
-          Dashboard Admin
-        </p>
+    <div className="flex flex-col h-full font-body">
+      {/* Brand Logo */}
+      <div className="text-2xl font-black tracking-tight text-primary px-6 py-6 font-headline">
+        SAKTI
       </div>
 
-      <div className="mx-4 h-px bg-border mb-3" />
+      {/* Profile Card Mini */}
+      <div className="px-4 mb-6">
+        <div className="flex items-center gap-3 p-3 rounded-xl bg-slate-50 border border-slate-100">
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+            <span className="text-sm font-bold text-primary">{initials}</span>
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-bold text-primary truncate">{adminName}</p>
+            <p className="text-[10px] font-medium text-slate-500">Admin</p>
+          </div>
+        </div>
+      </div>
 
-      <nav className="flex-1 px-3 space-y-0.5">
+      {/* Navigation Links */}
+      <nav className="flex-1 px-4 space-y-2">
         {navItems.map(({ href, label, icon: Icon }) => {
-          // Dashboard hanya exact match, route lain boleh startsWith
           const active =
             href === "/admin"
               ? pathname === "/admin"
@@ -91,29 +103,28 @@ export default function AdminNavigation({ adminName = "Admin" }: AdminNavigation
               key={href}
               href={href}
               onClick={() => setMobileOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
+              className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 ${
                 active
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "bg-blue-50 text-primary font-bold shadow-sm"
+                  : "text-slate-500 hover:bg-slate-50 hover:text-primary font-medium"
               }`}
             >
-              <Icon size={17} />
-              {label}
+              <Icon className="w-5 h-5" />
+              <span>{label}</span>
             </Link>
           )
         })}
       </nav>
 
-      <div className="px-3 pb-6 pt-4 space-y-1">
-        <div className="mx-1 h-px bg-border mb-3" />
-        <motion.button
-          whileHover={{ x: 2 }}
+      {/* Bottom Actions */}
+      <div className="px-4 py-4 mt-auto space-y-3">
+        <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          className="flex items-center gap-3 px-4 py-3 text-red-600 font-medium hover:bg-red-50 rounded-xl transition-all w-full"
         >
-          <LogOut size={16} />
-          Keluar
-        </motion.button>
+          <LogOut className="w-5 h-5" />
+          <span>Keluar</span>
+        </button>
       </div>
     </div>
   )
