@@ -11,7 +11,7 @@ import { fileURLToPath } from "url";
 const __dir = dirname(fileURLToPath(import.meta.url));
 
 // ── Baca CSV ──────────────────────────────────────────────────────────────────
-const csvPath = join(__dir, "Data Verifikasi Validasi_SNBT Eligible_.csv");
+const csvPath = join(__dir, "Data Verifikasi Validasi_SNBP Eligible_.csv");
 const raw = readFileSync(csvPath, "utf-8");
 
 // CSV pakai delimiter ";"
@@ -113,20 +113,20 @@ const COL = {
   nama_ayah:            idx("Nama Ayah"),
   pekerjaan_ayah:       idx("Pekerjaan Ayah"),
   ket_pekerjaan_ayah:   idx("Ket. Pekerjaan Ayah"),
-  penghasilan_ayah_r:   idx("Penghasilan Ayah"),       // range teks
-  ket_penghasilan_ayah: idx(" Ket. Penghasilan Ayah/ bln "),  // nominal angka
+  penghasilan_ayah_r:   idx("Penghasilan Ayah"),       
+  ket_penghasilan_ayah: idx("Ket. Penghasilan Ayah/ bln"), // Spasi awal/akhir dihapus
   status_ayah:          idx("Status Ayah"),
   nama_ibu:             idx("Nama Ibu"),
   pekerjaan_ibu:        idx("Pekerjaan Ibu"),
   ket_pekerjaan_ibu:    idx("Ket. Pekerjaan Ibu"),
   penghasilan_ibu_r:    idx("Penghasilan Ibu"),
-  ket_penghasilan_ibu:  idx(" Ket. Penghasilan Ibu/ bln "),
+  ket_penghasilan_ibu:  idx("Ket. Penghasilan Ibu/ bln"),  // Spasi awal/akhir dihapus
   status_ibu:           idx("Status Ibu"),
   wali:                 idx("Wali (jika ada)"),
-  penghasilan_lain:     idx(" Penghasilan lain/ bln "),
+  penghasilan_lain:     idx("Penghasilan lain/ bln"),      // Spasi awal/akhir dihapus
   jml_tanggungan:       idx("Jumlah Tanggungan"),
   jml_sebenarnya:       idx("Jml Tanggungan Sebenarnya"),
-  nominal_per_kapita:   idx(" Nominal per kapita "),
+  nominal_per_kapita:   idx("Nominal per kapita"),         // Spasi awal/akhir dihapus
   kepemilikan_rumah:    idx("Kepemilikan Rumah"),
   tahun_perolehan:      idx("Tahun Perolehan"),
   sumber_listrik:       idx("Sumber Listrik"),
@@ -140,7 +140,7 @@ const COL = {
   rekomendasi:          idx("Rekomendasi"),
   alasan:               idx("Alasan"),
   pewawancara:          idx("Nama Pewawancara"),
-  alasan_penguat:       idx("Alasan Penguat nanti jadi role model undip (untuk divisitasi Pimpinan Undip)"),
+  alasan_penguat:       idx("Alasan Penguat nanti jadi role model undip"), // Disesuaikan dengan CSV
 };
 
 console.log("Header terdeteksi:");
@@ -158,7 +158,7 @@ sqls.push(`-- ============================================================`);
 sqls.push(`-- 1. Buat record impor_data (batch)`);
 sqls.push(`-- ============================================================`);
 sqls.push(`INSERT INTO impor_data (file_name, total_rows, valid_rows, error_rows, dup_rows)`);
-sqls.push(`VALUES ('Data Verifikasi Validasi_SNBT Eligible_.csv', ${lines.length - 1}, ${lines.length - 1}, 0, 0)`);
+sqls.push(`VALUES ('Data Verifikasi Validasi_SNBP Eligible_.csv', ${lines.length - 1}, ${lines.length - 1}, 0, 0)`);
 sqls.push(`RETURNING id;`);
 sqls.push(``);
 sqls.push(`-- ⚠️  Catat ID yang dikembalikan di atas, ganti ${`<IMPOR_ID>`} di bawah ini`);

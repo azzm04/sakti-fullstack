@@ -139,7 +139,7 @@ export default function DaftarPewawancara() {
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Cari nama atau email pewawancara..."
+              placeholder="Cari nama atau email pengguna..."
               className="w-full pl-12 pr-4 py-3 text-sm font-medium border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all placeholder:font-normal"
             />
           </div>
@@ -147,7 +147,7 @@ export default function DaftarPewawancara() {
             onClick={openAdd}
             className="flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 text-white text-sm font-semibold rounded-2xl hover:bg-indigo-600 focus:ring-4 focus:ring-indigo-500/20 transition-all shadow-sm"
           >
-            <Plus size={18} /> Tambah Pewawancara
+            <Plus size={18} /> Tambah Akun Pengguna
           </button>
         </div>
 

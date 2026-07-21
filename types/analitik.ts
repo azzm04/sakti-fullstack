@@ -26,10 +26,17 @@ export interface DistribusiKelas {
 
 export interface DistribusiGeografis {
   provinsi: string
+  total: number
   diusulkan: number
   tidak_diusulkan: number
-  total: number
   pct_diusulkan: number
+}
+
+export interface DistribusiFakultas {
+  fakultas: string;
+  total_penerima: number
+  laki_laki: number;
+  perempuan: number;
 }
 
 export interface RuleNode {
@@ -74,6 +81,14 @@ export interface Ringkasan {
   tahun_seleksi: string | null
 }
 
+export interface DistribusiJenisKelamin {
+  label: string
+  diusulkan: number
+  tidak_diusulkan: number
+  total: number
+  pct_diusulkan: number
+}
+
 export interface DashboardAnalitikData {
   status: string
   pesan: string
@@ -88,5 +103,7 @@ export interface DashboardAnalitikData {
   distribusi_kondisi_rumah: DistribusiKelas[]
   distribusi_dtks: DistribusiKelas[]
   distribusi_geografis: DistribusiGeografis[]
+  distribusi_fakultas: DistribusiFakultas[]
+  distribusi_jenis_kelamin: DistribusiJenisKelamin[]
   model_info: ModelInfo
 }

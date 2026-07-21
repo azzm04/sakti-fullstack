@@ -34,7 +34,10 @@ export default function InsightNaratif({ data }: Props) {
     : null
 
   const safeAmbigu = Array.isArray(kasus_ambigu) ? kasus_ambigu : []
-  const ambiguMestiDisusulkan = safeAmbigu.filter((k) => k.prediksi_model === "Diusulkan").length
+  // Kasus di mana pewawancara menolak, padahal model memprediksi "Diusulkan"
+  const seharusnyaDiusulkan = safeAmbigu.filter(
+    (k) => k.keputusan_aktual !== "Diusulkan" && k.prediksi_model === "Diusulkan"
+  ).length
 
   const insights: {
     icon: React.ElementType
@@ -46,21 +49,21 @@ export default function InsightNaratif({ data }: Props) {
     body: string
   }[] = []
 
-  // 1. Insight Faktor Penentu Utama (Warna Slate/Abu-abu kebiruan lembut)
+  // 1. Faktor Penentu Utama
   if (topFitur.length > 0) {
     const top = topFitur[0]
     insights.push({
       icon: Lightbulb,
-      colorIcon: "text-slate-700",
-      colorTitle: "text-slate-800",
-      bg: "bg-slate-50",
-      border: "border-slate-200",
+      colorIcon: "text-secondary",
+      colorTitle: "text-foreground",
+      bg: "bg-muted/60",
+      border: "border-border",
       title: "Faktor Penentu Utama",
       body: `Keputusan pewawancara paling dipengaruhi oleh ${top.fitur} (${top.pct}% kontribusi)${topFitur[1] ? `, diikuti ${topFitur[1].fitur} (${topFitur[1].pct}%)` : ""}${topFitur[2] ? ` dan ${topFitur[2].fitur} (${topFitur[2].pct}%)` : ""}. Faktor ekonomi mendominasi pola keputusan ini.`,
     })
   }
 
-  // 2. Insight Pola Penolakan (Warna Rose/Merah Muda lembut)
+  // 2. Pola Tidak Diusulkan
   if (thresholdPenghasilan && thresholdTanggungan) {
     insights.push({
       icon: TrendingDown,
@@ -83,7 +86,7 @@ export default function InsightNaratif({ data }: Props) {
     })
   }
 
-  // 3. Insight Kasus Ambigu (Warna Amber/Kuning lembut)
+  // 3. Kasus Ambigu
   if (safeAmbigu.length > 0) {
     insights.push({
       icon: AlertTriangle,
@@ -91,12 +94,12 @@ export default function InsightNaratif({ data }: Props) {
       colorTitle: "text-amber-700",
       bg: "bg-amber-50/50",
       border: "border-amber-200/60",
-      title: `${safeAmbigu.length} Keputusan Tidak Konsisten dengan Pola`,
-      body: `${ambiguMestiDisusulkan} dari ${safeAmbigu.length} keputusan tidak konsisten: kandidat yang TIDAK diusulkan pewawancara padahal pola umum data mengarah ke "Diusulkan". Ini bisa mengindikasikan pertimbangan subjektif di luar data yang perlu ditinjau lebih lanjut.`,
+      title: `${safeAmbigu.length} Keputusan Layak Ditinjau Ulang`,
+      body: `${seharusnyaDiusulkan} dari ${safeAmbigu.length} kasus: kandidat yang TIDAK diusulkan pewawancara padahal pola umum data mengarah ke "Diusulkan". Ini bisa mengindikasikan pertimbangan subjektif di luar data yang perlu ditinjau lebih lanjut.`,
     })
   }
 
-  // 4. Insight Konsistensi Model (Warna Emerald/Hijau lembut)
+  // 4. Konsistensi Keputusan
   if (ringkasan.pct_diusulkan >= 85) {
     insights.push({
       icon: CheckCircle2,
@@ -105,36 +108,34 @@ export default function InsightNaratif({ data }: Props) {
       bg: "bg-emerald-50/50",
       border: "border-emerald-200/60",
       title: "Konsistensi Keputusan Baik",
-      body: `${ringkasan.pct_diusulkan}% kandidat diusulkan. Model Decision Tree berhasil menjelaskan 90% pola keputusan ini, menunjukkan pewawancara cukup konsisten dalam menggunakan kriteria yang sama.`,
+      body: `${ringkasan.pct_diusulkan}% kandidat diusulkan. Model Decision Tree berhasil menjelaskan pola keputusan ini dengan baik, menunjukkan pewawancara cukup konsisten dalam menggunakan kriteria yang sama.`,
     })
   }
 
   if (insights.length === 0) return null
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 lg:p-8">
-      {/* Header Panel */}
+    <div className="bg-tertiary rounded-2xl border border-border shadow-sm p-6 lg:p-8">
       <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center border border-slate-200 shrink-0">
-          <Lightbulb size={20} className="text-slate-700" strokeWidth={2} />
+        <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center border border-border shrink-0">
+          <Lightbulb size={20} className="text-secondary" strokeWidth={2} />
         </div>
-        <h3 className="text-[15px] font-extrabold text-slate-800 uppercase tracking-wide">
+        <h3 className="text-[15px] font-extrabold text-foreground uppercase tracking-wide">
           Ringkasan Analitik Pola Keputusan Pewawancara
         </h3>
       </div>
 
-      {/* Grid Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {insights.map(({ icon: Icon, colorIcon, colorTitle, bg, border, title, body }, i) => (
-          <div 
-            key={i} 
+          <div
+            key={i}
             className={`${bg} border ${border} rounded-2xl p-5 transition-colors hover:bg-opacity-80`}
           >
             <div className="flex items-center gap-2.5 mb-2.5">
               <Icon size={18} className={colorIcon} strokeWidth={2.5} />
               <h4 className={`text-sm font-bold ${colorTitle}`}>{title}</h4>
             </div>
-            <p className="text-[13px] text-slate-600 leading-relaxed font-medium">
+            <p className="text-[13px] text-muted-foreground leading-relaxed font-medium">
               {body}
             </p>
           </div>

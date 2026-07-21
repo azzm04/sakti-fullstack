@@ -65,15 +65,15 @@ export default function PewawancaraPage() {
       <nav className="flex items-center gap-2 text-[11px] uppercase tracking-wider font-semibold text-slate-400 mb-4">
         <span>Dashboard</span>
         <span>›</span>
-        <span className="text-primary">Pewawancara</span>
+        <span className="text-primary">Wawancara</span>
       </nav>
 
       <div className="mb-6">
         <h1 className="text-3xl font-extrabold text-slate-900 font-headline tracking-tight">
-          Pewawancara
+          Wawancara
         </h1>
         <p className="text-slate-500 text-sm mt-1">
-          Kelola pewawancara dan Pemilihan Urutan Pewawancara harian
+          Kelola akun pengguna dan Pemilihan Urutan Pewawancara
         </p>
       </div>
 
@@ -346,7 +346,7 @@ function DaftarPewawancara() {
             >
               <div className="flex items-center justify-between mb-5">
                 <h3 className="font-bold text-slate-800">
-                  {editing ? "Edit Pewawancara" : "Tambah Pewawancara"}
+                  {editing ? "Edit Akun Pengguna" : "Tambah Akun Pengguna"}
                 </h3>
                 <button
                   onClick={() => setShowModal(false)}
@@ -367,7 +367,7 @@ function DaftarPewawancara() {
                     onChange={(e) =>
                       setForm((f) => ({ ...f, email: e.target.value }))
                     }
-                    placeholder="pewawancara@students.undip.ac.id"
+                    placeholder="email-mahasiswa@students.undip.ac.id"
                     disabled={!!editing}
                     className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-primary bg-slate-50 disabled:opacity-60 transition-all"
                   />
@@ -382,14 +382,13 @@ function DaftarPewawancara() {
                     onChange={(e) =>
                       setForm((f) => ({ ...f, nama: e.target.value }))
                     }
-                    placeholder="Nama Pewawancara"
+                    placeholder="Nama Mahasiswa"
                     className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-primary bg-slate-50 transition-all"
                   />
                 </div>
                 {!editing && (
                   <p className="text-[11px] text-slate-400 bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
-                    Pewawancara otomatis bisa login via OTP menggunakan email
-                    ini.
+                    Pengguna otomatis bisa login via OTP menggunakan email ini.
                   </p>
                 )}
                 {formError && (

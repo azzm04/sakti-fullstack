@@ -1,82 +1,100 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { motion, AnimatePresence } from "framer-motion"
-import { Calendar, ChevronRight, Sparkles, AlertCircle, RefreshCw, ChevronDown, ChevronUp, Settings2 } from "lucide-react"
-import type { DashboardAnalitikData } from "@/types/analitik"
-import { JALUR_OPTIONS } from "@/app/admin/import/page"
+import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Calendar,
+  ChevronRight,
+  Sparkles,
+  AlertCircle,
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
+  Settings2,
+  Wrench,
+} from "lucide-react";
+import type { DashboardAnalitikData } from "@/types/analitik";
+import { JALUR_OPTIONS } from "@/app/admin/import/page";
 
-import KartuRingkasan from "@/components/admin/analitik/KartuRingkasan"
-import FeatureImportanceChart from "@/components/admin/analitik/FeatureImportanceChart"
-import KonsistensiCard from "@/components/admin/analitik/KonsistensiCard"
-import DistribusiChart from "@/components/admin/analitik/DistribusiChart"
-import GeografisChart from "@/components/admin/analitik/GeografisChart"
-import RuleExtraction from "@/components/admin/analitik/RuleExtraction"
-import KasusAmbigu from "@/components/admin/analitik/KasusAmbigu"
-import ModelInfoCard from "@/components/admin/analitik/ModelInfoCard"
-import InsightNaratif from "@/components/admin/analitik/InsightNaratif"
+import KartuRingkasan from "@/components/admin/analitik/KartuRingkasan";
+import FeatureImportanceChart from "@/components/admin/analitik/FeatureImportanceChart";
+import KonsistensiCard from "@/components/admin/analitik/KonsistensiCard";
+import DistribusiChart from "@/components/admin/analitik/DistribusiChart";
+import FakultasChart from "./FakultasChart";
+import GeografisChart from "@/components/admin/analitik/GeografisChart";
+import RuleExtraction from "@/components/admin/analitik/RuleExtraction";
+import KasusAmbigu from "@/components/admin/analitik/KasusAmbigu";
+import ModelInfoCard from "@/components/admin/analitik/ModelInfoCard";
+import InsightNaratif from "@/components/admin/analitik/InsightNaratif";
 
-type FetchState = "idle" | "loading" | "done" | "error"
+type FetchState = "idle" | "loading" | "done" | "error";
 
 export default function AnalitikSelector() {
-  const currentYear = new Date().getFullYear()
-  const [tahun, setTahun] = useState<string>(String(currentYear))
-  const [jalur, setJalur] = useState<string>("")
-  const [state, setState] = useState<FetchState>("idle")
-  const [data, setData] = useState<DashboardAnalitikData | null>(null)
-  const [error, setError] = useState<string | null>(null)
-  const [refresh, setRefresh] = useState(false)
-  // Form bisa di-collapse setelah analisis berhasil
-  const [formCollapsed, setFormCollapsed] = useState(false)
+  const currentYear = new Date().getFullYear();
+  const [tahun, setTahun] = useState<string>(String(currentYear));
+  const [jalur, setJalur] = useState<string>("");
+  const [state, setState] = useState<FetchState>("idle");
+  const [data, setData] = useState<DashboardAnalitikData | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [refresh, setRefresh] = useState(false);
+  const [formCollapsed, setFormCollapsed] = useState(false);
+  // Detail teknis (feature importance, konsistensi, rule extraction, model info) — collapsed by default
+  const [technicalOpen, setTechnicalOpen] = useState(false);
 
   const tahunValid =
-    /^\d{4}$/.test(tahun) &&
-    parseInt(tahun) >= 2020 &&
-    parseInt(tahun) <= 2099
+    /^\d{4}$/.test(tahun) && parseInt(tahun) >= 2020 && parseInt(tahun) <= 2099;
 
-  const canRun = tahunValid && !!jalur
+  const canRun = tahunValid && !!jalur;
 
-  async function handleAnalisis() {
-    if (!canRun) return
-    setState("loading")
-    setData(null)
-    setError(null)
+  async function handleAnalisis(forceRefresh = refresh) {
+    if (!canRun) return;
+    setState("loading");
+    setData(null);
+    setError(null);
 
     try {
-      // Fetch ke API route internal — cek cache DB dulu, baru FastAPI
       const params = new URLSearchParams({
         tahun,
         jalur_masuk: jalur,
-        ...(refresh ? { refresh: "true" } : {}),
-      })
+        ...(forceRefresh ? { refresh: "true" } : {}),
+      });
       const res = await fetch(`/api/admin/analitik?${params}`, {
         cache: "no-store",
-      })
+      });
 
       if (!res.ok) {
-        const body = await res.json().catch(() => ({})) as { pesan?: string; error?: string; detail?: string }
-        setError(body.pesan || body.error || body.detail || `Gagal mengambil data (Status: ${res.status})`)
-        setState("error")
-        return
+        const body = (await res.json().catch(() => ({}))) as {
+          pesan?: string;
+          error?: string;
+          detail?: string;
+        };
+        setError(
+          body.pesan ||
+            body.error ||
+            body.detail ||
+            `Gagal mengambil data (Status: ${res.status})`,
+        );
+        setState("error");
+        return;
       }
 
-      const json = await res.json()
-      setData(json)
-      setState("done")
-      setRefresh(false)
-      setFormCollapsed(true) // auto-collapse setelah berhasil
+      const json = await res.json();
+      setData(json);
+      setState("done");
+      setRefresh(false);
+      setFormCollapsed(true);
     } catch {
-      setError("Server analitik tidak dapat dijangkau. Pastikan FastAPI berjalan.")
-      setState("error")
+      setError(
+        "Server analitik tidak dapat dijangkau. Pastikan FastAPI berjalan.",
+      );
+      setState("error");
     }
   }
 
   return (
     <div className="space-y-8">
       {/* Form Selector — collapsible */}
-      <div className="bg-white rounded-3xl border border-border shadow-sm overflow-hidden">
-
-        {/* Header — selalu tampil, bisa klik untuk toggle */}
+      <div className="bg-tertiary rounded-3xl border border-border shadow-sm overflow-hidden">
         <button
           onClick={() => setFormCollapsed((v) => !v)}
           className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors"
@@ -86,8 +104,9 @@ export default function AnalitikSelector() {
               <Settings2 size={14} className="text-primary" />
             </div>
             <div className="text-left">
-              <p className="text-sm font-bold text-foreground">Pilih Data yang Dianalisis</p>
-              {/* Ringkasan saat collapsed */}
+              <p className="text-sm font-bold text-foreground">
+                Pilih Data yang Dianalisis
+              </p>
               {formCollapsed && jalur && (
                 <p className="text-xs text-muted-foreground mt-0.5">
                   {jalur} · Tahun {tahun}
@@ -99,7 +118,9 @@ export default function AnalitikSelector() {
                 </p>
               )}
               {formCollapsed && !jalur && (
-                <p className="text-xs text-muted-foreground mt-0.5">Klik untuk mengubah pilihan</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Klik untuk mengubah pilihan
+                </p>
               )}
             </div>
           </div>
@@ -109,13 +130,14 @@ export default function AnalitikSelector() {
                 Analisis aktif
               </span>
             )}
-            {formCollapsed
-              ? <ChevronDown size={16} className="text-muted-foreground" />
-              : <ChevronUp size={16} className="text-muted-foreground" />}
+            {formCollapsed ? (
+              <ChevronDown size={16} className="text-muted-foreground" />
+            ) : (
+              <ChevronUp size={16} className="text-muted-foreground" />
+            )}
           </div>
         </button>
 
-        {/* Form body — collapse/expand dengan animasi */}
         <AnimatePresence initial={false}>
           {!formCollapsed && (
             <motion.div
@@ -128,19 +150,25 @@ export default function AnalitikSelector() {
             >
               <div className="px-6 pb-6 pt-2 border-t border-border">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                  {/* Tahun Seleksi */}
                   <div>
                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
                       Tahun Seleksi
                     </label>
                     <div className="relative">
-                      <Calendar size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                      <Calendar
+                        size={14}
+                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+                      />
                       <input
                         type="number"
                         min={2020}
                         max={2099}
                         value={tahun}
-                        onChange={(e) => { setTahun(e.target.value); setState("idle") }}
+                        title="Masukkan tahun seleksi antara 2020–2099"
+                        onChange={(e) => {
+                          setTahun(e.target.value);
+                          setState("idle");
+                        }}
                         className={`w-full pl-9 pr-4 py-2.5 text-sm font-bold rounded-xl border bg-background text-foreground
                           focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-all
                           [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none
@@ -148,48 +176,54 @@ export default function AnalitikSelector() {
                       />
                     </div>
                     {!tahunValid && tahun !== "" && (
-                      <p className="mt-1 text-[11px] text-destructive">Masukkan tahun antara 2020–2099</p>
+                      <p className="mt-1 text-[11px] text-destructive">
+                        Masukkan tahun antara 2020–2099
+                      </p>
                     )}
                   </div>
 
-                  {/* Jalur Masuk */}
                   <div>
                     <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
                       Jalur Masuk
                     </label>
                     <div className="grid grid-cols-1 gap-1.5">
                       {JALUR_OPTIONS.map((opt) => {
-                        const selected = jalur === opt.value
+                        const selected = jalur === opt.value;
                         return (
                           <button
                             key={opt.value}
-                            onClick={() => { setJalur(opt.value); setState("idle") }}
+                            onClick={() => {
+                              setJalur(opt.value);
+                              setState("idle");
+                            }}
                             className={`flex items-center gap-3 px-3 py-2 rounded-xl border text-left text-sm font-semibold transition-all
-                              ${selected
-                                ? "bg-primary border-primary text-primary-foreground"
-                                : "bg-background border-border text-foreground hover:border-primary/40 hover:bg-primary/5"
+                              ${
+                                selected
+                                  ? "bg-primary border-primary text-primary-foreground"
+                                  : "bg-background border-border text-foreground hover:border-primary/40 hover:bg-primary/5"
                               }`}
                           >
-                            <span className={`w-3.5 h-3.5 rounded-full border-2 shrink-0 transition-all
+                            <span
+                              className={`w-3.5 h-3.5 rounded-full border-2 shrink-0 transition-all
                               ${selected ? "bg-primary-foreground border-primary-foreground" : "border-muted-foreground"}`}
                             />
                             {opt.label}
                           </button>
-                        )
+                        );
                       })}
                     </div>
                   </div>
                 </div>
 
-                {/* Action buttons */}
                 <div className="mt-5 flex items-center gap-3">
                   <button
-                    onClick={handleAnalisis}
+                    onClick={() => handleAnalisis()}
                     disabled={!canRun || state === "loading"}
                     className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all
-                      ${canRun && state !== "loading"
-                        ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                        : "bg-muted text-muted-foreground cursor-not-allowed"
+                      ${
+                        canRun && state !== "loading"
+                          ? "bg-primary text-primary-foreground hover:bg-primary/90"
+                          : "bg-muted text-muted-foreground cursor-not-allowed"
                       }`}
                   >
                     {state === "loading" ? (
@@ -200,15 +234,19 @@ export default function AnalitikSelector() {
                     ) : (
                       <>
                         <Sparkles size={14} />
-                        {state === "done" ? "Analisis Ulang" : "Jalankan Analisis"}
+                        {state === "done"
+                          ? "Analisis Ulang"
+                          : "Jalankan Analisis"}
                       </>
                     )}
                   </button>
 
-                  {/* Tombol force refresh (hapus cache) */}
                   {state === "done" && (
                     <button
-                      onClick={() => { setRefresh(true); handleAnalisis() }}
+                      onClick={() => {
+                        setRefresh(true);
+                        handleAnalisis(true);
+                      }}
                       className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all"
                     >
                       <RefreshCw size={13} />
@@ -226,10 +264,11 @@ export default function AnalitikSelector() {
                   )}
                 </div>
 
-                {/* Info: belum pilih */}
                 {!canRun && state === "idle" && (
                   <p className="mt-3 text-xs text-muted-foreground">
-                    {!tahunValid ? "Isi tahun seleksi yang valid" : "Pilih jalur masuk terlebih dahulu"}
+                    {!tahunValid
+                      ? "Isi tahun seleksi yang valid"
+                      : "Pilih jalur masuk terlebih dahulu"}
                   </p>
                 )}
               </div>
@@ -240,14 +279,16 @@ export default function AnalitikSelector() {
 
       {/* Error State */}
       {state === "error" && (
-        <div className="flex flex-col items-center justify-center py-16 text-center bg-white rounded-3xl border border-border">
+        <div className="flex flex-col items-center justify-center py-16 text-center bg-tertiary rounded-3xl border border-border">
           <div className="w-12 h-12 bg-destructive/8 rounded-2xl flex items-center justify-center mb-3">
             <AlertCircle size={24} className="text-destructive" />
           </div>
-          <h3 className="font-bold text-foreground mb-1">Gagal memuat data analitik</h3>
+          <h3 className="font-bold text-foreground mb-1">
+            Gagal memuat data analitik
+          </h3>
           <p className="text-muted-foreground text-sm max-w-sm">{error}</p>
           <button
-            onClick={handleAnalisis}
+            onClick={() => handleAnalisis()}
             className="mt-4 px-4 py-2 rounded-xl text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all"
           >
             Coba Lagi
@@ -262,28 +303,49 @@ export default function AnalitikSelector() {
           animate={{ opacity: 1, y: 0 }}
           className="space-y-8"
         >
-          {/* Label konteks aktif */}
           <div className="flex items-center gap-2 text-xs text-primary font-semibold">
             <ChevronRight size={14} />
-            Menampilkan analitik: <span className="font-bold">{jalur}</span> tahun <span className="font-bold">{tahun}</span>
+            Menampilkan analitik: <span className="font-bold">
+              {jalur}
+            </span>{" "}
+            tahun <span className="font-bold">{tahun}</span>
           </div>
 
-          <KartuRingkasan ringkasan={data.ringkasan} konsistensi={data.konsistensi} />
+          {/* 1. Ringkasan angka dasar — konteks fundamental */}
+          <KartuRingkasan
+            ringkasan={data.ringkasan}
+            konsistensi={data.konsistensi}
+          />
+
+          {/* 2. Insight naratif — kesimpulan siap baca */}
           <InsightNaratif data={data} />
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <FeatureImportanceChart data={data.feature_importance} />
-            <KonsistensiCard data={data.konsistensi} modelInfo={data.model_info} />
-          </div>
+          {/* 3. Kasus paling actionable — layak ditinjau ulang */}
+          <KasusAmbigu data={data.kasus_ambigu} />
 
-          {/* P3KE — full width, 4 label termasuk "Belum Terdata" yang panjang */}
+          {/* 4. Sebaran geografis — lihat wilayah bermasalah */}
+          <GeografisChart data={data.distribusi_geografis} />
+          
+          {/* 5. Sebaran Fakultas (Chart Jejer 2) */}
+          <FakultasChart
+            data={data.distribusi_fakultas}
+            totalDiusulkan={data.ringkasan.total_diusulkan}
+          />
+
+          {/* 6. Distribusi jenis kelamin — konteks demografis */}
+          <DistribusiChart
+            data={data.distribusi_jenis_kelamin}
+            title="Distribusi per Jenis Kelamin"
+            subtitle="Diusulkan vs tidak per kategori gender"
+          />
+
+          {/* 7. Distribusi sebagai konteks pendukung */}
           <DistribusiChart
             data={data.distribusi_p3ke}
             title="Distribusi per Status P3KE"
             subtitle="Diusulkan vs tidak per kategori P3KE"
           />
 
-          {/* Kondisi Rumah + DTKS — 2 kolom, label pendek */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <DistribusiChart
               data={data.distribusi_kondisi_rumah}
@@ -297,12 +359,66 @@ export default function AnalitikSelector() {
             />
           </div>
 
-          <GeografisChart data={data.distribusi_geografis} />
-          <RuleExtraction rules={data.rule_nodes} />
-          <KasusAmbigu data={data.kasus_ambigu} />
-          <ModelInfoCard data={data.model_info} />
+          {/* 8. Detail teknis model — collapsible, audiens teknis */}
+          <div className="bg-tertiary rounded-3xl border border-border shadow-sm overflow-hidden">
+            <button
+              onClick={() => setTechnicalOpen((v) => !v)}
+              className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-primary/8 flex items-center justify-center shrink-0">
+                  <Wrench size={14} className="text-primary" />
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-bold text-foreground">
+                    Detail Teknis Model
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Faktor dominan, konsistensi, aturan keputusan, dan info
+                    model Decision Tree
+                  </p>
+                </div>
+              </div>
+              {technicalOpen ? (
+                <ChevronUp
+                  size={16}
+                  className="text-muted-foreground shrink-0"
+                />
+              ) : (
+                <ChevronDown
+                  size={16}
+                  className="text-muted-foreground shrink-0"
+                />
+              )}
+            </button>
+
+            <AnimatePresence initial={false}>
+              {technicalOpen && (
+                <motion.div
+                  key="technical-body"
+                  initial={{ height: 0, opacity: 0 }}
+                  animate={{ height: "auto", opacity: 1 }}
+                  exit={{ height: 0, opacity: 0 }}
+                  transition={{ duration: 0.25, ease: "easeInOut" }}
+                  className="overflow-hidden"
+                >
+                  <div className="px-6 pb-6 pt-2 border-t border-border space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                      <FeatureImportanceChart data={data.feature_importance} />
+                      <KonsistensiCard
+                        data={data.konsistensi}
+                        modelInfo={data.model_info}
+                      />
+                    </div>
+                    <RuleExtraction rules={data.rule_nodes} />
+                    <ModelInfoCard data={data.model_info} />
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </motion.div>
       )}
     </div>
-  )
+  );
 }

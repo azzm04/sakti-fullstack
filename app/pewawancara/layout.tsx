@@ -34,46 +34,17 @@ const overlayVariants: Variants = {
   exit:    { opacity: 0 },
 };
 
-export default function PewawancaraLayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const router = useRouter();
-  const [mobileOpen, setMobileOpen] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  // Validasi role pewawancara
-  useEffect(() => {
-    const checkPewawancaraRole = async () => {
-      try {
-        const res = await fetch("/api/auth/me");
-        const data = await res.json();
-        
-        if (!res.ok || data.role !== "PEWAWANCARA") {
-          // Redirect ke halaman berdasarkan role
-          const roleRoutes: Record<string, string> = {
-            MAHASISWA_KIPK: "/mahasiswa",
-            ADMIN_DIRMAWA: "/admin",
-          };
-          const redirectPath = roleRoutes[data.role] || "/pewawancara-login";
-          router.push(redirectPath);
-          return;
-        }
-        
-        setLoading(false);
-      } catch {
-        router.push("/pewawancara-login");
-      }
-    };
-
-    checkPewawancaraRole();
-  }, [router]);
-
-  async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    router.push("/pewawancara-login");
-    router.refresh();
-  }
-
-  const SidebarContent = () => (
+// Dipindahkan keluar dari PewawancaraLayout supaya tidak dibuat ulang tiap render
+function SidebarContent({
+  pathname,
+  onNavigate,
+  onLogout,
+}: {
+  pathname: string;
+  onNavigate: () => void;
+  onLogout: () => void;
+}) {
+  return (
     <div className="flex flex-col h-full">
       <div className="px-6 pt-8 pb-1">
         <span className="text-2xl font-extrabold font-headline text-primary">SAKTI</span>
@@ -93,7 +64,7 @@ export default function PewawancaraLayout({ children }: { children: React.ReactN
             <Link
               key={href}
               href={href}
-              onClick={() => setMobileOpen(false)}
+              onClick={onNavigate}
               className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
                 active
                   ? "bg-primary text-primary-foreground shadow-sm"
@@ -111,7 +82,7 @@ export default function PewawancaraLayout({ children }: { children: React.ReactN
         <div className="mx-1 h-px bg-border mb-3" />
         <motion.button
           whileHover={{ x: 2 }}
-          onClick={handleLogout}
+          onClick={onLogout}
           className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
         >
           <LogOut size={16} />
@@ -120,6 +91,44 @@ export default function PewawancaraLayout({ children }: { children: React.ReactN
       </div>
     </div>
   );
+}
+
+export default function PewawancaraLayout({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkPewawancaraRole = async () => {
+      try {
+        const res = await fetch("/api/auth/me");
+        const data = await res.json();
+
+        if (!res.ok || data.role !== "PEWAWANCARA") {
+          const roleRoutes: Record<string, string> = {
+            MAHASISWA_KIPK: "/mahasiswa",
+            ADMIN_DIRMAWA: "/admin",
+          };
+          const redirectPath = roleRoutes[data.role] || "/pewawancara-login";
+          router.push(redirectPath);
+          return;
+        }
+
+        setLoading(false);
+      } catch {
+        router.push("/pewawancara-login");
+      }
+    };
+
+    checkPewawancaraRole();
+  }, [router]);
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    router.push("/pewawancara-login");
+    router.refresh();
+  }
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -138,7 +147,11 @@ export default function PewawancaraLayout({ children }: { children: React.ReactN
             animate="visible"
             className="hidden md:flex sticky top-0 h-screen w-60 flex-col bg-tertiary border-r border-border shrink-0"
           >
-            <SidebarContent />
+            <SidebarContent
+              pathname={pathname}
+              onNavigate={() => setMobileOpen(false)}
+              onLogout={handleLogout}
+            />
           </motion.aside>
 
           {/* Mobile Topbar */}
@@ -157,7 +170,7 @@ export default function PewawancaraLayout({ children }: { children: React.ReactN
           <AnimatePresence>
             {mobileOpen && (
               <div className="md:hidden fixed inset-0 z-50 flex">
-                    <motion.div
+                <motion.div
                   variants={overlayVariants}
                   initial="hidden"
                   animate="visible"
@@ -179,7 +192,11 @@ export default function PewawancaraLayout({ children }: { children: React.ReactN
                   >
                     <X size={18} className="text-muted-foreground" />
                   </motion.button>
-                  <SidebarContent />
+                  <SidebarContent
+                    pathname={pathname}
+                    onNavigate={() => setMobileOpen(false)}
+                    onLogout={handleLogout}
+                  />
                 </motion.aside>
               </div>
             )}

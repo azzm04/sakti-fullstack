@@ -219,6 +219,8 @@ model hasil_analitik_dt {
   distribusi_kondisi_rumah Json
   distribusi_dtks          Json
   distribusi_geografis     Json
+  distribusi_jenis_kelamin Json?
+  distribusi_fakultas      Json?
   analyzed_at              DateTime?   @default(now()) @db.Timestamptz(6)
   impor_data               impor_data? @relation(fields: [impor_data_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 

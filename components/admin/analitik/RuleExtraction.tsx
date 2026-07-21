@@ -1,130 +1,238 @@
-"use client"
+"use client";
 
-import { CheckCircle2, XCircle, ChevronDown, ChevronUp } from "lucide-react"
-import type { RuleNode } from "@/types/analitik"
-import { useState } from "react"
+import { CheckCircle2, XCircle, ChevronDown, ChevronUp } from "lucide-react";
+import type { RuleNode } from "@/types/analitik";
+import { useState } from "react";
 
 interface Props {
-  rules: RuleNode[]
+  rules: RuleNode[];
 }
 
-function humanizeKondisi(kondisi: string): string {
-  return kondisi
-    .replace(/(\w[\w\s()]+?)\s*([≤>]+)\s*(\d+(?:\.\d+)?)/g, (_, feat, op, val) => {
-      const numVal = parseFloat(val)
+interface ParsedCondition {
+  text: string;
+}
+
+// Ubah satu kondisi mentah ("Fitur ≤ 123") jadi kalimat manusiawi
+function parseCondition(raw: string): string {
+  let text = raw.trim();
+
+  // Angka rupiah / numerik
+  text = text.replace(
+    /(\w[\w\s()]+?)\s*([≤>]+)\s*(\d+(?:\.\d+)?)/g,
+    (_, feat, op, val) => {
+      const numVal = parseFloat(val);
+      const featClean = feat.trim();
       const isRupiah =
-        feat.toLowerCase().includes("penghasilan") ||
-        feat.toLowerCase().includes("kapita")
+        featClean.toLowerCase().includes("penghasilan") ||
+        featClean.toLowerCase().includes("kapita");
+
       const formatted = isRupiah
         ? `Rp ${numVal.toLocaleString("id-ID")}`
         : numVal % 1 === 0
-        ? numVal.toLocaleString("id-ID")
-        : numVal.toFixed(1)
-      return `${feat.trim()} ${op} ${formatted}`
-    })
-    .replace(/Status P3KE\s*([≤>]+)\s*([\d.]+)/g, (_, op, val) => {
-      const v = parseFloat(val)
-      if (op === "≤" && v < 1) return `Status P3KE = "Belum Terdata"`
-      if (op === ">") return `Status P3KE ≠ "Belum Terdata" (Desil 3+)`
-      return `Status P3KE ${op} ${val}`
-    })
-    .replace(/Jenis Kelamin\s*([≤>]+)\s*([\d.]+)/g, (_, op) => {
-      if (op === "≤") return `Jenis Kelamin = "Perempuan"`
-      return `Jenis Kelamin = "Laki-laki"`
-    })
-    .replace(/\s*&\s*/g, "\n  & ")
+          ? numVal.toLocaleString("id-ID")
+          : numVal.toFixed(1);
+
+      const opText = op === "≤" ? "maksimal" : "lebih dari";
+      return `${featClean} ${opText} ${formatted}`;
+    },
+  );
+
+  // Kasus khusus: Status P3KE
+  text = text.replace(
+    /Status P3KE\s*(maksimal|lebih dari)\s*([\d.]+)/g,
+    (_, opText) => {
+      return opText === "maksimal"
+        ? `Status P3KE = "Belum Terdata"`
+        : `Status P3KE ≠ "Belum Terdata" (Desil 3+)`;
+    },
+  );
+
+  // Kasus khusus: Jenis Kelamin
+  text = text.replace(
+    /Jenis Kelamin\s*(maksimal|lebih dari)\s*[\d.]+/g,
+    (_, opText) => {
+      return opText === "maksimal"
+        ? `Jenis Kelamin = "Perempuan"`
+        : `Jenis Kelamin = "Laki-laki"`;
+    },
+  );
+
+  return text;
 }
 
-export default function RuleExtraction({ rules }: Props) {
-  const [expanded, setExpanded] = useState(true)
-  const safeRules = Array.isArray(rules) ? rules : []
+function parseKondisi(kondisi: string): ParsedCondition[] {
+  return kondisi
+    .split("&")
+    .map((c) => c.trim())
+    .filter(Boolean)
+    .map((c) => ({ text: parseCondition(c) }));
+}
 
-  const diusulkan = safeRules.filter((r) => r.keputusan === "Diusulkan")
-  const tidak = safeRules.filter((r) => r.keputusan !== "Diusulkan")
+function confidenceLabel(pct: number): {
+  label: string;
+  color: string;
+  bar: string;
+} {
+  if (pct >= 90)
+    return {
+      label: "Sangat Yakin",
+      color: "text-emerald-700",
+      bar: "bg-emerald-500",
+    };
+  if (pct >= 75)
+    return { label: "Yakin", color: "text-amber-600", bar: "bg-amber-400" };
+  return { label: "Kurang Yakin", color: "text-red-600", bar: "bg-red-500" };
+}
+
+const PREVIEW_COUNT = 3;
+
+export default function RuleExtraction({ rules }: Props) {
+  const [expanded, setExpanded] = useState(true);
+  const [showAllDiusulkan, setShowAllDiusulkan] = useState(false);
+  const [showAllTidak, setShowAllTidak] = useState(false);
+
+  const safeRules = Array.isArray(rules) ? rules : [];
+  const diusulkan = safeRules.filter((r) => r.keputusan === "Diusulkan");
+  const tidak = safeRules.filter((r) => r.keputusan !== "Diusulkan");
+
+  const diusulkanVisible = showAllDiusulkan
+    ? diusulkan
+    : diusulkan.slice(0, PREVIEW_COUNT);
+  const tidakVisible = showAllTidak ? tidak : tidak.slice(0, PREVIEW_COUNT);
 
   return (
-    <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
+    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
       <button
         onClick={() => setExpanded((v) => !v)}
-        className="w-full flex items-center justify-between px-6 py-4 border-b border-border hover:bg-muted/40 transition-colors"
+        className="w-full flex items-center justify-between px-6 py-4 border-b border-slate-100 hover:bg-slate-50 transition-colors focus:outline-none"
       >
         <div className="text-left">
-          <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
-            Aturan Keputusan (Rule Extraction)
+          <h3 className="text-sm font-semibold text-slate-800">
+            Pola Keputusan yang Ditemukan
           </h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            Pola logika yang dihasilkan Decision Tree — {safeRules.length} aturan
+          <p className="text-xs text-slate-500 mt-1">
+            {safeRules.length} pola hasil analisis — makin banyak sampel &
+            keyakinan, makin kuat pola ini
           </p>
         </div>
-        {expanded
-          ? <ChevronUp size={16} className="text-muted-foreground" />
-          : <ChevronDown size={16} className="text-muted-foreground" />}
+        {expanded ? (
+          <ChevronUp size={16} className="text-slate-400" />
+        ) : (
+          <ChevronDown size={16} className="text-slate-400" />
+        )}
       </button>
 
       {expanded && (
-        <div className="p-6 space-y-6">
+        <div className="p-6 space-y-8">
           {diusulkan.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider flex items-center gap-1.5">
-                <CheckCircle2 size={12} /> Diusulkan ({diusulkan.length} aturan)
+            <div className="space-y-4">
+              <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider flex items-center gap-2">
+                <CheckCircle2 size={14} /> Cenderung Diusulkan (
+                {diusulkan.length} pola)
               </p>
-              {diusulkan.map((rule, i) => (
-                <RuleCard key={i} rule={rule} variant="diusulkan" />
-              ))}
+              <div className="space-y-3">
+                {diusulkanVisible.map((rule, i) => (
+                  <RuleCard key={i} rule={rule} variant="diusulkan" />
+                ))}
+              </div>
+              {diusulkan.length > PREVIEW_COUNT && (
+                <button
+                  onClick={() => setShowAllDiusulkan((v) => !v)}
+                  className="text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 hover:bg-slate-100 transition-colors"
+                >
+                  {showAllDiusulkan
+                    ? "Sembunyikan"
+                    : `Lihat ${diusulkan.length - PREVIEW_COUNT} pola lainnya`}
+                </button>
+              )}
             </div>
           )}
 
           {tidak.length > 0 && (
-            <div className="space-y-2">
-              <p className="text-[11px] font-bold text-destructive uppercase tracking-wider flex items-center gap-1.5">
-                <XCircle size={12} /> Tidak Diusulkan ({tidak.length} aturan)
+            <div className="space-y-4">
+              <p className="text-[11px] font-bold text-red-600 uppercase tracking-wider flex items-center gap-2">
+                <XCircle size={14} /> Cenderung Tidak Diusulkan ({tidak.length}{" "}
+                pola)
               </p>
-              {tidak.map((rule, i) => (
-                <RuleCard key={i} rule={rule} variant="tidak" />
-              ))}
+              <div className="space-y-3">
+                {tidakVisible.map((rule, i) => (
+                  <RuleCard key={i} rule={rule} variant="tidak" />
+                ))}
+              </div>
+              {tidak.length > PREVIEW_COUNT && (
+                <button
+                  onClick={() => setShowAllTidak((v) => !v)}
+                  className="text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 hover:bg-slate-100 transition-colors"
+                >
+                  {showAllTidak
+                    ? "Sembunyikan"
+                    : `Lihat ${tidak.length - PREVIEW_COUNT} pola lainnya`}
+                </button>
+              )}
             </div>
           )}
         </div>
       )}
     </div>
-  )
+  );
 }
 
-function RuleCard({ rule, variant }: { rule: RuleNode; variant: "diusulkan" | "tidak" }) {
-  const isDiusulkan = variant === "diusulkan"
-  const pct = Math.round(rule.confidence * 100)
+function RuleCard({
+  rule,
+  variant,
+}: {
+  rule: RuleNode;
+  variant: "diusulkan" | "tidak";
+}) {
+  const isDiusulkan = variant === "diusulkan";
+  const pct = Math.round(rule.confidence * 100);
+  const { label, color, bar } = confidenceLabel(pct);
 
-  // Warna confidence bar: hijau tinggi, amber sedang, merah rendah
-  const barColor = pct >= 90 ? "bg-emerald-500" : pct >= 75 ? "bg-amber-400" : "bg-red-400"
-  const textColor = isDiusulkan ? "text-emerald-700" : "text-destructive"
-  const borderColor = isDiusulkan ? "border-emerald-100" : "border-destructive/20"
-  const bgColor = isDiusulkan ? "bg-emerald-50/60" : "bg-destructive/5"
-  const Icon = isDiusulkan ? CheckCircle2 : XCircle
-  const iconColor = isDiusulkan ? "text-emerald-500" : "text-destructive"
+  const borderColor = isDiusulkan ? "border-emerald-100" : "border-red-100";
+  const bgColor = isDiusulkan ? "bg-emerald-50/40" : "bg-red-50/40";
+  const Icon = isDiusulkan ? CheckCircle2 : XCircle;
+  const iconColor = isDiusulkan ? "text-emerald-500" : "text-red-500";
 
-  const humanized = humanizeKondisi(rule.kondisi)
-  const lines = humanized.split("\n")
+  const conditions = parseKondisi(rule.kondisi);
 
   return (
-    <div className={`flex items-start gap-3 ${bgColor} border ${borderColor} rounded-xl p-4`}>
-      <Icon size={14} className={`${iconColor} mt-0.5 shrink-0`} />
-      <div className="flex-1 min-w-0">
-        <div className="font-mono text-xs text-foreground leading-relaxed break-words">
-          <span className="text-muted-foreground text-[10px] font-bold uppercase tracking-wider">JIKA </span>
-          {lines.map((line, i) => (
-            <span key={i} className={i > 0 ? "block pl-4" : ""}>{line}</span>
-          ))}
-        </div>
-        <div className="mt-3 flex items-center gap-3">
-          <span className="text-[11px] text-muted-foreground">{rule.jumlah_sampel} sampel</span>
-          <div className="flex items-center gap-1.5 flex-1">
-            <div className="flex-1 h-1.5 bg-muted rounded-full overflow-hidden max-w-[80px]">
-              <div className={`h-full ${barColor} rounded-full`} style={{ width: `${pct}%` }} />
-            </div>
-            <span className={`text-[11px] font-bold ${textColor}`}>Keyakinan {pct}%</span>
+    <div
+      className={`${bgColor} border ${borderColor} rounded-xl p-5 shadow-sm`}
+    >
+      <div className="flex items-start gap-2.5 mb-3">
+        <Icon size={16} className={`${iconColor} mt-0.5 shrink-0`} />
+        <p className="text-sm font-semibold text-slate-800">
+          Jika semua kondisi berikut terpenuhi:
+        </p>
+      </div>
+
+      <ul className="space-y-2 pl-7 mb-4">
+        {conditions.map((c, i) => (
+          <li
+            key={i}
+            className="text-sm text-slate-600 leading-relaxed relative before:content-['•'] before:absolute before:-left-4 before:text-slate-400"
+          >
+            {c.text}
+          </li>
+        ))}
+      </ul>
+
+      <div className="flex items-center justify-between pl-7">
+        <span className="text-[11px] text-slate-400 font-medium">
+          Berdasarkan {rule.jumlah_sampel} data mahasiswa serupa
+        </span>
+        <div className="flex items-center gap-2.5">
+          <div className="w-16 h-1.5 bg-slate-200/80 rounded-full overflow-hidden">
+            <div
+              className={`h-full ${bar} rounded-full`}
+              style={{ width: `${pct}%` }}
+            />
           </div>
+          <span className={`text-[11px] font-bold ${color}`}>
+            {label} ({pct}%)
+          </span>
         </div>
       </div>
     </div>
-  )
+  );
 }

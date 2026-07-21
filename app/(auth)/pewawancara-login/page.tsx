@@ -83,7 +83,7 @@ export default function PewawancaraLoginPage() {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="email@undip.ac.id"
+                placeholder="email@students.undip.ac.id"
                 required
                 className="w-full pl-10 h-11 text-sm bg-muted border border-border rounded-lg focus:bg-tertiary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-colors"
               />

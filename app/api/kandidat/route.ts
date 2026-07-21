@@ -188,6 +188,8 @@ export async function POST(req: NextRequest) {
       // Jalur masuk — dari pilihan admin saat import, bukan dari CSV
       jalur_masuk: jalurMasuk || null,
 
+      jarak_pusat_kota: row.jarak_pusat_kota || null,
+
       // DIBUANG — diisi saat wawancara, bukan saat import:
       // validasi_dtks, validasi_p3ke, validasi_kip, validasi_kks
       // ket_pekerjaan_ayah, ket_pekerjaan_ibu
