@@ -1,8 +1,10 @@
 "use client";
 
+import Link from "next/link";
 import { motion } from "framer-motion";
 import Image from "next/image";
-import { ExternalLink } from "lucide-react";
+// Mengganti icon ExternalLink dengan FileText dan Search agar lebih relevan dengan halaman internal
+import { FileText, Search } from "lucide-react"; 
 
 export default function PengaduanSection() {
   return (
@@ -19,6 +21,7 @@ export default function PengaduanSection() {
       >
         <div className="bg-gradient-to-r from-[#005B96] to-primary rounded-3xl p-8 md:p-14 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-10 md:gap-12 relative overflow-hidden">
           <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+          
           <div className="relative z-10 w-full md:w-1/2 flex flex-col items-center md:items-start text-center md:text-left">
             <motion.span
               initial={{ opacity: 0, y: -10 }}
@@ -53,24 +56,34 @@ export default function PengaduanSection() {
               membutuhkan.
             </motion.p>
 
+            {/* AREA TOMBOL YANG DIUBAH */}
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="w-full flex justify-center md:justify-start"
+              className="w-full flex flex-col sm:flex-row justify-center md:justify-start gap-4"
             >
-              <a
-                href="https://forms.gle/LINK_GFORM_ANDA"
-                target="_blank"
-                rel="noopener noreferrer"
+              {/* Tombol ke Form Pengaduan */}
+              <Link
+                href="/layanan-aduan"
                 className="inline-flex items-center justify-center w-full sm:w-auto px-8 py-3.5 sm:py-4 bg-white text-primary font-bold rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95"
               >
                 Buka Form Pelaporan
-                <ExternalLink className="w-5 h-5 ml-2 shrink-0" />
-              </a>
+                <FileText className="w-5 h-5 ml-2 shrink-0" />
+              </Link>
+
+              {/* Tombol ke Lacak Resi */}
+              <Link
+                href="/cek-aduan"
+                className="inline-flex items-center justify-center w-full sm:w-auto px-8 py-3.5 sm:py-4 bg-transparent border-2 border-white/70 text-white font-bold rounded-full hover:bg-white/10 hover:border-white transition-all active:scale-95"
+              >
+                Lacak Status Resi
+                <Search className="w-5 h-5 ml-2 shrink-0" />
+              </Link>
             </motion.div>
           </div>
+
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
