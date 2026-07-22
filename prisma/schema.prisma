@@ -16,7 +16,7 @@ model User {
   updatedAt             DateTime               @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
   otp_tokens            OtpToken[]
   penerimaKipk          PenerimaKipk?
-  pewawancara           Pewawancara[]
+  pewawancara           Pewawancara?
   tokenAktivasiTelegram TokenAktivasiTelegram?
 
   @@map("users")
@@ -56,18 +56,19 @@ model TokenAktivasiTelegram {
 }
 
 model PenerimaKipk {
-  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId         String   @unique @map("user_id") @db.Uuid
-  lolosSeleksiId String?  @map("lolos_seleksi_id") @db.Uuid
-  nim            String?  @db.VarChar(30)
-  nama           String?  @db.VarChar(150)
-  prodi          String?  @db.VarChar(100)
-  angkatan       Int?     @db.SmallInt
-  telegramId     BigInt?  @map("telegram_id")
-  monevSubmitted Boolean  @default(false) @map("monev_submitted")
-  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamp(6)
-  updatedAt      DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  id                 String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId             String          @unique @map("user_id") @db.Uuid
+  nim                String
+  nama               String
+  prodi_id           String          @db.Uuid
+  angkatan           Int             @db.SmallInt
+  telegramId         BigInt?         @map("telegram_id")
+  createdAt          DateTime        @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime        @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @updatedAt @map("updated_at") @db.Timestamp(6)
+  hasil_wawancara_id String          @unique @db.Uuid
+  hasil_wawancara    hasil_wawancara @relation(fields: [hasil_wawancara_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  prodi              prodi           @relation(fields: [prodi_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  user               User            @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@map("penerima_kipk")
 }
@@ -76,10 +77,10 @@ model Pewawancara {
   id                   BigInt                 @id @default(autoincrement())
   totalAssigned        Int?                   @default(0) @map("total_assigned")
   totalCompleted       Int?                   @default(0) @map("total_completed")
-  createdAt            DateTime?              @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt            DateTime?              @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  createdAt            DateTime?              @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime?              @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @updatedAt @map("updated_at") @db.Timestamptz(6)
   adminId              String?                @map("admin_id") @db.Uuid
-  userId               String?                @map("user_id") @db.Uuid
+  userId               String?                @unique @map("user_id") @db.Uuid
   nama                 String?
   isActive             Boolean?               @default(true) @map("is_active")
   hasil_wawancara      hasil_wawancara[]
@@ -136,6 +137,41 @@ model ChatHistory {
   createdAt DateTime @default(now())
 
   @@map("chat_history")
+}
+
+model Aduan {
+  id               String      @id @default(uuid())
+  admin_id         String?     
+  user_id          String?     
+  kode_laporan     String      @unique @db.VarChar(20)
+  jenis_aduan      JenisAduan
+  nama_terlapor    String      @db.VarChar(150)
+  
+  // --- TAMBAHAN STANDAR FORM 2026 ---
+  nim_terlapor     String?     @db.VarChar(50)  // Opsional (Jika pelapor tahu)
+  fakultas_prodi   String?     @db.VarChar(150) // Wajib di form 2026
+  angkatan         String?     @db.VarChar(20)  // Wajib di form 2026
+  
+  uraian_kronologi String      @db.Text
+  url_bukti        String      @db.Text
+  status           StatusAduan @default(MENUNGGU)
+  created_at       DateTime    @default(now())
+
+  @@map("aduan")
+}
+
+model BeritaInformasi {
+  id             String       @id @default(uuid())
+  admin_id       String
+  judul          String       @db.VarChar(255)
+  konten         String
+  jenis          JenisBerita
+  thumbnail_url  String
+  status         StatusBerita @default(DRAFT)
+  diterbitkan_at DateTime?
+  created_at     DateTime     @default(now())
+
+  @@map("berita_informasi")
 }
 
 model MonevSchedule {
@@ -220,6 +256,8 @@ model hasil_analitik_dt {
   distribusi_dtks          Json
   distribusi_geografis     Json
   analyzed_at              DateTime?   @default(now()) @db.Timestamptz(6)
+  distribusi_jenis_kelamin Json?
+  distribusi_fakultas      Json?
   impor_data               impor_data? @relation(fields: [impor_data_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([tahun_seleksi, jalur_masuk])
@@ -231,9 +269,9 @@ model hasil_wawancara {
   kandidat_id              String                     @db.Uuid
   dokumen_pendukung        String?
   sosial_media             String?                    @db.VarChar(255)
-  det_pekerjaan_ayah       String?
+  ket_pekerjaan_ayah       String?
   ket_penghasilan_ayah     Int?
-  det_pekerjaan_ibu        String?
+  ket_pekerjaan_ibu        String?
   ket_penghasilan_ibu      Int?
   penghasilan_lain         Int?
   validasi_orang_rumah     Int?                       @db.SmallInt
@@ -255,6 +293,7 @@ model hasil_wawancara {
   detail_ekonomi_wawancara detail_ekonomi_wawancara[]
   pewawancara              Pewawancara?               @relation(fields: [pewawancara_id], references: [id], onUpdate: NoAction, map: "fk_hasil_wawancara_pewawancara")
   kandidat                 kandidat                   @relation(fields: [kandidat_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "hasil_wawancara_kandidat_id_fkey1")
+  penerima_kipk            PenerimaKipk?
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -499,6 +538,42 @@ model wawancara_assignment {
   pewawancara    Pewawancara   @relation(fields: [pewawancara_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model prodi {
+  id            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nama_prodi    String
+  fakultas      String
+  created_at    DateTime           @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
+  updated_at    DateTime?          @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
+  prodi         jenjang_pendidikan
+  penerima_kipk PenerimaKipk[]
+}
+
+enum JenisAduan {
+  KETIDAKTEPATAN
+  PENYALAHGUNAAN
+}
+
+enum StatusAduan {
+  MENUNGGU
+  DIPROSES
+  SELESAI
+  DITOLAK
+}
+
+enum JenisBerita {
+  PENGUMUMAN
+  INFORMASI
+  PANDUAN
+}
+
+enum StatusBerita {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
 enum Role {
   MAHASISWA_KIPK
   PEWAWANCARA
@@ -522,4 +597,9 @@ enum tipe_monev {
   Evaluasi_Akademik @map("Evaluasi Akademik")
   Evaluasi_Sosial   @map("Evaluasi Sosial")
   Evaluasi_Akhir    @map("Evaluasi Akhir")
+}
+
+enum jenjang_pendidikan {
+  S1
+  D4
 }
