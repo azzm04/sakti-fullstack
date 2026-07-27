@@ -14,6 +14,7 @@ import {
   ClipboardList,
   BookMarked,
   BarChart2,
+  MessageSquareWarning,
 } from "lucide-react"
 
 const navItems = [
@@ -24,6 +25,7 @@ const navItems = [
   { href: "/admin/kalkulasi", label: "Kalkulasi", icon: ClipboardList },
   { href: "/admin/monev", label: "Monev", icon: BookMarked },
   { href: "/admin/analitik", label: "Analitik Seleksi", icon: BarChart2 },
+  { href: "/admin/aduan", label: "Pengaduan", icon: MessageSquareWarning },
 ]
 
 const sidebarVariants: Variants = {
