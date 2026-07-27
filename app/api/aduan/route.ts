@@ -2,13 +2,22 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db"; 
 import { z } from "zod";
 
-// Skema Validasi
+// Skema Validasi Diperbarui (Sesuai Spesifikasi Anda)
 const aduanSchema = z.object({
   jenis_aduan: z.enum(["KETIDAKTEPATAN", "PENYALAHGUNAAN"], {
-    error: "Jenis pelaporan wajib dipilih dan harus valid",
+    error: "Jenis pelaporan wajib dipilih",
   }),
+  is_anonim: z.boolean(),
+  nama_pelapor: z.string().optional().or(z.literal("")),
+  whatsapp_pelapor: z.string().optional().or(z.literal("")),
+  
   nama_terlapor: z.string().min(1, "Nama terlapor wajib diisi"),
-  uraian_kronologi: z.string().min(150, "Uraian terlalu singkat, mohon jelaskan detail kronologinya (idealnya 3 paragraf)."),
+  nim_terlapor: z.string().optional().or(z.literal("")),
+  fakultas_prodi: z.string().min(1, "Fakultas/Prodi wajib diisi"),
+  angkatan: z.string().min(1, "Angkatan wajib diisi"),
+  
+  // Batas minimal diturunkan menjadi 50 karakter
+  uraian_kronologi: z.string().min(50, "Uraian terlalu singkat (minimal 50 karakter)."),
   url_bukti: z.string().url("Format link bukti tidak valid").optional().or(z.literal("")),
 });
 
@@ -16,7 +25,6 @@ export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     
-    // Menggunakan safeParse menyesuaikan standar kode tim
     const result = aduanSchema.safeParse(body);
     
     if (!result.success) {
@@ -28,19 +36,29 @@ export async function POST(req: NextRequest) {
 
     const parsedData = result.data;
 
-    // Generate Kode Laporan unik otomatis (Contoh: ADUAN-2026-89473)
+    // Generate Kode Laporan unik otomatis
     const tahun = new Date().getFullYear();
     const angkaAcak = Math.floor(10000 + Math.random() * 90000);
     const kodeLaporan = `ADUAN-${tahun}-${angkaAcak}`;
 
-    // Simpan ke Database
+    // Simpan ke Database Prisma
     const aduanBaru = await prisma.aduan.create({
       data: {
         kode_laporan: kodeLaporan,
         jenis_aduan: parsedData.jenis_aduan,
+        
+        // Data Pelapor
+        is_anonim: parsedData.is_anonim,
+        nama_pelapor: parsedData.is_anonim ? null : parsedData.nama_pelapor,
+        whatsapp_pelapor: parsedData.is_anonim ? null : parsedData.whatsapp_pelapor,
+        
+        // Data Terlapor & Kronologi
         nama_terlapor: parsedData.nama_terlapor,
+        nim_terlapor: parsedData.nim_terlapor || null,
+        fakultas_prodi: parsedData.fakultas_prodi,
+        angkatan: parsedData.angkatan,
         uraian_kronologi: parsedData.uraian_kronologi,
-        url_bukti: parsedData.url_bukti || "https://placeholder.com/belum-ada-bukti",
+        url_bukti: parsedData.url_bukti ?? "",
       },
     });
 

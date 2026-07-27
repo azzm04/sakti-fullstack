@@ -147,6 +147,10 @@ model Aduan {
   jenis_aduan      JenisAduan
   nama_terlapor    String      @db.VarChar(150)
   
+  is_anonim        Boolean  @default(true)
+  nama_pelapor     String?  @db.VarChar(150)
+  whatsapp_pelapor String?  @db.VarChar(20)
+
   // --- TAMBAHAN STANDAR FORM 2026 ---
   nim_terlapor     String?     @db.VarChar(50)  // Opsional (Jika pelapor tahu)
   fakultas_prodi   String?     @db.VarChar(150) // Wajib di form 2026

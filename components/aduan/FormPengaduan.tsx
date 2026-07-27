@@ -7,8 +7,14 @@ export default function FormPengaduan() {
   const [pesanSukses, setPesanSukses] = useState("");
   const [pesanError, setPesanError] = useState("");
 
+  // State untuk mengontrol checkbox anonim (Default: true)
+  const [isAnonim, setIsAnonim] = useState(true);
+
+  // Form data sekarang mencakup data pelapor
   const [formData, setFormData] = useState({
     jenis_aduan: "",
+    nama_pelapor: "",
+    whatsapp_pelapor: "",
     nama_terlapor: "",
     nim_terlapor: "",
     fakultas_prodi: "",
@@ -30,10 +36,16 @@ export default function FormPengaduan() {
     setPesanError("");
 
     try {
+      // Gabungkan status isAnonim ke dalam payload yang dikirim ke API
+      const payload = {
+        ...formData,
+        is_anonim: isAnonim,
+      };
+
       const response = await fetch("/api/aduan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
 
       const result = await response.json();
@@ -47,8 +59,12 @@ export default function FormPengaduan() {
       }
 
       setPesanSukses(`Berhasil! Kode resi Anda: ${result.data.kode_laporan}`);
+      
+      // Reset form
       setFormData({
         jenis_aduan: "",
+        nama_pelapor: "",
+        whatsapp_pelapor: "",
         nama_terlapor: "",
         nim_terlapor: "",
         fakultas_prodi: "",
@@ -56,6 +72,8 @@ export default function FormPengaduan() {
         uraian_kronologi: "",
         url_bukti: "",
       });
+      setIsAnonim(true);
+      
     } catch (error: any) {
       setPesanError(error.message);
     } finally {
@@ -89,7 +107,7 @@ export default function FormPengaduan() {
                 Kategori Pengaduan <span className="text-rose-500">*</span>
               </label>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label className={`relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none transition-all ${formData.jenis_aduan === 'KETIDAKTEPATAN' ? 'border-[#0b1727] ring-1 ring-[#0b1727]' : 'border-slate-300 hover:border-slate-400'}`}>
+                <label className={`relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none transition-all ${formData.jenis_aduan === 'KETIDAKTEPATAN' ? 'border-[#001349] ring-1 ring-[#001349]' : 'border-slate-300 hover:border-slate-400'}`}>
                   <input type="radio" name="jenis_aduan" value="KETIDAKTEPATAN" onChange={handleChange} checked={formData.jenis_aduan === "KETIDAKTEPATAN"} className="sr-only" required />
                   <span className="flex flex-1">
                     <span className="flex flex-col">
@@ -97,10 +115,10 @@ export default function FormPengaduan() {
                       <span className="mt-1 flex items-center text-xs text-slate-500">Penerima dinilai mampu secara ekonomi.</span>
                     </span>
                   </span>
-                  <svg className={`h-5 w-5 ${formData.jenis_aduan === 'KETIDAKTEPATAN' ? 'text-[#0b1727]' : 'text-transparent'}`} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                  <svg className={`h-5 w-5 ${formData.jenis_aduan === 'KETIDAKTEPATAN' ? 'text-[#001349]' : 'text-transparent'}`} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
                 </label>
 
-                <label className={`relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none transition-all ${formData.jenis_aduan === 'PENYALAHGUNAAN' ? 'border-[#0b1727] ring-1 ring-[#0b1727]' : 'border-slate-300 hover:border-slate-400'}`}>
+                <label className={`relative flex cursor-pointer rounded-lg border bg-white p-4 shadow-sm focus:outline-none transition-all ${formData.jenis_aduan === 'PENYALAHGUNAAN' ? 'border-[#001349] ring-1 ring-[#001349]' : 'border-slate-300 hover:border-slate-400'}`}>
                   <input type="radio" name="jenis_aduan" value="PENYALAHGUNAAN" onChange={handleChange} checked={formData.jenis_aduan === "PENYALAHGUNAAN"} className="sr-only" required />
                   <span className="flex flex-1">
                     <span className="flex flex-col">
@@ -108,30 +126,114 @@ export default function FormPengaduan() {
                       <span className="mt-1 flex items-center text-xs text-slate-500">Dana tidak digunakan untuk pendidikan.</span>
                     </span>
                   </span>
-                  <svg className={`h-5 w-5 ${formData.jenis_aduan === 'PENYALAHGUNAAN' ? 'text-[#0b1727]' : 'text-transparent'}`} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
+                  <svg className={`h-5 w-5 ${formData.jenis_aduan === 'PENYALAHGUNAAN' ? 'text-[#001349]' : 'text-transparent'}`} viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
                 </label>
               </div>
+            </div>
+
+            {/* Section: Identitas Pelapor (Opsi Anonim) */}
+            <div>
+              <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-200 pb-2">Identitas Pelapor</h3>
+              
+              <div className="mb-6 flex items-center">
+                <input 
+                  type="checkbox" 
+                  id="is_anonim" 
+                  checked={isAnonim} 
+                  onChange={(e) => {
+                    setIsAnonim(e.target.checked);
+                    // Jika di-check anonim, bersihkan state pelapor
+                    if(e.target.checked) {
+                      setFormData({...formData, nama_pelapor: "", whatsapp_pelapor: ""});
+                    }
+                  }}
+                  className="w-5 h-5 text-[#001349] border-slate-300 rounded focus:ring-[#001349]"
+                />
+                <label htmlFor="is_anonim" className="ml-3 text-sm font-semibold text-slate-700 cursor-pointer">
+                  Rahasiakan identitas saya (Anonim)
+                </label>
+              </div>
+
+              {/* Tampil hanya jika BUKAN anonim */}
+              {!isAnonim && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-slate-50 p-5 rounded-xl border border-slate-200 mb-6 transition-all">
+                  <div>
+                    <label htmlFor="nama_pelapor" className="block text-sm font-semibold text-slate-700 mb-1">
+                      Nama Lengkap <span className="text-rose-500">*</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      name="nama_pelapor" 
+                      id="nama_pelapor" 
+                      value={formData.nama_pelapor} 
+                      onChange={handleChange} 
+                      required={!isAnonim} 
+                      placeholder="Nama Lengkap Anda"
+                      pattern="^[a-zA-Z\s]+$" 
+                      title="Nama pelapor hanya boleh berisi huruf dan spasi"
+                      className="mt-1 block w-full rounded-lg border-slate-300 py-3 px-4 text-slate-900 shadow-sm focus:border-[#001349] focus:ring-[#001349] sm:text-sm bg-white" 
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="whatsapp_pelapor" className="block text-sm font-semibold text-slate-700 mb-1">
+                      Nomor WhatsApp <span className="text-rose-500">*</span>
+                    </label>
+                    <input 
+                      type="text" 
+                      name="whatsapp_pelapor" 
+                      id="whatsapp_pelapor" 
+                      value={formData.whatsapp_pelapor} 
+                      onChange={handleChange} 
+                      required={!isAnonim} 
+                      placeholder="Contoh: 08123456789"
+                      pattern="^[0-9]+$" 
+                      title="Nomor WhatsApp hanya boleh berisi angka"
+                      className="mt-1 block w-full rounded-lg border-slate-300 py-3 px-4 text-slate-900 shadow-sm focus:border-[#001349] focus:ring-[#001349] sm:text-sm bg-white" 
+                    />
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Section: Identitas Terlapor */}
             <div>
               <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-200 pb-2">Informasi Terlapor</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                
+                {/* Nama Terlapor - Validasi Huruf & Spasi */}
                 <div className="sm:col-span-2">
                   <label htmlFor="nama_terlapor" className="block text-sm font-semibold text-slate-700 mb-1">
                     Nama Mahasiswa Terlapor <span className="text-rose-500">*</span>
                   </label>
-                  <input type="text" name="nama_terlapor" id="nama_terlapor" value={formData.nama_terlapor} onChange={handleChange} required placeholder="Contoh: Budi Santoso"
-                    className="mt-1 block w-full rounded-lg border-slate-300 py-3 px-4 text-slate-900 shadow-sm focus:border-[#0b1727] focus:ring-[#0b1727] sm:text-sm bg-slate-50 focus:bg-white transition-colors"
+                  <input 
+                    type="text" 
+                    name="nama_terlapor" 
+                    id="nama_terlapor" 
+                    value={formData.nama_terlapor} 
+                    onChange={handleChange} 
+                    required 
+                    placeholder="Contoh: Budi Santoso"
+                    pattern="^[a-zA-Z\s]+$" 
+                    title="Nama terlapor hanya boleh berisi huruf dan spasi"
+                    className="mt-1 block w-full rounded-lg border-slate-300 py-3 px-4 text-slate-900 shadow-sm focus:border-[#001349] focus:ring-[#001349] sm:text-sm bg-slate-50 focus:bg-white transition-colors"
                   />
                 </div>
 
+                {/* NIM Terlapor - Validasi Angka */}
                 <div>
                   <label htmlFor="nim_terlapor" className="block text-sm font-semibold text-slate-700 mb-1">
                     NIM Terlapor <span className="text-slate-400 font-normal">(Jika diketahui)</span>
                   </label>
-                  <input type="text" name="nim_terlapor" id="nim_terlapor" value={formData.nim_terlapor} onChange={handleChange} placeholder="Contoh: 21120120140xxx"
-                    className="mt-1 block w-full rounded-lg border-slate-300 py-3 px-4 text-slate-900 shadow-sm focus:border-[#0b1727] focus:ring-[#0b1727] sm:text-sm bg-slate-50 focus:bg-white transition-colors"
+                  <input 
+                    type="text" 
+                    name="nim_terlapor" 
+                    id="nim_terlapor" 
+                    value={formData.nim_terlapor} 
+                    onChange={handleChange} 
+                    placeholder="Contoh: 21120120140xxx"
+                    pattern="^[0-9]+$" 
+                    title="NIM hanya boleh berisi angka"
+                    className="mt-1 block w-full rounded-lg border-slate-300 py-3 px-4 text-slate-900 shadow-sm focus:border-[#001349] focus:ring-[#001349] sm:text-sm bg-slate-50 focus:bg-white transition-colors"
                   />
                 </div>
 
@@ -139,8 +241,14 @@ export default function FormPengaduan() {
                   <label htmlFor="angkatan" className="block text-sm font-semibold text-slate-700 mb-1">
                     Tahun Angkatan <span className="text-rose-500">*</span>
                   </label>
-                  <select name="angkatan" id="angkatan" value={formData.angkatan} onChange={handleChange} required
-                    className="mt-1 block w-full rounded-lg border-slate-300 py-3 px-4 text-slate-900 shadow-sm focus:border-[#0b1727] focus:ring-[#0b1727] sm:text-sm bg-slate-50 focus:bg-white transition-colors">
+                  <select 
+                    name="angkatan" 
+                    id="angkatan" 
+                    value={formData.angkatan} 
+                    onChange={handleChange} 
+                    required
+                    className="mt-1 block w-full rounded-lg border-slate-300 py-3 px-4 text-slate-900 shadow-sm focus:border-[#001349] focus:ring-[#001349] sm:text-sm bg-slate-50 focus:bg-white transition-colors"
+                  >
                     <option value="" disabled>Pilih Angkatan...</option>
                     <option value="2022">2022</option>
                     <option value="2023">2023</option>
@@ -154,8 +262,15 @@ export default function FormPengaduan() {
                   <label htmlFor="fakultas_prodi" className="block text-sm font-semibold text-slate-700 mb-1">
                     Fakultas / Program Studi <span className="text-rose-500">*</span>
                   </label>
-                  <input type="text" name="fakultas_prodi" id="fakultas_prodi" value={formData.fakultas_prodi} onChange={handleChange} required placeholder="Contoh: Teknik Komputer - Fakultas Teknik"
-                    className="mt-1 block w-full rounded-lg border-slate-300 py-3 px-4 text-slate-900 shadow-sm focus:border-[#0b1727] focus:ring-[#0b1727] sm:text-sm bg-slate-50 focus:bg-white transition-colors"
+                  <input 
+                    type="text" 
+                    name="fakultas_prodi" 
+                    id="fakultas_prodi" 
+                    value={formData.fakultas_prodi} 
+                    onChange={handleChange} 
+                    required 
+                    placeholder="Contoh: Teknik Komputer - Fakultas Teknik"
+                    className="mt-1 block w-full rounded-lg border-slate-300 py-3 px-4 text-slate-900 shadow-sm focus:border-[#001349] focus:ring-[#001349] sm:text-sm bg-slate-50 focus:bg-white transition-colors"
                   />
                 </div>
               </div>
@@ -170,14 +285,22 @@ export default function FormPengaduan() {
                     Uraian Pelanggaran <span className="text-rose-500">*</span>
                   </label>
                   <p className="text-xs text-slate-500 mb-3">
-                    Uraikan dengan detail mengapa terlapor tidak tepat sasaran. (Minimal 150 karakter, idealnya 3 paragraf).
+                    Uraikan dengan detail mengapa terlapor tidak tepat sasaran. (Minimal 50 karakter).
                   </p>
-                  <textarea name="uraian_kronologi" id="uraian_kronologi" rows={5} value={formData.uraian_kronologi} onChange={handleChange} required minLength={150} placeholder="Tuliskan uraian detailnya di sini..."
-                    className="mt-1 block w-full rounded-lg border-slate-300 py-3 px-4 text-slate-900 shadow-sm focus:border-[#0b1727] focus:ring-[#0b1727] sm:text-sm bg-slate-50 focus:bg-white transition-colors"
+                  <textarea 
+                    name="uraian_kronologi" 
+                    id="uraian_kronologi" 
+                    rows={5} 
+                    value={formData.uraian_kronologi} 
+                    onChange={handleChange} 
+                    required 
+                    minLength={50} 
+                    placeholder="Tuliskan uraian detailnya di sini..."
+                    className="mt-1 block w-full rounded-lg border-slate-300 py-3 px-4 text-slate-900 shadow-sm focus:border-[#001349] focus:ring-[#001349] sm:text-sm bg-slate-50 focus:bg-white transition-colors"
                   />
-                  <div className={`text-right text-xs mt-2 font-medium ${formData.uraian_kronologi.length < 150 ? 'text-amber-500' : 'text-emerald-500'}`}>
-                    {formData.uraian_kronologi.length < 150 
-                      ? `Karakter: ${formData.uraian_kronologi.length} (Kurang ${150 - formData.uraian_kronologi.length} karakter lagi)` 
+                  <div className={`text-right text-xs mt-2 font-medium ${formData.uraian_kronologi.length < 50 ? 'text-amber-500' : 'text-emerald-500'}`}>
+                    {formData.uraian_kronologi.length < 50 
+                      ? `Karakter: ${formData.uraian_kronologi.length} (Kurang ${50 - formData.uraian_kronologi.length} karakter lagi)` 
                       : `Karakter: ${formData.uraian_kronologi.length} (Memenuhi batas minimal)`}
                   </div>
                 </div>
@@ -186,8 +309,14 @@ export default function FormPengaduan() {
                   <label htmlFor="url_bukti" className="block text-sm font-semibold text-slate-700 mb-1">
                     Tautan Bukti Pendukung <span className="text-slate-400 font-normal">(Google Drive / Lainnya)</span>
                   </label>
-                  <input type="url" name="url_bukti" id="url_bukti" value={formData.url_bukti} onChange={handleChange} placeholder="https://drive.google.com/drive/folders/..."
-                    className="mt-1 block w-full rounded-lg border-slate-300 py-3 px-4 text-slate-900 shadow-sm focus:border-[#0b1727] focus:ring-[#0b1727] sm:text-sm bg-slate-50 focus:bg-white transition-colors"
+                  <input 
+                    type="url" 
+                    name="url_bukti" 
+                    id="url_bukti" 
+                    value={formData.url_bukti} 
+                    onChange={handleChange} 
+                    placeholder="https://drive.google.com/drive/folders/..."
+                    className="mt-1 block w-full rounded-lg border-slate-300 py-3 px-4 text-slate-900 shadow-sm focus:border-[#001349] focus:ring-[#001349] sm:text-sm bg-slate-50 focus:bg-white transition-colors"
                   />
                 </div>
               </div>
@@ -197,7 +326,13 @@ export default function FormPengaduan() {
             <div className="pt-6 border-t border-slate-200">
               <div className="flex items-start mb-6">
                 <div className="flex items-center h-5">
-                  <input id="persetujuan" name="persetujuan" type="checkbox" required className="h-5 w-5 rounded border-slate-300 text-[#0b1727] focus:ring-[#0b1727]" />
+                  <input 
+                    id="persetujuan" 
+                    name="persetujuan" 
+                    type="checkbox" 
+                    required 
+                    className="h-5 w-5 rounded border-slate-300 text-[#001349] focus:ring-[#001349]" 
+                  />
                 </div>
                 <div className="ml-3 text-sm">
                   <label htmlFor="persetujuan" className="font-medium text-slate-700">Pernyataan Keabsahan Informasi <span className="text-rose-500">*</span></label>
@@ -208,7 +343,7 @@ export default function FormPengaduan() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full sm:w-auto sm:min-w-[250px] flex justify-center items-center py-3.5 px-6 border border-transparent rounded-full shadow-md text-sm font-bold text-white bg-[#0b1727] hover:bg-[#152740] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#0b1727] disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:-translate-y-0.5"
+                className="w-full sm:w-auto sm:min-w-[250px] flex justify-center items-center py-3.5 px-6 border border-transparent rounded-full shadow-md text-sm font-bold text-white bg-[#001349] hover:bg-[#001f70] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#001349] disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:-translate-y-0.5"
               >
                 {isSubmitting ? (
                   <>
