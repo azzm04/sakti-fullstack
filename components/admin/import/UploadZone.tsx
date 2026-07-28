@@ -210,10 +210,10 @@ export default function UploadZone({
               nisn: get(row, "NISN"),
 
               // ── Status sosial ──
-              status_dtks: get(row, "STATUS DTKS", "STATUS DTSEN", "STATUS DATA TUNGGAL"),
-              validasi_dtks: get(row, "VALIDASI DTKS"),
-              status_p3ke: get(row, "STATUS P3KE"),
-              validasi_p3ke: get(row, "VALIDASI P3KE"),
+              aktif_dtsen: get(row, "AKTIF DTSEN", "STATUS DTKS", "STATUS DTSEN", "STATUS DATA TUNGGAL"),
+              validasi_aktif_dtsen: get(row, "VALIDASI AKTIF DTSEN", "VALIDASI DTKS", "VALIDASI DTSEN"),
+              desil_dtsen: get(row, "DESIL DTSEN", "STATUS P3KE"),
+              validasi_desil_dtsen: get(row, "VALIDASI P3KE", "VALIDASI DESIL DTSEN"), 
               validasi_kip: get(row, "VALIDASI KIP"),
               validasi_kks: get(row, "VALIDASI KKS"),
 

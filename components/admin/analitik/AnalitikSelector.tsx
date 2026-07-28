@@ -341,9 +341,9 @@ export default function AnalitikSelector() {
 
           {/* 7. Distribusi sebagai konteks pendukung */}
           <DistribusiChart
-            data={data.distribusi_p3ke}
-            title="Distribusi per Status P3KE"
-            subtitle="Diusulkan vs tidak per kategori P3KE"
+            data={data.distribusi_desil_dtsen}
+            title="Distribusi per Desil DTSEN"
+            subtitle="Diusulkan vs tidak per kategori DTSEN"
           />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -353,9 +353,9 @@ export default function AnalitikSelector() {
               subtitle="Diusulkan vs tidak per kondisi tempat tinggal"
             />
             <DistribusiChart
-              data={data.distribusi_dtks}
-              title="Distribusi Data DTKS"
-              subtitle="Terdaftar vs belum terdata dalam DTKS"
+              data={data.distribusi_aktif_dtsen}
+              title="Distribusi Data DTSEN Aktif"
+              subtitle="Terdaftar vs belum terdata dalam DTSEN"
             />
           </div>
 

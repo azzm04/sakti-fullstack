@@ -62,7 +62,7 @@ const SUGGESTED = [
     action: "Apa saja syarat ekonomi untuk mendaftar KIPK?",
   },
   {
-    title: "Cek Status DTKS",
+    title: "Cek Aktif DTSEN",
     label: "Apakah saya terdaftar?",
     action: "Bagaimana cara cek status DTKS saya?",
   },

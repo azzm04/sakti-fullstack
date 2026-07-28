@@ -37,13 +37,13 @@ function parseCondition(raw: string): string {
     },
   );
 
-  // Kasus khusus: Status P3KE
+  // Kasus khusus: Desil DTSEN
   text = text.replace(
-    /Status P3KE\s*(maksimal|lebih dari)\s*([\d.]+)/g,
+    /Desil DTSEN\s*(maksimal|lebih dari)\s*([\d.]+)/g,
     (_, opText) => {
       return opText === "maksimal"
-        ? `Status P3KE = "Belum Terdata"`
-        : `Status P3KE ≠ "Belum Terdata" (Desil 3+)`;
+        ? `Desil DTSEN = "Belum Terdata"`
+        : `Desil DTSEN ≠ "Belum Terdata" (Desil 3+)`;
     },
   );
 

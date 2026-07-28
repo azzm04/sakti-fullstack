@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 export const ACCEPTED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'image/webp', 'image/gif'];
 const ACCEPTED_EXT = '.png,.jpg,.jpeg,.svg,.webp,.gif';
-const QUICK = ['Syarat Ekonomi KIPK', 'Cek Status DTKS', 'Dokumen Pendukung', 'Batas Waktu Pendaftaran'];
+const QUICK = ['Syarat Ekonomi KIPK', 'Cek Aktif DTSEN', 'Dokumen Pendukung', 'Batas Waktu Pendaftaran'];
 
 export type ImageAttachment = { file: File; previewUrl: string; base64: string };
 

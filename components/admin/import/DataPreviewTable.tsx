@@ -158,13 +158,13 @@ export default function DataPreviewTable({
         cell: (info) => <CellValue value={info.getValue()} />,
         size: 210,
       }),
-      columnHelper.accessor("status_dtks", {
-        header: "Status DTKS",
+columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
+        header: "Aktif DTSEN",
         cell: (info) => <DTKSBadge status={String(info.getValue() ?? "")} />,
         size: 130,
       }),
-      columnHelper.accessor("status_p3ke", {
-        header: "Status P3KE",
+      columnHelper.accessor("desil_dtsen" as keyof CandidateData, {
+        header: "Desil DTSEN",
         cell: (info) => <P3KEBadge status={String(info.getValue() ?? "")} />,
         size: 160,
       }),
@@ -221,13 +221,13 @@ export default function DataPreviewTable({
         ),
         size: 155,
       }),
-      columnHelper.accessor("validasi_dtks", {
-        header: "Validasi DTKS",
+      columnHelper.accessor("validasi_aktif_dtsen", {
+        header: "Validasi AKTIF DTSEN",
         cell: (info) => <CellValue value={info.getValue()} />,
         size: 120,
       }),
-      columnHelper.accessor("validasi_p3ke", {
-        header: "Validasi P3KE",
+      columnHelper.accessor("validasi_desil_dtsen", {
+        header: "Validasi DESIL DTSEN",
         cell: (info) => <CellValue value={info.getValue()} />,
         size: 120,
       }),
@@ -364,8 +364,8 @@ export default function DataPreviewTable({
     no_kks: false,
     no_kartu_keluarga: false,
     nik_kepala_keluarga: false,
-    validasi_dtks: false,
-    validasi_p3ke: false,
+    validasi_aktif_dtsen: false,
+    validasi_desil_dtsen: false,
     asal_sekolah: false,
     kab_kota_sekolah: false,
     provinsi_sekolah: false,
@@ -396,6 +396,7 @@ export default function DataPreviewTable({
     [showAllColumns],
   );
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const table = useReactTable({
     data,
     columns,
