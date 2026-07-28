@@ -15,6 +15,10 @@ export interface KasusAmbigu {
   status_p3ke: string
   nominal_per_kapita: number | null
   kondisi_rumah: string
+  status_dtks?: string | null
+  skor_kejanggalan?: number | null
+  tingkat_kejanggalan?: string | null
+  alasan_kejanggalan?: string | null
 }
 
 export interface DistribusiKelas {
@@ -99,9 +103,9 @@ export interface DashboardAnalitikData {
   konsistensi: Konsistensi
   rule_nodes: RuleNode[]
   kasus_ambigu: KasusAmbigu[]
-  distribusi_p3ke: DistribusiKelas[]
+  distribusi_desil_dtsen: DistribusiKelas[]
   distribusi_kondisi_rumah: DistribusiKelas[]
-  distribusi_dtks: DistribusiKelas[]
+  distribusi_aktif_dtsen: DistribusiKelas[]
   distribusi_geografis: DistribusiGeografis[]
   distribusi_fakultas: DistribusiFakultas[]
   distribusi_jenis_kelamin: DistribusiJenisKelamin[]

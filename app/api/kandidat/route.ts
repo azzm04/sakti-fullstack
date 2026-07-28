@@ -158,8 +158,8 @@ export async function POST(req: NextRequest) {
       // Sekolah
       asal_sekolah: row.asal_sekolah || null,
       // Status sosial (hanya status, bukan validasi — validasi diisi saat wawancara)
-      status_dtks: row.status_dtks || null,
-      status_p3ke: row.status_p3ke || null,
+      aktif_dtsen: row.aktif_dtsen || null,
+      desil_dtsen: row.desil_dtsen || null,
       // Pribadi
       tempat_lahir: row.tempat_lahir || null,
       tanggal_lahir: formatExcelDate(row.tanggal_lahir),
@@ -191,7 +191,7 @@ export async function POST(req: NextRequest) {
       jarak_pusat_kota: row.jarak_pusat_kota || null,
 
       // DIBUANG — diisi saat wawancara, bukan saat import:
-      // validasi_dtks, validasi_p3ke, validasi_kip, validasi_kks
+      // valdasi_aktif_dtsen, valdasi_desil_dtsen, validasi_kip, validasi_kks
       // ket_pekerjaan_ayah, ket_pekerjaan_ibu
       // status_ayah, status_ibu
       // penghasilan_lain, nominal_per_kapita

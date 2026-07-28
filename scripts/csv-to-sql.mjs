@@ -93,10 +93,10 @@ const COL = {
   no_kk:                idx("No. Kartu Keluarga"),
   nik_kepala:           idx("NIK Kepala Keluarga"),
   nisn:                 idx("NISN"),
-  status_dtks:          idx("Status DTKS"),
-  validasi_dtks:        idx("Validasi DTKS"),
-  status_p3ke:          idx("Status P3KE"),
-  validasi_p3ke:        idx("Validasi P3KE"),
+  status_dtks:          idx("Aktif DTSEN"),
+  valdasi_aktif_dtsen:        idx("Validasi DTKS"),
+  status_p3ke:          idx("Desil DTSEN"),
+  valdasi_desil_dtsen:        idx("Validasi P3KE"),
   no_kip:               idx("No. KIP"),
   validasi_kip:         idx("Validasi KIP"),
   no_kks:               idx("No. KKS"),
@@ -171,7 +171,7 @@ sqls.push(`-- ============================================================`);
 sqls.push(`INSERT INTO kandidat (`);
 sqls.push(`  impor_data_id, no, no_pendaftaran_kipk, no_kip, no_kks,`);
 sqls.push(`  nama_pendaftar, prodi_pendaftar, nik, no_kartu_keluarga, nik_kepala_keluarga, nisn,`);
-sqls.push(`  status_dtks, validasi_dtks, status_p3ke, validasi_p3ke, validasi_kip, validasi_kks,`);
+sqls.push(`  status_dtks, valdasi_aktif_dtsen, status_p3ke, valdasi_desil_dtsen, validasi_kip, validasi_kks,`);
 sqls.push(`  asal_sekolah, kab_kota_sekolah, provinsi_sekolah,`);
 sqls.push(`  tempat_lahir, tanggal_lahir, jenis_kelamin,`);
 sqls.push(`  alamat, no_hp, email,`);
@@ -218,9 +218,9 @@ for (let i = 1; i < lines.length; i++) {
     esc(g("nik_kepala")),                   // nik_kepala_keluarga
     esc(g("nisn")),                         // nisn
     esc(g("status_dtks")),                  // status_dtks
-    esc(g("validasi_dtks")),               // validasi_dtks
+    esc(g("valdasi_aktif_dtsen")),               // valdasi_aktif_dtsen
     esc(g("status_p3ke")),                  // status_p3ke
-    esc(g("validasi_p3ke")),               // validasi_p3ke
+    esc(g("valdasi_desil_dtsen")),               // valdasi_desil_dtsen
     esc(g("validasi_kip")),                // validasi_kip
     esc(g("no_kks") ? g("no_kks") : null), // validasi_kks (isi jika ada no_kks)
     esc(g("asal_sekolah")),                // asal_sekolah

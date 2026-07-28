@@ -13,7 +13,7 @@ RETURNING id;
 INSERT INTO kandidat (
   impor_data_id, no, no_pendaftaran_kipk, no_kip, no_kks,
   nama_pendaftar, prodi_pendaftar, nik, no_kartu_keluarga, nik_kepala_keluarga, nisn,
-  status_dtks, validasi_dtks, status_p3ke, validasi_p3ke, validasi_kip, validasi_kks,
+  status_dtks, valdasi_aktif_dtsen, status_p3ke, valdasi_desil_dtsen, validasi_kip, validasi_kks,
   asal_sekolah, kab_kota_sekolah, provinsi_sekolah,
   tempat_lahir, tanggal_lahir, jenis_kelamin,
   alamat, no_hp, email,

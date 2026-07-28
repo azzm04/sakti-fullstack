@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase"
 
+
 function parseJSON(val: unknown) {
   if (typeof val === "string") {
     try {
@@ -45,9 +46,9 @@ function buildCachePayload(body: any, tahun: string, jalurMasuk: string) {
     rule_nodes: body.rule_nodes ?? [],
     fitur_importance: body.feature_importance ?? [],
     kasus_ambigu_detail: body.kasus_ambigu ?? [],
-    distribusi_p3ke: body.distribusi_p3ke ?? [],
+    distribusi_desil_dtsen: body.distribusi_desil_dtsen ?? [],
     distribusi_kondisi_rumah: body.distribusi_kondisi_rumah ?? [],
-    distribusi_dtks: body.distribusi_dtks ?? [],
+    distribusi_aktif_dtsen: body.distribusi_aktif_dtsen ?? [],
     distribusi_geografis: body.distribusi_geografis ?? [],
     distribusi_jenis_kelamin: body.distribusi_jenis_kelamin ?? [],
     distribusi_fakultas: body.distribusi_fakultas ?? [],
@@ -150,9 +151,9 @@ export async function GET(req: NextRequest) {
           rule_text:                cached.rule_text,
           rule_nodes:               parseJSON(cached.rule_nodes) ?? [],
           kasus_ambigu:             parseJSON(cached.kasus_ambigu_detail) ?? [],
-          distribusi_p3ke:          parseJSON(cached.distribusi_p3ke) ?? [],
+          distribusi_desil_dtsen:          parseJSON(cached.distribusi_desil_dtsen) ?? [],
           distribusi_kondisi_rumah: parseJSON(cached.distribusi_kondisi_rumah) ?? [],
-          distribusi_dtks:          parseJSON(cached.distribusi_dtks) ?? [],
+          distribusi_aktif_dtsen:          parseJSON(cached.distribusi_aktif_dtsen) ?? [],
           distribusi_geografis:     parseJSON(cached.distribusi_geografis) ?? [],
           distribusi_fakultas:      parseJSON(cached.distribusi_fakultas) ?? [],
           distribusi_jenis_kelamin: parseJSON(cached.distribusi_jenis_kelamin) ?? [],
