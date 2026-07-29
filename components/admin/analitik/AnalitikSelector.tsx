@@ -1,7 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import {
+  motion,
+  AnimatePresence,
+  type Variants,
+  type Transition,
+} from "framer-motion";
 import {
   Calendar,
   ChevronRight,
@@ -9,7 +14,6 @@ import {
   AlertCircle,
   RefreshCw,
   ChevronDown,
-  ChevronUp,
   Settings2,
   Wrench,
 } from "lucide-react";
@@ -28,6 +32,58 @@ import ModelInfoCard from "@/components/admin/analitik/ModelInfoCard";
 import InsightNaratif from "@/components/admin/analitik/InsightNaratif";
 
 type FetchState = "idle" | "loading" | "done" | "error";
+
+interface ApiErrorBody {
+  pesan?: string;
+  error?: string;
+  detail?: string;
+}
+
+const spring: Transition = {
+  type: "spring",
+  stiffness: 400,
+  damping: 30,
+};
+
+const softSpring: Transition = {
+  type: "spring",
+  stiffness: 280,
+  damping: 26,
+};
+
+const collapseVariants: Variants = {
+  collapsed: { height: 0, opacity: 0 },
+  open: {
+    height: "auto",
+    opacity: 1,
+    transition: {
+      height: softSpring,
+      opacity: { duration: 0.18, delay: 0.05 },
+    },
+  },
+  exit: {
+    height: 0,
+    opacity: 0,
+    transition: { height: softSpring, opacity: { duration: 0.12 } },
+  },
+};
+
+const sectionListVariants: Variants = {
+  hidden: {},
+  visible: {
+    transition: { staggerChildren: 0.06, delayChildren: 0.05 },
+  },
+};
+
+const sectionItemVariants: Variants = {
+  hidden: { opacity: 0, y: 14 },
+  visible: { opacity: 1, y: 0, transition: spring },
+};
+
+/** Bungkus tiap section dashboard supaya muncul bertahap (stagger) tanpa mengulang boilerplate */
+function Section({ children }: { children: React.ReactNode }) {
+  return <motion.div variants={sectionItemVariants}>{children}</motion.div>;
+}
 
 export default function AnalitikSelector() {
   const currentYear = new Date().getFullYear();
@@ -63,11 +119,7 @@ export default function AnalitikSelector() {
       });
 
       if (!res.ok) {
-        const body = (await res.json().catch(() => ({}))) as {
-          pesan?: string;
-          error?: string;
-          detail?: string;
-        };
+        const body: ApiErrorBody = await res.json().catch(() => ({}));
         setError(
           body.pesan ||
             body.error ||
@@ -78,7 +130,7 @@ export default function AnalitikSelector() {
         return;
       }
 
-      const json = await res.json();
+      const json: DashboardAnalitikData = await res.json();
       setData(json);
       setState("done");
       setRefresh(false);
@@ -95,8 +147,10 @@ export default function AnalitikSelector() {
     <div className="space-y-8">
       {/* Form Selector — collapsible */}
       <div className="bg-tertiary rounded-3xl border border-border shadow-sm overflow-hidden">
-        <button
+        <motion.button
           onClick={() => setFormCollapsed((v) => !v)}
+          whileTap={{ scale: 0.995 }}
+          transition={spring}
           className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors"
         >
           <div className="flex items-center gap-2.5">
@@ -125,27 +179,36 @@ export default function AnalitikSelector() {
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
-            {formCollapsed && state === "done" && (
-              <span className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                Analisis aktif
-              </span>
-            )}
-            {formCollapsed ? (
+            <AnimatePresence>
+              {formCollapsed && state === "done" && (
+                <motion.span
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={spring}
+                  className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full"
+                >
+                  Analisis aktif
+                </motion.span>
+              )}
+            </AnimatePresence>
+            <motion.div
+              animate={{ rotate: formCollapsed ? 0 : 180 }}
+              transition={spring}
+            >
               <ChevronDown size={16} className="text-muted-foreground" />
-            ) : (
-              <ChevronUp size={16} className="text-muted-foreground" />
-            )}
+            </motion.div>
           </div>
-        </button>
+        </motion.button>
 
         <AnimatePresence initial={false}>
           {!formCollapsed && (
             <motion.div
               key="form-body"
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.25, ease: "easeInOut" }}
+              variants={collapseVariants}
+              initial="collapsed"
+              animate="open"
+              exit="exit"
               className="overflow-hidden"
             >
               <div className="px-6 pb-6 pt-2 border-t border-border">
@@ -175,11 +238,19 @@ export default function AnalitikSelector() {
                           ${!tahunValid && tahun !== "" ? "border-destructive bg-destructive/5" : "border-border"}`}
                       />
                     </div>
-                    {!tahunValid && tahun !== "" && (
-                      <p className="mt-1 text-[11px] text-destructive">
-                        Masukkan tahun antara 2020–2099
-                      </p>
-                    )}
+                    <AnimatePresence>
+                      {!tahunValid && tahun !== "" && (
+                        <motion.p
+                          initial={{ opacity: 0, height: 0, y: -4 }}
+                          animate={{ opacity: 1, height: "auto", y: 0 }}
+                          exit={{ opacity: 0, height: 0, y: -4 }}
+                          transition={softSpring}
+                          className="mt-1 text-[11px] text-destructive overflow-hidden"
+                        >
+                          Masukkan tahun antara 2020–2099
+                        </motion.p>
+                      )}
+                    </AnimatePresence>
                   </div>
 
                   <div>
@@ -190,25 +261,33 @@ export default function AnalitikSelector() {
                       {JALUR_OPTIONS.map((opt) => {
                         const selected = jalur === opt.value;
                         return (
-                          <button
+                          <motion.button
                             key={opt.value}
                             onClick={() => {
                               setJalur(opt.value);
                               setState("idle");
                             }}
-                            className={`flex items-center gap-3 px-3 py-2 rounded-xl border text-left text-sm font-semibold transition-all
+                            whileHover={{ scale: 1.01 }}
+                            whileTap={{ scale: 0.98 }}
+                            transition={spring}
+                            className={`flex items-center gap-3 px-3 py-2 rounded-xl border text-left text-sm font-semibold
                               ${
                                 selected
                                   ? "bg-primary border-primary text-primary-foreground"
                                   : "bg-background border-border text-foreground hover:border-primary/40 hover:bg-primary/5"
                               }`}
                           >
-                            <span
-                              className={`w-3.5 h-3.5 rounded-full border-2 shrink-0 transition-all
-                              ${selected ? "bg-primary-foreground border-primary-foreground" : "border-muted-foreground"}`}
-                            />
+                            <span className="relative w-3.5 h-3.5 rounded-full border-2 shrink-0 border-current opacity-80">
+                              {selected && (
+                                <motion.span
+                                  layoutId="jalur-dot"
+                                  transition={spring}
+                                  className="absolute inset-[2px] rounded-full bg-primary-foreground"
+                                />
+                              )}
+                            </span>
                             {opt.label}
-                          </button>
+                          </motion.button>
                         );
                       })}
                     </div>
@@ -216,10 +295,21 @@ export default function AnalitikSelector() {
                 </div>
 
                 <div className="mt-5 flex items-center gap-3">
-                  <button
+                  <motion.button
                     onClick={() => handleAnalisis()}
                     disabled={!canRun || state === "loading"}
-                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold transition-all
+                    whileHover={
+                      canRun && state !== "loading"
+                        ? { scale: 1.02 }
+                        : undefined
+                    }
+                    whileTap={
+                      canRun && state !== "loading"
+                        ? { scale: 0.97 }
+                        : undefined
+                    }
+                    transition={spring}
+                    className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold
                       ${
                         canRun && state !== "loading"
                           ? "bg-primary text-primary-foreground hover:bg-primary/90"
@@ -228,7 +318,15 @@ export default function AnalitikSelector() {
                   >
                     {state === "loading" ? (
                       <>
-                        <div className="w-4 h-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{
+                            repeat: Infinity,
+                            duration: 0.7,
+                            ease: "linear",
+                          }}
+                          className="w-4 h-4 border-2 border-current border-t-transparent rounded-full"
+                        />
                         Menganalisis...
                       </>
                     ) : (
@@ -239,19 +337,24 @@ export default function AnalitikSelector() {
                           : "Jalankan Analisis"}
                       </>
                     )}
-                  </button>
+                  </motion.button>
 
                   {state === "done" && (
-                    <button
+                    <motion.button
+                      initial={{ opacity: 0, x: -6 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      whileHover={{ scale: 1.03 }}
+                      whileTap={{ scale: 0.97 }}
+                      transition={spring}
                       onClick={() => {
                         setRefresh(true);
                         handleAnalisis(true);
                       }}
-                      className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold border border-border text-muted-foreground hover:text-foreground hover:border-primary/30 transition-all"
+                      className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold border border-border text-muted-foreground hover:text-foreground hover:border-primary/30"
                     >
                       <RefreshCw size={13} />
                       Perbarui Cache
-                    </button>
+                    </motion.button>
                   )}
 
                   {state === "done" && data && (
@@ -278,147 +381,188 @@ export default function AnalitikSelector() {
       </div>
 
       {/* Error State */}
-      {state === "error" && (
-        <div className="flex flex-col items-center justify-center py-16 text-center bg-tertiary rounded-3xl border border-border">
-          <div className="w-12 h-12 bg-destructive/8 rounded-2xl flex items-center justify-center mb-3">
-            <AlertCircle size={24} className="text-destructive" />
-          </div>
-          <h3 className="font-bold text-foreground mb-1">
-            Gagal memuat data analitik
-          </h3>
-          <p className="text-muted-foreground text-sm max-w-sm">{error}</p>
-          <button
-            onClick={() => handleAnalisis()}
-            className="mt-4 px-4 py-2 rounded-xl text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-all"
+      <AnimatePresence>
+        {state === "error" && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={spring}
+            className="flex flex-col items-center justify-center py-16 text-center bg-tertiary rounded-3xl border border-border"
           >
-            Coba Lagi
-          </button>
-        </div>
-      )}
+            <motion.div
+              initial={{ scale: 0.6, rotate: -8 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={spring}
+              className="w-12 h-12 bg-destructive/8 rounded-2xl flex items-center justify-center mb-3"
+            >
+              <AlertCircle size={24} className="text-destructive" />
+            </motion.div>
+            <h3 className="font-bold text-foreground mb-1">
+              Gagal memuat data analitik
+            </h3>
+            <p className="text-muted-foreground text-sm max-w-sm">{error}</p>
+            <motion.button
+              onClick={() => handleAnalisis()}
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.96 }}
+              transition={spring}
+              className="mt-4 px-4 py-2 rounded-xl text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
+            >
+              Coba Lagi
+            </motion.button>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Dashboard hasil */}
-      {state === "done" && data && (
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-8"
-        >
-          <div className="flex items-center gap-2 text-xs text-primary font-semibold">
-            <ChevronRight size={14} />
-            Menampilkan analitik: <span className="font-bold">
-              {jalur}
-            </span>{" "}
-            tahun <span className="font-bold">{tahun}</span>
-          </div>
-
-          {/* 1. Ringkasan angka dasar — konteks fundamental */}
-          <KartuRingkasan
-            ringkasan={data.ringkasan}
-            konsistensi={data.konsistensi}
-          />
-
-          {/* 2. Insight naratif — kesimpulan siap baca */}
-          <InsightNaratif data={data} />
-
-          {/* 3. Kasus paling actionable — layak ditinjau ulang */}
-          <KasusAmbigu data={data.kasus_ambigu} />
-
-          {/* 4. Sebaran geografis — lihat wilayah bermasalah */}
-          <GeografisChart data={data.distribusi_geografis} />
-          
-          {/* 5. Sebaran Fakultas (Chart Jejer 2) */}
-          <FakultasChart
-            data={data.distribusi_fakultas}
-            totalDiusulkan={data.ringkasan.total_diusulkan}
-          />
-
-          {/* 6. Distribusi jenis kelamin — konteks demografis */}
-          <DistribusiChart
-            data={data.distribusi_jenis_kelamin}
-            title="Distribusi per Jenis Kelamin"
-            subtitle="Diusulkan vs tidak per kategori gender"
-          />
-
-          {/* 7. Distribusi sebagai konteks pendukung */}
-          <DistribusiChart
-            data={data.distribusi_desil_dtsen}
-            title="Distribusi per Desil DTSEN"
-            subtitle="Diusulkan vs tidak per kategori DTSEN"
-          />
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <DistribusiChart
-              data={data.distribusi_kondisi_rumah}
-              title="Distribusi per Kondisi Rumah"
-              subtitle="Diusulkan vs tidak per kondisi tempat tinggal"
-            />
-            <DistribusiChart
-              data={data.distribusi_aktif_dtsen}
-              title="Distribusi Data DTSEN Aktif"
-              subtitle="Terdaftar vs belum terdata dalam DTSEN"
-            />
-          </div>
-
-          {/* 8. Detail teknis model — collapsible, audiens teknis */}
-          <div className="bg-tertiary rounded-3xl border border-border shadow-sm overflow-hidden">
-            <button
-              onClick={() => setTechnicalOpen((v) => !v)}
-              className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-lg bg-primary/8 flex items-center justify-center shrink-0">
-                  <Wrench size={14} className="text-primary" />
-                </div>
-                <div className="text-left">
-                  <p className="text-sm font-bold text-foreground">
-                    Detail Teknis Model
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Faktor dominan, konsistensi, aturan keputusan, dan info
-                    model Decision Tree
-                  </p>
-                </div>
+      <AnimatePresence>
+        {state === "done" && data && (
+          <motion.div
+            variants={sectionListVariants}
+            initial="hidden"
+            animate="visible"
+            className="space-y-8"
+          >
+            <Section>
+              <div className="flex items-center gap-2 text-xs text-primary font-semibold">
+                <ChevronRight size={14} />
+                Menampilkan analitik: <span className="font-bold">
+                  {jalur}
+                </span>{" "}
+                tahun <span className="font-bold">{tahun}</span>
               </div>
-              {technicalOpen ? (
-                <ChevronUp
-                  size={16}
-                  className="text-muted-foreground shrink-0"
-                />
-              ) : (
-                <ChevronDown
-                  size={16}
-                  className="text-muted-foreground shrink-0"
-                />
-              )}
-            </button>
+            </Section>
 
-            <AnimatePresence initial={false}>
-              {technicalOpen && (
-                <motion.div
-                  key="technical-body"
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: "auto", opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.25, ease: "easeInOut" }}
-                  className="overflow-hidden"
+            {/* 1. Ringkasan angka dasar — konteks fundamental */}
+            <Section>
+              <KartuRingkasan
+                ringkasan={data.ringkasan}
+                konsistensi={data.konsistensi}
+              />
+            </Section>
+
+            {/* 2. Insight naratif — kesimpulan siap baca */}
+            <Section>
+              <InsightNaratif data={data} />
+            </Section>
+
+            {/* 3. Kasus paling actionable — layak ditinjau ulang */}
+            <Section>
+              <KasusAmbigu data={data.kasus_ambigu} />
+            </Section>
+
+            {/* 4. Sebaran geografis — lihat wilayah bermasalah */}
+            <Section>
+              <GeografisChart data={data.distribusi_geografis} />
+            </Section>
+
+            {/* 5. Sebaran Fakultas */}
+            <Section>
+              <FakultasChart
+                data={data.distribusi_fakultas}
+                totalDiusulkan={data.ringkasan.total_diusulkan}
+              />
+            </Section>
+
+            {/* 6. Distribusi jenis kelamin — konteks demografis */}
+            <Section>
+              <DistribusiChart
+                data={data.distribusi_jenis_kelamin}
+                title="Distribusi per Jenis Kelamin"
+                subtitle="Diusulkan vs tidak per kategori gender"
+              />
+            </Section>
+
+            {/* 7. Distribusi sebagai konteks pendukung */}
+            <Section>
+              <DistribusiChart
+                data={data.distribusi_desil_dtsen}
+                title="Distribusi per Status P3KE"
+                subtitle="Diusulkan vs tidak per kategori P3KE"
+              />
+            </Section>
+
+            <Section>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <DistribusiChart
+                  data={data.distribusi_kondisi_rumah}
+                  title="Distribusi per Kondisi Rumah"
+                  subtitle="Diusulkan vs tidak per kondisi tempat tinggal"
+                />
+                <DistribusiChart
+                  data={data.distribusi_aktif_dtsen}
+                  title="Distribusi Data DTKS"
+                  subtitle="Terdaftar vs belum terdata dalam DTKS"
+                />
+              </div>
+            </Section>
+
+            {/* 8. Detail teknis model — collapsible, audiens teknis */}
+            <Section>
+              <div className="bg-tertiary rounded-3xl border border-border shadow-sm overflow-hidden">
+                <motion.button
+                  onClick={() => setTechnicalOpen((v) => !v)}
+                  whileTap={{ scale: 0.995 }}
+                  transition={spring}
+                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors"
                 >
-                  <div className="px-6 pb-6 pt-2 border-t border-border space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
-                      <FeatureImportanceChart data={data.feature_importance} />
-                      <KonsistensiCard
-                        data={data.konsistensi}
-                        modelInfo={data.model_info}
-                      />
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-7 h-7 rounded-lg bg-primary/8 flex items-center justify-center shrink-0">
+                      <Wrench size={14} className="text-primary" />
                     </div>
-                    <RuleExtraction rules={data.rule_nodes} />
-                    <ModelInfoCard data={data.model_info} />
+                    <div className="text-left">
+                      <p className="text-sm font-bold text-foreground">
+                        Detail Teknis Model
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-0.5">
+                        Faktor dominan, konsistensi, aturan keputusan, dan info
+                        model Decision Tree
+                      </p>
+                    </div>
                   </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </motion.div>
-      )}
+                  <motion.div
+                    animate={{ rotate: technicalOpen ? 180 : 0 }}
+                    transition={spring}
+                  >
+                    <ChevronDown
+                      size={16}
+                      className="text-muted-foreground shrink-0"
+                    />
+                  </motion.div>
+                </motion.button>
+
+                <AnimatePresence initial={false}>
+                  {technicalOpen && (
+                    <motion.div
+                      key="technical-body"
+                      variants={collapseVariants}
+                      initial="collapsed"
+                      animate="open"
+                      exit="exit"
+                      className="overflow-hidden"
+                    >
+                      <div className="px-6 pb-6 pt-2 border-t border-border space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
+                          <FeatureImportanceChart
+                            data={data.feature_importance}
+                          />
+                          <KonsistensiCard
+                            data={data.konsistensi}
+                            modelInfo={data.model_info}
+                          />
+                        </div>
+                        <RuleExtraction rules={data.rule_nodes} />
+                        <ModelInfoCard data={data.model_info} />
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+            </Section>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
