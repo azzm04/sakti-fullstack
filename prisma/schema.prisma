@@ -127,39 +127,52 @@ model SlotSesi {
   @@map("slot_sesi")
 }
 
-model ChatHistory {
+// 1. Tabel untuk menyimpan informasi sesi dan judul di sidebar
+model ChatSession {
   id        String   @id @default(cuid())
-  userId    String?
+  userId    String?  // Berisi ID mahasiswa, atau null jika pengguna publik
+  judul     String   @default("Percakapan Baru") // Akan di-update oleh AI Summarization
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relasi ke tabel pesan
+  messages  ChatMessage[]
+
+  @@map("chat_session")
+}
+
+// 2. Tabel untuk menyimpan isi percakapan (menggantikan chatHistory tunggal)
+model ChatMessage {
+  id        String   @id @default(cuid())
   sessionId String
-  role      String
-  content   String
-  imageUrl  String?
+  role      String   // Akan berisi "user" atau "assistant"
+  content   String   @db.Text // Gunakan @db.Text agar bisa menampung jawaban panjang SAKABOT
+  imageUrl  String?  @db.Text
   createdAt DateTime @default(now())
 
-  @@map("chat_history")
+  // Relasi kembali ke tabel sesi
+  session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("chat_message")
 }
 
 model Aduan {
   id               String      @id @default(uuid())
-  admin_id         String?     
-  user_id          String?     
+  admin_id         String?
+  user_id          String?
   kode_laporan     String      @unique @db.VarChar(20)
   jenis_aduan      JenisAduan
   nama_terlapor    String      @db.VarChar(150)
-  
-  is_anonim        Boolean  @default(true)
-  nama_pelapor     String?  @db.VarChar(150)
-  whatsapp_pelapor String?  @db.VarChar(20)
-
-  // --- TAMBAHAN STANDAR FORM 2026 ---
-  nim_terlapor     String?     @db.VarChar(50)  // Opsional (Jika pelapor tahu)
-  fakultas_prodi   String?     @db.VarChar(150) // Wajib di form 2026
-  angkatan         String?     @db.VarChar(20)  // Wajib di form 2026
-  
-  uraian_kronologi String      @db.Text
-  url_bukti        String      @db.Text
+  uraian_kronologi String
+  url_bukti        String
   status           StatusAduan @default(MENUNGGU)
   created_at       DateTime    @default(now())
+  angkatan         String?     @db.VarChar(20)
+  fakultas_prodi   String?     @db.VarChar(150)
+  nim_terlapor     String?     @db.VarChar(50)
+  is_anonim        Boolean     @default(true)
+  nama_pelapor     String?     @db.VarChar(150)
+  whatsapp_pelapor String?     @db.VarChar(20)
 
   @@map("aduan")
 }
@@ -255,9 +268,9 @@ model hasil_analitik_dt {
   rule_nodes               Json
   fitur_importance         Json
   kasus_ambigu_detail      Json
-  distribusi_p3ke          Json
+  distribusi_desil_dtsen   Json
   distribusi_kondisi_rumah Json
-  distribusi_dtks          Json
+  distribusi_aktif_dtsen   Json
   distribusi_geografis     Json
   analyzed_at              DateTime?   @default(now()) @db.Timestamptz(6)
   distribusi_jenis_kelamin Json?
@@ -396,8 +409,8 @@ model kandidat {
   jalur_masuk               String?                     @db.VarChar(100)
   jenis_kelamin             String?                     @db.VarChar(20)
   nik_kepala_keluarga       String?                     @db.VarChar(50)
-  status_dtks               String?                     @db.VarChar(50)
-  status_p3ke               String?                     @db.VarChar(50)
+  aktif_dtsen               String?                     @db.VarChar(50)
+  desil_dtsen               String?                     @db.VarChar(50)
   tempat_lahir              String?                     @db.VarChar(100)
   tanggal_lahir             DateTime?                   @db.Date
   jarak_pusat_kota          Decimal?                    @db.Decimal
@@ -553,6 +566,7 @@ model prodi {
   prodi         jenjang_pendidikan
   penerima_kipk PenerimaKipk[]
 }
+
 
 enum JenisAduan {
   KETIDAKTEPATAN
