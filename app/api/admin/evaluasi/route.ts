@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
       .range(from, to);
 
     if (search) {
-      query = query.or(`nama.ilike.%${search}%,no_pendaftaran_kipk.ilike.%${search}%,prodi.ilike.%${search}%`);
+      query = query.or(`nama_pendaftar.ilike.%${search}%,no_pendaftaran_kipk.ilike.%${search}%,prodi_pendaftar.ilike.%${search}%`);
     }
 
     const { data: rawData, count, error } = await query;
@@ -31,14 +31,6 @@ export async function GET(req: NextRequest) {
 
     const data = (rawData ?? []).map((row: Record<string, unknown>) => {
       const hw = Array.isArray(row.hasil_wawancara) ? row.hasil_wawancara[0] : row.hasil_wawancara;
-      
-      // Mapping Teks Rekomendasi dari DB ke Nomor untuk UI
-      let mappedHasil = null;
-      const rekDb = hw?.rekomendasi?.toLowerCase() || "";
-      if (rekDb.includes("tidak")) mappedHasil = 3;
-      else if (rekDb.includes("pertimbang")) mappedHasil = 2;
-      else if (rekDb.includes("layak")) mappedHasil = 1;
-      
       const pewawancaraData = Array.isArray(hw?.pewawancara) ? hw?.pewawancara[0] : hw?.pewawancara;
 
       return {
@@ -73,8 +65,7 @@ export async function GET(req: NextRequest) {
         is_draft: hw?.is_draft,
         interviewed_at: hw?.interviewed_at,
         
-        // Nilai Khusus UI List
-        hasil_akhir: mappedHasil,
+        hasil_akhir: hw?.hasil_akhir ?? null,
         pewawancara: pewawancaraData?.nama || null,
       };
     });

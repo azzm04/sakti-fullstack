@@ -296,7 +296,7 @@ export default function EvaluasiDetailClient({ kandidat, id }: EvaluasiDetailCli
               <div>
                 <SectionHeader title="Status Sosial Ekonomi" />
                 <div className="grid grid-cols-2 gap-3">
-                  <ReadField label="Status DTSEN"           value={kandidat.status_p3ke}        />
+                  <ReadField label="Status DTSEN"           value={kandidat.aktif_dtsen}        />
                   <ReadField label="Jumlah Tanggungan"      value={kandidat.jumlah_tanggungan}  />
                   <ReadField label="Orang Tinggal di Rumah" value={kandidat.jumlah_orang_rumah} />
                 </div>

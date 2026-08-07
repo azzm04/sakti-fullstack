@@ -7,6 +7,27 @@ export interface FeatureImportanceItem {
   berkontribusi?: boolean;
 }
 
+
+export interface KasusOverrideItem {
+  kandidat_id: string
+  nama: string
+  no_pendaftaran_kipk: string | null
+  rekomendasi_pewawancara: string
+  hasil_akhir: string
+  catatan_admin: string | null
+  alasan_pewawancara: string | null
+  per_kapita: number | null
+  jenis_override: "turun" | "naik"
+}
+
+export interface KasusOverrideResponse {
+  status: string
+  total: number
+  total_turun: number
+  total_naik: number
+  data: KasusOverrideItem[]
+}
+
 export interface KasusAmbigu {
   index: number;
   keputusan_aktual: string;
@@ -93,11 +114,13 @@ export interface DistribusiJenisKelamin {
   pct_diusulkan: number;
 }
 
+
 export interface DashboardAnalitikData {
   status: string;
   pesan: string;
   waktu_proses_ms: number;
   sumber?: string;
+  kasus_override?: KasusOverrideItem[];
   ringkasan: Ringkasan;
   feature_importance: FeatureImportanceItem[];
   konsistensi: Konsistensi;

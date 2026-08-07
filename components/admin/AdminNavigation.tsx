@@ -10,24 +10,23 @@ import {
   Menu,
   X,
   Upload,
-  UserCheck,
-  ClipboardList,
+  Zap,
+  ClipboardCheck,
+  Calculator,
   BookMarked,
-  BarChart2,
+  BarChart3,
+  Award,
 } from "lucide-react";
 
 const navItems = [
-  { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/import", label: "Import Data", icon: Upload },
-  { href: "/admin/wawancara", label: "Wawancara", icon: UserCheck },
-  {
-    href: "/admin/evaluasi",
-    label: "Evaluasi Hasil Wawancara",
-    icon: ClipboardList,
-  },
-  { href: "/admin/kalkulasi", label: "Kalkulasi", icon: ClipboardList },
-  { href: "/admin/monev", label: "Monev", icon: BookMarked },
-  { href: "/admin/analitik", label: "Analitik Seleksi", icon: BarChart2 },
+  { href: "/admin",             label: "Dashboard",  icon: LayoutDashboard },
+  { href: "/admin/import",      label: "Import Data", icon: Upload          },
+  { href: "/admin/wawancara",   label: "Wawancara",   icon: Zap             },
+  { href: "/admin/evaluasi",    label: "Evaluasi",    icon: ClipboardCheck  },
+  { href: "/admin/kalkulasi",   label: "Kalkulasi",   icon: Calculator      },
+  { href: "/admin/hasil-akhir", label: "Hasil Akhir", icon: Award           },
+  { href: "/admin/monev",       label: "Monev",       icon: BookMarked      },
+  { href: "/admin/analitik",    label: "Analitik",    icon: BarChart3       },
 ];
 
 const sidebarVariants: Variants = {

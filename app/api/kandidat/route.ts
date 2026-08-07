@@ -76,9 +76,6 @@ export async function POST(req: NextRequest) {
     let batchId = existingBatchId ?? null;
 
     if (!batchId && validation) {
-      // FIX: generate UUID di sini dan kirim ke DB sebagai nilai id.
-      // Jangan pakai nilai id yang dikembalikan DB karena Prisma/trigger
-      // bisa meng-override dengan cuid.
       const newBatchId = randomUUID();
 
       const { error: batchError } = await supabase.from("impor_data").insert({
@@ -92,8 +89,6 @@ export async function POST(req: NextRequest) {
         dup_rows: validation.duplicates,
         tahun_seleksi: tahunSeleksi,
       });
-      // FIX: hapus .select("id").single() — tidak perlu ambil id dari DB
-      // karena kita sudah pegang newBatchId yang kita kirim sendiri
 
       if (batchError) {
         console.error("[POST /api/kandidat] batch insert:", batchError);
@@ -103,7 +98,6 @@ export async function POST(req: NextRequest) {
         );
       }
 
-      // FIX: pakai newBatchId yang kita generate, bukan nilai dari DB
       batchId = newBatchId;
     }
 
@@ -115,9 +109,6 @@ export async function POST(req: NextRequest) {
     }
 
     // ── 2. Bulk insert kandidat ────────────────────────────────────────────
-    // Ganti bagian rows mapping yang lama dengan ini
-
-    // Fungsi untuk mengubah serial Excel menjadi format YYYY-MM-DD
     function formatExcelDate(
       excelSerial: string | number | null,
     ): string | null {
@@ -190,7 +181,7 @@ export async function POST(req: NextRequest) {
 
       jarak_pusat_kota: row.jarak_pusat_kota || null,
 
-      // DIBUANG — diisi saat wawancara, bukan saat import:
+      // diisi saat wawancara, bukan saat import:
       // valdasi_aktif_dtsen, valdasi_desil_dtsen, validasi_kip, validasi_kks
       // ket_pekerjaan_ayah, ket_pekerjaan_ibu
       // status_ayah, status_ibu
