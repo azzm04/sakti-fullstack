@@ -289,6 +289,159 @@ async function simpanCacheAnalitik(
 }
 
 // ─────────────────────────────────────────────────────────────────
+// getKasusOverride — ambil kandidat yang keputusan pewawancara
+// berbeda dengan hasil akhir admin (dari data real, bukan model)
+// Fokus: kandidat yang "harusnya layak" tapi tidak diusulkan
+// ─────────────────────────────────────────────────────────────────
+
+export interface KasusOverrideItem {
+  kandidat_id: string
+  nama: string
+  no_pendaftaran_kipk: string
+  rekomendasi_pewawancara: string   // dari pewawancara
+  hasil_akhir: string               // keputusan final admin
+  catatan_admin: string | null      // alasan admin jika ada
+  alasan_pewawancara: string | null // alasan pewawancara
+  per_kapita: number | null
+  jenis_override: "turun" | "naik"  // turun = lebih ketat, naik = lebih longgar
+}
+
+// ─────────────────────────────────────────────────────────────────
+// getKasusOverride — ambil kandidat yang keputusan pewawancara
+// berbeda dengan hasil akhir admin (dari data real, bukan model)
+// Fokus: kandidat yang "harusnya layak" tapi tidak diusulkan
+// ─────────────────────────────────────────────────────────────────
+
+export interface KasusOverrideItem {
+  kandidat_id: string
+  nama: string
+  no_pendaftaran_kipk: string
+  rekomendasi_pewawancara: string   // dari pewawancara
+  hasil_akhir: string               // keputusan final admin
+  catatan_admin: string | null      // alasan admin jika ada
+  alasan_pewawancara: string | null // alasan pewawancara
+  per_kapita: number | null
+  jenis_override: "turun" | "naik"  // turun = lebih ketat, naik = lebih longgar
+}
+
+// Bentuk baris hasil query nested join (hasil_wawancara + kandidat + impor_data)
+interface HasilWawancaraJoinRow {
+  kandidat_id: string
+  rekomendasi: string
+  hasil_akhir: string
+  catatan_admin: string | null
+  alasan: string | null
+  ket_penghasilan_ayah: number | null
+  ket_penghasilan_ibu: number | null
+  penghasilan_lain: number | null
+  kandidat: {
+    nama_pendaftar: string | null
+    no_pendaftaran_kipk: string | null
+    jumlah_tanggungan: number | null
+  } | null
+}
+
+async function getKasusOverride(tahun: string, jalurMasuk: string): Promise<KasusOverrideItem[]> {
+  try {
+    // PENTING: query digabung jadi SATU permintaan (nested join) alih-alih
+    // dua query terpisah dengan .in("kandidat_id", [...ratusan ID]).
+    // Pendekatan lama mengirim ratusan UUID lewat query string GET, yang
+    // untuk ~471 kandidat menghasilkan URL >18KB dan melebihi limit header
+    // (HEADERS_OVERFLOW / fetch failed). Dengan nested join, filter jalan
+    // di sisi Postgres via PostgREST, jadi tidak ada array ID yang perlu
+    // dikirim di URL.
+    //
+    // Filter jalur masuk juga langsung ke kolom kandidat.jalur_masuk
+    // (bukan impor_data.jenis_impor) — samain dengan cara backend Python
+    // (database.py -> ambil_kasus_override), karena dua kolom itu bisa
+    // berbeda nilai/format.
+    const { data, error } = await supabaseAdmin
+      .from("hasil_wawancara")
+      .select(`
+        kandidat_id,
+        rekomendasi,
+        hasil_akhir,
+        catatan_admin,
+        alasan,
+        ket_penghasilan_ayah,
+        ket_penghasilan_ibu,
+        penghasilan_lain,
+        kandidat!inner(
+          nama_pendaftar,
+          no_pendaftaran_kipk,
+          jumlah_tanggungan,
+          jalur_masuk,
+          impor_data!inner(tahun_seleksi)
+        )
+      `)
+      .eq("is_draft", false)
+      .not("hasil_akhir", "is", null)
+      .not("rekomendasi", "is", null)
+      .eq("kandidat.jalur_masuk", jalurMasuk)
+      .eq("kandidat.impor_data.tahun_seleksi", parseInt(tahun))
+      .returns<HasilWawancaraJoinRow[]>()
+
+    if (error) {
+      console.error("[getKasusOverride] query gagal:", error)
+      return []
+    }
+
+    if (!data || data.length === 0) {
+      console.warn(
+        `[getKasusOverride] hasil kosong untuk tahun=${tahun} jalur_masuk="${jalurMasuk}". ` +
+        `Cek apakah nilai kolom kandidat.jalur_masuk persis sama dengan parameter yang dikirim.`,
+      )
+      return []
+    }
+
+    return data
+      .filter((row) => {
+        const rek   = row.rekomendasi
+        const akhir = row.hasil_akhir
+        // Support format baru (Layak/Tidak Layak) dan format lama (Diusulkan/Tidak Diusulkan)
+        const isRekLayak =
+          rek === "Layak" || rek === "Layak Dipertimbangkan" || rek === "Diusulkan"
+        const isRekTidak =
+          rek === "Tidak Layak" || rek === "Tidak Layak Dipertimbangkan" || rek === "Tidak Diusulkan"
+        const isAkhirDisusulkan = akhir === "Diusulkan"
+        const isAkhirTidak      = akhir === "Tidak Diusulkan"
+        // Hanya yang berbeda arah
+        return (isRekLayak && isAkhirTidak) || (isRekTidak && isAkhirDisusulkan)
+      })
+      .map((row) => {
+        const kandidat = row.kandidat
+
+        const rek        = row.rekomendasi
+        const akhir      = row.hasil_akhir
+        const isRekLayak =
+          rek === "Layak" || rek === "Layak Dipertimbangkan" || rek === "Diusulkan"
+
+        const totalPenghasilan =
+          (row.ket_penghasilan_ayah ?? 0) +
+          (row.ket_penghasilan_ibu  ?? 0) +
+          (row.penghasilan_lain     ?? 0)
+        const tanggungan = kandidat?.jumlah_tanggungan ?? 0
+        const perKapita  = tanggungan > 0 ? Math.round(totalPenghasilan / tanggungan) : null
+
+        return {
+          kandidat_id:             row.kandidat_id,
+          nama:                    kandidat?.nama_pendaftar     ?? "—",
+          no_pendaftaran_kipk:     kandidat?.no_pendaftaran_kipk ?? "—",
+          rekomendasi_pewawancara: rek,
+          hasil_akhir:             akhir,
+          catatan_admin:           row.catatan_admin ?? null,
+          alasan_pewawancara:      row.alasan ?? null,
+          per_kapita:              perKapita,
+          jenis_override:          isRekLayak ? "turun" : "naik",
+        } satisfies KasusOverrideItem
+      })
+  } catch (err) {
+    console.error("[getKasusOverride] error:", err)
+    return []
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────
 // GET /api/admin/analitik?tahun=2026&jalur_masuk=SNBT+Eligible&refresh=false
 // ─────────────────────────────────────────────────────────────────
 
@@ -322,6 +475,7 @@ export async function GET(req: NextRequest) {
         cached.distribusi_jenis_kelamin != null;
 
       if (hasEnrichedDistributions) {
+        const kasusOverride = await getKasusOverride(tahun, jalurMasuk);
         const response: AnalitikApiResponse = {
           status: "success",
           pesan: "Analisis diambil dari cache database",
@@ -382,8 +536,75 @@ export async function GET(req: NextRequest) {
           },
         };
 
-        return NextResponse.json(response);
+        return NextResponse.json({ ...response, kasus_override: kasusOverride });
       }
+    }
+  }
+
+  // ── Langkah 1b: Cache ada tapi tanpa distribusi baru — tetap return + override ──
+  if (!refresh) {
+    const { data: cachedLegacy } = await supabaseAdmin
+      .from("hasil_analitik_dt")
+      .select("*")
+      .eq("tahun_seleksi", parseInt(tahun))
+      .eq("jalur_masuk", jalurMasuk)
+      .order("analyzed_at", { ascending: false })
+      .limit(1)
+      .maybeSingle<HasilAnalitikDtRow>();
+
+    if (cachedLegacy) {
+      const kasusOverride = await getKasusOverride(tahun, jalurMasuk);
+      const legacyResponse: AnalitikApiResponse = {
+        status:          "success",
+        pesan:           "Analisis diambil dari cache database",
+        sumber:          "cache",
+        waktu_proses_ms: cachedLegacy.waktu_proses_ms ?? 0,
+        ringkasan: {
+          total_pendaftar:       cachedLegacy.total_pendaftar,
+          total_diusulkan:       cachedLegacy.total_diusulkan,
+          total_tidak_diusulkan: cachedLegacy.total_tidak_diusulkan,
+          pct_diusulkan:         cachedLegacy.pct_diusulkan,
+          pct_tidak_diusulkan:   cachedLegacy.pct_tidak_diusulkan,
+          tahun_seleksi:         String(cachedLegacy.tahun_seleksi),
+          jalur_masuk:           cachedLegacy.jalur_masuk,
+        },
+        feature_importance:      parseJSON(cachedLegacy.fitur_importance, []),
+        konsistensi: {
+          akurasi_model:        cachedLegacy.akurasi_model,
+          cv_accuracy:          cachedLegacy.cv_accuracy,
+          pct_dapat_dijelaskan: cachedLegacy.konsistensi_pct,
+          pct_kasus_ambigu:     cachedLegacy.pct_kasus_ambigu,
+          jumlah_kasus_ambigu:  cachedLegacy.jumlah_kasus_ambigu,
+          jumlah_total_uji:     cachedLegacy.jumlah_data_uji,
+          precision_diusulkan:  cachedLegacy.precision_diusulkan,
+          recall_diusulkan:     cachedLegacy.recall_diusulkan,
+          f1_diusulkan:         cachedLegacy.f1_diusulkan,
+          precision_tidak:      cachedLegacy.precision_tidak,
+          recall_tidak:         cachedLegacy.recall_tidak,
+          f1_tidak:             cachedLegacy.f1_tidak,
+          confusion_matrix:     parseJSON<number[][] | null>(cachedLegacy.confusion_matrix, null),
+        },
+        rule_text:               cachedLegacy.rule_text,
+        rule_nodes:              parseJSON(cachedLegacy.rule_nodes, []),
+        kasus_ambigu:            parseJSON(cachedLegacy.kasus_ambigu_detail, []),
+        distribusi_desil_dtsen:  parseJSON(cachedLegacy.distribusi_desil_dtsen, []),
+        distribusi_kondisi_rumah:parseJSON(cachedLegacy.distribusi_kondisi_rumah, []),
+        distribusi_aktif_dtsen:  parseJSON(cachedLegacy.distribusi_aktif_dtsen, []),
+        distribusi_geografis:    parseJSON(cachedLegacy.distribusi_geografis, []),
+        distribusi_fakultas:     parseJSON(cachedLegacy.distribusi_fakultas, []),
+        distribusi_jenis_kelamin:parseJSON(cachedLegacy.distribusi_jenis_kelamin, []),
+        model_info: {
+          algoritma:         "Decision Tree",
+          best_params:       parseJSON(cachedLegacy.best_params, {}),
+          cv_accuracy:       cachedLegacy.cv_accuracy,
+          train_accuracy:    cachedLegacy.akurasi_latih,
+          test_accuracy:     cachedLegacy.akurasi_model,
+          jumlah_fitur:      cachedLegacy.jumlah_fitur,
+          jumlah_data_train: cachedLegacy.jumlah_data_latih,
+          jumlah_data_test:  cachedLegacy.jumlah_data_uji,
+        },
+      }
+      return NextResponse.json({ ...legacyResponse, kasus_override: kasusOverride })
     }
   }
 
@@ -406,7 +627,14 @@ export async function GET(req: NextRequest) {
 
     await simpanCacheAnalitik(body, tahun, jalurMasuk);
 
-    return NextResponse.json({ ...body, sumber: body.sumber ?? "computed" });
+    // Tambahkan kasus override setelah data dari FastAPI berhasil
+    const kasusOverride = await getKasusOverride(tahun, jalurMasuk);
+
+    return NextResponse.json({
+      ...body,
+      sumber: body.sumber ?? "computed",
+      kasus_override: kasusOverride,
+    });
   } catch {
     return NextResponse.json(
       {

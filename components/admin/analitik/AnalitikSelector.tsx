@@ -27,7 +27,7 @@ import DistribusiChart from "@/components/admin/analitik/DistribusiChart";
 import FakultasChart from "./FakultasChart";
 import GeografisChart from "@/components/admin/analitik/GeografisChart";
 import RuleExtraction from "@/components/admin/analitik/RuleExtraction";
-import KasusAmbigu from "@/components/admin/analitik/KasusAmbigu";
+import KasusOverrideAdmin from "@/components/admin/analitik/KasusOverrideAdmin";
 import ModelInfoCard from "@/components/admin/analitik/ModelInfoCard";
 import InsightNaratif from "@/components/admin/analitik/InsightNaratif";
 
@@ -449,7 +449,7 @@ export default function AnalitikSelector() {
 
             {/* 3. Kasus paling actionable — layak ditinjau ulang */}
             <Section>
-              <KasusAmbigu data={data.kasus_ambigu} />
+              <KasusOverrideAdmin data={data.kasus_override ?? []} />
             </Section>
 
             {/* 4. Sebaran geografis — lihat wilayah bermasalah */}
