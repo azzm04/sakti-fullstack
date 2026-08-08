@@ -28,9 +28,10 @@ export default function FormPengaduan() {
     let newValue = value;
 
     // Blokir angka dan simbol untuk NAMA
-    if (name === "nama_pelapor" || name === "nama_terlapor") {
-      newValue = newValue.replace(/[^a-zA-Z\s]/g, ""); 
+    if (name === "nama_pelapor" || name === "nama_terlapor" || name === "fakultas_prodi") {
+      newValue = newValue.replace(/[^a-zA-Z\s\-]/g, ""); 
     }
+    
     // Blokir huruf dan simbol untuk WA dan NIM
     else if (name === "whatsapp_pelapor" || name === "nim_terlapor") {
       newValue = newValue.replace(/[^0-9]/g, "");
@@ -63,7 +64,7 @@ export default function FormPengaduan() {
         throw new Error(result.error || "Gagal mengirim laporan.");
       }
 
-      setPesanSukses(`Berhasil! Kode resi Anda: ${result.data.kode_laporan}`);
+      setPesanSukses(`Berhasil! Kode Aduan Anda: ${result.data.kode_laporan}`);
       setFormData({
         jenis_aduan: "", nama_pelapor: "", whatsapp_pelapor: "", nama_terlapor: "",
         nim_terlapor: "", fakultas_prodi: "", angkatan: "", uraian_kronologi: "", url_bukti: "",
@@ -121,34 +122,47 @@ export default function FormPengaduan() {
 
             <div>
               <h3 className="text-lg font-bold text-slate-800 mb-4 border-b border-slate-200 pb-2">Identitas Pelapor</h3>
+              
               <div className="mb-6 flex items-center">
                 <input 
                   type="checkbox" id="is_anonim" checked={isAnonim} 
                   onChange={(e) => {
                     setIsAnonim(e.target.checked);
-                    if(e.target.checked) setFormData({...formData, nama_pelapor: "", whatsapp_pelapor: ""});
+                    // HANYA hapus nama pelapor, WA tetap dipertahankan
+                    if(e.target.checked) setFormData({...formData, nama_pelapor: ""});
                   }}
                   className="w-5 h-5 text-[#001349] border-slate-300 rounded focus:ring-[#001349]"
                 />
-                <label htmlFor="is_anonim" className="ml-3 text-sm font-semibold text-slate-700 cursor-pointer">
-                  Rahasiakan identitas saya (Anonim)
+                <label htmlFor="is_anonim" className="ml-3 text-sm font-semibold text-slate-700 cursor-pointer select-none">
+                  Kirim sebagai Rahasia (Sembunyikan nama dari terlapor)
                 </label>
               </div>
 
-              {!isAnonim && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-slate-50 p-5 rounded-xl border border-slate-200 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 bg-slate-50 p-5 rounded-xl border border-slate-200 mb-6">
+                {/* KOLOM NAMA (Bisa Hilang Jika Rahasia) */}
+                {!isAnonim && (
                   <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1">Nama Lengkap <span className="text-rose-500">*</span></label>
+                    <label className="block text-sm font-semibold text-slate-700 mb-1">
+                      Nama Lengkap <span className="text-rose-500">*</span>
+                    </label>
                     <input type="text" name="nama_pelapor" value={formData.nama_pelapor} onChange={handleChange} required={!isAnonim} placeholder="Nama Lengkap Anda"
                       className="mt-1 block w-full rounded-lg border-slate-300 py-3 px-4 text-slate-900 shadow-sm focus:border-[#001349] sm:text-sm bg-white" />
                   </div>
-                  <div>
-                    <label className="block text-sm font-semibold text-slate-700 mb-1">Nomor WhatsApp <span className="text-rose-500">*</span></label>
-                    <input type="text" name="whatsapp_pelapor" value={formData.whatsapp_pelapor} onChange={handleChange} required={!isAnonim} placeholder="Contoh: 08123456789"
-                      className="mt-1 block w-full rounded-lg border-slate-300 py-3 px-4 text-slate-900 shadow-sm focus:border-[#001349] sm:text-sm bg-white" />
+                )}
+                
+                {/* KOLOM WA (Selalu Muncul dan Mengisi Penuh Lebar Jika Nama Hilang) */}
+                <div className={isAnonim ? "sm:col-span-2" : ""}>
+                  <label className="block text-sm font-semibold text-slate-700 mb-1">
+                    Nomor WhatsApp <span className="text-rose-500">*</span>
+                  </label>
+                  <input type="text" name="whatsapp_pelapor" value={formData.whatsapp_pelapor} onChange={handleChange} required placeholder="Contoh: 08123456789"
+                    className="mt-1 block w-full rounded-lg border-slate-300 py-3 px-4 text-slate-900 shadow-sm focus:border-[#001349] sm:text-sm bg-white" />
+                  <div className="mt-2 flex items-start gap-1.5 text-xs font-medium text-slate-500">
+                    <svg className="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    <span>Nomor ini wajib diisi untuk keperluan validasi oleh Dirmawa dan <b>dijamin kerahasiaannya</b>.</span>
                   </div>
                 </div>
-              )}
+              </div>
             </div>
 
             <div>

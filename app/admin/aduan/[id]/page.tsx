@@ -43,29 +43,28 @@ export default async function DetailAduanAdmin({ params }: { params: Promise<{ i
 
           <div className="p-8 space-y-10">
             
-            {/* Bagian 1: Identitas Pelapor */}
+            {/* Bagian 1: Identitas Pelapor (DIUBAH LOGIKANYA) */}
             <section>
               <h2 className="text-lg font-bold text-slate-800 border-b border-slate-200 pb-2 mb-4">1. Identitas Pelapor</h2>
-              {aduan.is_anonim ? (
-                <div className="bg-slate-50 border border-slate-200 text-slate-500 p-4 rounded-xl text-sm font-medium italic">
-                  Pelapor memilih untuk merahasiakan identitasnya (Anonim).
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
+                <div>
+                  <p className="text-xs text-slate-500 font-bold uppercase tracking-wide">Nama Pelapor</p>
+                  <p className={`font-semibold mt-1 ${aduan.is_anonim ? 'text-slate-500 italic' : 'text-slate-900'}`}>
+                    {aduan.is_anonim ? '🕵️ Dirahasiakan (Anonim)' : aduan.nama_pelapor}
+                  </p>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                  <div>
-                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wide">Nama Pelapor</p>
-                    <p className="font-semibold text-slate-900 mt-1">{aduan.nama_pelapor}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-slate-500 font-bold uppercase tracking-wide">Nomor WhatsApp</p>
-                    <p className="font-semibold text-slate-900 mt-1">
-                      <a href={`https://wa.me/${aduan.whatsapp_pelapor}`} target="_blank" className="text-blue-600 hover:underline">
-                        {aduan.whatsapp_pelapor}
-                      </a>
-                    </p>
-                  </div>
+                <div>
+                  <p className="text-xs text-slate-500 font-bold uppercase tracking-wide">Nomor WhatsApp</p>
+                  <p className="font-semibold text-slate-900 mt-1">
+                    <a href={`https://wa.me/${aduan.whatsapp_pelapor}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 hover:underline">
+                      {aduan.whatsapp_pelapor}
+                      <span className="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full font-bold uppercase no-underline">
+                        Hubungi
+                      </span>
+                    </a>
+                  </p>
                 </div>
-              )}
+              </div>
             </section>
 
             {/* Bagian 2: Terlapor & Kategori */}

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, type MouseEvent } from "react";
 import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation"; // 👈 IMPORT DITAMBAHKAN
 import { X, Menu } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
@@ -14,6 +15,10 @@ const NAV_LINKS = [
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  
+  // Panggil hook navigasi Next.js
+  const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 50);
@@ -22,14 +27,23 @@ export default function Navbar() {
   }, []);
 
   const handleNavClick = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
-    event.preventDefault();
+    event.preventDefault(); // Kita ambil alih navigasi secara manual
     setMobileOpen(false);
 
-    const sectionId = href.split("#")[1];
-    const section = document.getElementById(sectionId!);
-    if (section) {
-      section.scrollIntoView({ behavior: "smooth", block: "start" });
-      window.history.replaceState(null, "", href);
+    const targetPath = href.split("#")[0] || "/"; // Memisahkan rute utama (misal: "/")
+    const sectionId = href.split("#")[1]; // Memisahkan ID (misal: "beranda")
+
+    // LOGIKA PINTAR: Cek apakah user sedang berada di rute yang dituju
+    if (pathname === targetPath) {
+      // Jika SUDAH di Beranda, cukup gulir mulus ke bawah
+      const section = document.getElementById(sectionId!);
+      if (section) {
+        section.scrollIntoView({ behavior: "smooth", block: "start" });
+        window.history.replaceState(null, "", href);
+      }
+    } else {
+      // Jika SEDANG DI HALAMAN LAIN (Layanan Aduan), paksa pindah halaman!
+      router.push(href);
     }
   };
 

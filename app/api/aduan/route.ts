@@ -5,11 +5,15 @@ import { z } from "zod";
 const aduanSchema = z.object({
   jenis_aduan: z.enum(["KETIDAKTEPATAN", "PENYALAHGUNAAN"]),
   is_anonim: z.boolean(),
+  // Nama pelapor boleh kosong jika anonim
   nama_pelapor: z.string().regex(/^[a-zA-Z\s]*$/, "Nama pelapor hanya boleh huruf").optional().or(z.literal("")),
-  whatsapp_pelapor: z.string().regex(/^[0-9]*$/, "WA pelapor hanya boleh angka").optional().or(z.literal("")),
+  // WA PELAPOR SEKARANG WAJIB (Min 10 angka)
+  whatsapp_pelapor: z.string().min(10, "Nomor WA minimal 10 angka").regex(/^[0-9]+$/, "WA pelapor hanya boleh angka"),
   nama_terlapor: z.string().min(1, "Nama wajib diisi").regex(/^[a-zA-Z\s]+$/, "Nama terlapor hanya boleh huruf"),
   nim_terlapor: z.string().regex(/^[0-9]*$/, "NIM hanya boleh angka").optional().or(z.literal("")),
-  fakultas_prodi: z.string().min(1, "Fakultas/Prodi wajib diisi"),
+  fakultas_prodi: z.string()
+  .min(1, "Fakultas/Prodi wajib diisi")
+  .regex(/^[a-zA-Z\s\-]+$/, "Fakultas/Prodi hanya boleh berisi huruf dan tanda strip"),
   angkatan: z.string().min(1, "Angkatan wajib diisi"),
   uraian_kronologi: z.string().min(50, "Uraian minimal 50 karakter"),
   url_bukti: z.string().url("Format link bukti tidak valid").optional().or(z.literal("")),
@@ -38,13 +42,15 @@ export async function POST(req: NextRequest) {
         jenis_aduan: parsedData.jenis_aduan,
         is_anonim: parsedData.is_anonim,
         nama_pelapor: parsedData.is_anonim ? null : parsedData.nama_pelapor,
-        whatsapp_pelapor: parsedData.is_anonim ? null : parsedData.whatsapp_pelapor,
+        // PERUBAHAN KRUSIAL: WA selalu disimpan, tidak peduli anonim atau tidak
+        whatsapp_pelapor: parsedData.whatsapp_pelapor, 
         nama_terlapor: parsedData.nama_terlapor,
         nim_terlapor: parsedData.nim_terlapor || null,
         fakultas_prodi: parsedData.fakultas_prodi,
         angkatan: parsedData.angkatan,
         uraian_kronologi: parsedData.uraian_kronologi,
         url_bukti: parsedData.url_bukti || "",
+        status: "MENUNGGU", // Pastikan enum di Prisma bernama 'MENUNGGU'
       },
     });
 
