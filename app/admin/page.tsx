@@ -1,32 +1,14 @@
-
 import AdminDashboardContent from "@/components/admin/AdminDashboardContent"
-
-interface Stats {
-  total: number
-  valid: number
-  incomplete: number
-  saved: boolean
-}
-async function getStats(): Promise<Stats | null> {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"
-    const res = await fetch(`${baseUrl}/api/kandidat`, {
-      cache: "no-store", // Don't cache - always fresh data
-    })
-
-    if (!res.ok) {
-      return null
-    }
-
-    return res.json()
-  } catch (error) {
-    console.error("Failed to fetch stats:", error)
-    return null
-  }
-}
+import { getDashboardStats } from "@/lib/dashboard-stats"
+import type { DashboardStats } from "@/schemas"
 
 export default async function AdminPage() {
-  const stats = await getStats()
+  let stats: DashboardStats | null = null
+  try {
+    stats = await getDashboardStats()
+  } catch (error) {
+    console.error("Failed to fetch dashboard stats:", error)
+  }
 
   return <AdminDashboardContent stats={stats} />
 }
