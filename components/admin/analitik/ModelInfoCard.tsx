@@ -26,44 +26,44 @@ export default function ModelInfoCard({ data }: Props) {
   ]
 
   return (
-    <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-admin-border shadow-sm overflow-hidden">
       {/* Header — klik untuk expand */}
       <button
         onClick={() => setExpanded((v) => !v)}
-        className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/40 transition-colors"
+        className="w-full flex items-center justify-between px-6 py-4 hover:bg-admin-surface-soft/40 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-primary/8 flex items-center justify-center shrink-0">
-            <Cpu size={15} className="text-primary" />
+          <div className="w-8 h-8 rounded-xl bg-admin-accent/8 flex items-center justify-center shrink-0">
+            <Cpu size={15} className="text-admin-accent" />
           </div>
           <div className="text-left">
-            <p className="text-sm font-bold text-foreground">Detail Teknis Model</p>
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-sm font-bold text-admin-text">Detail Teknis Model</p>
+            <p className="text-[11px] text-admin-text-3">
               {data.algoritma} · Akurasi {(data.test_accuracy * 100).toFixed(1)}%
               {!expanded && (
-                <span className="ml-2 text-primary/60">— klik untuk detail</span>
+                <span className="ml-2 text-admin-accent/60">— klik untuk detail</span>
               )}
             </p>
           </div>
         </div>
         {expanded
-          ? <ChevronUp size={16} className="text-muted-foreground shrink-0" />
-          : <ChevronDown size={16} className="text-muted-foreground shrink-0" />}
+          ? <ChevronUp size={16} className="text-admin-text-3 shrink-0" />
+          : <ChevronDown size={16} className="text-admin-text-3 shrink-0" />}
       </button>
 
       {/* Content — hanya muncul saat expanded */}
       {expanded && (
-        <div className="px-6 pb-6 border-t border-border">
+        <div className="px-6 pb-6 border-t border-admin-border">
           <div className="pt-4 grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-1.5 text-xs">
             {/* Statistik dataset & akurasi */}
             <div className="space-y-1.5">
-              <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">
+              <p className="text-[11px] font-bold text-admin-text-3 uppercase tracking-wider mb-2">
                 Dataset & Akurasi
               </p>
               {stats.map(({ label, value, highlight }) => (
                 <div key={label} className="flex justify-between">
-                  <span className="text-muted-foreground">{label}</span>
-                  <span className={`font-semibold ${highlight ? "text-primary" : "text-foreground"}`}>
+                  <span className="text-admin-text-3">{label}</span>
+                  <span className={`font-semibold ${highlight ? "text-admin-accent" : "text-admin-text"}`}>
                     {value}
                   </span>
                 </div>
@@ -73,13 +73,13 @@ export default function ModelInfoCard({ data }: Props) {
             {/* Best params */}
             {params.length > 0 && (
               <div className="space-y-1.5 mt-4 sm:mt-0">
-                <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-2">
+                <p className="text-[11px] font-bold text-admin-text-3 uppercase tracking-wider mb-2">
                   Parameter Terbaik
                 </p>
                 {params.map(({ key, value }) => (
                   <div key={key} className="flex justify-between">
-                    <span className="text-muted-foreground capitalize">{key}</span>
-                    <span className="font-mono font-semibold text-foreground">{value}</span>
+                    <span className="text-admin-text-3 capitalize">{key}</span>
+                    <span className="font-mono font-semibold text-admin-text">{value}</span>
                   </div>
                 ))}
               </div>

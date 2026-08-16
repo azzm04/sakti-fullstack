@@ -84,31 +84,31 @@ export default function GeografisChart({ data }: Props) {
 
   if (sorted.length === 0) {
     return (
-      <div className="bg-tertiary rounded-2xl border border-border shadow-sm p-6">
-        <h3 className="text-sm font-bold text-foreground flex items-center gap-2 mb-1">
-          <MapIcon size={16} className="text-secondary" />
+      <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm p-6">
+        <h3 className="font-admin-heading text-sm font-bold text-admin-text flex items-center gap-2 mb-1">
+          <MapIcon size={16} className="text-admin-text-2" />
           Sebaran per Provinsi
         </h3>
-        <p className="text-xs text-muted-foreground">Data geografis tidak tersedia</p>
+        <p className="text-xs text-admin-text-3">Data geografis tidak tersedia</p>
       </div>
     )
   }
 
   return (
-    <div className="bg-tertiary rounded-2xl border border-border shadow-sm overflow-hidden flex flex-col">
-      <div className="px-6 py-5 border-b border-border bg-muted/40">
-        <h3 className="text-[15px] font-bold text-foreground flex items-center gap-2">
-          <MapIcon size={18} className="text-secondary" />
+    <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm overflow-hidden flex flex-col">
+      <div className="px-6 py-5 border-b border-admin-border bg-admin-surface-soft/40">
+        <h3 className="font-admin-heading text-[15px] font-bold text-admin-text flex items-center gap-2">
+          <MapIcon size={18} className="text-admin-text-2" />
           Sebaran per Provinsi
         </h3>
-        <p className="text-sm text-muted-foreground mt-1">
-          <span className="font-bold text-foreground">{grandTotal.toLocaleString("id-ID")}</span> total pendaftar
+        <p className="text-sm text-admin-text-3 mt-1">
+          <span className="font-bold text-admin-text">{grandTotal.toLocaleString("id-ID")}</span> total pendaftar
           {" · "}ukuran lingkaran = volume pendaftar, warna = tingkat diusulkan
         </p>
       </div>
 
       <div className="flex flex-col lg:flex-row h-[500px]">
-        <div className="flex-1 bg-muted relative z-0">
+        <div className="flex-1 bg-admin-surface-soft relative z-0">
           {isMounted ? (
             <MapContainer
               center={[-2.5489, 118.0149]}
@@ -143,11 +143,11 @@ export default function GeografisChart({ data }: Props) {
                     }}
                   >
                     <Tooltip sticky>
-                      <div className="text-xs font-semibold text-foreground">{item.provinsi.toUpperCase()}</div>
-                      <div className="text-[11px] text-muted-foreground">
+                      <div className="text-xs font-semibold text-admin-text">{item.provinsi.toUpperCase()}</div>
+                      <div className="text-[11px] text-admin-text-3">
                         Total {item.total.toLocaleString("id-ID")}
                       </div>
-                      <div className="text-[11px] text-muted-foreground">
+                      <div className="text-[11px] text-admin-text-3">
                         {item.diusulkan.toLocaleString("id-ID")} diusulkan, {item.tidak_diusulkan.toLocaleString("id-ID")} tidak
                       </div>
                     </Tooltip>
@@ -156,22 +156,22 @@ export default function GeografisChart({ data }: Props) {
               })}
             </MapContainer>
           ) : (
-            <div className="absolute inset-0 flex flex-col items-center justify-center text-muted-foreground">
+            <div className="absolute inset-0 flex flex-col items-center justify-center text-admin-text-3">
               <MapIcon size={48} className="mb-3 opacity-20 animate-pulse" />
               <p className="text-sm font-medium">Memuat Peta...</p>
             </div>
           )}
 
           {/* Legend Peta */}
-          <div className="absolute bottom-4 right-4 bg-tertiary/95 backdrop-blur px-4 py-3 rounded-lg shadow-sm border border-border text-xs text-muted-foreground z-[400] pointer-events-none">
-            <p className="font-bold text-foreground mb-2">Ukuran = volume pendaftar</p>
+          <div className="absolute bottom-4 right-4 bg-admin-surface/95 backdrop-blur px-4 py-3 rounded-lg shadow-sm border border-admin-border text-xs text-admin-text-3 z-[400] pointer-events-none">
+            <p className="font-bold text-admin-text mb-2">Ukuran = volume pendaftar</p>
             <div className="flex items-center gap-2 mb-2">
-              <div className="w-3 h-3 rounded-full bg-muted-foreground/30 border border-border"></div>
+              <div className="w-3 h-3 rounded-full bg-admin-text-3/30 border border-admin-border"></div>
               <span>Sedikit</span>
-              <div className="w-6 h-6 rounded-full bg-muted-foreground/30 border border-border ml-2"></div>
+              <div className="w-6 h-6 rounded-full bg-admin-text-3/30 border border-admin-border ml-2"></div>
               <span>Banyak</span>
             </div>
-            <p className="font-bold text-foreground mb-1.5 mt-3">Warna = tingkat diusulkan</p>
+            <p className="font-bold text-admin-text mb-1.5 mt-3">Warna = tingkat diusulkan</p>
             <div className="flex items-center gap-2 mb-1">
               <div className="w-3 h-3 rounded-full" style={{ background: "var(--color-primary)" }}></div>
               <span>Tinggi (≥90%)</span>
@@ -188,9 +188,9 @@ export default function GeografisChart({ data }: Props) {
         </div>
 
         {/* Sidebar Kanan (List Provinsi) */}
-        <div className="w-full lg:w-[320px] bg-tertiary flex flex-col border-l border-border relative z-20 shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.05)]">
-          <div className="px-5 py-4 border-b border-border bg-tertiary">
-            <h4 className="text-[15px] font-semibold text-foreground">Ringkasan per provinsi</h4>
+        <div className="w-full lg:w-[320px] bg-admin-surface flex flex-col border-l border-admin-border relative z-20 shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.05)]">
+          <div className="px-5 py-4 border-b border-admin-border bg-admin-surface">
+            <h4 className="font-admin-heading text-[15px] font-semibold text-admin-text">Ringkasan per provinsi</h4>
           </div>
 
           <div className="flex-1 overflow-y-auto py-2 custom-scrollbar">
@@ -198,10 +198,10 @@ export default function GeografisChart({ data }: Props) {
               {sorted.map((item, index) => (
                 <li
                   key={index}
-                  className="px-5 py-2.5 hover:bg-muted/60 transition-colors cursor-default text-[13px] text-foreground flex items-center"
+                  className="px-5 py-2.5 hover:bg-admin-surface-soft/60 transition-colors cursor-default text-[13px] text-admin-text flex items-center"
                 >
                   <span>{item.provinsi.toUpperCase()}</span>
-                  <span className="text-muted-foreground ml-1.5">
+                  <span className="text-admin-text-3 ml-1.5">
                     (total {item.total.toLocaleString("id-ID")})
                   </span>
                 </li>

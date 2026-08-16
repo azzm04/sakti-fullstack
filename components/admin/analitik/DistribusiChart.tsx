@@ -51,9 +51,9 @@ function CustomTooltip({ active, payload, label }: TooltipProps<number, string>)
       initial={{ opacity: 0, scale: 0.92, y: 4 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={springTransition}
-      className="rounded-xl border border-border/60 bg-white px-3.5 py-2.5 shadow-lg"
+      className="rounded-xl border border-admin-border/60 bg-white px-3.5 py-2.5 shadow-lg"
     >
-      <p className="mb-1.5 text-[11px] font-semibold text-slate-800">{label}</p>
+      <p className="mb-1.5 text-[11px] font-semibold text-admin-text">{label}</p>
       <div className="space-y-1">
         {payload.map((entry) => (
           <div key={entry.dataKey as string} className="flex items-center gap-2 text-[11px]">
@@ -61,8 +61,8 @@ function CustomTooltip({ active, payload, label }: TooltipProps<number, string>)
               className="h-2 w-2 shrink-0 rounded-full"
               style={{ backgroundColor: entry.color }}
             />
-            <span className="text-slate-500">{entry.name}</span>
-            <span className="ml-auto font-semibold tabular-nums text-slate-800">
+            <span className="text-admin-text-4">{entry.name}</span>
+            <span className="ml-auto font-semibold tabular-nums text-admin-text">
               {entry.value}
             </span>
           </div>
@@ -81,19 +81,19 @@ export default function DistribusiChart({ data, title, subtitle }: Props) {
       variants={cardVariants}
       initial="hidden"
       animate="visible"
-      className="bg-white rounded-2xl border border-border shadow-sm p-6"
+      className="bg-white rounded-2xl border border-admin-border shadow-sm p-6"
     >
       <div className="mb-5">
-        <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-1">
+        <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider mb-1">
           {title}
         </h3>
         {subtitle && (
-          <p className="text-xs text-slate-500">{subtitle}</p>
+          <p className="text-xs text-admin-text-4">{subtitle}</p>
         )}
       </div>
 
       {safeData.length === 0 ? (
-        <div className="flex items-center justify-center h-[220px] text-slate-400 text-sm">
+        <div className="flex items-center justify-center h-[220px] text-admin-text-5 text-sm">
           Data tidak tersedia
         </div>
       ) : (
@@ -196,7 +196,7 @@ function LegendDot({ color, label }: LegendDotProps) {
     <motion.div
       whileHover={{ scale: 1.05 }}
       transition={springTransition}
-      className="flex items-center gap-1.5 text-xs text-slate-500"
+      className="flex items-center gap-1.5 text-xs text-admin-text-4"
     >
       <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
       {label}

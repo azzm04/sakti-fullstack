@@ -146,33 +146,33 @@ export default function AnalitikSelector() {
   return (
     <div className="space-y-8">
       {/* Form Selector — collapsible */}
-      <div className="bg-tertiary rounded-3xl border border-border shadow-sm overflow-hidden">
+      <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm overflow-hidden">
         <motion.button
           onClick={() => setFormCollapsed((v) => !v)}
           whileTap={{ scale: 0.995 }}
           transition={spring}
-          className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors"
+          className="w-full flex items-center justify-between px-6 py-4 hover:bg-admin-surface-soft/30 transition-colors"
         >
           <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-lg bg-primary/8 flex items-center justify-center shrink-0">
-              <Settings2 size={14} className="text-primary" />
+            <div className="w-7 h-7 rounded-lg bg-admin-accent/8 flex items-center justify-center shrink-0">
+              <Settings2 size={14} className="text-admin-accent" />
             </div>
             <div className="text-left">
-              <p className="text-sm font-bold text-foreground">
+              <p className="text-sm font-bold text-admin-text">
                 Pilih Data yang Dianalisis
               </p>
               {formCollapsed && jalur && (
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="text-xs text-admin-text-3 mt-0.5">
                   {jalur} · Tahun {tahun}
                   {state === "done" && data && (
-                    <span className="ml-2 text-primary font-semibold">
+                    <span className="ml-2 text-admin-accent font-semibold">
                       · {data.ringkasan.total_pendaftar} pendaftar
                     </span>
                   )}
                 </p>
               )}
               {formCollapsed && !jalur && (
-                <p className="text-xs text-muted-foreground mt-0.5">
+                <p className="text-xs text-admin-text-3 mt-0.5">
                   Klik untuk mengubah pilihan
                 </p>
               )}
@@ -186,7 +186,7 @@ export default function AnalitikSelector() {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.8 }}
                   transition={spring}
-                  className="text-[10px] font-semibold text-emerald-600 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full"
+                  className="text-[10px] font-semibold text-admin-accent bg-admin-accent/10 border border-admin-accent/25 px-2 py-0.5 rounded-full"
                 >
                   Analisis aktif
                 </motion.span>
@@ -196,7 +196,7 @@ export default function AnalitikSelector() {
               animate={{ rotate: formCollapsed ? 0 : 180 }}
               transition={spring}
             >
-              <ChevronDown size={16} className="text-muted-foreground" />
+              <ChevronDown size={16} className="text-admin-text-3" />
             </motion.div>
           </div>
         </motion.button>
@@ -211,16 +211,16 @@ export default function AnalitikSelector() {
               exit="exit"
               className="overflow-hidden"
             >
-              <div className="px-6 pb-6 pt-2 border-t border-border">
+              <div className="px-6 pb-6 pt-2 border-t border-admin-border">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
                   <div>
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
+                    <label className="text-xs font-semibold text-admin-text-3 uppercase tracking-wider mb-2 block">
                       Tahun Seleksi
                     </label>
                     <div className="relative">
                       <Calendar
                         size={14}
-                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none"
+                        className="absolute left-3.5 top-1/2 -translate-y-1/2 text-admin-text-3 pointer-events-none"
                       />
                       <input
                         type="number"
@@ -232,10 +232,10 @@ export default function AnalitikSelector() {
                           setTahun(e.target.value);
                           setState("idle");
                         }}
-                        className={`w-full pl-9 pr-4 py-2.5 text-sm font-bold rounded-xl border bg-background text-foreground
+                        className={`w-full pl-9 pr-4 py-2.5 text-sm font-bold rounded-xl border bg-admin-bg text-admin-text
                           focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-all
                           [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none
-                          ${!tahunValid && tahun !== "" ? "border-destructive bg-destructive/5" : "border-border"}`}
+                          ${!tahunValid && tahun !== "" ? "border-admin-danger-text bg-admin-danger-text/5" : "border-admin-border"}`}
                       />
                     </div>
                     <AnimatePresence>
@@ -245,7 +245,7 @@ export default function AnalitikSelector() {
                           animate={{ opacity: 1, height: "auto", y: 0 }}
                           exit={{ opacity: 0, height: 0, y: -4 }}
                           transition={softSpring}
-                          className="mt-1 text-[11px] text-destructive overflow-hidden"
+                          className="mt-1 text-[11px] text-admin-danger-text overflow-hidden"
                         >
                           Masukkan tahun antara 2020–2099
                         </motion.p>
@@ -254,7 +254,7 @@ export default function AnalitikSelector() {
                   </div>
 
                   <div>
-                    <label className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">
+                    <label className="text-xs font-semibold text-admin-text-3 uppercase tracking-wider mb-2 block">
                       Jalur Masuk
                     </label>
                     <div className="grid grid-cols-1 gap-1.5">
@@ -273,8 +273,8 @@ export default function AnalitikSelector() {
                             className={`flex items-center gap-3 px-3 py-2 rounded-xl border text-left text-sm font-semibold
                               ${
                                 selected
-                                  ? "bg-primary border-primary text-primary-foreground"
-                                  : "bg-background border-border text-foreground hover:border-primary/40 hover:bg-primary/5"
+                                  ? "bg-admin-accent border-admin-accent text-white"
+                                  : "bg-admin-bg border-admin-border text-admin-text hover:border-admin-accent/40 hover:bg-admin-accent/5"
                               }`}
                           >
                             <span className="relative w-3.5 h-3.5 rounded-full border-2 shrink-0 border-current opacity-80">
@@ -282,7 +282,7 @@ export default function AnalitikSelector() {
                                 <motion.span
                                   layoutId="jalur-dot"
                                   transition={spring}
-                                  className="absolute inset-[2px] rounded-full bg-primary-foreground"
+                                  className="absolute inset-[2px] rounded-full bg-white"
                                 />
                               )}
                             </span>
@@ -312,8 +312,8 @@ export default function AnalitikSelector() {
                     className={`flex items-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold
                       ${
                         canRun && state !== "loading"
-                          ? "bg-primary text-primary-foreground hover:bg-primary/90"
-                          : "bg-muted text-muted-foreground cursor-not-allowed"
+                          ? "bg-admin-accent text-white hover:bg-admin-accent/90"
+                          : "bg-admin-surface-soft text-admin-text-3 cursor-not-allowed"
                       }`}
                   >
                     {state === "loading" ? (
@@ -350,7 +350,7 @@ export default function AnalitikSelector() {
                         setRefresh(true);
                         handleAnalisis(true);
                       }}
-                      className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold border border-border text-muted-foreground hover:text-foreground hover:border-primary/30"
+                      className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold border border-admin-border text-admin-text-3 hover:text-admin-text hover:border-admin-accent/30"
                     >
                       <RefreshCw size={13} />
                       Perbarui Cache
@@ -358,17 +358,17 @@ export default function AnalitikSelector() {
                   )}
 
                   {state === "done" && data && (
-                    <span className="text-xs text-muted-foreground">
+                    <span className="text-xs text-admin-text-3">
                       Diproses dalam {(data.waktu_proses_ms / 1000).toFixed(1)}s
                       {data.sumber === "cache" && (
-                        <span className="ml-1 text-primary">(dari cache)</span>
+                        <span className="ml-1 text-admin-accent">(dari cache)</span>
                       )}
                     </span>
                   )}
                 </div>
 
                 {!canRun && state === "idle" && (
-                  <p className="mt-3 text-xs text-muted-foreground">
+                  <p className="mt-3 text-xs text-admin-text-3">
                     {!tahunValid
                       ? "Isi tahun seleksi yang valid"
                       : "Pilih jalur masuk terlebih dahulu"}
@@ -388,26 +388,26 @@ export default function AnalitikSelector() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
             transition={spring}
-            className="flex flex-col items-center justify-center py-16 text-center bg-tertiary rounded-3xl border border-border"
+            className="flex flex-col items-center justify-center py-16 text-center bg-admin-surface rounded-2xl border border-admin-border"
           >
             <motion.div
               initial={{ scale: 0.6, rotate: -8 }}
               animate={{ scale: 1, rotate: 0 }}
               transition={spring}
-              className="w-12 h-12 bg-destructive/8 rounded-2xl flex items-center justify-center mb-3"
+              className="w-12 h-12 bg-admin-danger-text/8 rounded-2xl flex items-center justify-center mb-3"
             >
-              <AlertCircle size={24} className="text-destructive" />
+              <AlertCircle size={24} className="text-admin-danger-text" />
             </motion.div>
-            <h3 className="font-bold text-foreground mb-1">
+            <h3 className="font-admin-heading font-bold text-admin-text mb-1">
               Gagal memuat data analitik
             </h3>
-            <p className="text-muted-foreground text-sm max-w-sm">{error}</p>
+            <p className="text-admin-text-3 text-sm max-w-sm">{error}</p>
             <motion.button
               onClick={() => handleAnalisis()}
               whileHover={{ scale: 1.03 }}
               whileTap={{ scale: 0.96 }}
               transition={spring}
-              className="mt-4 px-4 py-2 rounded-xl text-sm font-semibold bg-primary text-primary-foreground hover:bg-primary/90"
+              className="mt-4 px-4 py-2 rounded-xl text-sm font-semibold bg-admin-accent text-white hover:bg-admin-accent/90"
             >
               Coba Lagi
             </motion.button>
@@ -425,7 +425,7 @@ export default function AnalitikSelector() {
             className="space-y-8"
           >
             <Section>
-              <div className="flex items-center gap-2 text-xs text-primary font-semibold">
+              <div className="flex items-center gap-2 text-xs text-admin-accent font-semibold">
                 <ChevronRight size={14} />
                 Menampilkan analitik: <span className="font-bold">
                   {jalur}
@@ -500,22 +500,22 @@ export default function AnalitikSelector() {
 
             {/* 8. Detail teknis model — collapsible, audiens teknis */}
             <Section>
-              <div className="bg-tertiary rounded-3xl border border-border shadow-sm overflow-hidden">
+              <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm overflow-hidden">
                 <motion.button
                   onClick={() => setTechnicalOpen((v) => !v)}
                   whileTap={{ scale: 0.995 }}
                   transition={spring}
-                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-muted/30 transition-colors"
+                  className="w-full flex items-center justify-between px-6 py-4 hover:bg-admin-surface-soft/30 transition-colors"
                 >
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-primary/8 flex items-center justify-center shrink-0">
-                      <Wrench size={14} className="text-primary" />
+                    <div className="w-7 h-7 rounded-lg bg-admin-accent/8 flex items-center justify-center shrink-0">
+                      <Wrench size={14} className="text-admin-accent" />
                     </div>
                     <div className="text-left">
-                      <p className="text-sm font-bold text-foreground">
+                      <p className="text-sm font-bold text-admin-text">
                         Detail Teknis Model
                       </p>
-                      <p className="text-xs text-muted-foreground mt-0.5">
+                      <p className="text-xs text-admin-text-3 mt-0.5">
                         Faktor dominan, konsistensi, aturan keputusan, dan info
                         model Decision Tree
                       </p>
@@ -527,7 +527,7 @@ export default function AnalitikSelector() {
                   >
                     <ChevronDown
                       size={16}
-                      className="text-muted-foreground shrink-0"
+                      className="text-admin-text-3 shrink-0"
                     />
                   </motion.div>
                 </motion.button>
@@ -542,7 +542,7 @@ export default function AnalitikSelector() {
                       exit="exit"
                       className="overflow-hidden"
                     >
-                      <div className="px-6 pb-6 pt-2 border-t border-border space-y-6">
+                      <div className="px-6 pb-6 pt-2 border-t border-admin-border space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4">
                           <FeatureImportanceChart
                             data={data.feature_importance}

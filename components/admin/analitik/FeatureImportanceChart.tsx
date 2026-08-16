@@ -27,12 +27,12 @@ function CustomTooltip({ active, payload }: {
   const item = payload[0].payload
 
   return (
-    <div className="bg-tertiary border border-border rounded-xl shadow-lg px-4 py-3 max-w-[260px]">
-      <p className="text-xs font-bold text-foreground mb-1">{item.fitur}</p>
-      <p className="text-[11px] font-semibold text-primary mb-1">
+    <div className="bg-admin-surface border border-admin-border rounded-xl shadow-lg px-4 py-3 max-w-[260px]">
+      <p className="text-xs font-bold text-admin-text mb-1">{item.fitur}</p>
+      <p className="text-[11px] font-semibold text-admin-accent mb-1">
         Kontribusi: {item.pct}%
       </p>
-      <p className="text-[11px] text-muted-foreground leading-relaxed">
+      <p className="text-[11px] text-admin-text-3 leading-relaxed">
         Fitur ini digunakan model sebagai salah satu penentu keputusan pewawancara.
         Semakin besar nilainya, semakin sering dipakai sebagai dasar penilaian.
       </p>
@@ -51,14 +51,14 @@ export default function FeatureImportanceChart({ data }: Props) {
 
   if (displayed.length === 0) {
     return (
-      <div className="bg-tertiary rounded-2xl border border-border shadow-sm p-6">
-        <h3 className="text-sm font-bold text-foreground uppercase tracking-wider mb-1">
+      <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm p-6">
+        <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider mb-1">
           Faktor Dominan Keputusan
         </h3>
-        <p className="text-xs text-muted-foreground mb-4">
+        <p className="text-xs text-admin-text-3 mb-4">
           Kontribusi tiap fitur terhadap hasil prediksi model
         </p>
-        <div className="flex items-center justify-center h-[200px] text-muted-foreground text-sm">
+        <div className="flex items-center justify-center h-[200px] text-admin-text-3 text-sm">
           Data tidak tersedia
         </div>
       </div>
@@ -69,18 +69,18 @@ export default function FeatureImportanceChart({ data }: Props) {
   const chartHeight = active.length * 40 + (showAll ? inactive.length * 28 : 0) + 40
 
   return (
-    <div className="bg-tertiary rounded-2xl border border-border shadow-sm p-6">
+    <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm p-6">
       <div className="flex items-start justify-between mb-1">
-        <h3 className="text-sm font-bold text-foreground uppercase tracking-wider">
+        <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider">
           Faktor Dominan Keputusan
         </h3>
         {inactive.length > 0 && (
-          <span className="text-[10px] font-medium text-muted-foreground bg-muted px-2 py-0.5 rounded-full shrink-0 ml-2">
+          <span className="text-[10px] font-medium text-admin-text-3 bg-admin-surface-soft px-2 py-0.5 rounded-full shrink-0 ml-2">
             {active.length} aktif · {inactive.length} tidak aktif
           </span>
         )}
       </div>
-      <p className="text-xs text-muted-foreground mb-5">
+      <p className="text-xs text-admin-text-3 mb-5">
         Kontribusi tiap fitur terhadap hasil prediksi model
       </p>
 
@@ -162,22 +162,22 @@ export default function FeatureImportanceChart({ data }: Props) {
       </ResponsiveContainer>
 
       {inactive.length > 0 && (
-        <div className="mt-4 pt-4 border-t border-border flex items-center justify-between gap-3 flex-wrap">
-          <div className="flex items-center gap-5 text-[11px] text-muted-foreground">
+        <div className="mt-4 pt-4 border-t border-admin-border flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-5 text-[11px] text-admin-text-3">
             <span className="flex items-center gap-2">
               <span className="w-3 h-3 rounded-sm inline-block" style={{ background: "var(--color-primary)" }} />
               Berkontribusi ({active.length})
             </span>
             {showAll && (
               <span className="flex items-center gap-2">
-                <span className="w-3 h-3 rounded-sm bg-muted border border-border inline-block" />
+                <span className="w-3 h-3 rounded-sm bg-admin-surface-soft border border-admin-border inline-block" />
                 Nilai seragam — tidak aktif ({inactive.length})
               </span>
             )}
           </div>
           <button
             onClick={() => setShowAll((v) => !v)}
-            className="flex items-center gap-1 text-xs font-semibold text-primary hover:underline shrink-0"
+            className="flex items-center gap-1 text-xs font-semibold text-admin-accent hover:underline shrink-0"
           >
             {showAll ? (
               <>Sembunyikan {inactive.length} fitur tidak aktif <ChevronUp size={13} /></>

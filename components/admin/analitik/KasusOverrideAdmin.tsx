@@ -42,7 +42,7 @@ function ExpandableText({ text, maxLength = 90, className = "" }: { text: string
       </span>
       <button
         onClick={() => setExpanded(!expanded)}
-        className="text-[10px] font-semibold text-primary bg-primary/5 hover:bg-primary/10 px-2 py-0.5 rounded transition-colors whitespace-nowrap"
+        className="text-[10px] font-semibold text-admin-accent bg-admin-accent/5 hover:bg-admin-accent/10 px-2 py-0.5 rounded transition-colors whitespace-nowrap"
       >
         {expanded ? "Ringkas" : "Selengkapnya"}
       </button>
@@ -97,21 +97,21 @@ export default function KasusOverrideAdmin({ data }: Props) {
   if (safeData.length === 0) return null;
 
   return (
-    <div className="bg-tertiary rounded-3xl border border-border shadow-sm overflow-hidden">
+    <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-border">
+      <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-admin-border">
         <div>
-          <h3 className="text-sm font-bold text-foreground">
+          <h3 className="font-admin-heading text-sm font-bold text-admin-text">
             Keputusan Berbeda antara Pewawancara dan Admin
           </h3>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-admin-text-3 mt-0.5">
             {safeData.length} kandidat dengan rekomendasi berbeda dari keputusan
             final
           </p>
         </div>
         <button
           onClick={handleExport}
-          className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground border border-border rounded-lg px-3 py-1.5 hover:text-foreground hover:border-foreground/20 transition-colors shrink-0"
+          className="flex items-center gap-1.5 text-xs font-semibold text-admin-text-3 border border-admin-border rounded-lg px-3 py-1.5 hover:text-admin-text hover:border-foreground/20 transition-colors shrink-0"
         >
           <Download size={12} />
           Export CSV
@@ -119,28 +119,28 @@ export default function KasusOverrideAdmin({ data }: Props) {
       </div>
 
       {/* Ringkasan sebagai satu bar proporsi */}
-      <div className="px-6 py-4 border-b border-border">
-        <div className="flex h-1.5 w-full rounded-full overflow-hidden bg-muted">
-          <div className="bg-destructive" style={{ width: `${pctTurun}%` }} />
+      <div className="px-6 py-4 border-b border-admin-border">
+        <div className="flex h-1.5 w-full rounded-full overflow-hidden bg-admin-surface-soft">
+          <div className="bg-admin-danger-text" style={{ width: `${pctTurun}%` }} />
           <div
-            className="bg-amber-500"
+            className="bg-admin-warn-bar"
             style={{ width: `${100 - pctTurun}%` }}
           />
         </div>
         <div className="flex items-center justify-between mt-2.5 text-xs">
           <div className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-destructive shrink-0" />
-            <span className="font-semibold text-foreground">
+            <span className="w-1.5 h-1.5 rounded-full bg-admin-danger-text shrink-0" />
+            <span className="font-semibold text-admin-text">
               {turun.length}
             </span>
-            <span className="text-muted-foreground">
+            <span className="text-admin-text-3">
               Layak menurut pewawancara, ditolak admin
             </span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-            <span className="font-semibold text-foreground">{naik.length}</span>
-            <span className="text-muted-foreground">
+            <span className="w-1.5 h-1.5 rounded-full bg-admin-warn-bar shrink-0" />
+            <span className="font-semibold text-admin-text">{naik.length}</span>
+            <span className="text-admin-text-3">
               Tidak layak menurut pewawancara, diterima admin
             </span>
           </div>
@@ -151,58 +151,58 @@ export default function KasusOverrideAdmin({ data }: Props) {
       <div className="overflow-x-auto">
         <table className="w-full text-sm text-left border-collapse">
           <thead>
-            <tr className="border-b border-border">
-              <th className="px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground w-10">
+            <tr className="border-b border-admin-border">
+              <th className="px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-admin-text-3 w-10">
                 #
               </th>
-              <th className="px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <th className="px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-admin-text-3">
                 Kandidat
               </th>
-              <th className="px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <th className="px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-admin-text-3">
                 Perubahan Keputusan
               </th>
-              <th className="px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground text-right">
+              <th className="px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-admin-text-3 text-right">
                 Per Kapita
               </th>
-              <th className="px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <th className="px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-admin-text-3">
                 Alasan Pewawancara
               </th>
-              <th className="px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <th className="px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-admin-text-3">
                 Catatan Admin
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
+          <tbody className="divide-y divide-admin-border">
             {visibleData.map((k, i) => {
               const akhirPositif = isPositif(k.hasil_akhir);
               return (
                 <tr
                   key={k.kandidat_id}
-                  className="hover:bg-muted/30 transition-colors"
+                  className="hover:bg-admin-surface-soft/30 transition-colors"
                 >
-                  <td className="px-5 py-3 font-mono text-xs text-muted-foreground align-top">
+                  <td className="px-5 py-3 font-mono text-xs text-admin-text-3 align-top">
                     {i + 1}
                   </td>
                   <td className="px-5 py-3 align-top min-w-[200px]">
-                    <p className="font-semibold text-foreground text-sm leading-tight">
+                    <p className="font-semibold text-admin-text text-sm leading-tight">
                       {k.nama}
                     </p>
-                    <p className="text-[11px] text-muted-foreground font-mono mt-0.5">
+                    <p className="text-[11px] text-admin-text-3 font-mono mt-0.5">
                       {k.no_pendaftaran_kipk}
                     </p>
                   </td>
                   <td className="px-5 py-3 align-top">
                     <div className="flex items-center gap-1.5 text-xs whitespace-nowrap">
-                      <span className="text-muted-foreground">
+                      <span className="text-admin-text-3">
                         {k.rekomendasi_pewawancara}
                       </span>
                       <ArrowRight
                         size={11}
-                        className="text-muted-foreground/50 shrink-0"
+                        className="text-admin-text-3/50 shrink-0"
                       />
                       <span
                         className={`font-semibold ${
-                          akhirPositif ? "text-emerald-700" : "text-destructive"
+                          akhirPositif ? "text-admin-accent-ink" : "text-admin-danger-text"
                         }`}
                       >
                         {k.hasil_akhir}
@@ -210,22 +210,22 @@ export default function KasusOverrideAdmin({ data }: Props) {
                     </div>
                   </td>
                   <td className="px-5 py-3 text-right align-top whitespace-nowrap">
-                    <span className="font-mono text-xs tabular-nums text-foreground">
+                    <span className="font-mono text-xs tabular-nums text-admin-text">
                       {formatRupiah(k.per_kapita)}
                     </span>
                   </td>
                   <td className="px-5 py-3 text-xs align-top min-w-[250px] w-[30%]">
                     {k.alasan_pewawancara ? (
-                      <ExpandableText text={k.alasan_pewawancara} className="text-muted-foreground" />
+                      <ExpandableText text={k.alasan_pewawancara} className="text-admin-text-3" />
                     ) : (
-                      <span className="text-muted-foreground/40">—</span>
+                      <span className="text-admin-text-3/40">—</span>
                     )}
                   </td>
                   <td className="px-5 py-3 text-xs align-top min-w-[200px] w-[25%]">
                     {k.catatan_admin ? (
-                      <ExpandableText text={k.catatan_admin} className="text-foreground" />
+                      <ExpandableText text={k.catatan_admin} className="text-admin-text" />
                     ) : (
-                      <span className="flex items-center gap-1 text-amber-600 whitespace-nowrap">
+                      <span className="flex items-center gap-1 text-admin-warn-text whitespace-nowrap">
                         <TriangleAlert size={11} className="shrink-0" />
                         Tanpa catatan
                       </span>
@@ -240,10 +240,10 @@ export default function KasusOverrideAdmin({ data }: Props) {
 
       {/* Tombol Tampilkan Lebih Banyak (Hanya muncul jika data melebihi PREVIEW_COUNT) */}
       {safeData.length > PREVIEW_COUNT && (
-        <div className="px-6 py-4 border-t border-border flex justify-center">
+        <div className="px-6 py-4 border-t border-admin-border flex justify-center">
           <button
             onClick={() => setShowAll((v) => !v)}
-            className="flex items-center gap-2 text-xs font-semibold text-muted-foreground bg-background border border-border rounded-lg px-5 py-2.5 hover:bg-muted/50 hover:text-foreground transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-border"
+            className="flex items-center gap-2 text-xs font-semibold text-admin-text-3 bg-admin-bg border border-admin-border rounded-lg px-5 py-2.5 hover:bg-admin-surface-soft/50 hover:text-admin-text transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-border"
           >
             {showAll ? (
               <>
@@ -261,8 +261,8 @@ export default function KasusOverrideAdmin({ data }: Props) {
       )}
 
       {/* Footer info */}
-      <div className="px-6 py-3 bg-muted/20 border-t border-border">
-        <p className="text-xs text-muted-foreground">
+      <div className="px-6 py-3 bg-admin-surface-soft/20 border-t border-admin-border">
+        <p className="text-xs text-admin-text-3">
           Perbedaan pandangan antara pewawancara lapangan dan admin — bukan
           indikasi kesalahan, admin bisa memiliki informasi tambahan yang tidak
           tercatat di sini.

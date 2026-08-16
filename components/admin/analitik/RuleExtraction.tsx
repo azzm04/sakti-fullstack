@@ -76,12 +76,12 @@ function confidenceLabel(pct: number): {
   if (pct >= 90)
     return {
       label: "Sangat Yakin",
-      color: "text-emerald-700",
-      bar: "bg-emerald-500",
+      color: "text-admin-accent-ink",
+      bar: "bg-admin-accent",
     };
   if (pct >= 75)
-    return { label: "Yakin", color: "text-amber-600", bar: "bg-amber-400" };
-  return { label: "Kurang Yakin", color: "text-red-600", bar: "bg-red-500" };
+    return { label: "Yakin", color: "text-admin-warn-text", bar: "bg-admin-warn-bar" };
+  return { label: "Kurang Yakin", color: "text-admin-danger-text", bar: "bg-admin-danger-bar" };
 }
 
 const PREVIEW_COUNT = 3;
@@ -101,24 +101,24 @@ export default function RuleExtraction({ rules }: Props) {
   const tidakVisible = showAllTidak ? tidak : tidak.slice(0, PREVIEW_COUNT);
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-xl border border-admin-border shadow-sm overflow-hidden">
       <button
         onClick={() => setExpanded((v) => !v)}
-        className="w-full flex items-center justify-between px-6 py-4 border-b border-slate-100 hover:bg-slate-50 transition-colors focus:outline-none"
+        className="w-full flex items-center justify-between px-6 py-4 border-b border-admin-border-soft hover:bg-admin-surface-soft transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-admin-accent/30"
       >
         <div className="text-left">
-          <h3 className="text-sm font-semibold text-slate-800">
+          <h3 className="font-admin-heading text-sm font-semibold text-admin-text">
             Pola Keputusan yang Ditemukan
           </h3>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-admin-text-4 mt-1">
             {safeRules.length} pola hasil analisis — makin banyak sampel &
             keyakinan, makin kuat pola ini
           </p>
         </div>
         {expanded ? (
-          <ChevronUp size={16} className="text-slate-400" />
+          <ChevronUp size={16} className="text-admin-text-5" />
         ) : (
-          <ChevronDown size={16} className="text-slate-400" />
+          <ChevronDown size={16} className="text-admin-text-5" />
         )}
       </button>
 
@@ -126,7 +126,7 @@ export default function RuleExtraction({ rules }: Props) {
         <div className="p-6 space-y-8">
           {diusulkan.length > 0 && (
             <div className="space-y-4">
-              <p className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider flex items-center gap-2">
+              <p className="text-[11px] font-bold text-admin-accent uppercase tracking-wider flex items-center gap-2">
                 <CheckCircle2 size={14} /> Cenderung Diusulkan (
                 {diusulkan.length} pola)
               </p>
@@ -138,7 +138,7 @@ export default function RuleExtraction({ rules }: Props) {
               {diusulkan.length > PREVIEW_COUNT && (
                 <button
                   onClick={() => setShowAllDiusulkan((v) => !v)}
-                  className="text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 hover:bg-slate-100 transition-colors"
+                  className="text-xs font-semibold text-admin-text-3 bg-admin-surface-soft border border-admin-border rounded-lg px-4 py-2 hover:bg-admin-border-soft transition-colors"
                 >
                   {showAllDiusulkan
                     ? "Sembunyikan"
@@ -150,7 +150,7 @@ export default function RuleExtraction({ rules }: Props) {
 
           {tidak.length > 0 && (
             <div className="space-y-4">
-              <p className="text-[11px] font-bold text-red-600 uppercase tracking-wider flex items-center gap-2">
+              <p className="text-[11px] font-bold text-admin-danger-text uppercase tracking-wider flex items-center gap-2">
                 <XCircle size={14} /> Cenderung Tidak Diusulkan ({tidak.length}{" "}
                 pola)
               </p>
@@ -162,7 +162,7 @@ export default function RuleExtraction({ rules }: Props) {
               {tidak.length > PREVIEW_COUNT && (
                 <button
                   onClick={() => setShowAllTidak((v) => !v)}
-                  className="text-xs font-semibold text-slate-600 bg-slate-50 border border-slate-200 rounded-lg px-4 py-2 hover:bg-slate-100 transition-colors"
+                  className="text-xs font-semibold text-admin-text-3 bg-admin-surface-soft border border-admin-border rounded-lg px-4 py-2 hover:bg-admin-border-soft transition-colors"
                 >
                   {showAllTidak
                     ? "Sembunyikan"
@@ -188,20 +188,16 @@ function RuleCard({
   const pct = Math.round(rule.confidence * 100);
   const { label, color, bar } = confidenceLabel(pct);
 
-  const borderColor = isDiusulkan ? "border-emerald-100" : "border-red-100";
-  const bgColor = isDiusulkan ? "bg-emerald-50/40" : "bg-red-50/40";
   const Icon = isDiusulkan ? CheckCircle2 : XCircle;
-  const iconColor = isDiusulkan ? "text-emerald-500" : "text-red-500";
+  const iconColor = isDiusulkan ? "text-admin-accent" : "text-admin-danger-bar";
 
   const conditions = parseKondisi(rule.kondisi);
 
   return (
-    <div
-      className={`${bgColor} border ${borderColor} rounded-xl p-5 shadow-sm`}
-    >
+    <div className="border border-admin-border rounded-xl p-5">
       <div className="flex items-start gap-2.5 mb-3">
         <Icon size={16} className={`${iconColor} mt-0.5 shrink-0`} />
-        <p className="text-sm font-semibold text-slate-800">
+        <p className="text-sm font-semibold text-admin-text">
           Jika semua kondisi berikut terpenuhi:
         </p>
       </div>
@@ -210,7 +206,7 @@ function RuleCard({
         {conditions.map((c, i) => (
           <li
             key={i}
-            className="text-sm text-slate-600 leading-relaxed relative before:content-['•'] before:absolute before:-left-4 before:text-slate-400"
+            className="text-sm text-admin-text-3 leading-relaxed relative before:content-['•'] before:absolute before:-left-4 before:text-admin-text-5"
           >
             {c.text}
           </li>
@@ -218,11 +214,11 @@ function RuleCard({
       </ul>
 
       <div className="flex items-center justify-between pl-7">
-        <span className="text-[11px] text-slate-400 font-medium">
+        <span className="text-[11px] text-admin-text-5 font-medium">
           Berdasarkan {rule.jumlah_sampel} data mahasiswa serupa
         </span>
         <div className="flex items-center gap-2.5">
-          <div className="w-16 h-1.5 bg-slate-200/80 rounded-full overflow-hidden">
+          <div className="w-16 h-1.5 bg-admin-border-soft rounded-full overflow-hidden">
             <div
               className={`h-full ${bar} rounded-full`}
               style={{ width: `${pct}%` }}

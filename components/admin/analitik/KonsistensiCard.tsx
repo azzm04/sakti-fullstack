@@ -23,11 +23,11 @@ export default function KonsistensiCard({ data, modelInfo }: Props) {
   const maxDepth = modelInfo?.best_params?.max_depth ?? modelInfo?.best_params?.["max_depth"]
 
   return (
-    <div className="bg-white rounded-2xl border border-border shadow-sm p-6">
-      <h3 className="text-sm font-bold text-foreground uppercase tracking-wider mb-1">
+    <div className="bg-white rounded-2xl border border-admin-border shadow-sm p-6">
+      <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider mb-1">
         Konsistensi Model
       </h3>
-      <p className="text-xs text-muted-foreground mb-5">
+      <p className="text-xs text-admin-text-3 mb-5">
         Seberapa konsisten pola keputusan pewawancara
       </p>
 
@@ -51,8 +51,8 @@ export default function KonsistensiCard({ data, modelInfo }: Props) {
             </RadialBarChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-3xl font-extrabold text-primary">{akurasi}%</span>
-            <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wide mt-0.5">
+            <span className="text-3xl font-extrabold text-admin-accent">{akurasi}%</span>
+            <span className="text-[10px] font-semibold text-admin-text-3 uppercase tracking-wide mt-0.5">
               Konsisten
             </span>
           </div>
@@ -61,26 +61,26 @@ export default function KonsistensiCard({ data, modelInfo }: Props) {
 
       {/* Ringkasan plain-language */}
       <div className="space-y-2.5 mb-5">
-        <div className="flex items-center gap-3 bg-emerald-50 border border-emerald-100 rounded-xl px-4 py-3">
-          <CheckCircle2 size={18} className="text-emerald-500 shrink-0" />
+        <div className="flex items-center gap-3 bg-admin-accent/10 border border-admin-accent/20 rounded-xl px-4 py-3">
+          <CheckCircle2 size={18} className="text-admin-accent shrink-0" />
           <div>
-            <p className="text-sm font-bold text-emerald-800">
+            <p className="text-sm font-bold text-admin-accent-ink">
               {konsisten} keputusan konsisten
             </p>
-            <p className="text-xs text-emerald-600">
+            <p className="text-xs text-admin-accent">
               Sesuai dengan pola umum dari {jumlahUji} kasus yang diuji
             </p>
           </div>
         </div>
 
         {tidakKonsisten > 0 && (
-          <div className="flex items-center gap-3 bg-amber-50 border border-amber-100 rounded-xl px-4 py-3">
-            <AlertTriangle size={18} className="text-amber-500 shrink-0" />
+          <div className="flex items-center gap-3 bg-admin-warn-bg-2 border border-admin-warn-border rounded-xl px-4 py-3">
+            <AlertTriangle size={18} className="text-admin-warn-bar shrink-0" />
             <div>
-              <p className="text-sm font-bold text-amber-800">
+              <p className="text-sm font-bold text-admin-warn-text">
                 {tidakKonsisten} keputusan perlu ditinjau
               </p>
-              <p className="text-xs text-amber-600">
+              <p className="text-xs text-admin-warn-text">
                 Berbeda dari pola umum — mungkin ada pertimbangan di luar data
               </p>
             </div>
@@ -91,7 +91,7 @@ export default function KonsistensiCard({ data, modelInfo }: Props) {
       {/* Toggle detail teknis */}
       <button
         onClick={() => setShowTeknis((v) => !v)}
-        className="w-full flex items-center justify-between text-xs font-semibold text-muted-foreground hover:text-foreground border border-border rounded-xl px-4 py-2.5 hover:bg-muted/40 transition-colors"
+        className="w-full flex items-center justify-between text-xs font-semibold text-admin-text-3 hover:text-admin-text border border-admin-border rounded-xl px-4 py-2.5 hover:bg-admin-surface-soft/40 transition-colors"
       >
         <span>Lihat Detail Teknis</span>
         {showTeknis ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -99,8 +99,8 @@ export default function KonsistensiCard({ data, modelInfo }: Props) {
 
       {/* Detail teknis — parameter model saja, tanpa metrik ML */}
       {showTeknis && (
-        <div className="mt-3 pt-3 border-t border-border">
-          <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-3">
+        <div className="mt-3 pt-3 border-t border-admin-border">
+          <p className="text-[11px] font-bold text-admin-text-3 uppercase tracking-wider mb-3">
             Parameter Model
           </p>
           <div className="space-y-1.5 text-xs">
@@ -125,8 +125,8 @@ export default function KonsistensiCard({ data, modelInfo }: Props) {
               },
             ].map(({ label, value }) => (
               <div key={label} className="flex items-center justify-between">
-                <span className="text-muted-foreground">{label}</span>
-                <span className="font-bold text-foreground text-right max-w-[60%]">{value}</span>
+                <span className="text-admin-text-3">{label}</span>
+                <span className="font-bold text-admin-text text-right max-w-[60%]">{value}</span>
               </div>
             ))}
           </div>

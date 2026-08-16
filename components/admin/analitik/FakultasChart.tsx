@@ -37,12 +37,8 @@ const VIEW_OPTIONS: ReadonlyArray<ViewOption> = [
   { id: "gender", label: "L / P" }
 ]
 
-// Palet warna untuk grafik total
-const TOTAL_COLORS = [
-  '#3b82f6', '#f43f5e', '#f59e0b', '#10b981', '#8b5cf6', 
-  '#f59e0b', '#14b8a6', '#64748b', '#06b6d4', '#d946ef', 
-  '#84cc16', '#6366f1', '#f43f5e', '#22c55e'
-]
+// Satu series (magnitude per fakultas) → satu hue konsisten, bukan rainbow per-bar.
+const TOTAL_BAR_COLOR = "var(--color-primary)"
 
 const GENDER_COLORS = {
   lakiLaki: "#60a5fa",
@@ -72,9 +68,9 @@ function CustomTooltip({ active, payload, label }: TooltipProps<number, string>)
       initial={{ opacity: 0, scale: 0.92, y: 4 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={springTransition}
-      className="rounded-xl border border-border/60 bg-tertiary/95 px-3.5 py-2.5 shadow-lg backdrop-blur-sm"
+      className="rounded-xl border border-admin-border/60 bg-admin-surface/95 px-3.5 py-2.5 shadow-lg backdrop-blur-sm"
     >
-      <p className="mb-1.5 text-[11px] font-semibold text-foreground">{label}</p>
+      <p className="mb-1.5 text-[11px] font-semibold text-admin-text">{label}</p>
       <div className="space-y-1">
         {payload.map((entry) => (
           <div key={entry.dataKey as string} className="flex items-center gap-2 text-[11px]">
@@ -82,8 +78,8 @@ function CustomTooltip({ active, payload, label }: TooltipProps<number, string>)
               className="h-2 w-2 shrink-0 rounded-full"
               style={{ backgroundColor: entry.color }}
             />
-            <span className="text-muted-foreground">{entry.name}</span>
-            <span className="ml-auto font-semibold tabular-nums text-foreground">
+            <span className="text-admin-text-3">{entry.name}</span>
+            <span className="ml-auto font-semibold tabular-nums text-admin-text">
               {entry.value}
             </span>
           </div>
@@ -110,16 +106,16 @@ export default function FakultasChart({ data, totalDiusulkan }: FakultasChartPro
       variants={cardVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-5 rounded-3xl border border-border bg-tertiary p-6 shadow-sm"
+      className="space-y-5 rounded-2xl border border-admin-border bg-admin-surface p-6 shadow-sm"
     >
       {/* Header & Toggle */}
-      <div className="flex flex-col gap-4 border-b border-border pb-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-4 border-b border-admin-border pb-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h3 className="text-base font-bold text-foreground">
+          <h3 className="font-admin-heading text-base font-bold text-admin-text">
             Jumlah Penerima per Fakultas
           </h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            <span className="font-semibold text-foreground tabular-nums">
+          <p className="mt-0.5 text-xs text-admin-text-3">
+            <span className="font-semibold text-admin-text tabular-nums">
               {totalDiusulkan}
             </span>{" "}
             total penerima (diusulkan KIP Kuliah)
@@ -127,7 +123,7 @@ export default function FakultasChart({ data, totalDiusulkan }: FakultasChartPro
         </div>
 
         {/* Segmented control */}
-        <div className="relative flex shrink-0 gap-1 rounded-full bg-background p-1 border border-border">
+        <div className="relative flex shrink-0 gap-1 rounded-full bg-admin-bg p-1 border border-admin-border">
           {VIEW_OPTIONS.map((option) => {
             const isActive = view === option.id
             return (
@@ -141,13 +137,13 @@ export default function FakultasChart({ data, totalDiusulkan }: FakultasChartPro
                 {isActive && (
                   <motion.span
                     layoutId={`${layoutId}-pill`}
-                    className="absolute inset-0 rounded-full bg-tertiary shadow-sm"
+                    className="absolute inset-0 rounded-full bg-admin-surface shadow-sm"
                     transition={springTransition}
                   />
                 )}
                 <span
                   className={`relative z-10 ${
-                    isActive ? "text-foreground" : "text-muted-foreground"
+                    isActive ? "text-admin-text" : "text-admin-text-3"
                   }`}
                 >
                   {option.label}
@@ -202,7 +198,7 @@ export default function FakultasChart({ data, totalDiusulkan }: FakultasChartPro
                 {data.map((entry, index) => (
                   <Cell
                     key={`total-${index}`}
-                    fill={TOTAL_COLORS[index % TOTAL_COLORS.length]}
+                    fill={TOTAL_BAR_COLOR}
                     opacity={activeIndex === null || activeIndex === index ? 1 : 0.4}
                     style={{ transition: "opacity 200ms ease-out" }}
                   />
@@ -310,7 +306,7 @@ function LegendDot({ color, label }: LegendDotProps) {
     <motion.div
       whileHover={{ scale: 1.05 }}
       transition={springTransition}
-      className="flex items-center gap-1.5 text-xs text-muted-foreground"
+      className="flex items-center gap-1.5 text-xs text-admin-text-3"
     >
       <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: color }} />
       {label}

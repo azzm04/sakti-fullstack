@@ -75,15 +75,15 @@ function kekuatanInfo(kasus: KasusAmbigu) {
   const labelLower = label.toLowerCase();
 
   if (labelLower.includes("sangat perlu ditinjau"))
-    return { color: "text-red-700 bg-red-50 border-red-200", label, skor };
+    return { color: "text-admin-danger-text bg-admin-danger-bg border-admin-danger-border", label, skor };
   if (labelLower.includes("perlu ditinjau"))
     return {
-      color: "text-amber-700 bg-amber-50 border-amber-200",
+      color: "text-admin-warn-text bg-admin-warn-bg-2 border-admin-warn-border",
       label,
       skor,
     };
   return {
-    color: "text-emerald-700 bg-emerald-50 border-emerald-200",
+    color: "text-admin-accent-ink bg-admin-accent/10 border-admin-accent/25",
     label,
     skor,
   };
@@ -139,23 +139,23 @@ export default function KasusAmbigu({ data }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
+    <div className="bg-white rounded-xl border border-admin-border shadow-sm overflow-hidden">
       {/* Header Section */}
-      <div className="flex items-start sm:items-center justify-between px-6 py-5 border-b border-slate-100 gap-4 flex-col sm:flex-row">
+      <div className="flex items-start sm:items-center justify-between px-6 py-5 border-b border-admin-border-soft gap-4 flex-col sm:flex-row">
         <div>
-          <h3 className="text-sm font-semibold text-slate-800 flex items-center gap-2">
-            <AlertTriangle size={16} className="text-amber-500" />
+          <h3 className="font-admin-heading text-sm font-semibold text-admin-text flex items-center gap-2">
+            <AlertTriangle size={16} className="text-admin-warn-bar" />
             Kasus yang Layak Ditinjau Ulang
           </h3>
-          <p className="text-xs text-slate-500 mt-1.5 flex items-start gap-1.5 max-w-2xl leading-relaxed">
-            <Info size={14} className="mt-0.5 shrink-0 text-slate-400" />
+          <p className="text-xs text-admin-text-4 mt-1.5 flex items-start gap-1.5 max-w-2xl leading-relaxed">
+            <Info size={14} className="mt-0.5 shrink-0 text-admin-text-5" />
             Pendaftar yang keputusan wawancaranya berbeda dari pola pendaftar
             serupa lainnya. Diurutkan dari yang paling mencurigakan.
           </p>
         </div>
         <button
           onClick={handleExport}
-          className="flex items-center gap-2 text-xs font-medium text-slate-700 bg-white border border-slate-300 rounded-lg px-4 py-2 hover:bg-slate-50 hover:text-slate-900 transition-all shadow-sm shrink-0 focus:outline-none focus:ring-2 focus:ring-slate-200"
+          className="flex items-center gap-2 text-xs font-medium text-admin-text-2 bg-white border border-admin-text-6 rounded-lg px-4 py-2 hover:bg-admin-surface-soft hover:text-admin-text transition-all shadow-sm shrink-0 focus:outline-none focus:ring-2 focus:ring-admin-border"
         >
           <Download size={14} />
           Export CSV
@@ -166,37 +166,37 @@ export default function KasusAmbigu({ data }: Props) {
       <div className="overflow-x-auto">
         <table className="w-full text-sm text-left min-w-190">
           <thead>
-            <tr className="bg-slate-50/50 border-b border-slate-100">
-              <th className="px-6 py-3.5 text-xs font-medium text-slate-500 uppercase tracking-wider w-16">
+            <tr className="bg-admin-surface-soft/50 border-b border-admin-border-soft">
+              <th className="px-6 py-3.5 text-xs font-medium text-admin-text-4 uppercase tracking-wider w-16">
                 #
               </th>
-              <th className="px-6 py-3.5 text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className="px-6 py-3.5 text-xs font-medium text-admin-text-4 uppercase tracking-wider">
                 Tingkat Kejanggalan
               </th>
-              <th className="px-6 py-3.5 text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className="px-6 py-3.5 text-xs font-medium text-admin-text-4 uppercase tracking-wider">
                 Keputusan Aktual
               </th>
-              <th className="px-6 py-3.5 text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className="px-6 py-3.5 text-xs font-medium text-admin-text-4 uppercase tracking-wider">
                 Aktif DTSEN
               </th>
-              <th className="px-6 py-3.5 text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className="px-6 py-3.5 text-xs font-medium text-admin-text-4 uppercase tracking-wider">
                 Desil DTSEN
               </th>
-              <th className="px-6 py-3.5 text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className="px-6 py-3.5 text-xs font-medium text-admin-text-4 uppercase tracking-wider">
                 Per Kapita
               </th>
-              <th className="px-6 py-3.5 text-xs font-medium text-slate-500 uppercase tracking-wider">
+              <th className="px-6 py-3.5 text-xs font-medium text-admin-text-4 uppercase tracking-wider">
                 Alasan Kejanggalan
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-admin-border-soft">
             {visibleData.length === 0 ? (
               <tr>
                 <td colSpan={7} className="px-6 py-12 text-center">
                   <div className="flex flex-col items-center justify-center space-y-2">
-                    <Info size={24} className="text-slate-300" />
-                    <p className="text-sm text-slate-500">
+                    <Info size={24} className="text-admin-text-6" />
+                    <p className="text-sm text-admin-text-4">
                       Tidak ada kasus yang perlu ditinjau ulang
                     </p>
                   </div>
@@ -209,9 +209,9 @@ export default function KasusAmbigu({ data }: Props) {
                 return (
                   <tr
                     key={k.index}
-                    className="hover:bg-slate-50/80 transition-colors align-middle group"
+                    className="hover:bg-admin-surface-soft/80 transition-colors align-middle group"
                   >
-                    <td className="px-6 py-4 font-mono text-xs text-slate-400 group-hover:text-slate-500">
+                    <td className="px-6 py-4 font-mono text-xs text-admin-text-5 group-hover:text-admin-text-4">
                       {k.index}
                     </td>
                     <td className="px-6 py-4">
@@ -225,23 +225,23 @@ export default function KasusAmbigu({ data }: Props) {
                       <span
                         className={`inline-flex text-xs font-medium px-2.5 py-1 rounded-md ${
                           k.keputusan_aktual === "Diusulkan"
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                            : "bg-red-50 text-red-700 border border-red-100"
+                            ? "bg-admin-accent/10 text-admin-accent-ink border border-admin-accent/20"
+                            : "bg-admin-danger-bg text-admin-danger-text border border-admin-danger-border"
                         }`}
                       >
                         {k.keputusan_aktual}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-700">
+                    <td className="px-6 py-4 text-sm text-admin-text-2">
                       {k.aktif_dtsen}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-700">
+                    <td className="px-6 py-4 text-sm text-admin-text-2">
                       {getP3KEDesil(k.desil_dtsen)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-700">
+                    <td className="px-6 py-4 text-sm text-admin-text-2">
                       {formatRupiah(k.nominal_per_kapita ?? null)}
                     </td>
-                    <td className="px-6 py-4 text-sm text-slate-600 max-w-90 whitespace-normal leading-relaxed">
+                    <td className="px-6 py-4 text-sm text-admin-text-3 max-w-90 whitespace-normal leading-relaxed">
                       {k.alasan_kejanggalan ?? "—"}
                     </td>
                   </tr>
@@ -254,20 +254,20 @@ export default function KasusAmbigu({ data }: Props) {
 
       {/* Tampilkan tombol hanya jika jumlah data lebih dari batas preview */}
       {sortedData.length > PREVIEW_COUNT && (
-        <div className="px-6 py-4 border-t border-slate-100 bg-slate-50/30 flex justify-center">
+        <div className="px-6 py-4 border-t border-admin-border-soft bg-admin-surface-soft/30 flex justify-center">
           <button
             onClick={() => setShowAll((v) => !v)}
-            className="flex items-center gap-2 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg px-5 py-2.5 hover:bg-slate-50 hover:text-slate-900 transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-slate-200"
+            className="flex items-center gap-2 text-xs font-semibold text-admin-text-3 bg-white border border-admin-border rounded-lg px-5 py-2.5 hover:bg-admin-surface-soft hover:text-admin-text transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-admin-border"
           >
             {showAll ? (
               <>
                 Sembunyikan
-                <ChevronUp size={14} className="text-slate-400" />
+                <ChevronUp size={14} className="text-admin-text-5" />
               </>
             ) : (
               <>
                 Lihat {hiddenCount} kasus lainnya
-                <ChevronDown size={14} className="text-slate-400" />
+                <ChevronDown size={14} className="text-admin-text-5" />
               </>
             )}
           </button>
