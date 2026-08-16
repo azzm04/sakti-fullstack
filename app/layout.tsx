@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Manrope, Montserrat } from "next/font/google";
+import { MotionConfig } from "framer-motion";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import LenisScroll from "@/components/layout/LenisScroll";
@@ -38,7 +39,7 @@ export default function RootLayout({
         suppressHydrationWarning
       >
         <LenisScroll />
-        {children}
+        <MotionConfig reducedMotion="user">{children}</MotionConfig>
         <Toaster richColors position="top-right" />
       </body>
     </html>

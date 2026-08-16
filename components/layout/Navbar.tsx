@@ -61,7 +61,7 @@ export default function Navbar() {
                 href={href}
                 scroll={false}
                 onClick={(event) => handleNavClick(event, href)}
-                className="text-blue-100 font-medium hover:text-white hover:border-b-2 hover:border-white py-1 transition-all border-b-2 border-transparent"
+                className="text-blue-100 font-medium hover:text-white hover:border-b-2 hover:border-white py-1 transition-colors duration-200 ease-out border-b-2 border-transparent"
               >
                 {label}
               </Link>
@@ -71,7 +71,7 @@ export default function Navbar() {
           {/* Right side */}
           <div className="flex items-center gap-3">
             <Link href="/login" className="hidden md:block">
-              <button className="bg-white text-primary px-6 lg:px-8 py-2.5 rounded-full font-bold text-sm shadow hover:bg-slate-100 hover:shadow-md active:scale-95 transition-all">
+              <button className="bg-white text-primary px-6 lg:px-8 py-2.5 rounded-full font-bold text-sm shadow hover:bg-slate-100 hover:shadow-md active:scale-95 transition-[transform,background-color,box-shadow] duration-200 ease-out">
                 Masuk
               </button>
             </Link>
@@ -146,7 +146,7 @@ export default function Navbar() {
               {/* CTA */}
               <div className="px-6 py-6 border-t border-slate-100">
                 <Link href="/login" className="block">
-                  <button className="w-full bg-primary text-white py-3 rounded-full font-bold text-sm shadow-md hover:bg-primary/90 active:scale-95 transition-all">
+                  <button className="w-full bg-primary text-white py-3 rounded-full font-bold text-sm shadow-md hover:bg-primary/90 active:scale-95 transition-[transform,background-color] duration-200 ease-out">
                     Masuk ke SAKTI
                   </button>
                 </Link>

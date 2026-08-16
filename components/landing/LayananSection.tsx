@@ -16,6 +16,9 @@ export default function LayananSection() {
         transition={{ duration: 0.6, ease: "easeOut" }}
         className="text-center mb-16"
       >
+        <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary text-[10px] sm:text-xs font-bold tracking-widest uppercase rounded-full mb-4">
+          Akses Cepat &amp; Transparan
+        </span>
         <h2 className="text-3xl font-bold text-primary mb-4">
           Layanan Terpadu SAKTI
         </h2>
@@ -46,9 +49,9 @@ export default function LayananSection() {
               transition: { duration: 0.6, ease: "easeOut" },
             },
           }}
-          className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 text-center hover:shadow-md hover:-translate-y-1 transition-all duration-300"
+          className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200/80 border-t-4 border-t-blue-500 text-center hover:shadow-lg hover:-translate-y-1 transition-[transform,box-shadow] duration-300 ease-out"
         >
-          <div className="w-16 h-16 bg-blue-50 text-blue-600 flex items-center justify-center rounded-2xl mx-auto mb-6">
+          <div className="w-16 h-16 bg-blue-50 text-blue-600 ring-4 ring-blue-50/60 flex items-center justify-center rounded-2xl mx-auto mb-6">
             <MessageSquare className="w-8 h-8" />
           </div>
           <h3 className="text-xl font-bold text-primary mb-3">
@@ -70,9 +73,9 @@ export default function LayananSection() {
               transition: { duration: 0.6, ease: "easeOut" },
             },
           }}
-          className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 text-center hover:shadow-md hover:-translate-y-1 transition-all duration-300"
+          className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200/80 border-t-4 border-t-indigo-500 text-center hover:shadow-lg hover:-translate-y-1 transition-[transform,box-shadow] duration-300 ease-out"
         >
-          <div className="w-16 h-16 bg-blue-50 text-blue-600 flex items-center justify-center rounded-2xl mx-auto mb-6">
+          <div className="w-16 h-16 bg-indigo-50 text-indigo-600 ring-4 ring-indigo-50/60 flex items-center justify-center rounded-2xl mx-auto mb-6">
             <FileCheck className="w-8 h-8" />
           </div>
           <h3 className="text-xl font-bold text-primary mb-3">
@@ -94,9 +97,9 @@ export default function LayananSection() {
               transition: { duration: 0.6, ease: "easeOut" },
             },
           }}
-          className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 text-center hover:shadow-md hover:-translate-y-1 transition-all duration-300"
+          className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200/80 border-t-4 border-t-emerald-500 text-center hover:shadow-lg hover:-translate-y-1 transition-[transform,box-shadow] duration-300 ease-out"
         >
-          <div className="w-16 h-16 bg-blue-50 text-blue-600 flex items-center justify-center rounded-2xl mx-auto mb-6">
+          <div className="w-16 h-16 bg-emerald-50 text-emerald-600 ring-4 ring-emerald-50/60 flex items-center justify-center rounded-2xl mx-auto mb-6">
             <ShieldCheck className="w-8 h-8" />
           </div>
           <h3 className="text-xl font-bold text-primary mb-3">

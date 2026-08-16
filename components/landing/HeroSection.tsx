@@ -11,24 +11,32 @@ export default function HeroSection() {
     // Menggunakan gsap.context agar pembersihan (cleanup) lebih aman
     const ctx = gsap.context(() => {
       const chars = titleRef.current?.querySelectorAll(".char");
+      const prefersReducedMotion = window.matchMedia(
+        "(prefers-reduced-motion: reduce)"
+      ).matches;
 
       if (chars && chars.length > 0) {
-        // Menggunakan fromTo lebih stabil di React Strict Mode & Next.js Navigation
-        gsap.fromTo(
-          chars,
-          { 
-            x: 100, // Mulai dari geser kanan 100px
-            opacity: 0, // Transparan
-          },
-          {
-            x: 0, // Berakhir di posisi asli
-            opacity: 1, // Muncul penuh
-            duration: 0.8,
-            ease: "power3.out",
-            stagger: 0.03, // Jeda per huruf sedikit dipercepat agar lebih mulus
-            delay: 0.1, // Beri sedikit jeda saat halaman baru dimuat
-          }
-        );
+        if (prefersReducedMotion) {
+          // Langsung tampilkan tanpa animasi untuk pengguna reduced-motion
+          gsap.set(chars, { x: 0, opacity: 1 });
+        } else {
+          // Menggunakan fromTo lebih stabil di React Strict Mode & Next.js Navigation
+          gsap.fromTo(
+            chars,
+            {
+              x: 100, // Mulai dari geser kanan 100px
+              opacity: 0, // Transparan
+            },
+            {
+              x: 0, // Berakhir di posisi asli
+              opacity: 1, // Muncul penuh
+              duration: 0.8,
+              ease: "power3.out",
+              stagger: 0.03, // Jeda per huruf sedikit dipercepat agar lebih mulus
+              delay: 0.1, // Beri sedikit jeda saat halaman baru dimuat
+            }
+          );
+        }
       }
     }, titleRef); // Scope context ke titleRef
 
@@ -66,6 +74,10 @@ export default function HeroSection() {
       />
 
       <div className="relative z-10 w-full max-w-5xl mx-auto flex flex-col items-center px-4 sm:px-6">
+        <span className="inline-block px-4 py-1.5 bg-white/15 text-white text-[10px] sm:text-xs font-bold tracking-widest uppercase rounded-full mb-6 backdrop-blur-sm border border-white/20">
+          Universitas Diponegoro
+        </span>
+
         <h1
           ref={titleRef}
           className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight mb-6 leading-tight"
@@ -85,7 +97,7 @@ export default function HeroSection() {
         </p>
 
         <Link href="/login">
-          <button className="bg-white text-primary px-6 sm:px-8 py-3.5 rounded-full font-bold text-base shadow-lg hover:bg-slate-100 hover:scale-105 transition-all">
+          <button className="bg-white text-primary px-6 sm:px-8 py-3.5 rounded-full font-bold text-base shadow-lg hover:bg-slate-100 hover:scale-105 active:scale-95 transition-[transform,background-color] duration-200 ease-out">
             Masuk ke SAKTI
           </button>
         </Link>

@@ -6,6 +6,9 @@ export default function PanduanSection() {
     >
       <div className="max-w-7xl mx-auto">
         <div className="text-center mb-12">
+          <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary text-[10px] sm:text-xs font-bold tracking-widest uppercase rounded-full mb-4">
+            Panduan Resmi Kementerian
+          </span>
           <h2 className="text-3xl sm:text-4xl font-bold text-primary mb-4">
             Tutorial dan Informasi
           </h2>

@@ -35,7 +35,7 @@ export default function PengaduanSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="text-3xl sm:text-4xl md:text-5xl font-brolimo text-white leading-tight mb-4 sm:mb-6"
+              className="text-3xl sm:text-4xl md:text-5xl font-headline text-white leading-tight mb-4 sm:mb-6"
             >
               Layanan Pengaduan KIP-K
             </motion.h2>
@@ -64,7 +64,7 @@ export default function PengaduanSection() {
                 href="https://forms.gle/LINK_GFORM_ANDA"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center w-full sm:w-auto px-8 py-3.5 sm:py-4 bg-white text-primary font-bold rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all active:scale-95"
+                className="inline-flex items-center justify-center w-full sm:w-auto px-8 py-3.5 sm:py-4 bg-white text-primary font-bold rounded-full shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-[transform,box-shadow] duration-200 ease-out active:scale-95"
               >
                 Buka Form Pelaporan
                 <ExternalLink className="w-5 h-5 ml-2 shrink-0" />
