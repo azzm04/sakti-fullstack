@@ -62,14 +62,14 @@ export default function BuatSesiModal({
         <>
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 text-sm font-semibold border border-slate-200 rounded-xl hover:bg-slate-50 transition-all"
+            className="flex-1 py-2.5 text-sm font-semibold border border-admin-border rounded-xl hover:bg-admin-surface-soft transition-all"
           >
             Batal
           </button>
           <button
             onClick={onSubmit}
             disabled={saving || !form.tanggal_mulai || !form.tanggal_selesai || !kandidatCount}
-            className="flex-1 py-2.5 text-sm font-semibold bg-primary text-white rounded-xl hover:bg-primary/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+            className="flex-1 py-2.5 text-sm font-semibold bg-admin-accent text-white rounded-xl hover:bg-admin-accent/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
           >
             {saving && <Loader2 size={14} className="animate-spin" />}
             Buat Sesi
@@ -79,8 +79,8 @@ export default function BuatSesiModal({
     >
       {/* Jalur Masuk */}
       <div>
-        <label className="block text-xs font-semibold text-slate-500 mb-1.5">
-          Jalur Masuk <span className="text-red-500">*</span>
+        <label className="block text-xs font-semibold text-admin-text-4 mb-1.5">
+          Jalur Masuk <span className="text-admin-danger-bar">*</span>
         </label>
         <select
           value={form.jalur_masuk}
@@ -89,7 +89,7 @@ export default function BuatSesiModal({
             onChange({ ...form, jalur_masuk: e.target.value });
             onJalurChange(e.target.value);
           }}
-          className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-primary bg-slate-50"
+          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
         >
           <option value="SNBT ELIGIBLE">SNBT (Eligible)</option>
           <option value="SNBT NON ELIGIBLE">SNBT (Non-Eligible)</option>
@@ -98,14 +98,14 @@ export default function BuatSesiModal({
           <option value="UM">UM (Ujian Mandiri)</option>
         </select>
         {kandidatCount !== null && (
-          <p className="text-[11px] text-slate-500 mt-1 flex items-center gap-1">
+          <p className="text-[11px] text-admin-text-4 mt-1 flex items-center gap-1">
             <Users size={11} />
             {loadingCount ? (
               "Menghitung..."
             ) : (
               <>
-                Total kandidat <b className="text-primary">{form.jalur_masuk}</b>:{" "}
-                <b className="text-slate-800">{kandidatCount}</b> mahasiswa
+                Total kandidat <b className="text-admin-accent">{form.jalur_masuk}</b>:{" "}
+                <b className="text-admin-text">{kandidatCount}</b> mahasiswa
               </>
             )}
           </p>
@@ -115,20 +115,20 @@ export default function BuatSesiModal({
       {/* Rentang Tanggal */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1.5">
-            Tanggal Mulai <span className="text-red-500">*</span>
+          <label className="block text-xs font-semibold text-admin-text-4 mb-1.5">
+            Tanggal Mulai <span className="text-admin-danger-bar">*</span>
           </label>
           <input
             type="date"
             value={form.tanggal_mulai}
             title="Tanggal mulai"
             onChange={(e) => onChange({ ...form, tanggal_mulai: e.target.value })}
-            className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-primary bg-slate-50"
+            className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
           />
         </div>
         <div>
-          <label className="block text-xs font-semibold text-slate-500 mb-1.5">
-            Tanggal Selesai <span className="text-red-500">*</span>
+          <label className="block text-xs font-semibold text-admin-text-4 mb-1.5">
+            Tanggal Selesai <span className="text-admin-danger-bar">*</span>
           </label>
           <input
             type="date"
@@ -136,15 +136,15 @@ export default function BuatSesiModal({
             value={form.tanggal_selesai}
             min={form.tanggal_mulai || undefined}
             onChange={(e) => onChange({ ...form, tanggal_selesai: e.target.value })}
-            className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-primary bg-slate-50"
+            className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
           />
         </div>
       </div>
 
       {/* Preview distribusi */}
       {showPreview && (
-        <div className="px-3 py-2.5 bg-primary/5 border border-primary/10 rounded-xl">
-          <p className="text-[11px] font-semibold text-primary mb-1.5">
+        <div className="px-3 py-2.5 bg-admin-accent/5 border border-admin-accent/10 rounded-xl">
+          <p className="text-[11px] font-semibold text-admin-accent mb-1.5">
             Distribusi Otomatis ({jumlahHari} hari)
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -155,15 +155,15 @@ export default function BuatSesiModal({
               return (
                 <span
                   key={i}
-                  className="text-[10px] font-bold px-2 py-1 bg-white border border-primary/20 rounded-lg text-slate-700"
+                  className="text-[10px] font-bold px-2 py-1 bg-white border border-admin-accent/20 rounded-lg text-admin-text-2"
                 >
                   {d.toLocaleDateString("id-ID", { day: "numeric", month: "short" })}:{" "}
-                  <span className="text-primary">{kuota}</span>
+                  <span className="text-admin-accent">{kuota}</span>
                 </span>
               );
             })}
           </div>
-          <p className="text-[10px] text-slate-500 mt-1.5">
+          <p className="text-[10px] text-admin-text-4 mt-1.5">
             Total: {kandidatCount} mahasiswa (maks tidak melebihi jumlah kandidat)
           </p>
         </div>
@@ -171,7 +171,7 @@ export default function BuatSesiModal({
 
       {/* Kuota Pewawancara */}
       <div>
-        <label className="block text-xs font-semibold text-slate-500 mb-1.5">
+        <label className="block text-xs font-semibold text-admin-text-4 mb-1.5">
           Kuota Pewawancara / hari
         </label>
         <input
@@ -181,11 +181,11 @@ export default function BuatSesiModal({
           value={form.kuota_pewawancara}
           title="Kuota pewawancara"
           onChange={(e) => onChange({ ...form, kuota_pewawancara: e.target.value })}
-          className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-primary bg-slate-50"
+          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
         />
         {perPewawancara !== null && (
-          <p className="text-[11px] text-slate-400 mt-1">
-            Tiap pewawancara ≈ <b className="text-slate-700">{perPewawancara}</b> mahasiswa/hari
+          <p className="text-[11px] text-admin-text-5 mt-1">
+            Tiap pewawancara ≈ <b className="text-admin-text-2">{perPewawancara}</b> mahasiswa/hari
           </p>
         )}
       </div>

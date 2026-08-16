@@ -29,23 +29,23 @@ const VARIANT_CONFIG: Record<
 > = {
   danger: {
     icon: Trash2,
-    iconBg: "bg-red-100",
-    iconColor: "text-red-600",
-    btnClass: "bg-red-500 hover:bg-red-600",
+    iconBg: "bg-admin-danger-border",
+    iconColor: "text-admin-danger-text",
+    btnClass: "bg-admin-danger-bar hover:bg-admin-danger-text",
     defaultLabel: "Hapus",
   },
   warning: {
     icon: Zap,
-    iconBg: "bg-amber-100",
-    iconColor: "text-amber-600",
-    btnClass: "bg-amber-500 hover:bg-amber-600",
+    iconBg: "bg-admin-warn-border",
+    iconColor: "text-admin-warn-text",
+    btnClass: "bg-admin-warn-bar hover:bg-admin-warn-text",
     defaultLabel: "Ya, Lanjutkan",
   },
   info: {
     icon: Play,
-    iconBg: "bg-blue-100",
-    iconColor: "text-blue-600",
-    btnClass: "bg-primary hover:bg-primary/90",
+    iconBg: "bg-admin-accent/20",
+    iconColor: "text-admin-accent",
+    btnClass: "bg-admin-accent hover:bg-admin-accent/90",
     defaultLabel: "Lanjutkan",
   },
 };
@@ -80,7 +80,7 @@ export default function ConfirmModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: "spring", duration: 0.3, bounce: 0.2 }}
-            className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 border border-slate-100"
+            className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 border border-admin-border-soft"
           >
             <div className="flex justify-center mb-4">
               <div
@@ -91,15 +91,15 @@ export default function ConfirmModal({
             </div>
 
             <div className="text-center mb-6">
-              <h3 className="text-lg font-bold text-slate-900 mb-2">{title}</h3>
-              <p className="text-sm text-slate-500 leading-relaxed">{description}</p>
+              <h3 className="font-admin-heading text-lg font-bold text-admin-text mb-2">{title}</h3>
+              <p className="text-sm text-admin-text-4 leading-relaxed">{description}</p>
             </div>
 
             <div className="flex gap-3">
               <button
                 onClick={onCancel}
                 disabled={loading}
-                className="flex-1 py-2.5 text-sm font-semibold border border-slate-200 rounded-xl hover:bg-slate-50 text-slate-700 transition-all disabled:opacity-50"
+                className="flex-1 py-2.5 text-sm font-semibold border border-admin-border rounded-xl hover:bg-admin-surface-soft text-admin-text-2 transition-all disabled:opacity-50"
               >
                 {cancelLabel}
               </button>

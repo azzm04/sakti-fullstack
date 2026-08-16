@@ -46,14 +46,14 @@ export default function EditKuotaModal({
         <>
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 text-sm font-semibold border border-slate-200 rounded-xl hover:bg-slate-50 transition-all"
+            className="flex-1 py-2.5 text-sm font-semibold border border-admin-border rounded-xl hover:bg-admin-surface-soft transition-all"
           >
             Batal
           </button>
           <button
             onClick={onSubmit}
             disabled={disabled}
-            className="flex-1 py-2.5 text-sm font-semibold bg-primary text-white rounded-xl hover:bg-primary/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+            className="flex-1 py-2.5 text-sm font-semibold bg-admin-accent text-white rounded-xl hover:bg-admin-accent/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
           >
             {saving && <Loader2 size={14} className="animate-spin" />}
             Simpan
@@ -62,8 +62,8 @@ export default function EditKuotaModal({
       }
     >
       {minKuotaPewawancara > 0 && (
-        <div className="px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl">
-          <p className="text-[11px] text-amber-700 font-medium flex items-center gap-1.5">
+        <div className="px-3 py-2 bg-admin-warn-bg-2 border border-admin-warn-border rounded-xl">
+          <p className="text-[11px] text-admin-warn-text font-medium flex items-center gap-1.5">
             <AlertTriangle size={12} />
             {minKuotaPewawancara} pewawancara sudah klaim kuota. Kuota pewawancara tidak boleh
             kurang dari {minKuotaPewawancara}.
@@ -72,7 +72,7 @@ export default function EditKuotaModal({
       )}
 
       <div>
-        <label className="block text-xs font-semibold text-slate-500 mb-1.5">
+        <label className="block text-xs font-semibold text-admin-text-4 mb-1.5">
           Kuota Pewawancara
         </label>
         <input
@@ -82,11 +82,11 @@ export default function EditKuotaModal({
           value={form.kuota_pewawancara}
           title="kuota pewawancara"
           onChange={(e) => onChange({ ...form, kuota_pewawancara: e.target.value })}
-          className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-primary bg-slate-50"
+          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
         />
       </div>
       <div>
-        <label className="block text-xs font-semibold text-slate-500 mb-1.5">
+        <label className="block text-xs font-semibold text-admin-text-4 mb-1.5">
           Kuota Mahasiswa
         </label>
         <input
@@ -95,9 +95,9 @@ export default function EditKuotaModal({
           value={form.kuota_mahasiswa}
           title="kuota mahasiswa"
           onChange={(e) => onChange({ ...form, kuota_mahasiswa: e.target.value })}
-          className="w-full px-3 py-2.5 text-sm border border-slate-200 rounded-xl focus:outline-none focus:border-primary bg-slate-50"
+          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
         />
-        <p className="text-[11px] text-slate-400 mt-1">
+        <p className="text-[11px] text-admin-text-5 mt-1">
           Tiap pewawancara akan mewawancarai ±
           {Math.ceil(
             parseInt(form.kuota_mahasiswa || "1") / parseInt(form.kuota_pewawancara || "1"),

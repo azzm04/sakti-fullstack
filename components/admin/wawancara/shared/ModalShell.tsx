@@ -36,21 +36,21 @@ export default function ModalShell({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className={`bg-white rounded-2xl border border-slate-100 shadow-xl p-6 w-full mx-4 ${
+            className={`bg-white rounded-2xl border border-admin-border-soft shadow-xl p-6 w-full mx-4 ${
               maxWidth === "md" ? "max-w-md" : "max-w-sm"
             }`}
           >
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h3 className="font-bold text-slate-800">{title}</h3>
-                {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
+                <h3 className="font-admin-heading font-bold text-admin-text">{title}</h3>
+                {subtitle && <p className="text-xs text-admin-text-5 mt-0.5">{subtitle}</p>}
               </div>
               <button
                 onClick={onClose}
-                className="p-1.5 rounded-lg hover:bg-slate-100"
+                className="p-1.5 rounded-lg hover:bg-admin-border-soft"
                 title="Tutup"
               >
-                <X size={16} className="text-slate-400" />
+                <X size={16} className="text-admin-text-5" />
               </button>
             </div>
 

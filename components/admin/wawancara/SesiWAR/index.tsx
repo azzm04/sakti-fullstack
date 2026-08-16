@@ -324,19 +324,19 @@ export default function SesiWAR() {
       <SesiOverview onSelectTanggal={setTanggal} activeTanggal={tanggal} />
 
       <div className="flex items-center gap-3 mb-6">
-        <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-sm">
-          <CalendarDays size={15} className="text-slate-400" />
+        <div className="flex items-center gap-2 bg-white border border-admin-border rounded-xl px-3 py-2 shadow-sm">
+          <CalendarDays size={15} className="text-admin-text-5" />
           <input
             type="date"
             value={tanggal}
             onChange={(e) => setTanggal(e.target.value)}
-            className="text-sm font-semibold text-slate-700 bg-transparent focus:outline-none"
+            className="text-sm font-semibold text-admin-text-2 bg-transparent rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-admin-accent/30"
             title="pilih tanggal"
           />
         </div>
         <button
           onClick={fetchSesi}
-          className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-slate-200 text-slate-400 hover:text-primary hover:border-primary transition-colors shadow-sm"
+          className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-admin-border text-admin-text-5 hover:text-admin-accent hover:border-admin-accent transition-colors shadow-sm"
           title="Muat ulang"
         >
           <RefreshCw size={14} />
@@ -346,13 +346,14 @@ export default function SesiWAR() {
       <AnimatePresence>
         {msg && (
           <motion.div
+            role={msg.type === "err" ? "alert" : "status"}
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0 }}
             className={`mb-4 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 ${
               msg.type === "ok"
-                ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                : "bg-red-50 text-red-600 border border-red-200"
+                ? "bg-admin-accent/10 text-admin-accent-ink border border-admin-accent/25"
+                : "bg-admin-danger-bg text-admin-danger-text border border-admin-danger-border"
             }`}
           >
             {msg.type === "ok" ? <CheckCircle2 size={15} /> : <AlertTriangle size={15} />}
@@ -364,17 +365,17 @@ export default function SesiWAR() {
       {loading ? (
         <LoadingState />
       ) : !sesi ? (
-        <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-10 text-center">
-          <CalendarDays size={36} className="text-slate-200 mx-auto mb-3" />
-          <p className="text-sm font-semibold text-slate-600 mb-1">
+        <div className="bg-white rounded-2xl border border-admin-border-soft shadow-sm p-10 text-center">
+          <CalendarDays size={36} className="text-admin-border mx-auto mb-3" />
+          <p className="text-sm font-semibold text-admin-text-3 mb-1">
             Belum ada sesi untuk tanggal ini
           </p>
-          <p className="text-xs text-slate-400 mb-5">
+          <p className="text-xs text-admin-text-5 mb-5">
             Buat sesi terlebih dahulu sebelum membuka pemilihan urutan pewawancara
           </p>
           <button
             onClick={openBuatSesi}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center gap-2 px-5 py-2.5 bg-admin-accent text-white text-sm font-semibold rounded-xl hover:bg-admin-accent/90 transition-colors"
           >
             <Plus size={15} /> Buat Sesi
           </button>

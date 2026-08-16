@@ -12,17 +12,17 @@ export default function KuotaProgress({ sesi, kuotaList }: KuotaProgressProps) {
   const kuotaPenuh = kuotaList.length >= sesi.kuota_pewawancara;
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+    <div className="bg-white rounded-2xl border border-admin-border-soft shadow-sm p-5">
       <div className="flex items-center justify-between mb-3">
-        <h3 className="font-bold text-slate-800 text-sm">Kuota Pewawancara</h3>
-        <span className="text-xs font-bold text-primary">
+        <h3 className="font-admin-heading font-bold text-admin-text text-sm">Kuota Pewawancara</h3>
+        <span className="text-xs font-bold text-admin-accent">
           {kuotaList.length} / {sesi.kuota_pewawancara} terisi
         </span>
       </div>
 
-      <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden mb-4">
+      <div className="w-full h-2 bg-admin-border-soft rounded-full overflow-hidden mb-4">
         <motion.div
-          className={`h-full rounded-full ${kuotaPenuh ? "bg-emerald-500" : "bg-primary"}`}
+          className={`h-full rounded-full ${kuotaPenuh ? "bg-admin-accent" : "bg-admin-accent"}`}
           initial={{ width: 0 }}
           animate={{ width: `${(kuotaList.length / sesi.kuota_pewawancara) * 100}%` }}
           transition={{ duration: 0.5 }}
@@ -43,7 +43,7 @@ export default function KuotaProgress({ sesi, kuotaList }: KuotaProgressProps) {
                   : `Kuota ${i + 1} — kosong`
               }
               className={`aspect-square rounded-xl flex flex-col items-center justify-center text-xs font-bold transition-all cursor-default ${
-                kuotaItem ? "bg-primary text-white shadow-sm" : "bg-slate-100 text-slate-300"
+                kuotaItem ? "bg-admin-accent text-white shadow-sm" : "bg-admin-border-soft text-admin-text-6"
               }`}
             >
               <span>{i + 1}</span>

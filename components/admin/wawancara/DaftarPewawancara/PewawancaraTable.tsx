@@ -24,8 +24,8 @@ export default function PewawancaraTable({
   if (data.length === 0) {
     return (
       <div className="py-16 text-center">
-        <UserCheck size={32} className="text-slate-200 mx-auto mb-3" />
-        <p className="text-sm text-slate-400">Belum ada pewawancara terdaftar</p>
+        <UserCheck size={32} className="text-admin-border mx-auto mb-3" />
+        <p className="text-sm text-admin-text-5">Belum ada pewawancara terdaftar</p>
       </div>
     );
   }
@@ -33,25 +33,25 @@ export default function PewawancaraTable({
   return (
     <table className="w-full text-sm">
       <thead>
-        <tr className="bg-slate-50 border-b border-slate-100">
+        <tr className="bg-admin-surface-soft border-b border-admin-border-soft">
           {["Nama", "Email", "Status", "Aksi"].map((h) => (
             <th
               key={h}
-              className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-slate-400"
+              className="px-4 py-3 text-left text-[10px] font-bold uppercase tracking-wider text-admin-text-5"
             >
               {h}
             </th>
           ))}
         </tr>
       </thead>
-      <tbody className="divide-y divide-slate-50">
+      <tbody className="divide-y divide-admin-surface-soft">
         {data.map((p) => (
-          <tr key={p.id} className="hover:bg-slate-50/60 transition-colors">
+          <tr key={p.id} className="hover:bg-admin-surface-soft/60 transition-colors">
             <td className="px-4 py-3">
-              <p className="font-semibold text-slate-800">{p.nama ?? "—"}</p>
+              <p className="font-semibold text-admin-text">{p.nama ?? "—"}</p>
             </td>
             <td className="px-4 py-3">
-              <p className="text-[11px] font-semibold text-slate-800">
+              <p className="text-[11px] font-semibold text-admin-text">
                 {p.users?.email_sso ?? "—"}
               </p>
             </td>
@@ -60,8 +60,8 @@ export default function PewawancaraTable({
                 onClick={() => onToggleActive(p)}
                 className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border transition-colors ${
                   p.users?.status_akun === "AKTIF"
-                    ? "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100"
-                    : "bg-slate-50 text-slate-400 border-slate-200 hover:bg-slate-100"
+                    ? "bg-admin-accent/10 text-admin-accent-ink border-admin-accent/25 hover:bg-admin-accent/20"
+                    : "bg-admin-surface-soft text-admin-text-5 border-admin-border hover:bg-admin-border-soft"
                 }`}
               >
                 {p.users?.status_akun === "AKTIF" ? (
@@ -77,14 +77,14 @@ export default function PewawancaraTable({
               <div className="flex items-center gap-1">
                 <button
                   onClick={() => onEdit(p)}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-primary transition-colors"
+                  className="w-7 h-7 flex items-center justify-center rounded-lg text-admin-text-5 hover:bg-admin-border-soft hover:text-admin-accent transition-colors"
                   title="Edit"
                 >
                   <Pencil size={13} />
                 </button>
                 <button
                   onClick={() => onDelete(p)}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:bg-red-50 hover:text-red-500 transition-colors"
+                  className="w-7 h-7 flex items-center justify-center rounded-lg text-admin-text-5 hover:bg-admin-danger-bg hover:text-admin-danger-bar transition-colors"
                   title="Hapus"
                 >
                   <Trash2 size={13} />
