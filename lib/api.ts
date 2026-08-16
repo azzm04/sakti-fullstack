@@ -239,30 +239,6 @@ export const warAPI = {
   },
 };
 
-// ── Kalkulasi SMART-TOPSIS API (Next.js routes) ───────────────────────────────
-export const kalkulasiAPI = {
-  // POST /api/admin/kalkulasi/topsis — proxy ke FastAPI SMART-TOPSIS
-  // apiUrl: URL endpoint FastAPI, kuota: { SNBP, SNBT, UM }
-  runTopsis: async (apiUrl: string, kuota: { SNBP: number; SNBT: number; UM: number }) => {
-    const res = await fetch("/api/admin/kalkulasi/topsis", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ apiUrl, kuota }),
-    });
-    return res.json();
-  },
-
-  // POST /api/admin/kalkulasi/simpan — simpan hasil ranking ke DB
-  simpan: async (hasil: object[]) => {
-    const res = await fetch("/api/admin/kalkulasi/simpan", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ hasil }),
-    });
-    return res.json();
-  },
-};
-
 // ── Mahasiswa (pewawancara) API (Next.js routes) ───────────────────────────────
 export const mahasiswaAPI = {
   // GET /api/pewawancara/mahasiswa?mode=saya|hari_ini|semua&search=&page=

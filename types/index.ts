@@ -6,7 +6,5 @@ export type {
   ChatMessage,
   Conversation,
   TelegramStatus,
-  Candidate,
-  RankingResult,
   User,
 } from "@/schemas";
