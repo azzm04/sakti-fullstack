@@ -45,6 +45,61 @@
   --radius-md: calc(0.5rem - 2px);
   --radius-sm: calc(0.5rem - 4px);
 
+  /* =======================================================
+     SAKTI ADMIN DESIGN SYSTEM — scoped to /admin only.
+     Prefixed (admin-*) so it never collides with the shadcn
+     --color-accent / --color-border tokens above, which the
+     rest of the app (landing, auth) still relies on.
+     ======================================================= */
+  --font-admin-heading: var(--font-admin-heading), Georgia, serif;
+  --font-admin-body: var(--font-admin-body), system-ui, sans-serif;
+  --font-admin-mono: var(--font-admin-mono), ui-monospace, monospace;
+
+  --color-admin-bg: #EFF2F6;
+  --color-admin-surface: #FFFFFF;
+  --color-admin-surface-soft: #F7F9FC;
+  --color-admin-surface-soft-2: #F0F3F7;
+  --color-admin-border: #DDE3EB;
+  --color-admin-border-soft: #EDF1F5;
+  --color-admin-grid: #E6EBF1;
+
+  --color-admin-text: #1B2430;
+  --color-admin-text-2: #4A5768;
+  --color-admin-text-3: #6B7787;
+  --color-admin-text-4: #7B8798;
+  --color-admin-placeholder: #8C97A6;
+  --color-admin-text-5: #A6B0BD;
+  --color-admin-text-6: #C3CCD8;
+
+  --color-admin-accent: #1F4E87;
+  --color-admin-accent-hover: #1A4576;
+  --color-admin-accent-active: #10305A;
+  --color-admin-accent-ink: #163A66;
+
+  --color-admin-warn-bg: #FDF8EC;
+  --color-admin-warn-bg-2: #FBF3E2;
+  --color-admin-warn-border: #EFE0C4;
+  --color-admin-warn-text: #8A5320;
+  --color-admin-warn-bar: #D4A252;
+
+  --color-admin-danger-bg: #FBEDE9;
+  --color-admin-danger-bg-2: #FDF3F1;
+  --color-admin-danger-border: #F0D6CF;
+  --color-admin-danger-text: #8E3B2C;
+  --color-admin-danger-bar: #C4705C;
+
+  --color-admin-neutral-bg: #E9EDF2;
+  --color-admin-neutral-border: #E3E8EF;
+  --color-admin-neutral-text: #4A5768;
+  --color-admin-neutral-bar: #C3CCD8;
+
+  --color-admin-hero: #10305A;
+  --color-admin-amber: #B4702A;
+  --color-admin-amber-danger: #8E3B2C;
+
+  --radius-admin-lg: 16px;
+  --radius-admin-md: 11px;
+  --radius-admin-sm: 8px;
 }
 
 @layer base {
@@ -113,4 +168,5 @@ html.lenis.body {
 .lenis.lenis-smooth iframe {
   pointer-events: none;
 }
+
 
