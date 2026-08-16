@@ -243,7 +243,7 @@ export async function GET(req: NextRequest) {
       .from("kandidat")
       .select(
         "id, no, no_pendaftaran_kipk, nama_pendaftar, prodi_pendaftar, nik, no_hp, email, " +
-          "status_dtks, status_p3ke, penghasilan_ayah, penghasilan_ibu, " +
+          "aktif_dtsen, desil_dtsen, penghasilan_ayah, penghasilan_ibu, " +
           "jumlah_tanggungan, jalur_masuk, impor_data_id, created_at",
         { count: "exact" },
       )
@@ -263,15 +263,29 @@ export async function GET(req: NextRequest) {
 
     const { data: batches, error: batchErr } = await supabase
       .from("impor_data")
-      .select("id, file_name, created_at, total_rows, jenis_impor")
+      .select(
+        "id, file_name, created_at, total_rows, valid_rows, error_rows, jenis_impor",
+      )
       .order("created_at", { ascending: false })
       .limit(20);
 
     if (batchErr) throw batchErr;
 
+    const validTotal = (batches ?? []).reduce(
+      (sum, b) => sum + (b.valid_rows ?? 0),
+      0,
+    );
+    const incompleteTotal = (batches ?? []).reduce(
+      (sum, b) => sum + (b.error_rows ?? 0),
+      0,
+    );
+
     return NextResponse.json({
       data: kandidats ?? [],
       total: count ?? 0,
+      valid: validTotal,
+      incomplete: incompleteTotal,
+      saved: (count ?? 0) > 0,
       page,
       totalPages: Math.ceil((count ?? 0) / limit),
       batches: batches ?? [],

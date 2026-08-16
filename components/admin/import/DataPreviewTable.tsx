@@ -45,26 +45,26 @@ const formatRupiah = (value: number) =>
 
 function CellValue({ value, isNumber }: { value: unknown; isNumber?: boolean }) {
   if (value === null || value === undefined || value === "" || (isNumber && value === 0)) {
-    return <span className="text-muted-foreground/50">—</span>;
+    return <span className="text-admin-text-5">—</span>;
   }
   if (isNumber && typeof value === "number") {
-    return <span className="font-medium text-foreground">{formatRupiah(value)}</span>;
+    return <span className="font-medium text-admin-text">{formatRupiah(value)}</span>;
   }
   return <>{String(value)}</>;
 }
 
 function P3KEBadge({ status }: { status: string }) {
-  if (!status) return <span className="text-muted-foreground/50">—</span>;
+  if (!status) return <span className="text-admin-text-5">—</span>;
   const isDesil = status.toLowerCase().includes("desil");
   const isBelum = status.toLowerCase().includes("belum");
   return (
     <span
       className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold border ${
         isBelum
-          ? "bg-muted text-muted-foreground border-border"
+          ? "bg-admin-surface-soft text-admin-text-3 border-admin-border"
           : isDesil
-          ? "bg-primary/8 text-primary border-primary/20"
-          : "bg-emerald-50 text-emerald-700 border-emerald-200"
+          ? "bg-admin-accent/8 text-admin-accent border-admin-accent/20"
+          : "bg-admin-accent/10 text-admin-accent-ink border-admin-accent/25"
       }`}
     >
       {status}
@@ -73,14 +73,14 @@ function P3KEBadge({ status }: { status: string }) {
 }
 
 function DTKSBadge({ status }: { status: string }) {
-  if (!status) return <span className="text-muted-foreground/50">—</span>;
+  if (!status) return <span className="text-admin-text-5">—</span>;
   const terdata = status.toLowerCase() === "terdata";
   return (
     <span
       className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold border ${
         terdata
-          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-          : "bg-amber-50 text-amber-700 border-amber-200"
+          ? "bg-admin-accent/10 text-admin-accent-ink border-admin-accent/25"
+          : "bg-admin-warn-bg-2 text-admin-warn-text border-admin-warn-border"
       }`}
     >
       {status}
@@ -105,14 +105,14 @@ export default function DataPreviewTable({
       columnHelper.accessor("no", {
         header: "No",
         cell: (info) => (
-          <span className="font-bold text-primary">{info.getValue() as number}</span>
+          <span className="font-bold text-admin-accent">{info.getValue() as number}</span>
         ),
         size: 55,
       }),
       columnHelper.accessor("no_pendaftaran_kipk", {
         header: "No. Pendaftaran KIP",
         cell: (info) => (
-          <span className="font-mono text-xs text-muted-foreground">
+          <span className="font-admin-mono text-xs text-admin-text-3">
             <CellValue value={info.getValue()} />
           </span>
         ),
@@ -121,7 +121,7 @@ export default function DataPreviewTable({
       columnHelper.accessor("nama_pendaftar", {
         header: "Nama Pendaftar",
         cell: (info) => (
-          <span className="font-semibold text-foreground">{String(info.getValue() || "—")}</span>
+          <span className="font-semibold text-admin-text">{String(info.getValue() || "—")}</span>
         ),
         size: 210,
       }),
@@ -133,7 +133,7 @@ export default function DataPreviewTable({
       columnHelper.accessor("nik", {
         header: "NIK",
         cell: (info) => (
-          <span className="font-mono text-xs text-muted-foreground">
+          <span className="font-admin-mono text-xs text-admin-text-3">
             <CellValue value={info.getValue()} />
           </span>
         ),
@@ -142,7 +142,7 @@ export default function DataPreviewTable({
       columnHelper.accessor("nisn", {
         header: "NISN",
         cell: (info) => (
-          <span className="font-mono text-xs text-muted-foreground">
+          <span className="font-admin-mono text-xs text-admin-text-3">
             <CellValue value={info.getValue()} />
           </span>
         ),
@@ -187,7 +187,7 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
         header: "Jarak (KM)",
         cell: (info) => {
           const v = info.getValue() as number;
-          return v ? <span>{v} km</span> : <span className="text-muted-foreground/50">—</span>;
+          return v ? <span>{v} km</span> : <span className="text-admin-text-5">—</span>;
         },
         size: 100,
       }),
@@ -206,7 +206,7 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
       columnHelper.accessor("no_kartu_keluarga", {
         header: "No. KK",
         cell: (info) => (
-          <span className="font-mono text-xs text-muted-foreground">
+          <span className="font-admin-mono text-xs text-admin-text-3">
             <CellValue value={info.getValue()} />
           </span>
         ),
@@ -215,7 +215,7 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
       columnHelper.accessor("nik_kepala_keluarga", {
         header: "NIK Kepala KK",
         cell: (info) => (
-          <span className="font-mono text-xs text-muted-foreground">
+          <span className="font-admin-mono text-xs text-admin-text-3">
             <CellValue value={info.getValue()} />
           </span>
         ),
@@ -345,9 +345,9 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
         header: "Jalur Masuk",
         cell: (info) => {
           const val = info.getValue() as string;
-          if (!val) return <span className="text-muted-foreground/50">—</span>;
+          if (!val) return <span className="text-admin-text-5">—</span>;
           return (
-            <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-semibold bg-primary/8 text-primary border border-primary/20">
+            <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-semibold bg-admin-accent/8 text-admin-accent border border-admin-accent/20">
               {val}
             </span>
           );
@@ -415,19 +415,19 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative">
-      <div className="bg-white rounded-3xl border border-border shadow-sm overflow-hidden">
+      <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-[0_1px_2px_rgba(20,40,70,0.05)] overflow-hidden">
 
         {/* ── Header ── */}
-        <div className="px-6 py-5 border-b border-border/50">
+        <div className="px-6 py-5 border-b border-admin-border-soft">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center shadow-sm">
+                <div className="w-10 h-10 rounded-xl bg-admin-accent flex items-center justify-center shadow-sm">
                   <Table2 size={20} className="text-white" />
                 </div>
                 <div>
-                  <h4 className="text-lg font-extrabold text-foreground">Data Preview</h4>
-                  <p className="text-[11px] text-muted-foreground flex items-center gap-1.5">
+                  <h4 className="font-admin-heading text-lg font-extrabold text-admin-text">Data Preview</h4>
+                  <p className="text-[11px] text-admin-text-3 flex items-center gap-1.5">
                     <FileText size={11} />
                     {fileName}
                   </p>
@@ -436,18 +436,18 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
 
               {/* Stats */}
               <div className="flex items-center gap-2 flex-wrap">
-                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/8 rounded-lg border border-primary/20">
-                  <Database size={12} className="text-primary" />
-                  <span className="text-xs font-bold text-primary">{data.length} Baris</span>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-admin-accent/8 rounded-lg border border-admin-accent/20">
+                  <Database size={12} className="text-admin-accent" />
+                  <span className="text-xs font-bold text-admin-accent">{data.length} Baris</span>
                 </div>
-                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 rounded-lg border border-emerald-100">
-                  <CheckCircle2 size={12} className="text-emerald-600" />
-                  <span className="text-xs font-bold text-emerald-700">{validCount} Valid</span>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-admin-accent/10 rounded-lg border border-admin-accent/20">
+                  <CheckCircle2 size={12} className="text-admin-accent" />
+                  <span className="text-xs font-bold text-admin-accent-ink">{validCount} Valid</span>
                 </div>
                 {errorCount > 0 && (
-                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 rounded-lg border border-amber-100">
-                    <Info size={12} className="text-amber-600" />
-                    <span className="text-xs font-bold text-amber-700">{errorCount} Perlu Periksa</span>
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 bg-admin-warn-bg-2 rounded-lg border border-admin-warn-border">
+                    <Info size={12} className="text-admin-warn-text" />
+                    <span className="text-xs font-bold text-admin-warn-text">{errorCount} Perlu Periksa</span>
                   </div>
                 )}
               </div>
@@ -457,7 +457,7 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => setShowAllColumns(!showAllColumns)}
-                className="px-4 py-2.5 bg-muted hover:bg-muted/80 text-foreground text-xs font-bold rounded-xl transition-all flex items-center gap-2"
+                className="px-4 py-2.5 bg-admin-surface-soft hover:bg-admin-border/60 text-admin-text text-xs font-bold rounded-xl transition-all flex items-center gap-2"
               >
                 {showAllColumns ? <EyeOff size={14} /> : <Eye size={14} />}
                 {showAllColumns ? "Kolom Dasar" : "Semua Kolom"}
@@ -467,11 +467,11 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
                 onClick={onSave}
                 disabled={!hasData || saveStatus === "saving" || saveStatus === "saved"}
                 className={`px-4 py-2.5 text-xs font-bold rounded-xl transition-all flex items-center gap-2
-                  ${saveStatus === "saved" ? "bg-emerald-500 text-white" :
-                    saveStatus === "saving" ? "bg-primary/60 text-white cursor-wait" :
-                    saveStatus === "error" ? "bg-destructive text-white" :
-                    hasData ? "bg-primary hover:bg-primary/90 text-white" :
-                    "bg-muted text-muted-foreground cursor-not-allowed"
+                  ${saveStatus === "saved" ? "bg-admin-accent text-white" :
+                    saveStatus === "saving" ? "bg-admin-accent/60 text-white cursor-wait" :
+                    saveStatus === "error" ? "bg-admin-danger-text text-white" :
+                    hasData ? "bg-admin-accent hover:bg-admin-accent-hover text-white" :
+                    "bg-admin-border text-admin-placeholder cursor-not-allowed"
                   }`}
               >
                 {saveStatus === "saving" ? (
@@ -492,20 +492,20 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
 
           {/* Search */}
           <div className="mt-4 relative">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-admin-text-3" />
             <input
               type="text"
               value={globalFilter ?? ""}
               onChange={(e) => setGlobalFilter(e.target.value)}
               placeholder="Cari nama, NIK, prodi, email, status P3KE..."
-              className="w-full pl-10 pr-10 py-2.5 bg-muted border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+              className="w-full pl-10 pr-10 py-2.5 bg-admin-surface-soft border border-admin-border rounded-xl text-sm text-admin-text placeholder:text-admin-placeholder focus:outline-none focus:ring-2 focus:ring-admin-accent/30 focus:border-admin-accent transition-all"
             />
             {globalFilter && (
               <button
                 onClick={() => setGlobalFilter("")}
-                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center bg-muted hover:bg-border rounded-full transition-colors"
+                className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center bg-admin-surface-soft hover:bg-admin-border rounded-full transition-colors"
               >
-                <X size={11} className="text-muted-foreground" />
+                <X size={11} className="text-admin-text-3" />
               </button>
             )}
           </div>
@@ -516,7 +516,7 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id} className="bg-muted border-b border-border/50 hover:bg-muted">
+                <TableRow key={headerGroup.id} className="bg-admin-surface-soft border-b border-admin-border-soft hover:bg-admin-surface-soft">
                   {headerGroup.headers.map((header) => (
                     <TableHead
                       key={header.id}
@@ -525,16 +525,16 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
                     >
                       {header.isPlaceholder ? null : (
                         <button
-                          className="flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground hover:text-primary transition-colors"
+                          className="flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-admin-text-3 hover:text-admin-accent transition-colors"
                           onClick={header.column.getToggleSortingHandler()}
                         >
                           {flexRender(header.column.columnDef.header, header.getContext())}
                           {{
-                            asc: <ArrowUp size={11} className="text-primary" />,
-                            desc: <ArrowDown size={11} className="text-primary" />,
+                            asc: <ArrowUp size={11} className="text-admin-accent" />,
+                            desc: <ArrowDown size={11} className="text-admin-accent" />,
                           }[header.column.getIsSorted() as string] ?? (
                             header.column.getCanSort() ? (
-                              <ArrowUpDown size={10} className="text-muted-foreground/50" />
+                              <ArrowUpDown size={10} className="text-admin-text-5" />
                             ) : null
                           )}
                         </button>
@@ -551,14 +551,14 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
                     key={row.id}
                     className={
                       row.original.hasErrors
-                        ? "bg-amber-50/40 hover:bg-amber-50/60"
-                        : "hover:bg-slate-50/80"
+                        ? "bg-admin-warn-bg/40 hover:bg-admin-warn-bg/70"
+                        : "hover:bg-admin-surface-soft"
                     }
                   >
                     {row.getVisibleCells().map((cell) => (
                       <TableCell
                         key={cell.id}
-                        className="px-4 py-3 text-sm text-slate-600 whitespace-nowrap"
+                        className="px-4 py-3 text-sm text-admin-text-2 whitespace-nowrap"
                       >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </TableCell>
@@ -567,7 +567,7 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center text-slate-400 text-sm">
+                  <TableCell colSpan={columns.length} className="h-24 text-center text-admin-text-5 text-sm">
                     Tidak ada data ditemukan.
                   </TableCell>
                 </TableRow>
@@ -577,10 +577,10 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
         </div>
 
         {/* ── Pagination ── */}
-        <div className="bg-slate-50/50 px-6 py-4 border-t border-slate-100 flex items-center justify-between flex-wrap gap-3">
-          <p className="text-xs text-slate-500">
+        <div className="bg-admin-surface-soft px-6 py-4 border-t border-admin-border-soft flex items-center justify-between flex-wrap gap-3">
+          <p className="text-xs text-admin-text-3">
             Menampilkan{" "}
-            <span className="font-bold text-slate-700">
+            <span className="font-bold text-admin-text-2">
               {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}–
               {Math.min(
                 (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
@@ -588,7 +588,7 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
               )}
             </span>{" "}
             dari{" "}
-            <span className="font-bold text-slate-700">
+            <span className="font-bold text-admin-text-2">
               {table.getFilteredRowModel().rows.length}
             </span>{" "}
             baris{globalFilter ? " (terfilter)" : ""}
@@ -603,13 +603,13 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
                 key={i}
                 onClick={action}
                 disabled={disabled}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-admin-text-3 hover:bg-admin-accent/10 hover:text-admin-accent disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <Icon size={15} />
               </button>
             ))}
 
-            <span className="px-3 py-1 text-xs font-bold text-indigo-600 bg-indigo-50 rounded-lg border border-indigo-100">
+            <span className="px-3 py-1 text-xs font-bold text-admin-accent-ink bg-admin-accent/10 rounded-lg border border-admin-accent/20">
               {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
             </span>
 
@@ -621,7 +621,7 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
                 key={i}
                 onClick={action}
                 disabled={disabled}
-                className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:bg-indigo-50 hover:text-indigo-600 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                className="w-8 h-8 flex items-center justify-center rounded-lg text-admin-text-3 hover:bg-admin-accent/10 hover:text-admin-accent disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
               >
                 <Icon size={15} />
               </button>
@@ -636,14 +636,14 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="mt-4 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3"
+          className="mt-4 p-4 bg-admin-warn-bg-2 border border-admin-warn-border rounded-xl flex items-start gap-3"
         >
-          <Lightbulb size={18} className="text-amber-500 mt-0.5 shrink-0" />
+          <Lightbulb size={18} className="text-admin-warn-text mt-0.5 shrink-0" />
           <div>
-            <h5 className="text-sm font-bold text-amber-900 mb-0.5">
+            <h5 className="text-sm font-bold text-admin-warn-text mb-0.5">
               {errorCount} data belum lengkap
             </h5>
-            <p className="text-xs text-amber-700">
+            <p className="text-xs text-admin-warn-text/85">
               Kolom wajib (Nama, No. Pendaftaran KIP, NIK, Email) kosong. Data tetap dapat disimpan dan akan ditandai untuk verifikasi manual.
             </p>
           </div>

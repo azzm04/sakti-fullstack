@@ -5,7 +5,7 @@ import { useDropzone } from "react-dropzone";
 import { motion, AnimatePresence } from "framer-motion";
 import * as XLSX from "xlsx";
 import { CandidateData, ValidationSummary } from "@/schemas";
-import { UploadCloud } from "lucide-react";
+import { UploadCloud, AlertTriangle } from "lucide-react";
 
 // Normalize header: collapse whitespace, trim, uppercase
 const normalize = (s: unknown) =>
@@ -38,6 +38,7 @@ export default function UploadZone({
 }: Props) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [parseError, setParseError] = useState<string | null>(null);
 
   // ── Validasi kolom wajib ──────────────────────────────────────────────────
   const validateRow = (row: unknown[]): { hasErrors: boolean; missingFields: string[] } => {
@@ -78,6 +79,7 @@ export default function UploadZone({
   const processFile = useCallback(
     (file: File) => {
       setIsProcessing(true);
+      setParseError(null);
       const reader = new FileReader();
 
       reader.onload = (e) => {
@@ -319,7 +321,9 @@ export default function UploadZone({
           setUploadedFile(file);
         } catch (error) {
           console.error("Error processing file:", error);
-          alert("Gagal memproses file. Pastikan format sesuai template.");
+          setParseError(
+            "Gagal memproses file. Pastikan format sesuai template.",
+          );
         } finally {
           setIsProcessing(false);
         }
@@ -354,8 +358,8 @@ export default function UploadZone({
       {/* Drop Zone */}
       <div
         {...getRootProps()}
-        className={`p-8 rounded-2xl border-2 border-dashed transition-all cursor-pointer
-          ${isDragActive ? "border-primary bg-primary/5" : "border-border hover:border-primary/40 hover:bg-muted/40"}
+        className={`p-8 rounded-2xl border-[1.5px] border-dashed transition-[border-color,background-color,opacity] duration-200 cursor-pointer
+          ${isDragActive ? "border-admin-accent bg-admin-accent/5" : "border-admin-border hover:border-admin-accent/40 hover:bg-admin-surface-soft"}
           ${isProcessing ? "opacity-50 pointer-events-none" : ""}
         `}
       >
@@ -364,20 +368,20 @@ export default function UploadZone({
         <div className="flex flex-col items-center justify-center text-center">
           <motion.div
             animate={isDragActive ? { scale: 1.1 } : { scale: 1 }}
-            className="w-16 h-16 bg-primary/8 rounded-2xl flex items-center justify-center mb-4"
+            className="w-16 h-16 bg-admin-accent/[0.12] rounded-2xl flex items-center justify-center mb-4"
           >
             {isProcessing ? (
-              <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+              <div className="w-6 h-6 border-2 border-admin-accent border-t-transparent rounded-full animate-spin" />
             ) : (
-              <UploadCloud size={28} className="text-primary" />
+              <UploadCloud size={28} className="text-admin-accent" />
             )}
           </motion.div>
 
-          <h3 className="text-base font-bold text-foreground mb-1">
+          <h3 className="font-admin-heading text-base font-bold text-admin-text mb-1">
             {isProcessing ? "Memproses File..." : "Drag & Drop File"}
           </h3>
 
-          <p className="text-xs text-muted-foreground mb-5 px-2">
+          <p className="text-xs text-admin-text-3 mb-5 px-2">
             {isDragActive
               ? "Lepaskan file di sini..."
               : "Unggah file Excel atau CSV data pendaftar KIP-K"}
@@ -386,27 +390,45 @@ export default function UploadZone({
           {!isProcessing && (
             <button
               type="button"
-              className="px-5 py-2 text-sm font-semibold bg-primary text-primary-foreground rounded-xl hover:bg-primary/90 transition-colors"
+              className="px-5 py-2 text-sm font-semibold bg-admin-accent text-white rounded-xl hover:bg-admin-accent-hover transition-colors"
             >
               Pilih File
             </button>
           )}
 
-          <p className="mt-4 text-[10px] text-muted-foreground">
+          <p className="mt-4 text-[10px] text-admin-text-4">
             .xlsx · .xls · .csv · maks. 10MB
           </p>
 
           <AnimatePresence>
-            {uploadedFile && !isProcessing && (
+            {uploadedFile && !isProcessing && !parseError && (
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="mt-4 flex items-center gap-2 px-3 py-1.5 bg-emerald-50 border border-emerald-200 rounded-lg"
+                className="mt-4 flex items-center gap-2 px-3 py-1.5 bg-admin-accent/10 border border-admin-accent/25 rounded-lg"
               >
-                <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                <span className="text-xs text-emerald-700 font-medium truncate max-w-[200px]">
+                <div className="w-2 h-2 rounded-full bg-admin-accent" />
+                <span className="text-xs text-admin-accent-ink font-medium truncate max-w-[200px]">
                   {uploadedFile.name}
+                </span>
+              </motion.div>
+            )}
+
+            {parseError && !isProcessing && (
+              <motion.div
+                role="alert"
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="mt-4 flex items-start gap-2 px-3 py-2 bg-admin-danger-bg border border-admin-danger-border rounded-lg text-left"
+              >
+                <AlertTriangle
+                  size={14}
+                  className="text-admin-danger-text shrink-0 mt-0.5"
+                />
+                <span className="text-xs text-admin-danger-text font-medium">
+                  {parseError}
                 </span>
               </motion.div>
             )}
@@ -415,21 +437,21 @@ export default function UploadZone({
       </div>
 
       {/* Info format kolom */}
-      <div className="mt-4 p-3 bg-muted/40 border border-border rounded-xl">
-        <p className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">
+      <div className="mt-4 p-3 bg-admin-surface-soft border border-admin-border rounded-xl">
+        <p className="text-[11px] font-semibold text-admin-text-3 uppercase tracking-wider mb-1.5">
           Kolom wajib di file
         </p>
         <div className="flex flex-wrap gap-1.5">
           {["Nama Siswa2", "No. Pendaftaran KIP", "NIK", "Alamat Email"].map((col) => (
             <span
               key={col}
-              className="text-[10px] font-medium px-2 py-0.5 bg-white border border-border rounded text-secondary"
+              className="text-[10px] font-medium px-2 py-0.5 bg-white border border-admin-border rounded text-admin-text-2"
             >
               {col}
             </span>
           ))}
         </div>
-        <p className="mt-2 text-[10px] text-muted-foreground">
+        <p className="mt-2 text-[10px] text-admin-text-4">
           Header CSV harus sesuai dengan format file{" "}
           <em>Data Verifikasi Validasi SNBT Eligible</em>.
         </p>
@@ -442,10 +464,10 @@ export default function UploadZone({
           disabled={saveStatus === "saving" || !jalurMasuk}
           className={`mt-4 w-full py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2
             ${saveStatus === "saving"
-              ? "bg-primary/60 text-primary-foreground cursor-wait"
+              ? "bg-admin-accent/60 text-white cursor-wait"
               : !jalurMasuk
-              ? "bg-muted text-muted-foreground cursor-not-allowed"
-              : "bg-primary text-primary-foreground hover:bg-primary/90"
+              ? "bg-admin-border text-admin-placeholder cursor-not-allowed"
+              : "bg-admin-accent text-white hover:bg-admin-accent-hover"
             }`}
         >
           {saveStatus === "saving" ? (

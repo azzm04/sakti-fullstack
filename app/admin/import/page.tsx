@@ -3,11 +3,9 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  ChevronRight,
   EyeOff,
   Eye,
   LayoutTemplate,
-  DatabaseBackup,
 } from "lucide-react";
 
 import { type CandidateData, type ValidationSummary } from "@/schemas";
@@ -17,6 +15,8 @@ import TahunSeleksiInput from "@/components/admin/import/TahunSeleksiInput";
 import JalurMasukPicker from "@/components/admin/import/JalurMasukPicker";
 import ImportStatusBadge from "@/components/admin/import/ImportStatusBadge";
 import ImportSuccessBanner from "@/components/admin/import/ImportSuccessBanner";
+import { PageHeader } from "@/components/admin/ui/PageHeader";
+import { KpiCard } from "@/components/admin/ui/KpiCard";
 
 // ── Shared constants & types (re-exported for other modules) ─────────────────
 export type SaveStatus = "idle" | "saving" | "saved" | "error";
@@ -52,6 +52,7 @@ export default function ImportDataPage() {
   const [fileName, setFileName] = useState("");
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [saveProgress, setSaveProgress] = useState(0);
+  const [saveError, setSaveError] = useState<string | null>(null);
   const [showUpload, setShowUpload] = useState(true);
   const [jalurMasuk, setJalurMasuk] = useState<JalurMasuk | "">("");
   const [tahunSeleksi, setTahunSeleksi] = useState(String(currentYear));
@@ -76,6 +77,7 @@ export default function ImportDataPage() {
     setFileName(filename);
     setSaveStatus("idle");
     setSaveProgress(0);
+    setSaveError(null);
   }
 
   async function handleSave() {
@@ -83,6 +85,7 @@ export default function ImportDataPage() {
 
     setSaveStatus("saving");
     setSaveProgress(0);
+    setSaveError(null);
 
     try {
       const { CandidateDataSchema, ValidationSummarySchema } =
@@ -107,7 +110,9 @@ export default function ImportDataPage() {
       const validationResult = ValidationSummarySchema.safeParse(validation);
       if (!validationResult.success) {
         setSaveStatus("error");
-        setTimeout(() => setSaveStatus("idle"), 3000);
+        setSaveError(
+          "Ringkasan validasi data tidak sesuai format. Coba unggah ulang file.",
+        );
         return;
       }
 
@@ -144,7 +149,11 @@ export default function ImportDataPage() {
 
           console.error(`Save error chunk ${i}:`, err); // Sekarang error aslinya akan terbaca
           setSaveStatus("error");
-          setTimeout(() => setSaveStatus("idle"), 3000);
+          setSaveError(
+            typeof err === "string"
+              ? err
+              : err?.error || err?.message || `Gagal menyimpan pada baris ke-${i}.`,
+          );
           return;
         }
 
@@ -158,7 +167,11 @@ export default function ImportDataPage() {
     } catch (err) {
       console.error("Network / System error:", err);
       setSaveStatus("error");
-      setTimeout(() => setSaveStatus("idle"), 3000);
+      setSaveError(
+        err instanceof Error
+          ? err.message
+          : "Terjadi kesalahan jaringan atau sistem saat menyimpan.",
+      );
     }
   }
 
@@ -169,59 +182,77 @@ export default function ImportDataPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-background pb-20">
-      <div className="max-w-screen-2xl mx-auto p-4 md:p-8 space-y-8">
-        {/* Header */}
-        <div>
-          <nav className="flex items-center gap-2 text-xs font-medium text-muted-foreground mb-3">
-            <span>Dashboard</span>
-            <ChevronRight size={14} className="text-muted-foreground/50" />
-            <span className="text-foreground">Import Data</span>
-          </nav>
+    <div className="min-h-screen bg-admin-bg font-admin-body text-admin-text flex flex-col">
+      <PageHeader
+        breadcrumb="Admin / Seleksi KIP-K / Import Data"
+        title="Import Data Pendaftar"
+        right={
+          <>
+            {hasData && (
+              <button
+                onClick={() => setShowUpload((v) => !v)}
+                className="flex items-center gap-2 px-[15px] py-[10px] text-[12.5px] font-semibold rounded-[11px] border border-admin-border bg-transparent hover:bg-admin-surface-soft text-admin-text transition-colors"
+              >
+                {showUpload ? (
+                  <EyeOff size={15} className="text-admin-text-3" />
+                ) : (
+                  <Eye size={15} className="text-admin-text-3" />
+                )}
+                {showUpload ? "Sembunyikan Panel" : "Tampilkan Panel"}
+              </button>
+            )}
+            <ImportStatusBadge
+              saveStatus={saveStatus}
+              saveProgress={saveProgress}
+              saveError={saveError}
+              validation={validation}
+              jalurMasuk={jalurMasuk}
+              tahunSeleksi={tahunSeleksi}
+            />
+          </>
+        }
+      />
 
-          <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-5">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight flex items-center gap-3">
-                <div className="p-2 bg-primary/10 text-primary rounded-xl">
-                  <DatabaseBackup size={24} />
-                </div>
-                Import Data Pendaftar
-              </h1>
-              <p className="text-muted-foreground text-sm mt-2 max-w-2xl">
-                Unggah file Excel/CSV, pilih tahun &amp; jalur masuk, lalu
-                simpan ke database.
-              </p>
-            </div>
-
-            {/* Status badges */}
-            <div className="flex items-center gap-3 flex-wrap">
-              {hasData && (
-                <button
-                  onClick={() => setShowUpload((v) => !v)}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-semibold rounded-xl border border-border bg-tertiary hover:bg-muted text-foreground transition-all shadow-sm"
-                >
-                  {showUpload ? (
-                    <EyeOff size={16} className="text-muted-foreground" />
-                  ) : (
-                    <Eye size={16} className="text-muted-foreground" />
-                  )}
-                  {showUpload ? "Sembunyikan Panel" : "Tampilkan Panel"}
-                </button>
-              )}
-
-              <ImportStatusBadge
-                saveStatus={saveStatus}
-                saveProgress={saveProgress}
-                validation={validation}
-                jalurMasuk={jalurMasuk}
-                tahunSeleksi={tahunSeleksi}
-              />
-            </div>
-          </div>
-        </div>
+      <div className="px-[30px] pt-[22px] pb-[34px] flex flex-col gap-[18px]">
+        {hasData && (
+          <section className="grid grid-cols-2 lg:grid-cols-4 gap-[14px]">
+            <KpiCard
+              label="Baris Dimuat"
+              code="IM-01"
+              value={validation.total.toLocaleString("id-ID")}
+              note="pratinjau sebelum disimpan"
+              pct="100%"
+            />
+            <KpiCard
+              label="Baris Valid"
+              code="IM-02"
+              value={validation.valid.toLocaleString("id-ID")}
+              note="kolom wajib lengkap"
+              pct={`${validation.total > 0 ? Math.round((validation.valid / validation.total) * 100) : 0}%`}
+            />
+            <KpiCard
+              label="Perlu Perbaikan"
+              code="IM-03"
+              value={validation.incomplete.toLocaleString("id-ID")}
+              note="kolom wajib tidak lengkap"
+              pct={`${validation.total > 0 ? Math.round((validation.incomplete / validation.total) * 100) : 0}%`}
+              barColor="var(--color-admin-warn-bar)"
+              valueColor={validation.incomplete > 0 ? "var(--color-admin-warn-text)" : undefined}
+            />
+            <KpiCard
+              label="Duplikat NIK"
+              code="IM-04"
+              value={validation.duplicates.toLocaleString("id-ID")}
+              note="terdeteksi dalam berkas ini"
+              pct={`${validation.total > 0 ? Math.round((validation.duplicates / validation.total) * 100) : 0}%`}
+              barColor="var(--color-admin-danger-bar)"
+              valueColor={validation.duplicates > 0 ? "var(--color-admin-danger-text)" : undefined}
+            />
+          </section>
+        )}
 
         {/* Main layout */}
-        <div className="flex flex-col xl:flex-row gap-6 items-start">
+        <div className="flex flex-col xl:flex-row gap-[14px] items-start">
           {/* Left panel — step-by-step config */}
           <AnimatePresence initial={false}>
             {showUpload && (
@@ -247,9 +278,9 @@ export default function ImportDataPage() {
                   showWarning={hasData && !jalurMasuk}
                 />
 
-                <div className="bg-tertiary rounded-3xl border border-border shadow-sm p-5">
-                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground text-[10px] font-black flex items-center justify-center shrink-0">
+                <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-[0_1px_2px_rgba(20,40,70,0.05)] p-5">
+                  <p className="text-[10.5px] font-bold text-admin-text-3 uppercase tracking-wider mb-3 flex items-center gap-2">
+                    <span className="w-5 h-5 rounded-full bg-admin-accent text-white text-[10px] font-black flex items-center justify-center shrink-0">
                       2
                     </span>
                     Unggah File
@@ -291,18 +322,18 @@ export default function ImportDataPage() {
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="w-full min-h-[400px] bg-tertiary rounded-3xl border-2 border-dashed border-border flex flex-col items-center justify-center text-center p-12"
+                className="w-full min-h-[400px] bg-admin-surface rounded-2xl border-[1.5px] border-dashed border-admin-border flex flex-col items-center justify-center text-center p-12"
               >
-                <div className="w-20 h-20 bg-muted rounded-full flex items-center justify-center mb-5">
+                <div className="w-20 h-20 bg-admin-surface-soft-2 rounded-full flex items-center justify-center mb-5">
                   <LayoutTemplate
                     size={32}
-                    className="text-muted-foreground/40"
+                    className="text-admin-text-5"
                   />
                 </div>
-                <h3 className="text-xl font-extrabold text-foreground mb-2">
+                <h3 className="font-admin-heading text-xl font-extrabold text-admin-text mb-2">
                   Belum Ada Data
                 </h3>
-                <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                <p className="text-sm text-admin-text-3 max-w-sm mx-auto">
                   Isi tahun seleksi, pilih jalur masuk, lalu unggah file
                   Excel/CSV data pendaftar KIP-K di panel kiri.
                 </p>

@@ -1,13 +1,14 @@
 "use client"
 
 import { motion, AnimatePresence } from "framer-motion"
-import { CheckCircle2, FileSpreadsheet } from "lucide-react"
+import { CheckCircle2, FileSpreadsheet, AlertTriangle } from "lucide-react"
 import type { SaveStatus } from "@/app/admin/import/page"
 import type { ValidationSummary } from "@/schemas"
 
 interface Props {
   saveStatus: SaveStatus
   saveProgress: number
+  saveError?: string | null
   validation: ValidationSummary
   jalurMasuk: string
   tahunSeleksi: string
@@ -16,6 +17,7 @@ interface Props {
 export default function ImportStatusBadge({
   saveStatus,
   saveProgress,
+  saveError,
   validation,
   jalurMasuk,
   tahunSeleksi,
@@ -30,14 +32,14 @@ export default function ImportStatusBadge({
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
-          className="flex items-center gap-2.5 px-4 py-2 bg-emerald-50 border border-emerald-200 rounded-xl shadow-sm"
+          className="flex items-center gap-2.5 px-4 py-2 bg-admin-accent/10 border border-admin-accent/25 rounded-xl shadow-sm"
         >
-          <CheckCircle2 size={18} className="text-emerald-600" />
+          <CheckCircle2 size={18} className="text-admin-accent" />
           <div className="flex flex-col">
-            <span className="text-sm font-bold text-emerald-800 leading-none">
+            <span className="text-sm font-bold text-admin-accent-ink leading-none">
               {validation.total} baris tersimpan
             </span>
-            <span className="text-[10px] font-medium text-emerald-600 mt-0.5">
+            <span className="text-[10px] font-medium text-admin-accent mt-0.5">
               {tahunSeleksi} · {jalurMasuk}
             </span>
           </div>
@@ -50,16 +52,37 @@ export default function ImportStatusBadge({
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="flex items-center gap-2.5 px-4 py-2 bg-primary/8 border border-primary/20 rounded-xl shadow-sm"
+          className="flex items-center gap-2.5 px-4 py-2 bg-admin-accent/8 border border-admin-accent/20 rounded-xl shadow-sm"
         >
-          <FileSpreadsheet size={18} className="text-primary" />
+          <FileSpreadsheet size={18} className="text-admin-accent" />
           <div className="flex flex-col">
-            <span className="text-sm font-bold text-foreground leading-none">
+            <span className="text-sm font-bold text-admin-text leading-none">
               {validation.total} baris dimuat
             </span>
-            <span className="text-[10px] font-medium text-primary mt-0.5">
+            <span className="text-[10px] font-medium text-admin-accent mt-0.5">
               {validation.valid} Valid · {validation.incomplete} Perbaikan
               {jalurMasuk ? ` · ${jalurMasuk}` : " · Pilih jalur ↑"}
+            </span>
+          </div>
+        </motion.div>
+      )}
+
+      {saveStatus === "error" && (
+        <motion.div
+          key="error"
+          role="alert"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          className="flex items-start gap-2.5 px-4 py-2 bg-admin-danger-bg border border-admin-danger-border rounded-xl shadow-sm max-w-sm"
+        >
+          <AlertTriangle size={18} className="text-admin-danger-text shrink-0 mt-0.5" />
+          <div className="flex flex-col">
+            <span className="text-sm font-bold text-admin-danger-text leading-none">
+              Gagal menyimpan data
+            </span>
+            <span className="text-xs text-admin-danger-text/80 mt-1 leading-snug">
+              {saveError ?? "Terjadi kesalahan yang tidak diketahui."}
             </span>
           </div>
         </motion.div>
@@ -71,16 +94,16 @@ export default function ImportStatusBadge({
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
-          className="flex items-center gap-2.5 px-4 py-2 bg-primary/8 border border-primary/20 rounded-xl shadow-sm min-w-[160px]"
+          className="flex items-center gap-2.5 px-4 py-2 bg-admin-accent/8 border border-admin-accent/20 rounded-xl shadow-sm min-w-[160px]"
         >
-          <div className="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin shrink-0" />
+          <div className="w-4 h-4 border-2 border-admin-accent border-t-transparent rounded-full animate-spin shrink-0" />
           <div className="flex flex-col flex-1">
-            <span className="text-xs font-bold text-foreground leading-none mb-1">
+            <span className="text-xs font-bold text-admin-text leading-none mb-1">
               Menyimpan... {saveProgress}%
             </span>
-            <div className="h-1 bg-muted rounded-full overflow-hidden">
+            <div className="h-1 bg-admin-grid rounded-full overflow-hidden">
               <motion.div
-                className="h-full bg-primary rounded-full"
+                className="h-full bg-admin-accent rounded-full"
                 animate={{ width: `${saveProgress}%` }}
                 transition={{ duration: 0.3 }}
               />
