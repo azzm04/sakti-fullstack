@@ -38,60 +38,6 @@ export const TelegramActivationSchema = z.object({
 export type TelegramActivation = z.infer<typeof TelegramActivationSchema>;
 
 /* =========================
-   TOPSIS / Pendaftar
-========================= */
-export const RecommendationStatusSchema = z.enum([
-  "Prioritas Utama",
-  "Direkomendasikan",
-  "Cadangan",
-]);
-export type RecommendationStatus = z.infer<typeof RecommendationStatusSchema>;
-
-export const PendaftarSchema = z.object({
-  rank: z.number().int().positive(),
-  nama: z.string().min(1),
-  nim: z.string().min(1),
-  prodi: z.string().min(1),
-  ipk: z.number().min(0).max(4),
-  penghasilan: z.string(),
-  penghasilan_raw: z.number().nonnegative(),
-  tanggungan: z.number().int().nonnegative(),
-  jarak: z.string(),
-  prestasi: z.string(),
-  skor: z.number().min(0).max(1),
-  status: RecommendationStatusSchema,
-});
-export type Pendaftar = z.infer<typeof PendaftarSchema>;
-
-export const KriteriaSchema = z.object({
-  key: z.string(),
-  label: z.string(),
-  bobot: z.number().int().min(0).max(100),
-  type: z.enum(["benefit", "cost"]),
-});
-export type Kriteria = z.infer<typeof KriteriaSchema>;
-
-// Untuk API response dari backend
-export const CandidateSchema = z.object({
-  rank: z.number(),
-  id: z.string(),
-  name: z.string(),
-  ipk: z.number(),
-  parent_income: z.number(),
-  topsis_score: z.number(),
-  recommendation_status: RecommendationStatusSchema,
-});
-export type Candidate = z.infer<typeof CandidateSchema>;
-
-export const RankingResultSchema = z.object({
-  candidates: z.array(CandidateSchema),
-  total: z.number(),
-  page: z.number(),
-  total_pages: z.number(),
-});
-export type RankingResult = z.infer<typeof RankingResultSchema>;
-
-/* =========================
    User
 ========================= */
 export const UserSchema = z.object({
@@ -314,9 +260,9 @@ export type KandidatBase = z.infer<typeof KandidatBaseSchema>;
    Hasil Wawancara DB (Base Table: hasil_wawancara)
 ========================= */
 export const HasilWawancaraBaseSchema = z.object({
-  hasil_wawancara_id: z.number().nullable().optional(),
-  kandidat_id: z.number().nullable().optional(),
-  pewawancara_id: z.number().nullable().optional(),
+  hasil_wawancara_id: z.string().nullable().optional(),
+  kandidat_id: z.string().nullable().optional(),
+  pewawancara_id: z.string().nullable().optional(),
   validasi_kks: z.boolean().nullable().optional(),
   validasi_kip: z.boolean().nullable().optional(),
   validasi_sktm: z.boolean().nullable().optional(),
@@ -389,7 +335,7 @@ export type StatusWawancara =
 
 export function getStatusWawancara(
   isDraft: boolean | null | undefined,
-  pewawancaraId?: number | null,
+  pewawancaraId?: string | number | null,
 ): StatusWawancara {
   if (pewawancaraId === null || pewawancaraId === undefined)
     return "Belum Ditugaskan";
@@ -431,6 +377,18 @@ export const PewawancaraDataSchema = z.object({
 });
 
 /* =========================
+   Riwayat Kandidat (log aktivitas append-only)
+========================= */
+export const RiwayatKandidatItemSchema = z.object({
+  id: z.string(),
+  tipe: z.string(),
+  deskripsi: z.string(),
+  aktor: z.string().nullable().optional(),
+  created_at: z.string(),
+});
+export type RiwayatKandidatItem = z.infer<typeof RiwayatKandidatItemSchema>;
+
+/* =========================
    Mahasiswa Evaluasi / Kandidat (API Response Merged)
 ========================= */
 export const MahasiswaEvaluasiSchema = KandidatBaseSchema.merge(
@@ -441,6 +399,7 @@ export const MahasiswaEvaluasiSchema = KandidatBaseSchema.merge(
   pewawancara: z.string().nullable().optional(),
   pewawancara_data: PewawancaraDataSchema.nullable().optional(),
   status_wawancara: z.string().default("pending"),
+  riwayat: z.array(RiwayatKandidatItemSchema).optional(),
 });
 export type MahasiswaEvaluasi = z.infer<typeof MahasiswaEvaluasiSchema>;
 export type Kandidat = MahasiswaEvaluasi; // Alias agar komponen lama tidak error
@@ -570,46 +529,6 @@ export const MahasiswaApiResponseSchema = z.object({
 export type MahasiswaApiResponse = z.infer<typeof MahasiswaApiResponseSchema>;
 
 /* =========================
-   Kalkulasi SMART-TOPSIS
-========================= */
-export const KandidatResultSchema = z.object({
-  id: z.union([z.string(), z.number()]),
-  no: z.number().optional(),
-  no_pendaftaran_kipk: z.string(),
-  nama: z.string(),
-  prodi: z.string(),
-  jalur_masuk: z.string().default(""),
-  skor_total: z.number(),
-  ranking: z.number(),
-  lolos: z.boolean(),
-});
-export type KandidatResult = z.infer<typeof KandidatResultSchema>;
-
-/* =========================
-   Seleksi (API SMART-TOPSIS eksternal)
-========================= */
-export const RankedKandidatSchema = z
-  .object({
-    rank: z.number(),
-    id: z.union([z.string(), z.number()]),
-    nama: z.string(),
-    prodi: z.string(),
-    no_pendaftaran_kipk: z.string(),
-    skor: z.number().optional(),
-    rekomendasi: z.string().optional(),
-  })
-  .catchall(z.unknown());
-export type RankedKandidat = z.infer<typeof RankedKandidatSchema>;
-
-export const TopsisApiResultSchema = z
-  .object({
-    data: z.array(RankedKandidatSchema).optional(),
-    total: z.number().optional(),
-  })
-  .catchall(z.unknown());
-export type TopsisApiResult = z.infer<typeof TopsisApiResultSchema>;
-
-/* =========================
    Evaluasi stats API response
 ========================= */
 export const EvaluasiApiResponseSchema = z.object({
@@ -621,3 +540,58 @@ export const EvaluasiApiResponseSchema = z.object({
   totalBelum: z.number(),
 });
 export type EvaluasiApiResponse = z.infer<typeof EvaluasiApiResponseSchema>;
+
+/* =========================
+   Admin dashboard aggregation API response
+========================= */
+export const DashboardRecentInterviewSchema = z.object({
+  id: z.string(),
+  nama: z.string().nullable(),
+  prodi: z.string().nullable(),
+  noPendaftaran: z.string().nullable(),
+  pewawancara: z.string().nullable(),
+  rekomendasi: z.string().nullable(),
+  hasilAkhir: z.string().nullable(),
+  interviewedAt: z.string().nullable(),
+});
+export type DashboardRecentInterview = z.infer<
+  typeof DashboardRecentInterviewSchema
+>;
+
+export const DashboardTrendPointSchema = z.object({
+  tahun: z.number(),
+  pendaftar: z.number(),
+  penerima: z.number(),
+});
+export type DashboardTrendPoint = z.infer<typeof DashboardTrendPointSchema>;
+
+export const DashboardDtAccuracySchema = z.object({
+  akurasi: z.number(),
+  tahun: z.number(),
+  jalur: z.string(),
+  jumlahFitur: z.number(),
+  analyzedAt: z.string().nullable(),
+});
+export type DashboardDtAccuracy = z.infer<typeof DashboardDtAccuracySchema>;
+
+export const DashboardActivityItemSchema = z.object({
+  time: z.string(),
+  title: z.string(),
+  by: z.string(),
+});
+export type DashboardActivityItem = z.infer<typeof DashboardActivityItemSchema>;
+
+export const DashboardStatsSchema = z.object({
+  total: z.number(),
+  valid: z.number(),
+  incomplete: z.number(),
+  wawancaraSelesai: z.number(),
+  wawancaraTotal: z.number(),
+  pewawancaraAktif: z.number(),
+  sesiAktif: z.number(),
+  recentInterviews: z.array(DashboardRecentInterviewSchema),
+  pendaftarPenerimaTrend: z.array(DashboardTrendPointSchema),
+  dtAccuracy: DashboardDtAccuracySchema.nullable(),
+  recentActivity: z.array(DashboardActivityItemSchema),
+});
+export type DashboardStats = z.infer<typeof DashboardStatsSchema>;
