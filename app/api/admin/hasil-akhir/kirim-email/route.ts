@@ -24,10 +24,10 @@ const BodySchema = z.object({
 });
 
 const JALUR_MAP: Record<string, string[]> = {
-  SNBP_ELIGIBLE:     ["SNBP"],
-  SNBP_NON_ELIGIBLE: ["SNBP"],
-  SNBT_ELIGIBLE:     ["SNBT"],
-  SNBT_NON_ELIGIBLE: ["SNBT"],
+  SNBP_ELIGIBLE:     ["SNBP", "SNBP Eligible", "SNBP_ELIGIBLE"], 
+  SNBP_NON_ELIGIBLE: ["SNBP non-eligible", "SNBP Non-Eligible"],
+  SNBT_ELIGIBLE:     ["SNBT", "SNBT Eligible", "SNBT_ELIGIBLE"],
+  SNBT_NON_ELIGIBLE: ["SNBT non-eligible", "SNBT Non-Eligible"],
   UM:                ["UM", "Ujian Mandiri"],
   SBUB:              ["SBUB"],
 };
@@ -72,8 +72,13 @@ export async function POST(req: NextRequest) {
 
     for (const item of data) {
       // Supabase mengembalikan relasi one-to-many sebagai array
-      const wawancaraArr = item.hasil_wawancara as any;
-      const statusAkhir = Array.isArray(wawancaraArr) ? wawancaraArr[0]?.hasil_akhir : wawancaraArr?.hasil_akhir;
+      const wawancara = item.hasil_wawancara as
+        | Array<{ hasil_akhir?: string }>
+        | { hasil_akhir?: string }
+        | null
+        | undefined;
+
+      const statusAkhir = Array.isArray(wawancara) ? wawancara[0]?.hasil_akhir : wawancara?.hasil_akhir;
       
       // Ubah teks "Diusulkan" menjadi true (lolos), selain itu false (tidak lolos)
       const isLolos = statusAkhir === "Diusulkan";

@@ -1,20 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
+import { resolveJalurAliases } from "@/lib/jalur";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
-
-const JALUR_MAP: Record<string, string[]> = {
-  SNBP_ELIGIBLE:     ["SNBP"],
-  SNBP_NON_ELIGIBLE: ["SNBP"],
-  SNBT_ELIGIBLE:     ["SNBT"],
-  SNBT_NON_ELIGIBLE: ["SNBT"],
-  UM:                ["UM", "Ujian Mandiri"],
-  SBUB:              ["SBUB"],
-};
 
 const BodySchema = z.object({
   jalur:         z.array(z.string()).min(1),
@@ -34,9 +26,7 @@ export async function POST(req: NextRequest) {
     const { jalur, sk_dokumen_id, subject } = parsed.data;
 
     // Kumpulkan nilai jalur_masuk dari semua key terpilih
-    const jalurValues = Array.from(
-      new Set(jalur.flatMap((k) => JALUR_MAP[k] ?? []))
-    );
+    const jalurValues = Array.from(new Set(resolveJalurAliases(jalur)));
 
     if (jalurValues.length === 0) {
       return NextResponse.json({ error: "Jalur tidak valid" }, { status: 400 });
@@ -53,25 +43,24 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "SK dokumen tidak ditemukan" }, { status: 404 });
     }
 
-    // Ambil kandidat lolos dengan email valid
+    // Ambil semua kandidat dengan email valid pada jalur terpilih
     const { data: kandidats, error: kErr } = await supabase
       .from("kandidat")
       .select(`
         id,
         nama_pendaftar,
         email,
-        hasil_wawancara!inner (
+        hasil_wawancara (
           hasil_akhir
         )
       `)
       .in("jalur_masuk", jalurValues)
-      .in("hasil_wawancara.hasil_akhir", ["Diusulkan", "DIUSULKAN", "Lolos", "LOLOS"])
       .not("email", "is", null)
       .neq("email", "");
 
     if (kErr) throw kErr;
     if (!kandidats || kandidats.length === 0) {
-      return NextResponse.json({ error: "Tidak ada kandidat lolos dengan email valid" }, { status: 404 });
+      return NextResponse.json({ error: "Tidak ada kandidat dengan email valid" }, { status: 404 });
     }
 
     // Cek duplikat

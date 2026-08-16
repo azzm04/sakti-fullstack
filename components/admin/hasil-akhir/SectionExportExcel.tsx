@@ -18,32 +18,32 @@ const JALUR_OPTIONS = [
   {
     key: "SNBP_ELIGIBLE",
     label: "SNBP Eligible",
-    color: "bg-blue-50 text-blue-700 border-blue-200",
+    color: "bg-admin-accent/10 text-admin-accent-ink border-admin-accent/25",
   },
   {
     key: "SNBP_NON_ELIGIBLE",
     label: "SNBP Non-Eligible",
-    color: "bg-blue-50 text-blue-600 border-blue-200",
+    color: "bg-admin-accent/10 text-admin-accent border-admin-accent/25",
   },
   {
     key: "SNBT_ELIGIBLE",
     label: "SNBT Eligible",
-    color: "bg-violet-50 text-violet-700 border-violet-200",
+    color: "bg-admin-accent/10 text-admin-accent-ink border-admin-accent/25",
   },
   {
     key: "SNBT_NON_ELIGIBLE",
     label: "SNBT Non-Eligible",
-    color: "bg-violet-50 text-violet-600 border-violet-200",
+    color: "bg-admin-accent/10 text-admin-accent border-admin-accent/25",
   },
   {
     key: "UM",
     label: "Ujian Mandiri (UM)",
-    color: "bg-orange-50 text-orange-700 border-orange-200",
+    color: "bg-admin-warn-bg-2 text-admin-warn-text border-admin-warn-border",
   },
   {
     key: "SBUB",
     label: "SBUB",
-    color: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    color: "bg-admin-accent/10 text-admin-accent-ink border-admin-accent/25",
   },
 ] as const;
 
@@ -190,17 +190,17 @@ export default function SectionExportExcel() {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-border shadow-sm overflow-hidden">
+    <div className="bg-white rounded-2xl border border-admin-border shadow-sm overflow-hidden">
       {/* Card Header */}
-      <div className="px-6 py-5 border-b border-border flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+      <div className="px-6 py-5 border-b border-admin-border flex items-center gap-3">
+        <div className="w-9 h-9 rounded-xl bg-admin-accent/10 text-admin-accent flex items-center justify-center">
           <FileSpreadsheet size={17} />
         </div>
         <div>
-          <h2 className="font-bold text-foreground text-base">
+          <h2 className="font-admin-heading font-bold text-admin-text text-base">
             Export Data Penerima (Lolos) ke Excel
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
+          <p className="text-xs text-admin-text-3 mt-0.5">
             Hanya mengekspor kandidat yang lolos (Diusulkan). Format: No | Nama Siswa | NISN | Prodi
           </p>
         </div>
@@ -209,17 +209,17 @@ export default function SectionExportExcel() {
       <div className="p-6 space-y-6">
         
         {/* Pilih Tahun Seleksi */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-muted/50 p-4 rounded-xl border border-border">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-admin-surface-soft/50 p-4 rounded-xl border border-admin-border">
           <div>
-            <label className="text-sm font-semibold text-foreground block">Tahun Seleksi</label>
-            <p className="text-xs text-muted-foreground mt-0.5">Filter data penerima KIP-K berdasarkan tahun.</p>
+            <label className="text-sm font-semibold text-admin-text block">Tahun Seleksi</label>
+            <p className="text-xs text-admin-text-3 mt-0.5">Filter data penerima KIP-K berdasarkan tahun.</p>
           </div>
           <div className="w-full md:w-32">
             <input
               type="number"
               value={tahun}
               onChange={(e) => setTahun(Number(e.target.value))}
-              className="w-full px-4 py-2.5 text-sm font-semibold border border-border rounded-lg bg-white focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/10 transition-all"
+              className="w-full px-4 py-2.5 text-sm font-semibold border border-admin-border rounded-lg bg-white focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/10 transition-all"
             />
           </div>
         </div>
@@ -227,12 +227,12 @@ export default function SectionExportExcel() {
         {/* Pilih Jalur */}
         <div>
           <div className="flex items-center justify-between mb-3">
-            <p className="text-sm font-semibold text-foreground">
+            <p className="text-sm font-semibold text-admin-text">
               Pilih Jalur Masuk
             </p>
             <button
               onClick={toggleAll}
-              className="text-xs font-semibold text-primary hover:underline underline-offset-2"
+              className="text-xs font-semibold text-admin-accent hover:underline underline-offset-2"
             >
               {selected.size === JALUR_OPTIONS.length
                 ? "Batal Semua"
@@ -251,7 +251,7 @@ export default function SectionExportExcel() {
                   className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border text-sm font-semibold transition-all ${
                     isSelected
                       ? `${color} shadow-sm`
-                      : "bg-muted border-border text-muted-foreground hover:border-slate-300"
+                      : "bg-admin-surface-soft border-admin-border text-admin-text-3 hover:border-admin-text-6"
                   }`}
                 >
                   {isSelected ? (
@@ -271,7 +271,7 @@ export default function SectionExportExcel() {
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-primary/5 border border-primary/15 rounded-xl text-sm text-primary font-medium"
+            className="flex items-center gap-2 px-4 py-2.5 bg-admin-accent/5 border border-admin-accent/15 rounded-xl text-sm text-admin-accent font-medium"
           >
             <CheckCircle2 size={14} />
             {selected.size} jalur dipilih ·{" "}
@@ -288,7 +288,7 @@ export default function SectionExportExcel() {
               initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="flex items-center gap-2 px-4 py-3 bg-emerald-50 border border-emerald-200 rounded-xl text-sm font-semibold text-emerald-700"
+              className="flex items-center gap-2 px-4 py-3 bg-admin-accent/10 border border-admin-accent/25 rounded-xl text-sm font-semibold text-admin-accent-ink"
             >
               <CheckCircle2 size={15} /> File Excel berhasil diunduh!
             </motion.div>
@@ -298,7 +298,7 @@ export default function SectionExportExcel() {
               initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="flex items-center gap-2 px-4 py-3 bg-red-50 border border-red-200 rounded-xl text-sm font-semibold text-red-600"
+              className="flex items-center gap-2 px-4 py-3 bg-admin-danger-bg border border-admin-danger-border rounded-xl text-sm font-semibold text-admin-danger-text"
             >
               <AlertCircle size={15} /> {errorMsg}
             </motion.div>
@@ -311,7 +311,7 @@ export default function SectionExportExcel() {
           whileTap={{ scale: 0.98 }}
           onClick={handleExport}
           disabled={loading || selected.size === 0}
-          className="flex items-center justify-center gap-2 w-full md:w-auto px-8 py-3 bg-primary text-primary-foreground rounded-xl text-sm font-semibold hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+          className="flex items-center justify-center gap-2 w-full md:w-auto px-8 py-3 bg-admin-accent text-white rounded-xl text-sm font-semibold hover:bg-admin-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
         >
           {loading ? (
             <>

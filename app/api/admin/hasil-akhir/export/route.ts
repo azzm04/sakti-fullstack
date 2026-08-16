@@ -1,20 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { resolveJalurAliases } from "@/lib/jalur";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
-
-// Key → nilai kolom jalur_masuk di DB
-const JALUR_MAP: Record<string, string[]> = {
-  SNBP_ELIGIBLE:     ["SNBP", "SNBP Eligible", "SNBP_ELIGIBLE"], 
-  SNBP_NON_ELIGIBLE: ["SNBP non-eligible", "SNBP Non-Eligible"],
-  SNBT_ELIGIBLE:     ["SNBT", "SNBT Eligible", "SNBT_ELIGIBLE"],
-  SNBT_NON_ELIGIBLE: ["SNBT non-eligible", "SNBT Non-Eligible"],
-  UM:                ["UM", "Ujian Mandiri"],
-  SBUB:              ["SBUB"],
-};
 
 // "Diusulkan" adalah kandidat yang direkomendasikan (lolos)
 const LOLOS_VALUES = ["Diusulkan", "DIUSULKAN", "Lolos", "LOLOS"];
@@ -35,9 +26,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Parameter tahun wajib diisi" }, { status: 400 });
     }
 
-    const jalurValues = Array.from(
-      new Set(jalurKeys.flatMap((k) => JALUR_MAP[k] ?? []))
-    );
+    const jalurValues = Array.from(new Set(resolveJalurAliases(jalurKeys)));
 
     if (jalurValues.length === 0) {
       return NextResponse.json({ error: "Jalur tidak dikenali" }, { status: 400 });

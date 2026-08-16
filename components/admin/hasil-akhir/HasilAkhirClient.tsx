@@ -45,15 +45,15 @@ export default function HasilAkhirClient() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, ease }}
         >
-          <nav className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider mb-3">
+          <nav className="flex items-center gap-1.5 text-[11px] font-semibold text-admin-text-3 uppercase tracking-wider mb-3">
             <span>Dashboard</span>
             <ChevronRight size={12} />
-            <span className="text-primary">Hasil Akhir</span>
+            <span className="text-admin-accent">Hasil Akhir</span>
           </nav>
-          <h1 className="text-2xl md:text-3xl font-extrabold font-headline text-primary leading-tight">
+          <h1 className="text-2xl md:text-3xl font-extrabold font-admin-heading text-admin-accent leading-tight">
             Hasil Akhir Seleksi
           </h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-admin-text-3 mt-1">
             Export data penerima, import dokumen SK, dan kirim SK langsung ke email kandidat.
           </p>
         </motion.div>
@@ -75,20 +75,20 @@ export default function HasilAkhirClient() {
                 onClick={() => setActiveTab(key)}
                 className={`flex items-start gap-3 p-4 rounded-2xl border text-left transition-all duration-200 ${
                   active
-                    ? "bg-white border-primary shadow-sm"
-                    : "bg-white border-border hover:border-slate-300"
+                    ? "bg-white border-admin-accent shadow-sm"
+                    : "bg-white border-admin-border hover:border-admin-text-6"
                 }`}
               >
                 <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                  active ? "bg-primary text-white" : "bg-muted text-muted-foreground"
+                  active ? "bg-admin-accent text-white" : "bg-admin-surface-soft text-admin-text-3"
                 }`}>
                   <Icon size={17} />
                 </div>
                 <div>
-                  <p className={`text-sm font-bold ${active ? "text-primary" : "text-foreground"}`}>
+                  <p className={`text-sm font-bold ${active ? "text-admin-accent" : "text-admin-text"}`}>
                     {label}
                   </p>
-                  <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                  <p className="text-[11px] text-admin-text-3 mt-0.5 leading-relaxed">
                     {desc}
                   </p>
                 </div>
