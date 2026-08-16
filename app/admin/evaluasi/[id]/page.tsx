@@ -1,9 +1,10 @@
 import { notFound } from "next/navigation";
 import { supabaseAdmin } from "@/lib/supabase";
 import type { Kandidat } from "@/schemas";
+import { computeEvaluasiInsight, countPolaSerupa } from "@/lib/evaluasi-insight";
 import EvaluasiDetailClient from "@/components/admin/evaluasi/EvaluasiDetailClient";
 
-async function getKandidatDetail(id: string): Promise<Kandidat | null> {
+async function getKandidatDetail(id: string) {
   try {
     const { data: row, error } = await supabaseAdmin
       .from("kandidat")
@@ -33,23 +34,35 @@ async function getKandidatDetail(id: string): Promise<Kandidat | null> {
       ? hw?.detail_ekonomi_wawancara[0]
       : hw?.detail_ekonomi_wawancara;
 
-    return {
+    const { data: riwayat } = await supabaseAdmin
+      .from("kandidat_riwayat")
+      .select("id, tipe, deskripsi, aktor, created_at")
+      .eq("kandidat_id", id)
+      .order("created_at", { ascending: false })
+      .limit(20);
+
+    const kandidat = {
       ...row,
       nama: (row as Record<string, unknown>).nama_pendaftar,
       hasil_wawancara: undefined,
       hasil_wawancara_id: hw?.id,
       sosial_media: hw?.sosial_media,
-      det_pekerjaan_ayah: hw?.det_pekerjaan_ayah,
+      validasi_kks: hw?.validasi_kks,
+      validasi_kip: hw?.validasi_kip,
+      validasi_sktm: hw?.validasi_sktm,
+      ket_pekerjaan_ayah: hw?.ket_pekerjaan_ayah,
       ket_penghasilan_ayah: hw?.ket_penghasilan_ayah,
-      det_pekerjaan_ibu: hw?.det_pekerjaan_ibu,
+      ket_pekerjaan_ibu: hw?.ket_pekerjaan_ibu,
       ket_penghasilan_ibu: hw?.ket_penghasilan_ibu,
-      penghasilan_lain: hw?.penghasilan_lain,
+      penghasilan_lain: hw?.penghasilan_lain ?? dew?.penghasilan_lain,
       jumlah_orang_rumah: hw?.jumlah_orang_rumah,
       validasi_orang_rumah: hw?.validasi_orang_rumah,
       kepemilikan_rumah: hw?.kepemilikan_rumah,
       kepemilikan_kendaraan: hw?.kepemilikan_kendaraan,
       kepemilikan_elektronik: hw?.kepemilikan_elektronik,
       kelayakan_rumah: hw?.kelayakan_rumah,
+      aset: hw?.aset,
+      kondisi_rumah: hw?.kondisi_rumah,
       rekomendasi: hw?.rekomendasi,
       alasan: hw?.alasan,
       status_wawancara: hw?.status_wawancara,
@@ -66,11 +79,30 @@ async function getKandidatDetail(id: string): Promise<Kandidat | null> {
       mck: dew?.mck,
       jml_tanggungan_sebenarnya: dew?.jml_tanggungan_sebenarnya,
       tahun_perolehan: dew?.tahun_perolehan,
-      penghasilan_lain_dew: dew?.penghasilan_lain,
       // pewawancara
       pewawancara: pewawancaraData?.nama || null,
       pewawancara_data: pewawancaraData || null,
+      riwayat: riwayat ?? [],
     } as unknown as Kandidat;
+
+    const insight = computeEvaluasiInsight({
+      desilDtsen: row.desil_dtsen,
+      jarakPusatKota: row.jarak_pusat_kota,
+      penghasilanAyah: hw?.ket_penghasilan_ayah ?? row.penghasilan_ayah,
+      penghasilanIbu: hw?.ket_penghasilan_ibu ?? row.penghasilan_ibu,
+      penghasilanLain: hw?.penghasilan_lain ?? dew?.penghasilan_lain,
+      jumlahTanggungan: row.jumlah_tanggungan,
+      jmlTanggunganSebenarnya: dew?.jml_tanggungan_sebenarnya,
+    });
+
+    const polaSerupaCount = await countPolaSerupa(supabaseAdmin, {
+      kandidatId: id,
+      jalurMasuk: row.jalur_masuk,
+      desilDtsen: row.desil_dtsen,
+      kepemilikanRumah: hw?.kepemilikan_rumah,
+    });
+
+    return { kandidat, insight, polaSerupaCount };
   } catch (err) {
     console.error("[Server] getKandidatDetail error:", err);
     return null;
@@ -83,11 +115,20 @@ export default async function EvaluasiDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const kandidat = await getKandidatDetail(id);
+  const result = await getKandidatDetail(id);
 
-  if (!kandidat) {
+  if (!result) {
     notFound();
   }
 
-  return <EvaluasiDetailClient kandidat={kandidat} id={id} />;
+  const { kandidat, insight, polaSerupaCount } = result;
+
+  return (
+    <EvaluasiDetailClient
+      kandidat={kandidat}
+      id={id}
+      insight={insight}
+      polaSerupaCount={polaSerupaCount}
+    />
+  );
 }

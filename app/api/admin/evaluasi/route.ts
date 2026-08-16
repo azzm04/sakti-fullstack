@@ -6,24 +6,52 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search") ?? "";
     const page   = Math.max(1, parseInt(searchParams.get("page") ?? "1"));
-    const limit  = 50;
+    const limitParam = parseInt(searchParams.get("limit") ?? "50");
+    const limit  = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 500) : 50;
     const from   = (page - 1) * limit;
     const to     = from + limit - 1;
 
+    const tahun = searchParams.get("tahun") ?? "";
+    const jalurMasuk = searchParams.get("jalur_masuk") ?? "";
+
+    if (!tahun || !jalurMasuk) {
+      return NextResponse.json(
+        { error: "Parameter tahun dan jalur_masuk wajib diisi" },
+        { status: 400 },
+      );
+    }
+
+    const tahunSeleksi = parseInt(tahun);
+    if (Number.isNaN(tahunSeleksi)) {
+      return NextResponse.json(
+        { error: "Parameter tahun tidak valid" },
+        { status: 400 },
+      );
+    }
+
+    const selectClause = `
+      *,
+      impor_data!inner (
+        tahun_seleksi
+      ),
+      hasil_wawancara (
+        *,
+        pewawancara:pewawancara_id (nama)
+      )
+    `;
+
     let query = supabaseAdmin
       .from("kandidat")
-      .select(`
-        *,
-        hasil_wawancara (
-          *,
-          pewawancara:pewawancara_id (nama)
-        )
-      `, { count: "exact" })
+      .select(selectClause, { count: "exact" })
+      .eq("impor_data.tahun_seleksi", tahunSeleksi)
+      .eq("jalur_masuk", jalurMasuk)
       .order("no", { ascending: true })
       .range(from, to);
 
     if (search) {
-      query = query.or(`nama_pendaftar.ilike.%${search}%,no_pendaftaran_kipk.ilike.%${search}%,prodi_pendaftar.ilike.%${search}%`);
+      query = query.or(
+        `nama_pendaftar.ilike.%${search}%,no_pendaftaran_kipk.ilike.%${search}%,prodi_pendaftar.ilike.%${search}%`,
+      );
     }
 
     const { data: rawData, count, error } = await query;
@@ -70,13 +98,69 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    // Hitung total data untuk statistik atas
-    const { count: totalKandidat } = await supabaseAdmin.from("kandidat").select("id", { count: "exact", head: true });
-    const { count: totalWawancara } = await supabaseAdmin.from("hasil_wawancara").select("id", { count: "exact", head: true });
-    
+    let totalKandidatQuery = supabaseAdmin
+      .from("kandidat")
+      .select("id", { count: "exact", head: true })
+      .eq("impor_data.tahun_seleksi", tahunSeleksi)
+      .eq("jalur_masuk", jalurMasuk);
+
+    if (search) {
+      totalKandidatQuery = totalKandidatQuery.or(
+        `nama_pendaftar.ilike.%${search}%,no_pendaftaran_kipk.ilike.%${search}%,prodi_pendaftar.ilike.%${search}%`,
+      );
+    }
+
+    const { count: totalKandidat } = await totalKandidatQuery;
+
+    const { data: statsRows } = await supabaseAdmin
+      .from("kandidat")
+      .select(
+        `
+          id,
+          hasil_wawancara (
+            rekomendasi,
+            hasil_akhir,
+            is_draft
+          ),
+          impor_data!inner (
+            tahun_seleksi
+          )
+        `,
+      )
+      .eq("impor_data.tahun_seleksi", tahunSeleksi)
+      .eq("jalur_masuk", jalurMasuk);
+
+    const uniqueCompletedIds = new Set<string>();
+
+    for (const row of statsRows ?? []) {
+      const rowRecord = row as Record<string, unknown>;
+      const kandidatId = String(rowRecord.id ?? "");
+      if (!kandidatId) continue;
+
+      const wawancaraRaw = rowRecord.hasil_wawancara;
+      const wawancara = Array.isArray(wawancaraRaw)
+        ? wawancaraRaw
+        : wawancaraRaw
+          ? [wawancaraRaw]
+          : [];
+
+      const isSelesai = wawancara.some((item) => {
+        const wawancaraItem = item as Record<string, unknown>;
+        return Boolean(
+          wawancaraItem.rekomendasi &&
+            wawancaraItem.hasil_akhir &&
+            wawancaraItem.is_draft === false,
+        );
+      });
+
+      if (isSelesai) {
+        uniqueCompletedIds.add(kandidatId);
+      }
+    }
+
     const realTotal = totalKandidat ?? 0;
-    const realTotalSelesai = totalWawancara ?? 0;
-    const realTotalBelum = realTotal - realTotalSelesai;
+    const realTotalSelesai = uniqueCompletedIds.size;
+    const realTotalBelum = Math.max(0, realTotal - realTotalSelesai);
 
     return NextResponse.json({
       data,
