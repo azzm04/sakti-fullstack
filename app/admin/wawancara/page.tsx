@@ -1,18 +1,25 @@
 "use client";
 
 import { useState } from "react";
-import { Users, Zap } from "lucide-react";
+import { Users, Zap, GraduationCap, UserCheck } from "lucide-react";
 import DaftarPewawancara from "@/components/admin/wawancara/DaftarPewawancara";
+import DaftarMahasiswa from "@/components/admin/wawancara/DaftarMahasiswa";
 import SesiWAR from "@/components/admin/wawancara/SesiWAR";
-import type { WawancaraTab } from "@/types/wawancara";
+import type { WawancaraTab, DaftarPenggunaRole } from "@/types/wawancara";
 
 const TABS: { key: WawancaraTab; label: string; icon: React.ElementType }[] = [
   { key: "daftar", label: "Daftar Pengguna", icon: Users },
   { key: "sesi", label: "Pemilihan Urutan Pewawancara", icon: Zap },
 ];
 
+const ROLE_TABS: { key: DaftarPenggunaRole; label: string; icon: React.ElementType }[] = [
+  { key: "pewawancara", label: "Pewawancara", icon: UserCheck },
+  { key: "mahasiswa", label: "Mahasiswa KIP-K", icon: GraduationCap },
+];
+
 export default function PewawancaraPage() {
   const [tab, setTab] = useState<WawancaraTab>("daftar");
+  const [role, setRole] = useState<DaftarPenggunaRole>("pewawancara");
 
   return (
     <div className="p-6 md:p-10 min-h-screen bg-admin-bg font-admin-body text-admin-text">
@@ -48,7 +55,29 @@ export default function PewawancaraPage() {
         ))}
       </div>
 
-      {tab === "daftar" ? <DaftarPewawancara /> : <SesiWAR />}
+      {tab === "daftar" ? (
+        <>
+          <div className="flex gap-1 p-1 bg-admin-surface-soft border border-admin-border-soft rounded-xl w-fit mb-5">
+            {ROLE_TABS.map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                onClick={() => setRole(key)}
+                className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-[13px] font-semibold transition-colors duration-200 ${
+                  role === key
+                    ? "bg-white text-admin-text shadow-sm border border-admin-border-soft"
+                    : "text-admin-text-4 hover:text-admin-text-2"
+                }`}
+              >
+                <Icon size={14} />
+                {label}
+              </button>
+            ))}
+          </div>
+          {role === "pewawancara" ? <DaftarPewawancara /> : <DaftarMahasiswa />}
+        </>
+      ) : (
+        <SesiWAR />
+      )}
     </div>
   );
 }

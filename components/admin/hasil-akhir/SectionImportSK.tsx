@@ -1,24 +1,20 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
-import useSWR from "swr";
+import { useState, useRef } from "react";
+import { mutate as globalMutate } from "swr";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Upload,
   FileText,
-  Trash2,
   CheckCircle2,
   AlertCircle,
   Loader2,
   Calendar,
-  HardDrive,
   CheckSquare,
   Square,
-  RefreshCw,
-  Eye,
 } from "lucide-react";
-import { supabaseBrowser } from "@/lib/supabase-browser";
 import { JALUR_OPTIONS, type JalurKey } from "@/lib/jalur";
+import { SK_ENDPOINT } from "./SKTersimpanCard";
 
 // ── Tahun options ─────────────────────────────────────────────────────────────
 const CURRENT_YEAR = new Date().getFullYear();
@@ -37,45 +33,7 @@ export type SKDokumen = {
   catatan: string;
 };
 
-const ease = [0.25, 0, 0, 1] as [number, number, number, number];
-
-const SK_ENDPOINT = "/api/admin/hasil-akhir/sk-dokumen";
-
-const fetcher = (url: string) =>
-  fetch(url)
-    .then((res) => res.json())
-    .then((json) => (json.data ?? []) as SKDokumen[]);
-
 export default function SectionImportSK() {
-  // ── Cache store data SK (SWR) ──────────────────────────────────────────────
-  const {
-    data: skList = [],
-    isLoading: loading,
-    isValidating: refreshing,
-    mutate,
-  } = useSWR<SKDokumen[]>(SK_ENDPOINT, fetcher, {
-    revalidateOnFocus: true, // sinkron lagi begitu tab difokuskan
-  });
-
-  // ── Realtime: begitu ada perubahan di tabel sk_dokumen (dari mana pun),
-  //    langsung mutate() supaya list ter-refresh sendiri tanpa refresh manual ──
-  useEffect(() => {
-    const channel = supabaseBrowser
-      .channel("sk_dokumen_changes")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "sk_dokumen" },
-        () => {
-          mutate();
-        },
-      )
-      .subscribe();
-
-    return () => {
-      supabaseBrowser.removeChannel(channel);
-    };
-  }, [mutate]);
-
   // Upload state
   const [file, setFile] = useState<File | null>(null);
   const [tahun, setTahun] = useState(String(CURRENT_YEAR));
@@ -86,9 +44,6 @@ export default function SectionImportSK() {
     "idle" | "success" | "error"
   >("idle");
   const [uploadError, setUploadError] = useState("");
-
-  // Delete state
-  const [deleting, setDeleting] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -143,38 +98,15 @@ export default function SectionImportSK() {
       setCatatan("");
       if (fileInputRef.current) fileInputRef.current.value = "";
 
-      // Revalidate cache langsung (tidak perlu tunggu event Realtime).
-      // Realtime tetap jalan sebagai jaring pengaman untuk tab/sesi lain.
-      mutate();
+      // Revalidate cache SK Tersimpan (kartu ini ada di kolom sebelah) —
+      // key SWR sama, jadi cukup trigger lewat mutate global.
+      // Realtime di SKTersimpanCard tetap jalan sebagai jaring pengaman.
+      globalMutate(SK_ENDPOINT);
     } catch (err) {
       setUploadError(err instanceof Error ? err.message : "Terjadi kesalahan");
       setUploadStatus("error");
     } finally {
       setUploading(false);
-    }
-  }
-
-  async function handleDelete(id: string) {
-    if (!confirm("Hapus dokumen SK ini? Tindakan tidak bisa dibatalkan."))
-      return;
-    setDeleting(id);
-
-    // Optimistic update: hilangkan dari list dulu di UI, revalidate di belakang
-    const prevList = skList;
-    mutate(
-      prevList.filter((sk) => sk.id !== id),
-      false,
-    );
-
-    try {
-      const res = await fetch(`${SK_ENDPOINT}?id=${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error("Gagal menghapus SK");
-      mutate(); // revalidate untuk memastikan sinkron dengan server
-    } catch {
-      // Rollback kalau gagal
-      mutate(prevList, false);
-    } finally {
-      setDeleting(null);
     }
   }
 
@@ -358,138 +290,6 @@ export default function SectionImportSK() {
             )}
           </motion.button>
         </div>
-      </div>
-
-      {/* ── Daftar SK tersimpan ── */}
-      <div className="bg-white rounded-2xl border border-admin-border shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-admin-border flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <FileText size={16} className="text-admin-text-3" />
-            <h3 className="font-admin-heading font-bold text-admin-text text-sm">
-              SK Tersimpan
-              {!loading && (
-                <span className="ml-2 text-xs font-semibold text-admin-text-3 bg-admin-surface-soft px-2 py-0.5 rounded-full">
-                  {skList.length} file
-                </span>
-              )}
-            </h3>
-          </div>
-          {/* Tombol ini sekarang cuma opsional "force sync", bukan satu-satunya cara refresh */}
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={() => mutate()}
-            className="w-8 h-8 rounded-lg hover:bg-admin-surface-soft flex items-center justify-center text-admin-text-3 transition-colors"
-            title="Sinkronkan ulang"
-          >
-            <RefreshCw
-              size={14}
-              className={loading || refreshing ? "animate-spin" : ""}
-            />
-          </motion.button>
-        </div>
-
-        {loading ? (
-          <div className="flex items-center justify-center gap-2 py-12 text-admin-text-3 text-sm">
-            <Loader2 size={15} className="animate-spin" /> Memuat...
-          </div>
-        ) : skList.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-12 gap-3 text-center">
-            <div className="w-12 h-12 bg-admin-surface-soft rounded-2xl flex items-center justify-center">
-              <FileText size={22} className="text-admin-text-3" />
-            </div>
-            <div>
-              <p className="text-sm font-semibold text-admin-text">
-                Belum ada SK diupload
-              </p>
-              <p className="text-xs text-admin-text-3 mt-1">
-                Upload file SK di atas untuk mulai
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="divide-y divide-admin-border">
-            {skList.map((sk) => (
-              <motion.div
-                key={sk.id}
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ ease }}
-                className="flex items-start gap-4 px-6 py-4 hover:bg-admin-surface-soft/20 transition-colors"
-              >
-                {/* Icon */}
-                <div className="w-9 h-9 rounded-xl bg-admin-danger-bg text-admin-danger-bar flex items-center justify-center shrink-0 mt-0.5">
-                  <FileText size={16} />
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-admin-text truncate">
-                    {sk.nama_file}
-                  </p>
-                  {sk.catatan && (
-                    <p className="text-xs text-admin-text-3 mt-0.5 truncate">
-                      {sk.catatan}
-                    </p>
-                  )}
-                  {/* Jalur tags */}
-                  <div className="flex flex-wrap gap-1 mt-2">
-                    {sk.jalur_masuk.map((j) => (
-                      <span
-                        key={j}
-                        className="text-[10px] font-bold px-2 py-0.5 bg-admin-accent/8 text-admin-accent rounded-full"
-                      >
-                        {JALUR_OPTIONS.find((o) => o.key === j)?.label ?? j}
-                      </span>
-                    ))}
-                  </div>
-                  {/* Meta */}
-                  <div className="flex items-center gap-3 mt-1.5 text-[11px] text-admin-text-3">
-                    <span className="flex items-center gap-1 font-semibold text-admin-accent">
-                      Tahun {sk.tahun}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Calendar size={10} />
-                      {new Date(sk.created_at).toLocaleDateString("id-ID", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric",
-                      })}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <HardDrive size={10} />
-                      {sk.ukuran_kb} KB
-                    </span>
-                  </div>
-                </div>
-
-                {/* Actions */}
-                <div className="flex items-center gap-1 shrink-0">
-                  <a
-                    href={`/api/admin/hasil-akhir/sk-dokumen/preview?id=${sk.id}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-8 h-8 flex items-center justify-center rounded-lg text-admin-text-3 hover:bg-admin-surface-soft hover:text-admin-accent transition-colors"
-                    title="Preview PDF"
-                  >
-                    <Eye size={14} />
-                  </a>
-                  <button
-                    onClick={() => handleDelete(sk.id)}
-                    disabled={deleting === sk.id}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg text-admin-text-3 hover:bg-admin-danger-bg hover:text-admin-danger-bar disabled:opacity-40 transition-colors"
-                    title="Hapus SK"
-                  >
-                    {deleting === sk.id ? (
-                      <Loader2 size={13} className="animate-spin" />
-                    ) : (
-                      <Trash2 size={13} />
-                    )}
-                  </button>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        )}
       </div>
     </div>
   );

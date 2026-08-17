@@ -14,9 +14,6 @@ import {
   CheckSquare,
   Square,
   FileText,
-  RefreshCw,
-  Clock,
-  XCircle,
 } from "lucide-react";
 import type { SKDokumen } from "./SectionImportSK";
 import { JALUR_OPTIONS, type JalurKey } from "@/lib/jalur";
@@ -28,16 +25,15 @@ type PreviewItem = {
   lolos: boolean;
 };
 
-type QueueStats = {
-  total: number;
-  queued: number;
-  sent: number;
-  failed: number;
-};
-
 const ease = [0.25, 0, 0, 1] as [number, number, number, number];
 
-export default function SectionKirimEmail() {
+interface Props {
+  // Dipanggil setelah antrian berhasil dibuat, supaya kartu ringkasan
+  // antrian di kolom sebelah (dimiliki parent) ikut ter-refresh.
+  onEnqueued: () => void;
+}
+
+export default function SectionKirimEmail({ onEnqueued }: Props) {
   // Form state
   const [jalurTerpilih, setJalurTerpilih] = useState<Set<JalurKey>>(new Set());
   const [skList, setSkList] = useState<SKDokumen[]>([]);
@@ -52,10 +48,6 @@ export default function SectionKirimEmail() {
   const [preview, setPreview] = useState<PreviewItem[]>([]);
   const [loadingPreview, setLoadingPreview] = useState(false);
 
-  // Queue state
-  const [queueStats, setQueueStats] = useState<QueueStats | null>(null);
-  const [loadingQueue, setLoadingQueue] = useState(false);
-
   // Send state
   const [sending, setSending] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
@@ -68,21 +60,9 @@ export default function SectionKirimEmail() {
     setSkList(json.data ?? []);
   }, []);
 
-  const fetchQueueStats = useCallback(async () => {
-    setLoadingQueue(true);
-    try {
-      const res = await fetch("/api/admin/hasil-akhir/email-queue/stats");
-      const json = await res.json();
-      if (res.ok) setQueueStats(json);
-    } finally {
-      setLoadingQueue(false);
-    }
-  }, []);
-
   useEffect(() => {
     fetchSK();
-    fetchQueueStats();
-  }, [fetchSK, fetchQueueStats]);
+  }, [fetchSK]);
 
   function toggleJalur(key: JalurKey) {
     setJalurTerpilih((prev) => {
@@ -147,23 +127,12 @@ export default function SectionKirimEmail() {
 
       setStatus("success");
       setConfirmed(false);
-      fetchQueueStats(); // refresh stats
+      onEnqueued(); // refresh kartu ringkasan antrian di kolom sebelah
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : "Terjadi kesalahan");
       setStatus("error");
     } finally {
       setSending(false);
-    }
-  }
-
-  async function handleProcessQueue() {
-    try {
-      await fetch("/api/admin/hasil-akhir/email-queue/process", {
-        method: "POST",
-      });
-      setTimeout(fetchQueueStats, 2000);
-    } catch {
-      /* silent */
     }
   }
 
@@ -173,89 +142,6 @@ export default function SectionKirimEmail() {
 
   return (
     <div className="space-y-5">
-      {/* ── Queue Status Card ── */}
-      {queueStats && queueStats.total > 0 && (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ ease }}
-          className="bg-white rounded-2xl border border-admin-border shadow-sm p-5"
-        >
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Clock size={15} className="text-admin-accent" />
-              <h3 className="font-admin-heading text-sm font-bold text-admin-text">
-                Status Antrian Email
-              </h3>
-            </div>
-            <div className="flex items-center gap-2">
-              <motion.button
-                whileTap={{ scale: 0.9 }}
-                onClick={fetchQueueStats}
-                className="w-8 h-8 rounded-lg hover:bg-admin-surface-soft flex items-center justify-center text-admin-text-3"
-              >
-                <RefreshCw
-                  size={13}
-                  className={loadingQueue ? "animate-spin" : ""}
-                />
-              </motion.button>
-              {queueStats.queued > 0 && (
-                <button
-                  onClick={handleProcessQueue}
-                  className="flex items-center gap-1.5 px-3 py-1.5 bg-admin-accent text-white rounded-lg text-xs font-semibold hover:bg-admin-accent/90 transition-colors"
-                >
-                  <Send size={12} /> Proses Antrian
-                </button>
-              )}
-            </div>
-          </div>
-          <div className="grid grid-cols-4 gap-3">
-            {[
-              {
-                label: "Total",
-                value: queueStats.total,
-                color: "text-admin-text",
-                bg: "bg-admin-surface-soft",
-              },
-              {
-                label: "Antrian",
-                value: queueStats.queued,
-                color: "text-admin-warn-text",
-                bg: "bg-admin-warn-bg-2",
-              },
-              {
-                label: "Terkirim",
-                value: queueStats.sent,
-                color: "text-admin-accent",
-                bg: "bg-admin-accent/10",
-              },
-              {
-                label: "Gagal",
-                value: queueStats.failed,
-                color: "text-admin-danger-text",
-                bg: "bg-admin-danger-bg",
-              },
-            ].map(({ label, value, color, bg }) => (
-              <div key={label} className={`${bg} rounded-xl p-3 text-center`}>
-                <p className={`text-xl font-extrabold font-admin-heading ${color}`}>
-                  {value}
-                </p>
-                <p className="text-[10px] font-semibold text-admin-text-3 mt-0.5 uppercase tracking-wider">
-                  {label}
-                </p>
-              </div>
-            ))}
-          </div>
-          {queueStats.failed > 0 && (
-            <p className="mt-3 text-xs text-admin-danger-text flex items-center gap-1.5">
-              <XCircle size={12} />
-              {queueStats.failed} email gagal — cek log server untuk detail,
-              lalu proses antrian ulang.
-            </p>
-          )}
-        </motion.div>
-      )}
-
       {/* ── Form Card ── */}
       <div className="bg-white rounded-2xl border border-admin-border shadow-sm overflow-hidden">
         <div className="px-6 py-5 border-b border-admin-border flex items-center gap-3">

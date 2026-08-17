@@ -123,6 +123,8 @@ export default function GeografisChart({ data }: Props) {
               zoom={5}
               style={{ height: "100%", width: "100%", zIndex: 10 }}
               zoomControl={true}
+              scrollWheelZoom={false}
+              doubleClickZoom={false}
             >
               <TileLayer
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'

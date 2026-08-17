@@ -21,10 +21,9 @@ interface Props {
   subtitle?: string
 }
 
-// Warna diperbarui agar lebih padu dengan grafik pastel di atasnya
 const COLORS = {
-  diusulkan: "#3b82f6", // Biru medium yang lebih ramah di mata
-  tidakDiusulkan: "#f43f5e", // Merah rose/coral yang lebih lembut dari merah standar
+  diusulkan: "#22C55E",
+  tidakDiusulkan: "#EF4444",
 } as const
 
 const springTransition = {

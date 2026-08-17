@@ -1,71 +1,124 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "motion/react";
-import { FileSpreadsheet, FileUp, Mail, ChevronRight } from "lucide-react";
+import { FileSpreadsheet, FileUp, Mail } from "lucide-react";
+import { PageHeader } from "@/components/admin/ui/PageHeader";
 import SectionExportExcel from "./SectionExportExcel";
-import SectionImportSK    from "./SectionImportSK";
-import SectionKirimEmail  from "./SectionKirimEmail";
+import SectionImportSK from "./SectionImportSK";
+import SectionKirimEmail from "./SectionKirimEmail";
+import PenerimaPerJalurCard from "./PenerimaPerJalurCard";
+import SKTersimpanCard from "./SKTersimpanCard";
+import AntrianPengirimanCard from "./AntrianPengirimanCard";
+import { SK_ENDPOINT } from "./SKTersimpanCard";
+import { SUMMARY_ENDPOINT, summaryFetcher, type HasilAkhirSummary } from "./HasilAkhirSummary";
+import { mutate as globalMutate } from "swr";
+import type { SKDokumen } from "./SectionImportSK";
 
 const TABS = [
   {
     key: "export",
     label: "Export Excel",
+    step: "Langkah 1",
     icon: FileSpreadsheet,
-    desc: "Export daftar penerima per jalur masuk",
+    desc: "Rekap penerima per jalur masuk",
   },
   {
     key: "import_sk",
     label: "Import SK PDF",
+    step: "Langkah 2",
     icon: FileUp,
-    desc: "Upload & kelola dokumen SK yang sudah jadi",
+    desc: "Unggah & kelola dokumen SK final",
   },
   {
     key: "email",
     label: "Kirim Email SK",
+    step: "Langkah 3",
     icon: Mail,
-    desc: "Kirim SK langsung ke semua email kandidat lolos",
+    desc: "Kirim pengumuman ke email kandidat",
   },
 ] as const;
 
 type TabKey = (typeof TABS)[number]["key"];
 
+type QueueStats = { total: number; queued: number; sent: number; failed: number };
+
 const ease = [0.25, 0, 0, 1] as [number, number, number, number];
 
 export default function HasilAkhirClient() {
   const [activeTab, setActiveTab] = useState<TabKey>("export");
+  const [tahun, setTahun] = useState(new Date().getFullYear());
+
+  const [summary, setSummary] = useState<HasilAkhirSummary | null>(null);
+  const [loadingSummary, setLoadingSummary] = useState(true);
+
+  const [queueStats, setQueueStats] = useState<QueueStats | null>(null);
+  const [processingQueue, setProcessingQueue] = useState(false);
+  const [deletingSkId, setDeletingSkId] = useState<string | null>(null);
+
+  const fetchSummary = useCallback(async (year: number) => {
+    setLoadingSummary(true);
+    try {
+      const data = await summaryFetcher(`${SUMMARY_ENDPOINT}?tahun=${year}`);
+      setSummary(data);
+    } finally {
+      setLoadingSummary(false);
+    }
+  }, []);
+
+  const fetchQueueStats = useCallback(async () => {
+    try {
+      const res = await fetch("/api/admin/hasil-akhir/email-queue/stats");
+      const json = await res.json();
+      if (res.ok) setQueueStats(json);
+    } catch {
+      /* silent — kartu tetap tampil dengan angka terakhir yang diketahui */
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchSummary(tahun);
+  }, [tahun, fetchSummary]);
+
+  useEffect(() => {
+    fetchQueueStats();
+  }, [fetchQueueStats]);
+
+  async function handleProcessQueue() {
+    setProcessingQueue(true);
+    try {
+      await fetch("/api/admin/hasil-akhir/email-queue/process", { method: "POST" });
+      setTimeout(fetchQueueStats, 2000);
+    } finally {
+      setProcessingQueue(false);
+    }
+  }
+
+  async function handleDeleteSK(sk: SKDokumen) {
+    if (!confirm(`Hapus dokumen SK "${sk.nama_file}"? Tindakan tidak bisa dibatalkan.`)) return;
+    setDeletingSkId(sk.id);
+    try {
+      const res = await fetch(`${SK_ENDPOINT}?id=${sk.id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Gagal menghapus SK");
+    } finally {
+      setDeletingSkId(null);
+      globalMutate(SK_ENDPOINT);
+    }
+  }
 
   return (
-    <div className="min-h-screen bg-[#f7f9fb] p-5 md:p-8 lg:p-10">
-      <div className="max-w-screen-xl mx-auto space-y-8">
+    <div className="min-h-screen bg-admin-bg font-admin-body text-admin-text flex flex-col">
+      <PageHeader breadcrumb="Admin / Seleksi KIP-K / Hasil Akhir" title="Hasil Akhir Seleksi" />
 
-        {/* Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.35, ease }}
-        >
-          <nav className="flex items-center gap-1.5 text-[11px] font-semibold text-admin-text-3 uppercase tracking-wider mb-3">
-            <span>Dashboard</span>
-            <ChevronRight size={12} />
-            <span className="text-admin-accent">Hasil Akhir</span>
-          </nav>
-          <h1 className="text-2xl md:text-3xl font-extrabold font-admin-heading text-admin-accent leading-tight">
-            Hasil Akhir Seleksi
-          </h1>
-          <p className="text-sm text-admin-text-3 mt-1">
-            Export data penerima, import dokumen SK, dan kirim SK langsung ke email kandidat.
-          </p>
-        </motion.div>
-
-        {/* Tab Navigation */}
+      <div className="px-4 sm:px-[30px] pt-[22px] pb-[34px] flex flex-col gap-[18px]">
+        {/* Step navigation */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3, delay: 0.07, ease }}
+          transition={{ duration: 0.3, ease }}
           className="grid grid-cols-1 sm:grid-cols-3 gap-3"
         >
-          {TABS.map(({ key, label, icon: Icon, desc }) => {
+          {TABS.map(({ key, label, step, icon: Icon, desc }) => {
             const active = activeTab === key;
             return (
               <button
@@ -79,36 +132,63 @@ export default function HasilAkhirClient() {
                     : "bg-white border-admin-border hover:border-admin-text-6"
                 }`}
               >
-                <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                  active ? "bg-admin-accent text-white" : "bg-admin-surface-soft text-admin-text-3"
-                }`}>
+                <div
+                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                    active ? "bg-admin-accent text-white" : "bg-admin-surface-soft text-admin-text-3"
+                  }`}
+                >
                   <Icon size={17} />
                 </div>
-                <div>
-                  <p className={`text-sm font-bold ${active ? "text-admin-accent" : "text-admin-text"}`}>
-                    {label}
-                  </p>
-                  <p className="text-[11px] text-admin-text-3 mt-0.5 leading-relaxed">
-                    {desc}
-                  </p>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <p className={`text-sm font-bold ${active ? "text-admin-accent" : "text-admin-text"}`}>
+                      {label}
+                    </p>
+                    <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-admin-surface-soft text-admin-text-4">
+                      {step}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-admin-text-3 mt-0.5 leading-relaxed">{desc}</p>
                 </div>
               </button>
             );
           })}
         </motion.div>
 
-        {/* Tab Content */}
+        {/* Step content */}
         <motion.div
           key={activeTab}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25, ease }}
+          className="grid grid-cols-1 xl:grid-cols-[1.85fr_1fr] gap-[14px] items-start"
         >
-          {activeTab === "export"    && <SectionExportExcel />}
-          {activeTab === "import_sk" && <SectionImportSK    />}
-          {activeTab === "email"     && <SectionKirimEmail  />}
-        </motion.div>
+          {activeTab === "export" && (
+            <>
+              <SectionExportExcel tahun={tahun} onTahunChange={setTahun} summary={summary} />
+              <PenerimaPerJalurCard summary={summary} loading={loadingSummary} />
+            </>
+          )}
 
+          {activeTab === "import_sk" && (
+            <>
+              <SectionImportSK />
+              <SKTersimpanCard onDelete={handleDeleteSK} deletingId={deletingSkId} />
+            </>
+          )}
+
+          {activeTab === "email" && (
+            <>
+              <SectionKirimEmail onEnqueued={fetchQueueStats} />
+              <AntrianPengirimanCard
+                queueStats={queueStats}
+                summary={summary}
+                onProcessQueue={handleProcessQueue}
+                processing={processingQueue}
+              />
+            </>
+          )}
+        </motion.div>
       </div>
     </div>
   );

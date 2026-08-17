@@ -13,7 +13,7 @@ function fmtRp(n: number): string {
 }
 
 export default function InsightNaratif({ data }: Props) {
-  const { ringkasan, feature_importance, rule_nodes, kasus_ambigu } = data
+  const { ringkasan, feature_importance, rule_nodes, kasus_override } = data
 
   const topFitur = (Array.isArray(feature_importance) ? feature_importance : [])
     .filter((f) => f.importance > 0)
@@ -33,11 +33,9 @@ export default function InsightNaratif({ data }: Props) {
     ? parseFloat(thresholdTanggunganMatch[1])
     : null
 
-  const safeAmbigu = Array.isArray(kasus_ambigu) ? kasus_ambigu : []
-  // Kasus di mana pewawancara menolak, padahal model memprediksi "Diusulkan"
-  const seharusnyaDiusulkan = safeAmbigu.filter(
-    (k) => k.keputusan_aktual !== "Diusulkan" && k.prediksi_model === "Diusulkan"
-  ).length
+  const safeOverride = Array.isArray(kasus_override) ? kasus_override : []
+  // turun = pewawancara merekomendasikan Diusulkan, tapi admin mengubahnya jadi Tidak Diusulkan
+  const diturunkanAdmin = safeOverride.filter((k) => k.jenis_override === "turun").length
 
   const insights: {
     icon: React.ElementType
@@ -74,13 +72,13 @@ export default function InsightNaratif({ data }: Props) {
     })
   }
 
-  // 3. Kasus Ambigu
-  if (safeAmbigu.length > 0) {
+  // 3. Keputusan yang diturunkan admin — kasus konkret, bukan anomali statistik
+  if (diturunkanAdmin > 0) {
     insights.push({
       icon: AlertTriangle,
       colorIcon: "text-admin-warn-bar",
-      title: `${safeAmbigu.length} Keputusan Layak Ditinjau Ulang`,
-      body: `${seharusnyaDiusulkan} dari ${safeAmbigu.length} kasus: kandidat yang TIDAK diusulkan pewawancara padahal pola umum data mengarah ke "Diusulkan". Ini bisa mengindikasikan pertimbangan subjektif di luar data yang perlu ditinjau lebih lanjut.`,
+      title: `${diturunkanAdmin} Keputusan Layak Ditinjau Ulang`,
+      body: `Ada ${diturunkanAdmin} kandidat yang direkomendasikan "Diusulkan" oleh pewawancara, tapi diubah admin menjadi "Tidak Diusulkan" saat finalisasi. Lihat detail tiap kasus pada tabel Keputusan Berbeda antara Pewawancara dan Admin di bawah.`,
     })
   }
 

@@ -38,8 +38,23 @@ const VIEW_OPTIONS: ReadonlyArray<ViewOption> = [
   { id: "gender", label: "L / P" }
 ]
 
-// Satu series (magnitude per fakultas) → satu hue konsisten, bukan rainbow per-bar.
-const TOTAL_BAR_COLOR = "var(--color-primary)"
+// Satu warna berbeda per fakultas — sesuai referensi yang diminta, dicocokkan
+// berdasarkan urutan tampil (index), bukan nama fakultas tertentu.
+const FAKULTAS_PALETTE = [
+  "#7CB9E8", // biru
+  "#F17EA3", // pink
+  "#F5A65B", // oranye
+  "#5FC3BD", // teal
+  "#A78BE0", // ungu
+  "#F2C94C", // kuning
+  "#6FCF97", // hijau
+  "#EB6A5C", // merah karang
+  "#4F5D6B", // abu gelap
+  "#5FC7B8", // pirus
+  "#F0B94C", // emas
+  "#9B7FE0", // ungu muda
+  "#D98CB3", // mawar
+] as const
 
 const GENDER_COLORS = {
   lakiLaki: "#60a5fa",
@@ -199,7 +214,7 @@ export default function FakultasChart({ data, totalDiusulkan }: FakultasChartPro
                 {data.map((entry, index) => (
                   <Cell
                     key={`total-${index}`}
-                    fill={TOTAL_BAR_COLOR}
+                    fill={FAKULTAS_PALETTE[index % FAKULTAS_PALETTE.length]}
                     opacity={activeIndex === null || activeIndex === index ? 1 : 0.4}
                     style={{ transition: "opacity 200ms ease-out" }}
                   />

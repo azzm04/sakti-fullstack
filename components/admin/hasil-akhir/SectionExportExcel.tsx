@@ -12,42 +12,16 @@ import {
   FileSpreadsheet,
 } from "lucide-react";
 import * as XLSX from "xlsx";
+import type { HasilAkhirSummary } from "./HasilAkhirSummary";
+import { JALUR_OPTIONS, JALUR_DB_ALIASES, type JalurKey } from "@/lib/jalur";
 
-// ── Jalur options (sesuai dokumen pengumuman UNDIP) ───────────────────────────
-const JALUR_OPTIONS = [
-  {
-    key: "SNBP_ELIGIBLE",
-    label: "SNBP Eligible",
-    color: "bg-admin-accent/10 text-admin-accent-ink border-admin-accent/25",
-  },
-  {
-    key: "SNBP_NON_ELIGIBLE",
-    label: "SNBP Non-Eligible",
-    color: "bg-admin-accent/10 text-admin-accent border-admin-accent/25",
-  },
-  {
-    key: "SNBT_ELIGIBLE",
-    label: "SNBT Eligible",
-    color: "bg-admin-accent/10 text-admin-accent-ink border-admin-accent/25",
-  },
-  {
-    key: "SNBT_NON_ELIGIBLE",
-    label: "SNBT Non-Eligible",
-    color: "bg-admin-accent/10 text-admin-accent border-admin-accent/25",
-  },
-  {
-    key: "UM",
-    label: "Ujian Mandiri (UM)",
-    color: "bg-admin-warn-bg-2 text-admin-warn-text border-admin-warn-border",
-  },
-  {
-    key: "SBUB",
-    label: "SBUB",
-    color: "bg-admin-accent/10 text-admin-accent-ink border-admin-accent/25",
-  },
-] as const;
-
-type JalurKey = (typeof JALUR_OPTIONS)[number]["key"];
+// Warna badge terpilih — UM dapat warna beda (kuning) sesuai konvensi lama,
+// jalur lain pakai warna accent yang sama.
+function jalurColor(key: JalurKey): string {
+  return key === "UM"
+    ? "bg-admin-warn-bg-2 text-admin-warn-text border-admin-warn-border"
+    : "bg-admin-accent/10 text-admin-accent-ink border-admin-accent/25";
+}
 
 type KandidatRow = {
   no: number;
@@ -58,15 +32,20 @@ type KandidatRow = {
   lolos: boolean; 
 };
 
-const ease = [0.25, 0, 0, 1] as [number, number, number, number];
+interface Props {
+  tahun: number;
+  onTahunChange: (tahun: number) => void;
+  summary: HasilAkhirSummary | null;
+}
 
-export default function SectionExportExcel() {
+export default function SectionExportExcel({ tahun, onTahunChange, summary }: Props) {
   const [selected, setSelected] = useState<Set<JalurKey>>(
     new Set(["SNBP_ELIGIBLE"]),
   );
-  
-  // State untuk Tahun Seleksi
-  const [tahun, setTahun] = useState<number>(new Date().getFullYear());
+
+  const lolosByJalur = Object.fromEntries(
+    (summary?.perJalur ?? []).map((j) => [j.key, j.lolos]),
+  ) as Partial<Record<JalurKey, number>>;
 
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
@@ -146,20 +125,11 @@ export default function SectionExportExcel() {
         styleSheet(ws);
         XLSX.utils.book_append_sheet(wb, ws, jalurLabel.slice(0, 31));
       } else {
-        // Multi sheet — mapping string jalur database yang benar
-        const JALUR_STRING_MAP: Record<string, string[]> = {
-          SNBP_ELIGIBLE:     ["SNBP", "SNBP Eligible", "SNBP_ELIGIBLE"], 
-          SNBP_NON_ELIGIBLE: ["SNBP non-eligible", "SNBP Non-Eligible"],
-          SNBT_ELIGIBLE:     ["SNBT", "SNBT Eligible", "SNBT_ELIGIBLE"],
-          SNBT_NON_ELIGIBLE: ["SNBT non-eligible", "SNBT Non-Eligible"],
-          UM:                ["UM", "Ujian Mandiri"],
-          SBUB:              ["SBUB"],
-        };
-
+        // Multi sheet — mapping string jalur database via sumber alias bersama
         for (const key of selected) {
           const jalurLabel = JALUR_OPTIONS.find((j) => j.key === key)?.label ?? key;
-          const allowedValues = JALUR_STRING_MAP[key] ?? [];
-          
+          const allowedValues = JALUR_DB_ALIASES[key] ?? [];
+
           // Filter berdasarkan kecocokan string di database
           const filtered = rows.filter((r) => allowedValues.includes(r.jalur_masuk));
           
@@ -218,7 +188,7 @@ export default function SectionExportExcel() {
             <input
               type="number"
               value={tahun}
-              onChange={(e) => setTahun(Number(e.target.value))}
+              onChange={(e) => onTahunChange(Number(e.target.value))}
               className="w-full px-4 py-2.5 text-sm font-semibold border border-admin-border rounded-lg bg-white focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/10 transition-all"
             />
           </div>
@@ -241,25 +211,33 @@ export default function SectionExportExcel() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-3 gap-2.5">
-            {JALUR_OPTIONS.map(({ key, label, color }) => {
+            {JALUR_OPTIONS.map(({ key, label }) => {
               const isSelected = selected.has(key);
+              const count = lolosByJalur[key];
               return (
                 <motion.button
                   key={key}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => toggleJalur(key)}
-                  className={`flex items-center gap-2.5 px-4 py-3 rounded-xl border text-sm font-semibold transition-all ${
+                  className={`flex items-center justify-between gap-2.5 px-4 py-3 rounded-xl border text-sm font-semibold transition-all ${
                     isSelected
-                      ? `${color} shadow-sm`
+                      ? `${jalurColor(key)} shadow-sm`
                       : "bg-admin-surface-soft border-admin-border text-admin-text-3 hover:border-admin-text-6"
                   }`}
                 >
-                  {isSelected ? (
-                    <CheckSquare size={15} className="shrink-0" />
-                  ) : (
-                    <Square size={15} className="shrink-0" />
+                  <span className="flex items-center gap-2.5 min-w-0">
+                    {isSelected ? (
+                      <CheckSquare size={15} className="shrink-0" />
+                    ) : (
+                      <Square size={15} className="shrink-0" />
+                    )}
+                    <span className="truncate">{label}</span>
+                  </span>
+                  {count !== undefined && (
+                    <span className="text-xs font-bold tabular-nums shrink-0 opacity-70">
+                      {count.toLocaleString("id-ID")}
+                    </span>
                   )}
-                  {label}
                 </motion.button>
               );
             })}

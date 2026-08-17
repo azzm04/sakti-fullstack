@@ -13,7 +13,6 @@ import {
   AlertCircle,
   RefreshCw,
   Settings2,
-  Download,
   BarChart3,
 } from "lucide-react";
 import type { DashboardAnalitikData } from "@/types/analitik";
@@ -23,7 +22,6 @@ import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { EmptyState } from "@/components/admin/ui/EmptyState";
 import AnalisisHeroBanner from "@/components/admin/analitik/AnalisisHeroBanner";
 import FeatureImportanceChart from "@/components/admin/analitik/FeatureImportanceChart";
-import KonsistensiCard from "@/components/admin/analitik/KonsistensiCard";
 import DistribusiChart from "@/components/admin/analitik/DistribusiChart";
 import FakultasChart from "./FakultasChart";
 import GeografisChart from "@/components/admin/analitik/GeografisChart";
@@ -94,6 +92,11 @@ export default function AnalitikSelector() {
   const [error, setError] = useState<string | null>(null);
   const [refresh, setRefresh] = useState(false);
   const [formCollapsed, setFormCollapsed] = useState(false);
+  // Jalur/tahun yang benar-benar sedang ditampilkan di dashboard — terpisah
+  // dari `jalur`/`tahun` (nilai form yang sedang dipilih user), supaya
+  // mengubah pilihan di form tidak langsung mengubah label di hero banner
+  // sebelum "Analisis Ulang" benar-benar ditekan.
+  const [activeSelection, setActiveSelection] = useState<{ jalur: string; tahun: string } | null>(null);
 
   const tahunValid =
     /^\d{4}$/.test(tahun) && parseInt(tahun) >= 2020 && parseInt(tahun) <= 2099;
@@ -102,14 +105,20 @@ export default function AnalitikSelector() {
 
   async function handleAnalisis(forceRefresh = refresh) {
     if (!canRun) return;
+    // Ambil nilai form saat request ini dikirim — bukan `jalur`/`tahun` yang
+    // dibaca lagi setelah await, karena user bisa saja mengubah form lagi
+    // sementara request sebelumnya masih berjalan.
+    const requestedJalur = jalur;
+    const requestedTahun = tahun;
+
     setState("loading");
     setData(null);
     setError(null);
 
     try {
       const params = new URLSearchParams({
-        tahun,
-        jalur_masuk: jalur,
+        tahun: requestedTahun,
+        jalur_masuk: requestedJalur,
         ...(forceRefresh ? { refresh: "true" } : {}),
       });
       const res = await fetch(`/api/admin/analitik?${params}`, {
@@ -130,6 +139,7 @@ export default function AnalitikSelector() {
 
       const json: DashboardAnalitikData = await res.json();
       setData(json);
+      setActiveSelection({ jalur: requestedJalur, tahun: requestedTahun });
       setState("done");
       setRefresh(false);
       setFormCollapsed(true);
@@ -146,56 +156,6 @@ export default function AnalitikSelector() {
       <PageHeader
         breadcrumb="Dashboard / Analitik Seleksi"
         title="Dashboard Analitik"
-        right={
-          <>
-            {state === "done" && data && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => setFormCollapsed(false)}
-                  className="hidden sm:flex items-center gap-1.5 border border-admin-border bg-transparent rounded-[11px] px-[13px] h-[38px] text-[13px] font-semibold text-admin-text-2 hover:bg-admin-surface-soft transition-colors"
-                >
-                  {jalur} · Tahun {tahun}
-                  <ChevronDown size={13} className="text-admin-text-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFormCollapsed(false)}
-                  className="border border-admin-border bg-transparent rounded-[11px] px-[13px] h-[38px] text-[13px] font-semibold text-admin-text-2 hover:bg-admin-surface-soft transition-colors"
-                >
-                  Ganti Data
-                </button>
-              </>
-            )}
-            <button
-              type="button"
-              disabled={state !== "done"}
-              title={state === "done" ? "Ekspor ringkasan" : "Jalankan analisis untuk mengekspor"}
-              className="border border-admin-border bg-transparent rounded-[11px] w-[38px] h-[38px] shrink-0 flex items-center justify-center text-admin-text-2 hover:bg-admin-surface-soft transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              <Download size={16} strokeWidth={1.8} />
-            </button>
-            <motion.button
-              onClick={() => handleAnalisis(true)}
-              disabled={!canRun || state === "loading"}
-              whileHover={canRun && state !== "loading" ? { scale: 1.02 } : undefined}
-              whileTap={canRun && state !== "loading" ? { scale: 0.97 } : undefined}
-              transition={spring}
-              className={`flex items-center gap-1.5 rounded-[11px] px-[15px] h-[38px] text-[13px] font-bold whitespace-nowrap transition-colors ${
-                canRun && state !== "loading"
-                  ? "bg-admin-accent text-white hover:bg-admin-accent-hover"
-                  : "bg-admin-border text-admin-placeholder cursor-not-allowed"
-              }`}
-            >
-              {state === "loading" ? (
-                <RefreshCw size={14} className="animate-spin" />
-              ) : (
-                <RefreshCw size={14} />
-              )}
-              Latih Ulang
-            </motion.button>
-          </>
-        }
       />
 
       <div className="px-4 sm:px-[30px] pt-[22px] pb-[34px] flex flex-col gap-[18px]">
@@ -289,7 +249,9 @@ export default function AnalitikSelector() {
                           title="Masukkan tahun seleksi antara 2020–2099"
                           onChange={(e) => {
                             setTahun(e.target.value);
-                            setState("idle");
+                            // Cuma reset kalau lagi nampilin error lama — jangan sembunyikan
+                            // dashboard yang sudah "done" hanya karena form-nya diutak-atik.
+                            if (state === "error") setState("idle");
                           }}
                           className={`w-full pl-9 pr-4 py-2.5 text-sm font-bold rounded-xl border bg-admin-bg text-admin-text
                             focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-all
@@ -324,7 +286,7 @@ export default function AnalitikSelector() {
                               key={opt.value}
                               onClick={() => {
                                 setJalur(opt.value);
-                                setState("idle");
+                                if (state === "error") setState("idle");
                               }}
                               whileHover={{ scale: 1.01 }}
                               whileTap={{ scale: 0.98 }}
@@ -494,8 +456,8 @@ export default function AnalitikSelector() {
                 <AnalisisHeroBanner
                   ringkasan={data.ringkasan}
                   konsistensi={data.konsistensi}
-                  jalur={jalur}
-                  tahun={tahun}
+                  jalur={activeSelection?.jalur ?? jalur}
+                  tahun={activeSelection?.tahun ?? tahun}
                 />
               </Section>
 
@@ -504,22 +466,19 @@ export default function AnalitikSelector() {
                 <InsightNaratif data={data} />
               </Section>
 
-              {/* 3. Faktor dominan & konsistensi keputusan berdampingan */}
+              {/* 3. Faktor dominan keputusan */}
               <Section>
-                <div className="grid grid-cols-1 lg:grid-cols-[1.6fr_1fr] gap-3.5 items-stretch">
-                  <FeatureImportanceChart data={data.feature_importance} />
-                  <KonsistensiCard data={data.konsistensi} modelInfo={data.model_info} />
-                </div>
+                <FeatureImportanceChart data={data.feature_importance} />
               </Section>
 
-              {/* 4. Pola keputusan yang ditemukan */}
-              <Section>
-                <RuleExtraction rules={data.rule_nodes} />
-              </Section>
-
-              {/* 5. Kasus paling actionable — layak ditinjau ulang */}
+              {/* 4. Kasus paling actionable — keputusan yang diturunkan admin saat finalisasi */}
               <Section>
                 <KasusOverrideAdmin data={data.kasus_override ?? []} />
+              </Section>
+
+              {/* 5. Pola keputusan yang ditemukan */}
+              <Section>
+                <RuleExtraction rules={data.rule_nodes} />
               </Section>
 
               {/* 6. Sebaran geografis — lihat wilayah bermasalah */}
