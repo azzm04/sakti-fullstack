@@ -1,6 +1,6 @@
 import axios from "axios";
 
-// ── Base URL FastAPI (chat, telegram) ─────────────────────────────────────────
+// ── Base URL FastAPI (chat) ───────────────────────────────────────────────────
 const FASTAPI_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export const apiClient = axios.create({
@@ -20,15 +20,21 @@ export const chatAPI = {
   },
 };
 
-// ── Telegram API (FastAPI) ────────────────────────────────────────────────────
+// ── Telegram API (Next.js routes) ────────────────────────────────────────────
 export const telegramAPI = {
-  activateBot: async (userId: string) => {
-    const res = await apiClient.post("/api/telegram/activate", { user_id: userId });
-    return res.data;
+  // POST /api/auth/telegram/activate — generate token & deep link
+  activate: async () => {
+    const res = await fetch("/api/auth/telegram/activate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+    return res.json();
   },
+
+  // GET /api/auth/telegram/status — cek status koneksi Telegram mahasiswa
   getStatus: async () => {
-    const res = await apiClient.get("/api/telegram/status");
-    return res.data;
+    const res = await fetch("/api/auth/telegram/status");
+    return res.json();
   },
 };
 
