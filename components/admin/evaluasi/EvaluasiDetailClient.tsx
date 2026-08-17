@@ -416,9 +416,9 @@ export default function EvaluasiDetailClient({
                   router.push("/admin/evaluasi");
                 }
               }}
-              className="inline-flex items-center gap-[7px] text-[12.5px] font-semibold text-admin-accent hover:text-admin-accent-ink transition-colors mouse-pointer"
+              className="inline-flex items-center gap-[7px] text-[12.5px] font-semibold text-admin-accent hover:text-admin-accent-ink transition-colors cursor-pointer"
             >
-              <ArrowLeft className="mouse-pointer" size={14} /> Kembali ke daftar
+              <ArrowLeft className="cursor-pointer" size={14} /> Kembali ke daftar
             </button>
             <h2 className="font-admin-heading text-[26px] font-semibold mt-2 tracking-[-0.015em] text-admin-text">
               {kandidat.nama_pendaftar}
