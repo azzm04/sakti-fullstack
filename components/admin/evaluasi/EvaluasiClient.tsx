@@ -504,11 +504,10 @@ export default function EvaluasiClient() {
                 {loading ? (
                   <>
                     <Loader2 size={14} className="animate-spin" />
-                    Memuat Data...
+                    Memuat Data...  
                   </>
                 ) : (
                   <>
-                    <Sparkles size={14} />
                     {hasSelection ? "Muat Ulang Data" : "Tampilkan Data"}
                   </>
                 )}

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Manrope, Montserrat } from "next/font/google";
+import { Inter } from "next/font/google";
 import { MotionConfig } from "framer-motion";
 import "./globals.css";
 import { cn } from "@/lib/utils";
@@ -8,18 +8,7 @@ import { Toaster } from "sonner";
 
 const inter = Inter({
   subsets: ["latin"],
-  variable: "--font-body",
-});
-
-const manrope = Manrope({
-  subsets: ["latin"],
-  variable: "--font-headline",
-});
-
-const montserrat = Montserrat({
-  subsets: ["latin"],
-  weight: ["400", "700"], // Optional: Specify weights to reduce bundle size
-  variable: "--font-montserrat", // Optional: For CSS variables
+  variable: "--font-sans",
 });
 
 export const metadata: Metadata = {
@@ -33,9 +22,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className={montserrat.className} suppressHydrationWarning>
+    <html lang="id" className={inter.variable} suppressHydrationWarning>
       <body
-        className="min-h-full flex flex-col font-body"
+        className={cn(inter.className, "min-h-full flex flex-col font-body")}
         suppressHydrationWarning
       >
         <LenisScroll />

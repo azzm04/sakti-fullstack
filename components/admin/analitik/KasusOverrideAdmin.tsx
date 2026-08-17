@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Download, ArrowRight, TriangleAlert, ChevronDown, ChevronUp } from "lucide-react";
+import { Download, ArrowRight, ChevronDown, ChevronUp } from "lucide-react";
 import type { KasusOverrideItem } from "@/types/analitik";
 
 interface Props {
@@ -99,9 +99,9 @@ export default function KasusOverrideAdmin({ data }: Props) {
   return (
     <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm overflow-hidden">
       {/* Header */}
-      <div className="flex items-center justify-between gap-4 px-6 py-4 border-b border-admin-border">
+      <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4 border-b border-admin-border">
         <div>
-          <h3 className="font-admin-heading text-sm font-bold text-admin-text">
+          <h3 className="font-admin-heading text-[15px] font-bold text-admin-text">
             Keputusan Berbeda antara Pewawancara dan Admin
           </h3>
           <p className="text-xs text-admin-text-3 mt-0.5">
@@ -109,41 +109,36 @@ export default function KasusOverrideAdmin({ data }: Props) {
             final
           </p>
         </div>
-        <button
-          onClick={handleExport}
-          className="flex items-center gap-1.5 text-xs font-semibold text-admin-text-3 border border-admin-border rounded-lg px-3 py-1.5 hover:text-admin-text hover:border-foreground/20 transition-colors shrink-0"
-        >
-          <Download size={12} />
-          Export CSV
-        </button>
-      </div>
-
-      {/* Ringkasan sebagai satu bar proporsi */}
-      <div className="px-6 py-4 border-b border-admin-border">
-        <div className="flex h-1.5 w-full rounded-full overflow-hidden bg-admin-surface-soft">
-          <div className="bg-admin-danger-text" style={{ width: `${pctTurun}%` }} />
-          <div
-            className="bg-admin-warn-bar"
-            style={{ width: `${100 - pctTurun}%` }}
-          />
-        </div>
-        <div className="flex items-center justify-between mt-2.5 text-xs">
-          <div className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-admin-danger-text shrink-0" />
-            <span className="font-semibold text-admin-text">
-              {turun.length}
-            </span>
-            <span className="text-admin-text-3">
+        <div className="flex items-center gap-2.5 shrink-0">
+          <div className="bg-admin-danger-bg border border-admin-danger-border rounded-xl px-3.5 py-2 text-right">
+            <p className="text-[15px] font-bold text-admin-danger-text leading-none tabular-nums">
+              {turun.length}{" "}
+              <span className="text-[11px] font-semibold">
+                {pctTurun.toLocaleString("id-ID", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%
+              </span>
+            </p>
+            <p className="text-[10px] text-admin-danger-text/80 mt-1 max-w-[130px] leading-snug">
               Layak menurut pewawancara, ditolak admin
-            </span>
+            </p>
           </div>
-          <div className="flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-admin-warn-bar shrink-0" />
-            <span className="font-semibold text-admin-text">{naik.length}</span>
-            <span className="text-admin-text-3">
+          <div className="bg-admin-warn-bg border border-admin-warn-border rounded-xl px-3.5 py-2 text-right">
+            <p className="text-[15px] font-bold text-admin-warn-text leading-none tabular-nums">
+              {naik.length}{" "}
+              <span className="text-[11px] font-semibold">
+                {(100 - pctTurun).toLocaleString("id-ID", { minimumFractionDigits: 1, maximumFractionDigits: 1 })}%
+              </span>
+            </p>
+            <p className="text-[10px] text-admin-warn-text/80 mt-1 max-w-[130px] leading-snug">
               Tidak layak menurut pewawancara, diterima admin
-            </span>
+            </p>
           </div>
+          <button
+            onClick={handleExport}
+            className="flex items-center gap-1.5 text-xs font-semibold text-admin-text-3 border border-admin-border rounded-lg px-3 py-1.5 h-fit hover:text-admin-text hover:border-foreground/20 transition-colors shrink-0"
+          >
+            <Download size={12} />
+            Export CSV
+          </button>
         </div>
       </div>
 
@@ -167,9 +162,6 @@ export default function KasusOverrideAdmin({ data }: Props) {
               <th className="px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-admin-text-3">
                 Alasan Pewawancara
               </th>
-              <th className="px-5 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-admin-text-3">
-                Catatan Admin
-              </th>
             </tr>
           </thead>
           <tbody className="divide-y divide-admin-border">
@@ -183,7 +175,7 @@ export default function KasusOverrideAdmin({ data }: Props) {
                   <td className="px-5 py-3 font-mono text-xs text-admin-text-3 align-top">
                     {i + 1}
                   </td>
-                  <td className="px-5 py-3 align-top min-w-[200px]">
+                  <td className="px-5 py-3 align-top min-w-50">
                     <p className="font-semibold text-admin-text text-sm leading-tight">
                       {k.nama}
                     </p>
@@ -214,21 +206,11 @@ export default function KasusOverrideAdmin({ data }: Props) {
                       {formatRupiah(k.per_kapita)}
                     </span>
                   </td>
-                  <td className="px-5 py-3 text-xs align-top min-w-[250px] w-[30%]">
+                  <td className="px-5 py-3 text-xs align-top min-w-62.5 w-[45%]">
                     {k.alasan_pewawancara ? (
                       <ExpandableText text={k.alasan_pewawancara} className="text-admin-text-3" />
                     ) : (
                       <span className="text-admin-text-3/40">—</span>
-                    )}
-                  </td>
-                  <td className="px-5 py-3 text-xs align-top min-w-[200px] w-[25%]">
-                    {k.catatan_admin ? (
-                      <ExpandableText text={k.catatan_admin} className="text-admin-text" />
-                    ) : (
-                      <span className="flex items-center gap-1 text-admin-warn-text whitespace-nowrap">
-                        <TriangleAlert size={11} className="shrink-0" />
-                        Tanpa catatan
-                      </span>
                     )}
                   </td>
                 </tr>

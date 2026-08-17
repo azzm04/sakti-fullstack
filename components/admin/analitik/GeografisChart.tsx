@@ -69,23 +69,33 @@ interface Props {
 }
 
 function rateFill(pct: number): string {
-  if (pct >= 90) return "var(--color-primary)"
-  if (pct >= 75) return "var(--color-secondary)"
-  return "color-mix(in srgb, var(--color-primary) 40%, white)"
+  if (pct >= 90) return "var(--color-admin-accent)"
+  if (pct >= 75) return "var(--color-admin-warn-bar)"
+  return "var(--color-admin-danger-bar)"
 }
+
+function rateText(pct: number): string {
+  if (pct >= 90) return "text-admin-accent-ink"
+  if (pct >= 75) return "text-admin-warn-text"
+  return "text-admin-danger-text"
+}
+
+const TOP_N = 10
 
 export default function GeografisChart({ data }: Props) {
   const isMounted = useIsMounted()
   const safeData = Array.isArray(data) ? data : []
 
   const sorted = [...safeData].sort((a, b) => b.total - a.total)
+  const top = sorted.slice(0, TOP_N)
   const grandTotal = sorted.reduce((acc, curr) => acc + curr.total, 0)
   const maxTotal = sorted.length > 0 ? Math.max(...sorted.map((d) => d.total)) : 0
+  const maxTop = top.length > 0 ? Math.max(...top.map((d) => d.total)) : 0
 
   if (sorted.length === 0) {
     return (
       <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm p-6">
-        <h3 className="font-admin-heading text-sm font-bold text-admin-text flex items-center gap-2 mb-1">
+        <h3 className="font-admin-heading text-[15px] font-bold text-admin-text flex items-center gap-2 mb-1">
           <MapIcon size={16} className="text-admin-text-2" />
           Sebaran per Provinsi
         </h3>
@@ -95,20 +105,18 @@ export default function GeografisChart({ data }: Props) {
   }
 
   return (
-    <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm overflow-hidden flex flex-col">
-      <div className="px-6 py-5 border-b border-admin-border bg-admin-surface-soft/40">
-        <h3 className="font-admin-heading text-[15px] font-bold text-admin-text flex items-center gap-2">
-          <MapIcon size={18} className="text-admin-text-2" />
-          Sebaran per Provinsi
-        </h3>
-        <p className="text-sm text-admin-text-3 mt-1">
-          <span className="font-bold text-admin-text">{grandTotal.toLocaleString("id-ID")}</span> total pendaftar
-          {" · "}ukuran lingkaran = volume pendaftar, warna = tingkat diusulkan
-        </p>
-      </div>
+    <div className="grid grid-cols-1 xl:grid-cols-[1.7fr_1fr] gap-3.5 items-start">
+      {/* Peta */}
+      <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm overflow-hidden">
+        <div className="px-6 py-5 border-b border-admin-border">
+          <h3 className="font-admin-heading text-[15px] font-bold text-admin-text">Sebaran per Provinsi</h3>
+          <p className="text-xs text-admin-text-3 mt-1">
+            <span className="font-bold text-admin-text">{grandTotal.toLocaleString("id-ID")}</span> total pendaftar
+            {" · "}ukuran lingkaran = volume pendaftar, warna = tingkat diusulkan
+          </p>
+        </div>
 
-      <div className="flex flex-col lg:flex-row h-[500px]">
-        <div className="flex-1 bg-admin-surface-soft relative z-0">
+        <div className="relative h-[460px]">
           {isMounted ? (
             <MapContainer
               center={[-2.5489, 118.0149]}
@@ -137,7 +145,7 @@ export default function GeografisChart({ data }: Props) {
                     radius={radius}
                     fillOpacity={0.65}
                     pathOptions={{
-                      color: "var(--color-primary)",
+                      color: "var(--color-admin-accent)",
                       fillColor: fill,
                       weight: 1,
                     }}
@@ -157,75 +165,46 @@ export default function GeografisChart({ data }: Props) {
             </MapContainer>
           ) : (
             <div className="absolute inset-0 flex flex-col items-center justify-center text-admin-text-3">
-              <MapIcon size={48} className="mb-3 opacity-20 animate-pulse" />
+              <MapIcon size={40} className="mb-3 opacity-20 animate-pulse" />
               <p className="text-sm font-medium">Memuat Peta...</p>
             </div>
           )}
-
-          {/* Legend Peta */}
-          <div className="absolute bottom-4 right-4 bg-admin-surface/95 backdrop-blur px-4 py-3 rounded-lg shadow-sm border border-admin-border text-xs text-admin-text-3 z-[400] pointer-events-none">
-            <p className="font-bold text-admin-text mb-2">Ukuran = volume pendaftar</p>
-            <div className="flex items-center gap-2 mb-2">
-              <div className="w-3 h-3 rounded-full bg-admin-text-3/30 border border-admin-border"></div>
-              <span>Sedikit</span>
-              <div className="w-6 h-6 rounded-full bg-admin-text-3/30 border border-admin-border ml-2"></div>
-              <span>Banyak</span>
-            </div>
-            <p className="font-bold text-admin-text mb-1.5 mt-3">Warna = tingkat diusulkan</p>
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-3 h-3 rounded-full" style={{ background: "var(--color-primary)" }}></div>
-              <span>Tinggi (≥90%)</span>
-            </div>
-            <div className="flex items-center gap-2 mb-1">
-              <div className="w-3 h-3 rounded-full" style={{ background: "var(--color-secondary)" }}></div>
-              <span>Sedang (75-89%)</span>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full" style={{ background: "color-mix(in srgb, var(--color-primary) 40%, white)" }}></div>
-              <span>Rendah (&lt;75%)</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Sidebar Kanan (List Provinsi) */}
-        <div className="w-full lg:w-[320px] bg-admin-surface flex flex-col border-l border-admin-border relative z-20 shadow-[-4px_0_15px_-3px_rgba(0,0,0,0.05)]">
-          <div className="px-5 py-4 border-b border-admin-border bg-admin-surface">
-            <h4 className="font-admin-heading text-[15px] font-semibold text-admin-text">Ringkasan per provinsi</h4>
-          </div>
-
-          <div className="flex-1 overflow-y-auto py-2 custom-scrollbar">
-            <ul className="space-y-0">
-              {sorted.map((item, index) => (
-                <li
-                  key={index}
-                  className="px-5 py-2.5 hover:bg-admin-surface-soft/60 transition-colors cursor-default text-[13px] text-admin-text flex items-center"
-                >
-                  <span>{item.provinsi.toUpperCase()}</span>
-                  <span className="text-admin-text-3 ml-1.5">
-                    (total {item.total.toLocaleString("id-ID")})
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </div>
         </div>
       </div>
 
-      <style jsx global>{`
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 6px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background-color: var(--color-border);
-          border-radius: 20px;
-        }
-        .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-          background-color: var(--color-secondary);
-        }
-      `}</style>
+      {/* Ringkasan */}
+      <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm p-6">
+        <div className="flex items-center justify-between gap-3 mb-4">
+          <h3 className="font-admin-heading text-[15px] font-bold text-admin-text">Ringkasan per Provinsi</h3>
+          <span className="text-[10.5px] font-medium text-admin-text-3 bg-admin-surface-soft border border-admin-border rounded-full px-2.5 py-1 shrink-0">
+            {top.length} teratas
+          </span>
+        </div>
+
+        <ol className="flex flex-col gap-3">
+          {top.map((item, index) => (
+            <li key={item.provinsi} className="flex items-center gap-3">
+              <span className="text-[11px] font-semibold text-admin-text-4 tabular-nums w-3.5 shrink-0">
+                {index + 1}
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className={`text-[13px] font-medium truncate ${rateText(item.pct_diusulkan)}`}>
+                  {item.provinsi}
+                </p>
+                <div className="h-1.5 rounded-full bg-admin-grid overflow-hidden mt-1.5">
+                  <div
+                    className="h-full rounded-full bg-admin-accent"
+                    style={{ width: `${maxTop > 0 ? Math.max(2, (item.total / maxTop) * 100) : 0}%` }}
+                  />
+                </div>
+              </div>
+              <span className="text-[13px] font-bold text-admin-text tabular-nums shrink-0">
+                {item.total.toLocaleString("id-ID")}
+              </span>
+            </li>
+          ))}
+        </ol>
+      </div>
     </div>
   )
 }

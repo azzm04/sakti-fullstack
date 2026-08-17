@@ -8,7 +8,7 @@
  * - Better security (no token exposed to client)
  */
 
-import { Karla, Source_Serif_4 } from "next/font/google"
+import { Inter } from "next/font/google"
 import { requireAdminRole } from "@/lib/auth-server"
 import AdminNavigation from "@/components/admin/AdminNavigation"
 
@@ -16,15 +16,14 @@ import AdminNavigation from "@/components/admin/AdminNavigation"
 // Defining the CSS variables here (not in the root layout) keeps them out
 // of the rest of the app; other pages simply don't reference the
 // font-admin-* utilities, so having the variable in scope is a no-op for them.
-const karla = Karla({
+// Both roles load Inter — matches the Undip reference (Inter, Helvetica, sans-serif).
+const interBody = Inter({
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
   variable: "--font-admin-body",
 })
 
-const sourceSerif4 = Source_Serif_4({
+const interHeading = Inter({
   subsets: ["latin"],
-  weight: ["400", "600", "700"],
   variable: "--font-admin-heading",
 })
 
@@ -39,7 +38,7 @@ export default async function AdminLayout({
   const user = await requireAdminRole()
 
   return (
-    <div className={`flex min-h-screen bg-admin-bg ${karla.variable} ${sourceSerif4.variable} font-admin-body text-admin-text`}>
+    <div className={`flex min-h-screen bg-admin-bg ${interBody.variable} ${interHeading.variable} font-admin-body text-admin-text`}>
       {/* Navigation - Client Component */}
       <AdminNavigation adminName={user.nama} />
 

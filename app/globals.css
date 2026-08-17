@@ -5,10 +5,10 @@
   ======================================================= 
 */
 @theme {
-  /* Font */
-  --font-headline: var(--font-headline), sans-serif;
-  --font-body: var(--font-body), sans-serif;
-  --font-label: var(--font-body), sans-serif;
+  /* Font — Inter everywhere, matching the Undip reference (Inter, Helvetica, sans-serif) */
+  --font-headline: var(--font-sans), Helvetica, sans-serif;
+  --font-body: var(--font-sans), Helvetica, sans-serif;
+  --font-label: var(--font-sans), Helvetica, sans-serif;
 
   /* Neutral (Background: #F8FAFC, Teks: #0F172A) */
   --color-background: hsl(210 40% 98%);
@@ -51,8 +51,8 @@
      --color-accent / --color-border tokens above, which the
      rest of the app (landing, auth) still relies on.
      ======================================================= */
-  --font-admin-heading: var(--font-admin-heading), Georgia, serif;
-  --font-admin-body: var(--font-admin-body), system-ui, sans-serif;
+  --font-admin-heading: var(--font-admin-heading), Helvetica, sans-serif;
+  --font-admin-body: var(--font-admin-body), Helvetica, sans-serif;
   --font-admin-mono: var(--font-admin-mono), ui-monospace, monospace;
 
   --color-admin-bg: #EFF2F6;

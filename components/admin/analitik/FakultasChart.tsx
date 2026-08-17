@@ -10,6 +10,7 @@ import {
   Tooltip,
   ResponsiveContainer,
   Cell,
+  LabelList,
   type TooltipProps
 } from "recharts"
 import { motion, AnimatePresence, type Variants } from "framer-motion"
@@ -203,6 +204,12 @@ export default function FakultasChart({ data, totalDiusulkan }: FakultasChartPro
                     style={{ transition: "opacity 200ms ease-out" }}
                   />
                 ))}
+                <LabelList
+                  dataKey="total_penerima"
+                  position="top"
+                  offset={8}
+                  style={{ fontSize: 11, fontWeight: 600, fill: "var(--color-admin-text-3)" }}
+                />
               </Bar>
             </BarChart>
           ) : (

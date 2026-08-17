@@ -84,93 +84,53 @@ function confidenceLabel(pct: number): {
   return { label: "Kurang Yakin", color: "text-admin-danger-text", bar: "bg-admin-danger-bar" };
 }
 
-const PREVIEW_COUNT = 3;
+const PREVIEW_COUNT = 4;
 
 export default function RuleExtraction({ rules }: Props) {
-  const [expanded, setExpanded] = useState(true);
-  const [showAllDiusulkan, setShowAllDiusulkan] = useState(false);
-  const [showAllTidak, setShowAllTidak] = useState(false);
+  const [showAll, setShowAll] = useState(false);
 
   const safeRules = Array.isArray(rules) ? rules : [];
   const diusulkan = safeRules.filter((r) => r.keputusan === "Diusulkan");
   const tidak = safeRules.filter((r) => r.keputusan !== "Diusulkan");
+  const ordered = [...diusulkan, ...tidak];
 
-  const diusulkanVisible = showAllDiusulkan
-    ? diusulkan
-    : diusulkan.slice(0, PREVIEW_COUNT);
-  const tidakVisible = showAllTidak ? tidak : tidak.slice(0, PREVIEW_COUNT);
+  const visible = showAll ? ordered : ordered.slice(0, PREVIEW_COUNT);
+  const hiddenCount = ordered.length - PREVIEW_COUNT;
+
+  if (ordered.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-xl border border-admin-border shadow-sm overflow-hidden">
-      <button
-        onClick={() => setExpanded((v) => !v)}
-        className="w-full flex items-center justify-between px-6 py-4 border-b border-admin-border-soft hover:bg-admin-surface-soft transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-admin-accent/30"
-      >
-        <div className="text-left">
-          <h3 className="font-admin-heading text-sm font-semibold text-admin-text">
-            Pola Keputusan yang Ditemukan
-          </h3>
-          <p className="text-xs text-admin-text-4 mt-1">
-            {safeRules.length} pola hasil analisis — makin banyak sampel &
-            keyakinan, makin kuat pola ini
-          </p>
-        </div>
-        {expanded ? (
-          <ChevronUp size={16} className="text-admin-text-5" />
-        ) : (
-          <ChevronDown size={16} className="text-admin-text-5" />
-        )}
-      </button>
+    <div>
+      <h3 className="font-admin-heading text-[19px] font-semibold text-admin-text">
+        Pola Keputusan yang Ditemukan
+      </h3>
+      <p className="text-[12.5px] text-admin-text-3 mt-1 mb-4">
+        {ordered.length} pola hasil analisis — makin banyak sampel & keyakinan, makin kuat pola ini
+      </p>
 
-      {expanded && (
-        <div className="p-6 space-y-8">
-          {diusulkan.length > 0 && (
-            <div className="space-y-4">
-              <p className="text-[11px] font-bold text-admin-accent uppercase tracking-wider flex items-center gap-2">
-                <CheckCircle2 size={14} /> Cenderung Diusulkan (
-                {diusulkan.length} pola)
-              </p>
-              <div className="space-y-3">
-                {diusulkanVisible.map((rule, i) => (
-                  <RuleCard key={i} rule={rule} variant="diusulkan" />
-                ))}
-              </div>
-              {diusulkan.length > PREVIEW_COUNT && (
-                <button
-                  onClick={() => setShowAllDiusulkan((v) => !v)}
-                  className="text-xs font-semibold text-admin-text-3 bg-admin-surface-soft border border-admin-border rounded-lg px-4 py-2 hover:bg-admin-border-soft transition-colors"
-                >
-                  {showAllDiusulkan
-                    ? "Sembunyikan"
-                    : `Lihat ${diusulkan.length - PREVIEW_COUNT} pola lainnya`}
-                </button>
-              )}
-            </div>
-          )}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+        {visible.map((rule, i) => (
+          <RuleCard
+            key={i}
+            index={i + 1}
+            rule={rule}
+            variant={rule.keputusan === "Diusulkan" ? "diusulkan" : "tidak"}
+          />
+        ))}
+      </div>
 
-          {tidak.length > 0 && (
-            <div className="space-y-4">
-              <p className="text-[11px] font-bold text-admin-danger-text uppercase tracking-wider flex items-center gap-2">
-                <XCircle size={14} /> Cenderung Tidak Diusulkan ({tidak.length}{" "}
-                pola)
-              </p>
-              <div className="space-y-3">
-                {tidakVisible.map((rule, i) => (
-                  <RuleCard key={i} rule={rule} variant="tidak" />
-                ))}
-              </div>
-              {tidak.length > PREVIEW_COUNT && (
-                <button
-                  onClick={() => setShowAllTidak((v) => !v)}
-                  className="text-xs font-semibold text-admin-text-3 bg-admin-surface-soft border border-admin-border rounded-lg px-4 py-2 hover:bg-admin-border-soft transition-colors"
-                >
-                  {showAllTidak
-                    ? "Sembunyikan"
-                    : `Lihat ${tidak.length - PREVIEW_COUNT} pola lainnya`}
-                </button>
-              )}
-            </div>
-          )}
+      {ordered.length > PREVIEW_COUNT && (
+        <div className="flex justify-center mt-4">
+          <button
+            onClick={() => setShowAll((v) => !v)}
+            className="flex items-center gap-1.5 text-xs font-semibold text-admin-text-3 bg-admin-surface border border-admin-border rounded-xl px-4 py-2.5 hover:bg-admin-surface-soft hover:text-admin-text transition-colors"
+          >
+            {showAll ? (
+              <>Sembunyikan <ChevronUp size={14} /></>
+            ) : (
+              <>Lihat {hiddenCount} pola lainnya <ChevronDown size={14} /></>
+            )}
+          </button>
         </div>
       )}
     </div>
@@ -180,9 +140,11 @@ export default function RuleExtraction({ rules }: Props) {
 function RuleCard({
   rule,
   variant,
+  index,
 }: {
   rule: RuleNode;
   variant: "diusulkan" | "tidak";
+  index: number;
 }) {
   const isDiusulkan = variant === "diusulkan";
   const pct = Math.round(rule.confidence * 100);
@@ -194,37 +156,40 @@ function RuleCard({
   const conditions = parseKondisi(rule.kondisi);
 
   return (
-    <div className="border border-admin-border rounded-xl p-5">
-      <div className="flex items-start gap-2.5 mb-3">
-        <Icon size={16} className={`${iconColor} mt-0.5 shrink-0`} />
-        <p className="text-sm font-semibold text-admin-text">
-          Jika semua kondisi berikut terpenuhi:
+    <div className="bg-admin-surface border border-admin-border rounded-2xl p-5">
+      <div className="flex items-center justify-between mb-4">
+        <p className={`flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider ${iconColor}`}>
+          <Icon size={14} />
+          {isDiusulkan ? "Cenderung Diusulkan" : "Cenderung Tidak Diusulkan"}
         </p>
+        <span className="text-[11px] font-semibold text-admin-text-5 tabular-nums">
+          {String(index).padStart(2, "0")}
+        </span>
       </div>
 
-      <ul className="space-y-2 pl-7 mb-4">
+      <p className="text-[11px] font-semibold uppercase tracking-wide text-admin-text-4 mb-2.5">
+        Jika semua kondisi terpenuhi
+      </p>
+      <ul className="space-y-1.5 mb-4">
         {conditions.map((c, i) => (
           <li
             key={i}
-            className="text-sm text-admin-text-3 leading-relaxed relative before:content-['•'] before:absolute before:-left-4 before:text-admin-text-5"
+            className="text-[12.5px] text-admin-text-2 leading-relaxed pl-3.5 relative before:content-['•'] before:absolute before:left-0 before:text-admin-text-5"
           >
             {c.text}
           </li>
         ))}
       </ul>
 
-      <div className="flex items-center justify-between pl-7">
-        <span className="text-[11px] text-admin-text-5 font-medium">
+      <div className="flex items-center justify-between pt-3 border-t border-admin-border-soft">
+        <span className="text-[11px] text-admin-text-4 font-medium">
           Berdasarkan {rule.jumlah_sampel} data mahasiswa serupa
         </span>
-        <div className="flex items-center gap-2.5">
-          <div className="w-16 h-1.5 bg-admin-border-soft rounded-full overflow-hidden">
-            <div
-              className={`h-full ${bar} rounded-full`}
-              style={{ width: `${pct}%` }}
-            />
+        <div className="flex items-center gap-2">
+          <div className="w-14 h-1.5 bg-admin-grid rounded-full overflow-hidden">
+            <div className={`h-full ${bar} rounded-full`} style={{ width: `${pct}%` }} />
           </div>
-          <span className={`text-[11px] font-bold ${color}`}>
+          <span className={`text-[11px] font-bold whitespace-nowrap ${color}`}>
             {label} ({pct}%)
           </span>
         </div>

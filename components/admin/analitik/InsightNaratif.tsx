@@ -51,7 +51,7 @@ export default function InsightNaratif({ data }: Props) {
     const top = topFitur[0]
     insights.push({
       icon: Lightbulb,
-      colorIcon: "text-admin-text-2",
+      colorIcon: "text-admin-text-3",
       title: "Faktor Penentu Utama",
       body: `Keputusan pewawancara paling dipengaruhi oleh ${top.fitur} (${top.pct}% kontribusi)${topFitur[1] ? `, diikuti ${topFitur[1].fitur} (${topFitur[1].pct}%)` : ""}${topFitur[2] ? ` dan ${topFitur[2].fitur} (${topFitur[2].pct}%)` : ""}. Faktor ekonomi mendominasi pola keputusan ini.`,
     })
@@ -97,24 +97,28 @@ export default function InsightNaratif({ data }: Props) {
   if (insights.length === 0) return null
 
   return (
-    <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm p-6 lg:p-8">
-      <h3 className="text-[15px] font-extrabold text-admin-text uppercase tracking-wide mb-1">
-        Ringkasan Analitik
-      </h3>
-      <p className="text-xs text-admin-text-3 mb-5">
+    <div>
+      <h3 className="font-admin-heading text-[19px] font-semibold text-admin-text">Ringkasan Analitik</h3>
+      <p className="text-[12.5px] text-admin-text-3 mt-1 mb-4">
         Pola keputusan pewawancara yang ditemukan dari data
       </p>
 
-      <div className="divide-y divide-admin-border">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
         {insights.map(({ icon: Icon, colorIcon, title, body }, i) => (
-          <div key={i} className="flex gap-4 py-5 first:pt-0 last:pb-0">
-            <Icon size={18} className={`${colorIcon} shrink-0 mt-0.5`} strokeWidth={2.25} />
-            <div>
-              <h4 className="font-admin-heading text-sm font-bold text-admin-text mb-1.5">{title}</h4>
-              <p className="text-[13px] text-admin-text-3 leading-relaxed">
-                {body}
-              </p>
+          <div
+            key={i}
+            className="bg-admin-surface border border-admin-border rounded-2xl p-5 flex flex-col gap-2.5"
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <Icon size={16} className={`${colorIcon} shrink-0`} strokeWidth={2.25} />
+                <h4 className="font-admin-heading text-[14.5px] font-bold text-admin-text">{title}</h4>
+              </div>
+              <span className="text-[11px] font-semibold text-admin-text-5 tabular-nums shrink-0">
+                {String(i + 1).padStart(2, "0")}
+              </span>
             </div>
+            <p className="text-[12.5px] text-admin-text-3 leading-relaxed">{body}</p>
           </div>
         ))}
       </div>

@@ -81,15 +81,21 @@ export default function DistribusiChart({ data, title, subtitle }: Props) {
       variants={cardVariants}
       initial="hidden"
       animate="visible"
-      className="bg-white rounded-2xl border border-admin-border shadow-sm p-6"
+      className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm p-6"
     >
-      <div className="mb-5">
-        <h3 className="text-sm font-bold text-admin-text uppercase tracking-wider mb-1">
-          {title}
-        </h3>
-        {subtitle && (
-          <p className="text-xs text-admin-text-4">{subtitle}</p>
-        )}
+      <div className="flex items-start justify-between gap-3 mb-5">
+        <div>
+          <h3 className="font-admin-heading text-[15px] font-bold text-admin-text">
+            {title}
+          </h3>
+          {subtitle && (
+            <p className="text-xs text-admin-text-3 mt-1">{subtitle}</p>
+          )}
+        </div>
+        <div className="flex items-center gap-3.5 shrink-0">
+          <LegendDot color={COLORS.diusulkan} label="Diusulkan" />
+          <LegendDot color={COLORS.tidakDiusulkan} label="Tidak" />
+        </div>
       </div>
 
       {safeData.length === 0 ? (
@@ -172,12 +178,6 @@ export default function DistribusiChart({ data, title, subtitle }: Props) {
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
-          </div>
-
-          {/* Custom Legend */}
-          <div className="flex items-center justify-center gap-5 pt-3">
-            <LegendDot color={COLORS.diusulkan} label="Diusulkan" />
-            <LegendDot color={COLORS.tidakDiusulkan} label="Tidak Diusulkan" />
           </div>
         </>
       )}
