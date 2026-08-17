@@ -7,7 +7,9 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get("search") ?? "";
     const page   = Math.max(1, parseInt(searchParams.get("page") ?? "1"));
     const limitParam = parseInt(searchParams.get("limit") ?? "50");
-    const limit  = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 500) : 50;
+    // EvaluasiClient loads the whole tahun+jalur combo in one request (FETCH_ALL_LIMIT = 5000)
+    // and paginates client-side, so the cap here must not sit below that.
+    const limit  = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(limitParam, 5000) : 50;
     const from   = (page - 1) * limit;
     const to     = from + limit - 1;
 

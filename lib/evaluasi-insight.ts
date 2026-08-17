@@ -70,7 +70,7 @@ export function computeEvaluasiInsight(input: EvaluasiInsightInput): EvaluasiIns
 
   const perKapita =
     hasPenghasilanData && jumlahOrang && jumlahOrang > 0
-      ? Math.round(totalPenghasilan / (jumlahOrang + 1))
+      ? Math.round(totalPenghasilan / (jumlahOrang))
       : null;
 
   const desilAngka = parseDesil(input.desilDtsen);
@@ -82,7 +82,7 @@ export function computeEvaluasiInsight(input: EvaluasiInsightInput): EvaluasiIns
       perKapita === null ? "Data penghasilan belum lengkap" : formatRupiah(perKapita) + " / bulan",
     perKapitaFormula:
       hasPenghasilanData && jumlahOrang
-        ? `${formatRupiahSingkat(totalPenghasilan)} ÷ ${jumlahOrang + 1} orang`
+        ? `${formatRupiahSingkat(totalPenghasilan)} ÷ ${jumlahOrang} orang`
         : "Data belum lengkap",
     desilAngka,
     desilLabel: desilLabelFromAngka(desilAngka),

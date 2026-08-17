@@ -374,11 +374,11 @@ export default function AdminDashboardContent({ stats }: Props) {
                   Pendaftar
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-[3px] bg-admin-accent/30" />
+                  <span className="w-2.5 h-2.5 rounded-[3px] bg-admin-accent/35" />
                   Penerima
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-admin-warn-bar" />
+                  <span className="w-3 h-2 rounded-full border border-admin-warn-border bg-admin-warn-bg" />
                   % Lolos
                 </span>
               </div>
@@ -389,12 +389,12 @@ export default function AdminDashboardContent({ stats }: Props) {
             ) : (
               <>
                 <div className="overflow-x-auto custom-scrollbar">
-                  <div className="min-w-120">
+                  <div className="min-w-120 max-w-160">
                     <TrendChart trend={trend} maxTrend={maxTrend} />
                   </div>
                 </div>
 
-                <div className={`grid grid-cols-2 ${trend.length > 1 ? "sm:grid-cols-4" : "sm:grid-cols-3"} gap-3 border-t border-admin-grid mt-4.5 pt-3.5`}>
+                <div className={`grid grid-cols-2 ${trend.length > 1 ? "sm:grid-cols-4" : "sm:grid-cols-3"} gap-3 max-w-160 border-t border-admin-grid mt-4.5 pt-3.5`}>
                   <TrendStat
                     label={`Pendaftar ${latest!.tahun}`}
                     value={fmtId(latest!.pendaftar)}
@@ -474,9 +474,12 @@ function TrendChart({
   maxTrend: number;
 }) {
   const width = 640;
-  const barAreaTop = 26;
-  const barAreaBottom = 168;
+  const barAreaTop = 38;
+  const barAreaBottom = 160;
   const barAreaHeight = barAreaBottom - barAreaTop;
+  // Y-axis ticks give the bars a fixed scale to read against instead of
+  // floating unanchored — rounded to clean steps of maxTrend.
+  const yTicks = [0, 0.5, 1].map((f) => Math.round((maxTrend * f) / 10) * 10);
   // Slot width is sized against a fixed 5-cycle reference (the richest view
   // this chart is expected to show), not against however many years actually
   // exist — otherwise 1–2 years of real data stretch into lonely bars
@@ -486,15 +489,8 @@ function TrendChart({
   const slotWidth = width / Math.max(trend.length, referenceSlots);
   const usedWidth = slotWidth * trend.length;
   const offsetX = (width - usedWidth) / 2;
-  const barWidth = Math.min(30, slotWidth * 0.26);
+  const barWidth = Math.min(24, slotWidth * 0.24);
   const gap = 4;
-
-  const linePoints = trend.map((p, i) => {
-    const cx = offsetX + i * slotWidth + slotWidth / 2;
-    const ratio = p.pendaftar > 0 ? p.penerima / p.pendaftar : 0;
-    const cy = barAreaBottom - ratio * barAreaHeight;
-    return { cx, cy, ratio };
-  });
 
   return (
     <svg
@@ -502,8 +498,24 @@ function TrendChart({
       className="w-full h-auto block overflow-visible"
       style={{ aspectRatio: `${width} / 200` }}
     >
-      <line x1="0" y1={barAreaBottom} x2={width} y2={barAreaBottom} stroke="var(--color-admin-border)" strokeWidth="1" />
-      <line x1="0" y1={barAreaTop + barAreaHeight * 0.5} x2={width} y2={barAreaTop + barAreaHeight * 0.5} stroke="var(--color-admin-grid)" strokeWidth="1" strokeDasharray="3 5" />
+      {yTicks.map((t, i) => {
+        const y = barAreaBottom - (maxTrend > 0 ? t / maxTrend : 0) * barAreaHeight;
+        return (
+          <g key={`${t}-${i}`}>
+            <line
+              x1="0"
+              y1={y}
+              x2={width}
+              y2={y}
+              stroke={i === 0 ? "var(--color-admin-border)" : "var(--color-admin-grid)"}
+              strokeWidth="1"
+            />
+            <text x="0" y={y - 5} fontSize="9.5" fill="var(--color-admin-text-5)">
+              {t.toLocaleString("id-ID")}
+            </text>
+          </g>
+        );
+      })}
 
       {trend.map((p, i) => {
         const slotCenter = offsetX + i * slotWidth + slotWidth / 2;
@@ -513,11 +525,25 @@ function TrendChart({
         const hPenerima = (p.penerima / maxTrend) * barAreaHeight;
         const yPendaftar = barAreaBottom - hPendaftar;
         const yPenerima = barAreaBottom - hPenerima;
+        const rasio = p.pendaftar > 0 ? Math.round((p.penerima / p.pendaftar) * 100) : 0;
 
         return (
           <g key={p.tahun}>
+            <rect
+              x={slotCenter - 17}
+              y={barAreaTop - 34}
+              width="34"
+              height="15"
+              rx="7.5"
+              fill="var(--color-admin-warn-bg)"
+              stroke="var(--color-admin-warn-border)"
+              strokeWidth="1"
+            />
+            <text x={slotCenter} y={barAreaTop - 24} textAnchor="middle" fontSize="9.5" fontWeight="700" fill="var(--color-admin-warn-text)">
+              {rasio}%
+            </text>
             <rect x={xPendaftar} y={yPendaftar} width={barWidth} height={hPendaftar} rx="3" fill="var(--color-admin-accent)" />
-            <rect x={xPenerima} y={yPenerima} width={barWidth} height={hPenerima} rx="3" fill="var(--color-admin-accent)" opacity="0.3" />
+            <rect x={xPenerima} y={yPenerima} width={barWidth} height={hPenerima} rx="3" fill="var(--color-admin-accent)" opacity="0.35" />
             <text x={xPendaftar + barWidth / 2} y={yPendaftar - 6} textAnchor="middle" fontSize="10.5" fontWeight="600" fill="var(--color-admin-text-2)">
               {p.pendaftar.toLocaleString("id-ID")}
             </text>
@@ -527,24 +553,9 @@ function TrendChart({
             <text x={slotCenter} y={barAreaBottom + 20} textAnchor="middle" fontSize="12" fontWeight="700" fill="var(--color-admin-text)">
               {p.tahun}
             </text>
-            <text x={slotCenter} y={barAreaBottom + 34} textAnchor="middle" fontSize="10" fill="var(--color-admin-warn-text)">
-              {p.pendaftar > 0 ? Math.round((p.penerima / p.pendaftar) * 100) : 0}%
-            </text>
           </g>
         );
       })}
-
-      {linePoints.length > 1 && (
-        <polyline
-          points={linePoints.map((pt) => `${pt.cx},${pt.cy}`).join(" ")}
-          fill="none"
-          stroke="var(--color-admin-warn-bar)"
-          strokeWidth="1.5"
-        />
-      )}
-      {linePoints.map((pt, i) => (
-        <circle key={i} cx={pt.cx} cy={pt.cy} r="2.5" fill="var(--color-admin-surface)" stroke="var(--color-admin-warn-bar)" strokeWidth="1.5" />
-      ))}
     </svg>
   );
 }
