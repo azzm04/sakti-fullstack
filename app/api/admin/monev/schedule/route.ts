@@ -6,13 +6,12 @@ import { supabaseAdmin } from "@/lib/supabase";
 export async function GET() {
   try {
     const { data, error } = await supabaseAdmin
-      .from("monev_schedules")
+      .from("periode_monev")
       .select(`id, tipe_monev, label, waktu_mulai, deadline, "isActive", "createdAt", updated_at`)
       .order('"createdAt"', { ascending: false });
 
     if (error) throw error;
 
-    // Normalisasi ke snake_case untuk konsistensi di frontend
     const normalized = (data ?? []).map((row) => ({
       id:          row.id,
       tipe_monev:  row.tipe_monev,
@@ -56,24 +55,22 @@ export async function POST(req: NextRequest) {
     const id = randomUUID();
 
     const { data, error } = await supabaseAdmin
-      .from("monev_schedules")
+      .from("periode_monev")
       .insert({
         id,
         tipe_monev,
         label,
         waktu_mulai:  waktu_mulai ?? null,
         deadline,
-        isActive:     true,   // camelCase sesuai kolom DB
-        createdAt:    now,    // camelCase sesuai kolom DB
-        updatedAt:    now,    // camelCase sesuai kolom DB
-        updated_at:   now,    // snake_case kolom kedua
+        isActive:     true,
+        createdAt:    now,
+        updated_at:   now,
       })
       .select()
       .single();
 
     if (error) throw error;
 
-    // Normalisasi response
     const normalized = {
       id:          data.id,
       tipe_monev:  data.tipe_monev,

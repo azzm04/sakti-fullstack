@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
 
   try {
     // 2. Ambil semua jadwal Monev yang aktif dan belum melewati deadline
-    const activeSchedules = await prisma.monevSchedule.findMany({
+    const activeSchedules = await prisma.periode_monev.findMany({
       where: {
         isActive: true,
         deadline: { gt: now },
@@ -114,9 +114,9 @@ export async function POST(req: NextRequest) {
       }
 
       // 5. Cek apakah sudah pernah kirim hari ini untuk kombinasi ini
-      const existingLog = await prisma.notificationLog.findFirst({
+      const existingLog = await prisma.log_notifikasi.findFirst({
         where: {
-          monevScheduleId: schedule.id,
+          periode_monev_id: schedule.id,
           triggerDay: daysLeft,
           sentAt: { gte: todayStart },
         },
@@ -134,8 +134,8 @@ export async function POST(req: NextRequest) {
       }
 
       // 6. Ambil user_id yang sudah submit untuk jadwal ini
-      const submissions = await prisma.monev_submissions.findMany({
-        where: { monev_schedule_id: schedule.id },
+      const submissions = await prisma.pengisian_monev.findMany({
+        where: { periode_monev_id: schedule.id },
         select: { user_id: true },
       })
       const submittedUserIds = new Set(submissions.map((s) => s.user_id))
@@ -167,9 +167,9 @@ export async function POST(req: NextRequest) {
       }
 
       // 9. Simpan log pengiriman
-      await prisma.notificationLog.create({
+      await prisma.log_notifikasi.create({
         data: {
-          monevScheduleId: schedule.id,
+          periode_monev_id: schedule.id,
           triggerDay: daysLeft,
           totalSent,
           totalFailed,

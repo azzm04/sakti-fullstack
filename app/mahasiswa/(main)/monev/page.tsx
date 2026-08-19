@@ -14,7 +14,7 @@ interface MonevSchedule {
 async function getSchedules(): Promise<MonevSchedule[]> {
   try {
     const { data, error } = await supabaseAdmin
-      .from("monev_schedules")
+      .from("periode_monev")
       .select(`id, tipe_monev, label, waktu_mulai, deadline, "isActive", "createdAt"`)
       .order('"createdAt"', { ascending: false });
 

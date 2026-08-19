@@ -60,7 +60,7 @@ async function getActivityFeed(): Promise<DashboardActivityItem[]> {
       .order("interviewed_at", { ascending: false })
       .limit(5),
     supabaseAdmin
-      .from("monev_schedules")
+      .from("periode_monev")
       .select("label, createdAt")
       .order("createdAt", { ascending: false })
       .limit(5),

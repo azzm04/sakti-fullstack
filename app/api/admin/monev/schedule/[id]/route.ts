@@ -21,7 +21,7 @@ export async function PATCH(
     if (body.deadline !== undefined)   payload["deadline"]   = body.deadline;
 
     const { data, error } = await supabaseAdmin
-      .from("monev_schedules")
+      .from("periode_monev")
       .update(payload)
       .eq("id", id)
       .select()
@@ -58,7 +58,7 @@ export async function DELETE(
   try {
     const { id } = await params;
     const { error } = await supabaseAdmin
-      .from("monev_schedules")
+      .from("periode_monev")
       .delete()
       .eq("id", id);
 
