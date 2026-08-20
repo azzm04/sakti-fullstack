@@ -1,11 +1,13 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   AlertCircle, CheckCircle2, FileText, Bell, Send,
-  CalendarClock, Clock,
+  CalendarClock, Clock, CheckCircle,
 } from "lucide-react";
+import ActivationButton from "@/components/aktivasi-bot/ActivationButton";
 
 interface MonevSchedule {
   id: string;
@@ -48,6 +50,22 @@ interface RiwayatMonevClientProps {
 
 export default function RiwayatMonevClient({ initialSchedules }: RiwayatMonevClientProps) {
   const schedules = initialSchedules;
+
+  // State status koneksi Telegram
+  const [telegramStatus, setTelegramStatus] = useState<{
+    connected: boolean;
+    loading: boolean;
+  }>({ connected: false, loading: true });
+
+  // Fetch status koneksi saat komponen mount
+  useEffect(() => {
+    fetch("/api/auth/telegram/status")
+      .then((r) => r.json())
+      .then((data) =>
+        setTelegramStatus({ connected: data.connected === true, loading: false })
+      )
+      .catch(() => setTelegramStatus({ connected: false, loading: false }));
+  }, []);
 
   // Pisahkan aktif vs riwayat
   const activeSchedules = schedules.filter((s) => s.is_active && !isDeadlinePassed(s.deadline));
@@ -225,22 +243,35 @@ export default function RiwayatMonevClient({ initialSchedules }: RiwayatMonevCli
             </div>
           </div>
 
-          {/* Kolom Kanan: Card Aktivasi */}
+          {/* Kolom Kanan: Card Aktivasi / Status */}
           <div className="bg-primary rounded-xl p-6 shadow-lg relative overflow-hidden flex flex-col justify-center">
             <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
             <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none" />
 
-            <div className="relative z-10 text-center space-y-4">
-              <div className="mx-auto w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mb-2">
-                <Send size={24} className="text-white ml-1" />
-              </div>
-              <h3 className="text-lg font-bold text-white">Mulai Sekarang</h3>
-              <p className="text-white/80 text-sm leading-relaxed pb-2">
-                Aktivasi bot dalam hitungan detik untuk proteksi status beasiswa Anda.
-              </p>
-              <p className="text-white/50 text-[10px]">
-                Dengan mengaktifkan, Anda menyetujui sistem akan mengirimkan pesan otomatis ke nomor Anda.
-              </p>
+            <div className="relative z-10">
+              {/* Loading state */}
+              {telegramStatus.loading ? (
+                <div className="flex justify-center items-center h-24">
+                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                </div>
+              ) : telegramStatus.connected ? (
+                /* Sudah terhubung */
+                <div className="text-center space-y-3">
+                  <div className="mx-auto w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mb-2">
+                    <CheckCircle size={24} className="text-emerald-300" />
+                  </div>
+                  <h3 className="text-lg font-bold text-white">Bot Sudah Terhubung</h3>
+                  <p className="text-white/80 text-sm leading-relaxed">
+                    Akun Telegram Anda sudah terhubung. Anda akan menerima pengingat otomatis Monev.
+                  </p>
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 rounded-full text-emerald-300 text-xs font-bold">
+                    <CheckCircle size={12} /> ✅ Terhubung ke Telegram
+                  </span>
+                </div>
+              ) : (
+                /* Belum terhubung — tampilkan tombol aktivasi */
+                <ActivationButton />
+              )}
             </div>
           </div>
         </div>
