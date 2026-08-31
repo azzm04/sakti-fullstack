@@ -44,3 +44,4 @@ next-env.d.ts
 
 # kiro spec files (local planning docs, not for repo)
 .kiro/
+.claude

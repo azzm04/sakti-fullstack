@@ -114,17 +114,7 @@ export default function LoginPage() {
           </button>
         </form>
 
-        {/* Footer / Links */}
         <AuthFooterLinks>
-          <span>
-            Mahasiswa KIPK Baru?{" "}
-            <Link
-              href="/verify-kandidat"
-              className="text-primary hover:underline font-semibold"
-            >
-              Verifikasi
-            </Link>
-          </span>
         </AuthFooterLinks>
       </AuthCardWrapper>
     </AuthLayout>

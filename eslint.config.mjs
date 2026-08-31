@@ -12,6 +12,9 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Script maintenance standalone (CommonJS, dijalankan manual lewat node,
+    // bukan bagian dari aplikasi Next.js) — wajar pakai require().
+    "scripts/**/*.cjs",
   ]),
 ]);
 

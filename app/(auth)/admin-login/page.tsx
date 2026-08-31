@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Eye, EyeOff, ShieldCheck, User, Lock, AlertCircle, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { AuthFooterLinks } from "@/components/auth/AuthFooterLinks";
+
 
 export default function AdminLoginPage() {
   const [username, setUsername] = useState("");
@@ -172,13 +175,8 @@ export default function AdminLoginPage() {
           </button>
         </form>
 
-        {/* Link ke login mahasiswa */}
-        <p className="text-center text-xs text-muted-foreground mt-6">
-          Bukan admin?{" "}
-          <a href="/login" className="text-primary hover:underline font-medium">
-            Login sebagai mahasiswa
-          </a>
-        </p>
+        <AuthFooterLinks>
+        </AuthFooterLinks>
       </div>
     </div>
   );
