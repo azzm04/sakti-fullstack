@@ -1,116 +1,130 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { MessageSquare, FileCheck, ShieldCheck } from "lucide-react";
+import Image from "next/image";
+
+const layanan = [
+  {
+    image: "/layanan/informasi-ai.png",
+    title: "Layanan Informasi berbasis Kecerdasan Buatan",
+  },
+  {
+    image: "/layanan/monitoring-evaluasi.png",
+    title: "Monitoring & Evaluasi",
+  },
+  {
+    image: "/layanan/sistem-pengaduan.png",
+    title: "Sistem Pengaduan",
+  },
+];
 
 export default function LayananSection() {
   return (
     <section
       id="layanan"
-      className="py-16 md:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto bg-[#F8FAFC]"
+      className="py-16 md:py-20 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto bg-[#F8FAFC] overflow-hidden"
     >
+      {/* Header */}
       <motion.div
-        initial={{ opacity: 0, y: 30 }}
+        initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: "-50px" }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className="text-center mb-16"
+        viewport={{ once: true }}
+        transition={{ duration: 0.5 }}
+        className="text-center mb-12"
       >
         <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary text-[10px] sm:text-xs font-bold tracking-widest uppercase rounded-full mb-4">
-          Akses Cepat &amp; Transparan
+          Akses Cepat & Transparan
         </span>
+
         <h2 className="text-3xl font-bold text-primary mb-4">
           Layanan Terpadu SAKTI
         </h2>
+
         <p className="text-slate-500 max-w-2xl mx-auto">
           Mempermudah akses informasi, pelaporan evaluasi, dan menjaga
           transparansi distribusi beasiswa di lingkungan kampus.
         </p>
       </motion.div>
 
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true, margin: "-50px" }}
-        variants={{
-          visible: {
-            transition: { staggerChildren: 0.18 },
-          },
-        }}
-        className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 md:gap-8"
-      >
-        {/* Card 1 */}
+      {/* Carousel */}
+      <div className="relative overflow-hidden">
         <motion.div
-          variants={{
-            hidden: { opacity: 0, y: 40 },
-            visible: {
-              opacity: 1,
-              y: 0,
-              transition: { duration: 0.6, ease: "easeOut" },
-            },
+          className="flex gap-6 w-max"
+          animate={{
+            x: ["0%", "-50%"],
           }}
-          className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200/80 border-t-4 border-t-blue-500 text-center hover:shadow-lg hover:-translate-y-1 transition-[transform,box-shadow] duration-300 ease-out"
+          transition={{
+            duration: 25,
+            ease: "linear",
+            repeat: Infinity,
+          }}
         >
-          <div className="w-16 h-16 bg-blue-50 text-blue-600 ring-4 ring-blue-50/60 flex items-center justify-center rounded-2xl mx-auto mb-6">
-            <MessageSquare className="w-8 h-8" />
-          </div>
-          <h3 className="text-xl font-bold text-primary mb-3">
-            Layanan Informasi berbasis Kecerdasan Buatan
-          </h3>
-          <p className="text-slate-500 text-sm">
-            Tanya jawab seputar regulasi dan panduan KIP-K 24/7 melalui Chatbot
-            AI yang bersumber langsung dari pedoman KIPK kemdiktisaintek.
-          </p>
-        </motion.div>
+          {/* SET 1 */}
+          {layanan.map((item, index) => (
+            <LayananCard
+              key={`first-${index}`}
+              image={item.image}
+              title={item.title}
+            />
+          ))}
 
-        {/* Card 2 */}
-        <motion.div
-          variants={{
-            hidden: { opacity: 0, y: 40 },
-            visible: {
-              opacity: 1,
-              y: 0,
-              transition: { duration: 0.6, ease: "easeOut" },
-            },
-          }}
-          className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200/80 border-t-4 border-t-indigo-500 text-center hover:shadow-lg hover:-translate-y-1 transition-[transform,box-shadow] duration-300 ease-out"
-        >
-          <div className="w-16 h-16 bg-indigo-50 text-indigo-600 ring-4 ring-indigo-50/60 flex items-center justify-center rounded-2xl mx-auto mb-6">
-            <FileCheck className="w-8 h-8" />
-          </div>
-          <h3 className="text-xl font-bold text-primary mb-3">
-            Monitoring & Evaluasi
-          </h3>
-          <p className="text-slate-500 text-sm">
-            Unggah berkas Monitoring Evaluasi Ekonomi Setiap Semester.
-            Dilengkapi sistem pengingat via Telegram agar tidak terlewat.
-          </p>
+          {/* SET 2 - DUPLIKAT UNTUK LOOP */}
+          {layanan.map((item, index) => (
+            <LayananCard
+              key={`second-${index}`}
+              image={item.image}
+              title={item.title}
+            />
+          ))}
         </motion.div>
-
-        {/* Card 3 */}
-        <motion.div
-          variants={{
-            hidden: { opacity: 0, y: 40 },
-            visible: {
-              opacity: 1,
-              y: 0,
-              transition: { duration: 0.6, ease: "easeOut" },
-            },
-          }}
-          className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200/80 border-t-4 border-t-emerald-500 text-center hover:shadow-lg hover:-translate-y-1 transition-[transform,box-shadow] duration-300 ease-out"
-        >
-          <div className="w-16 h-16 bg-emerald-50 text-emerald-600 ring-4 ring-emerald-50/60 flex items-center justify-center rounded-2xl mx-auto mb-6">
-            <ShieldCheck className="w-8 h-8" />
-          </div>
-          <h3 className="text-xl font-bold text-primary mb-3">
-            Sistem Pengaduan
-          </h3>
-          <p className="text-slate-500 text-sm">
-            Kanal aman dan rahasia (Whistleblowing System) untuk melaporkan
-            indikasi penyalahgunaan atau salah sasaran dana beasiswa.
-          </p>
-        </motion.div>
-      </motion.div>
+      </div>
     </section>
+  );
+}
+
+/* =========================================================
+   CARD
+========================================================= */
+
+function LayananCard({
+  image,
+  title,
+}: {
+  image: string;
+  title: string;
+}) {
+  return (
+    <div
+      className="
+        shrink-0
+        w-[150px]
+        sm:w-[220px]
+        lg:w-[320px]
+        bg-gradient-to-r from-[#005B96] to-primary
+        rounded-2xl
+        overflow-hidden
+        shadow-xl
+      "
+    >
+      <div className="p-4 flex flex-col items-center">
+
+        {/* Gambar */}
+        <div className="relative w-full h-[80px] sm:h-[90px] mb-3">
+          <Image
+            src={image}
+            alt={title}
+            fill
+            sizes="320px"
+            className="object-contain"
+          />
+        </div>
+
+        {/* Judul */}
+        <h3 className="text-xs sm:text-sm lg:text-base font-bold text-white text-center leading-snug">
+          {title}
+        </h3>
+
+      </div>
+    </div>
   );
 }
