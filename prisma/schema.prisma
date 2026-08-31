@@ -506,25 +506,26 @@ model log_notifikasi {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model pengisian_monev {
-  id                         BigInt        @id(map: "monev_submissions_pkey") @default(autoincrement())
-  user_id                    String        @db.Uuid
-  periode_monev_id           String        @db.Uuid
-  pekerjaan_ayah             String?       @db.VarChar(100)
-  url_bukti_pekerjaan_ayah   String?       @db.VarChar(255)
-  penghasilan_ayah           BigInt?
-  url_bukti_penghasilan_ayah String?       @db.VarChar(255)
-  pekerjaan_ibu              String?       @db.VarChar(100)
-  url_bukti_pekerjaan_ibu    String?       @db.VarChar(255)
-  penghasilan_ibu            BigInt?
-  url_bukti_penghasilan_ibu  String?       @db.VarChar(255)
-  penghasilan_lain           BigInt?       @default(0)
-  url_bukti_penghasilan_lain String?       @db.VarChar(255)
-  jumlah_tanggungan          Int?
-  url_scan_kk                String        @db.VarChar(255)
-  hasil_deteksi_yolo         Int?
-  status_anomali             Boolean?      @default(false)
-  waktu_lapor                DateTime?     @default(now()) @db.Timestamptz(6)
-  periode_monev              periode_monev @relation(fields: [periode_monev_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id                          String        @id(map: "monev_submissions_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                     String        @db.Uuid
+  periode_monev_id            String        @db.Uuid
+  pekerjaan_ayah              String?
+  path_bukti_pekerjaan_ayah   String?
+  penghasilan_ayah            BigInt?
+  path_bukti_penghasilan_ayah String?
+  pekerjaan_ibu               String?
+  path_bukti_pekerjaan_ibu    String?
+  penghasilan_ibu             BigInt?
+  path_bukti_penghasilan_ibu  String?
+  penghasilan_lain            BigInt?       @default(0)
+  path_bukti_penghasilan_lain String?
+  jumlah_tanggungan           Int?
+  path_scan_kk                String
+  hasil_deteksi_yolo          Int?
+  status_anomali              Boolean?      @default(false)
+  waktu_lapor                 DateTime?     @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
+  hasil_scan_ai               Json?
+  periode_monev               periode_monev @relation(fields: [periode_monev_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   AlertCircle, CheckCircle2, FileText, Bell, Send,
-  CalendarClock, Clock, CheckCircle,
+  CalendarClock, Clock, CheckCircle, Loader2
 } from "lucide-react";
 import ActivationButton from "@/components/aktivasi-bot/ActivationButton";
 
@@ -46,9 +46,10 @@ const TIMELINE = [
 
 interface RiwayatMonevClientProps {
   initialSchedules: MonevSchedule[];
+  initialSubmittedIds: string[];
 }
 
-export default function RiwayatMonevClient({ initialSchedules }: RiwayatMonevClientProps) {
+export default function RiwayatMonevClient({ initialSchedules, initialSubmittedIds }: RiwayatMonevClientProps) {
   const schedules = initialSchedules;
 
   // State status koneksi Telegram
@@ -57,7 +58,8 @@ export default function RiwayatMonevClient({ initialSchedules }: RiwayatMonevCli
     loading: boolean;
   }>({ connected: false, loading: true });
 
-  // Fetch status koneksi saat komponen mount
+  const [submittedIds] = useState<Set<string>>(new Set(initialSubmittedIds));
+
   useEffect(() => {
     fetch("/api/auth/telegram/status")
       .then((r) => r.json())
@@ -67,7 +69,6 @@ export default function RiwayatMonevClient({ initialSchedules }: RiwayatMonevCli
       .catch(() => setTelegramStatus({ connected: false, loading: false }));
   }, []);
 
-  // Pisahkan aktif vs riwayat
   const activeSchedules = schedules.filter((s) => s.is_active && !isDeadlinePassed(s.deadline));
   const historySchedules = schedules.filter((s) => !s.is_active || isDeadlinePassed(s.deadline));
 
@@ -85,15 +86,20 @@ export default function RiwayatMonevClient({ initialSchedules }: RiwayatMonevCli
           <div className="space-y-3">
             {activeSchedules.map((s) => {
               const daysLeft = getDaysLeft(s.deadline);
+              const alreadySubmitted = submittedIds.has(s.id);
               return (
                 <motion.div
                   key={s.id}
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4"
+                  className={`border rounded-xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 ${
+                    alreadySubmitted ? "bg-emerald-50/50 border-emerald-200" : "bg-emerald-50 border-emerald-200"
+                  }`}
                 >
                   <div className="flex items-start gap-3">
-                    <div className="p-2 bg-emerald-100 text-emerald-600 rounded-lg shrink-0 mt-0.5">
+                    <div className={`p-2 rounded-lg shrink-0 mt-0.5 ${
+                      alreadySubmitted ? "bg-emerald-100 text-emerald-600" : "bg-emerald-100 text-emerald-600"
+                    }`}>
                       <CalendarClock size={18} />
                     </div>
                     <div>
@@ -104,21 +110,34 @@ export default function RiwayatMonevClient({ initialSchedules }: RiwayatMonevCli
                           <span className="text-xs text-slate-500">Mulai: {formatDate(s.waktu_mulai)}</span>
                         )}
                         <span className="text-xs font-semibold text-slate-700">Deadline: {formatDate(s.deadline)}</span>
-                        <span className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${
-                          daysLeft <= 3 ? "bg-red-100 text-red-700" : daysLeft <= 7 ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
-                        }`}>
-                          <Clock size={11} />
-                          {daysLeft > 0 ? `${daysLeft} hari lagi` : "Hari ini!"}
-                        </span>
+                        {alreadySubmitted ? (
+                          <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
+                            <CheckCircle size={11} /> Sudah Mengisi
+                          </span>
+                        ) : (
+                          <span className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${
+                            daysLeft <= 3 ? "bg-red-100 text-red-700" : daysLeft <= 7 ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
+                          }`}>
+                            <Clock size={11} />
+                            {daysLeft > 0 ? `${daysLeft} hari lagi` : "Hari ini!"}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
                   <Link
                     href={`/mahasiswa/monev/${s.id}`}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-emerald-600 text-white font-semibold rounded-xl text-sm hover:bg-emerald-700 transition-all shadow-sm hover:shadow active:scale-95 whitespace-nowrap shrink-0"
+                    className={`inline-flex items-center gap-2 px-5 py-2.5 font-semibold rounded-xl text-sm transition-all shadow-sm hover:shadow active:scale-95 whitespace-nowrap shrink-0 ${
+                      alreadySubmitted
+                        ? "bg-emerald-600 text-white hover:bg-emerald-700"
+                        : "bg-emerald-600 text-white hover:bg-emerald-700"
+                    }`}
                   >
-                    <AlertCircle size={16} />
-                    Isi Evaluasi
+                    {alreadySubmitted ? (
+                      <><CheckCircle2 size={16} /> Lihat Evaluasi</>
+                    ) : (
+                      <><AlertCircle size={16} /> Isi Evaluasi</>
+                    )}
                   </Link>
                 </motion.div>
               );
@@ -173,14 +192,25 @@ export default function RiwayatMonevClient({ initialSchedules }: RiwayatMonevCli
                       <td className="p-4">
                         <div className="flex flex-col gap-3 items-start max-w-lg">
                           <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold ${
-                            passed ? "bg-slate-100 text-slate-500" : isActive ? "bg-amber-100 text-amber-700" : "bg-slate-100 text-slate-500"
+                            submittedIds.has(item.id)
+                              ? "bg-emerald-100 text-emerald-700"
+                              : passed
+                                ? "bg-slate-100 text-slate-500"
+                                : isActive
+                                  ? "bg-amber-100 text-amber-700"
+                                  : "bg-slate-100 text-slate-500"
                           }`}>
-                            {passed ? "Berakhir" : isActive ? "Belum Lengkap" : "Nonaktif"}
+                            {submittedIds.has(item.id) ? "Sudah Mengisi" : passed ? "Berakhir" : isActive ? "Belum Mengisi" : "Nonaktif"}
                           </span>
+                          
                           {passed ? (
                             <button disabled className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-400 font-semibold rounded-lg text-sm cursor-not-allowed">
                               <CheckCircle2 size={16} /> Periode Berakhir
                             </button>
+                          ) : isActive && submittedIds.has(item.id) ? (
+                            <Link href={`/mahasiswa/monev/${item.id}`} className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white font-semibold rounded-lg text-sm hover:bg-emerald-700 transition-all shadow-sm hover:shadow active:scale-95">
+                              <CheckCircle2 size={16} /> Lihat Evaluasi
+                            </Link>
                           ) : isActive ? (
                             <Link href={`/mahasiswa/monev/${item.id}`} className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white font-semibold rounded-lg text-sm hover:bg-primary/90 transition-all shadow-sm hover:shadow active:scale-95">
                               <AlertCircle size={16} /> Isi Evaluasi

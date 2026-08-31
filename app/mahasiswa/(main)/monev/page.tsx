@@ -1,5 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabase";
 import RiwayatMonevClient from "@/components/mahasiswa/monev/RiwayatMonevClient";
+import { getCurrentUser } from "@/lib/auth-server";
+import { redirect } from "next/navigation";
 
 interface MonevSchedule {
   id: string;
@@ -35,10 +37,27 @@ async function getSchedules(): Promise<MonevSchedule[]> {
   }
 }
 
-export default async function RiwayatMonevPage() {
-  // ↓ Ini yang membuat halaman jadi SSR:
-  //   data di-fetch di server SEBELUM HTML dikirim ke browser
-  const schedules = await getSchedules();
+async function getSubmittedIds(userId: string): Promise<string[]> {
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("pengisian_monev")
+      .select("periode_monev_id")
+      .eq("user_id", userId);
 
-  return <RiwayatMonevClient initialSchedules={schedules} />;
+    if (error) throw error;
+    return (data ?? []).map(row => row.periode_monev_id);
+  } catch (err) {
+    console.error("[Server] getSubmittedIds error:", err);
+    return [];
+  }
+}
+
+export default async function RiwayatMonevPage() {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+
+  const schedules = await getSchedules();
+  const submittedIds = await getSubmittedIds(user.id);
+
+  return <RiwayatMonevClient initialSchedules={schedules} initialSubmittedIds={submittedIds} />;
 }
