@@ -1,7 +1,7 @@
 "use client";
 
 import useSWR from "swr";
-import { Clock, FileUp } from "lucide-react";
+import { Clock, FileUp, AlertTriangle } from "lucide-react";
 import type { SKDokumen } from "./SectionImportSK";
 import { SK_ENDPOINT } from "./SKTersimpanCard";
 import type { HasilAkhirSummary } from "./HasilAkhirSummary";
@@ -73,10 +73,10 @@ export default function AntrianPengirimanCard({ queueStats, summary, onProcessQu
         <div className="grid grid-cols-3 gap-2.5">
           <div className="bg-admin-accent/8 rounded-xl p-2.5 text-center">
             <p className="text-base font-extrabold font-admin-heading text-admin-accent-ink tabular-nums">
-              {summary?.totalLolos ?? "—"}
+              {summary?.totalDitetapkanSk ?? "—"}
             </p>
             <p className="text-[9px] font-semibold text-admin-text-4 uppercase tracking-wide mt-0.5">
-              Lolos
+              Ditetapkan SK
             </p>
           </div>
           <div className="bg-admin-surface-soft rounded-xl p-2.5 text-center">
@@ -96,6 +96,17 @@ export default function AntrianPengirimanCard({ queueStats, summary, onProcessQu
             </p>
           </div>
         </div>
+
+        {(summary?.totalBelumDiprosesSk ?? 0) > 0 && (
+          <div className="flex items-start gap-2 mt-3 px-3 py-2.5 bg-admin-warn-bg-2 border border-admin-warn-border rounded-xl">
+            <AlertTriangle size={13} className="text-admin-warn-text shrink-0 mt-0.5" />
+            <p className="text-[11px] text-admin-warn-text leading-relaxed">
+              <strong>{summary?.totalBelumDiprosesSk}</strong> kandidat &quot;Diusulkan&quot; belum
+              diproses di tab <strong>Penetapan SK</strong> — kalau email dikirim sekarang, mereka
+              akan menerima email &quot;Belum Lolos&quot; walau sebenarnya diusulkan.
+            </p>
+          </div>
+        )}
       </div>
 
       <div className="bg-white rounded-2xl border border-admin-border shadow-sm p-5">

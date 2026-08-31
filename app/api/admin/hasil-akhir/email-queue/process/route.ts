@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import nodemailer from "nodemailer";
+import { isDitetapkanSk } from "@/lib/kelulusan";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -19,9 +20,27 @@ const transporter = nodemailer.createTransport({
 
 const BATCH_SIZE = 50;
 
+interface SkDokumenRow {
+  storage_path: string;
+  nama_file: string;
+}
+
+interface KandidatRow {
+  nama_pendaftar: string | null;
+  nisn: string | null;
+  prodi_pendaftar: string | null;
+  no_pendaftaran_kipk: string | null;
+  status_sk: string | null;
+  verifikasi_token: string | null;
+}
+
+function firstOf<T>(value: T | T[] | null | undefined): T | null {
+  return Array.isArray(value) ? (value[0] ?? null) : (value ?? null);
+}
+
 export async function POST() {
   try {
-    // 1. NESTED JOIN: Tarik hasil_wawancara melalui relasi kandidat
+    // 1. Tarik status_sk (hasil Penetapan SK Massal) melalui relasi kandidat
     const { data: batch, error: fetchErr } = await supabase
       .from("email_queue")
       .select(
@@ -29,11 +48,12 @@ export async function POST() {
         id, to_email, to_nama, subject,
         sk_dokumen:sk_dokumen_id (storage_path, nama_file),
         kandidat:kandidat_id (
-          nama_pendaftar, 
-          nisn, 
-          prodi_pendaftar, 
+          nama_pendaftar,
+          nisn,
+          prodi_pendaftar,
           no_pendaftaran_kipk,
-          hasil_wawancara (hasil_akhir)
+          status_sk,
+          verifikasi_token
         )
       `,
       )
@@ -60,30 +80,28 @@ export async function POST() {
 
     for (const item of batch) {
       try {
-        const skRaw = item.sk_dokumen as any;
-        const skData = Array.isArray(skRaw) ? skRaw[0] : skRaw;
-        const sk = skData as {
-          storage_path: string;
-          nama_file: string;
-        } | null;
+        const sk = firstOf(
+          item.sk_dokumen as unknown as SkDokumenRow | SkDokumenRow[] | null,
+        );
 
         // Parsing data kandidat yang lebih dalam
-        const kandidatRaw = item.kandidat as any;
+        const kandidat = firstOf(
+          item.kandidat as unknown as KandidatRow | KandidatRow[] | null,
+        );
 
-        // Ekstrak status dari tabel hasil_wawancara
-        const wawancaraArr = kandidatRaw?.hasil_wawancara;
-        const statusAkhir = Array.isArray(wawancaraArr)
-          ? wawancaraArr[0]?.hasil_akhir
-          : wawancaraArr?.hasil_akhir;
-        const isLolos = statusAkhir === "Diusulkan";
+        // "Lolos" ditentukan dari status_sk (hasil Penetapan SK Massal) —
+        // status resmi pasca SK dari pimpinan/DIKTI, bukan lagi rekomendasi
+        // wawancara internal kita. Lihat lib/kelulusan.ts.
+        const isLolos = isDitetapkanSk(kandidat?.status_sk);
 
         // Mapping data agar rapi masuk ke template
         const dataTemplate = {
-          nama: kandidatRaw?.nama_pendaftar || item.to_nama || "-",
-          nisn: kandidatRaw?.nisn || "-",
-          prodi: kandidatRaw?.prodi_pendaftar || "-",
-          no_pendaftaran_kipk: kandidatRaw?.no_pendaftaran_kipk || "-",
+          nama: kandidat?.nama_pendaftar || item.to_nama || "-",
+          nisn: kandidat?.nisn || "-",
+          prodi: kandidat?.prodi_pendaftar || "-",
+          no_pendaftaran_kipk: kandidat?.no_pendaftaran_kipk || "-",
           lolos: isLolos,
+          verifikasi_token: kandidat?.verifikasi_token ?? null,
         };
 
         // Dapatkan PDF bytes dari Supabase Storage
@@ -166,6 +184,7 @@ function buildTemplate(kandidat: {
   prodi: string;
   no_pendaftaran_kipk: string;
   lolos: boolean;
+  verifikasi_token: string | null;
 }) {
   // Jaring Pengaman yang BENAR (mengagalkan email jika data kosong)
   if (!kandidat || !kandidat.nama || kandidat.nama === "-") {
@@ -173,62 +192,21 @@ function buildTemplate(kandidat: {
   }
 
   const teksPembuka = kandidat.lolos
-    ? "Selamat! Berdasarkan hasil seleksi dan verifikasi, kamu dinyatakan <strong>LOLOS</strong>"
-    : "Mohon maaf, berdasarkan hasil seleksi dan verifikasi, kamu dinyatakan <strong>BELUM LOLOS</strong>";
-
-  const emoticon = kandidat.lolos ? "🎉" : "🙏";
-
+    ? "Berdasarkan hasil seleksi dan verifikasi, kamu dinyatakan <strong>LOLOS</strong> sebagai penerima Beasiswa KIP Kuliah Universitas Diponegoro."
+    : "Berdasarkan hasil seleksi dan verifikasi, kamu dinyatakan <strong>BELUM LOLOS</strong> sebagai penerima Beasiswa KIP Kuliah Universitas Diponegoro.";
   const teksPenutup = kandidat.lolos
-      ? "Dokumen SK (Surat Keputusan) resmi terlampir pada email ini. Status penetapan juga dapat kamu pantau langsung melalui akun KIP Kuliah masing-masing."
-      : "Sebagai bentuk transparansi, kami melampirkan salinan resmi Surat Keputusan (SK) Daftar Penerima KIP Kuliah. Jangan patah semangat, masih banyak kesempatan beasiswa lain di Universitas Diponegoro! 💪";
+    ? "Surat Keputusan (SK) resmi terlampir pada email ini. Status penetapan juga dapat dipantau melalui akun KIP Kuliah masing-masing."
+    : "Sebagai bentuk transparansi, kami melampirkan salinan resmi Surat Keputusan (SK) Daftar Penerima KIP Kuliah yang berisi nama-nama penerima yang telah ditetapkan pada jalur ini. Tetap semangat dan jangan berhenti mencari kesempatan beasiswa lainnya.";
 
-  return `
-    <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f4f7f6; padding: 32px 16px; color: #333;">
-      <div style="max-width: 550px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);">
-        
-        <div style="background-color: ${kandidat.lolos ? "#003580" : "#475569"}; padding: 24px; text-align: center;">
-          <h2 style="color: #ffffff; margin: 0; font-size: 18px; letter-spacing: 1px;">🎓 PENGUMUMAN KIP KULIAH UNDIP</h2>
-        </div>
+  // Link personal & sekali pakai (?token=...) kalau ada — kandidat langsung
+  // skip ke step OTP tanpa isi ulang data. Fallback ke link generik hanya
+  // sebagai jaga-jaga kalau token entah kenapa belum ter-generate.
+  const linkVerifikasi = kandidat.verifikasi_token
+    ? `${process.env.NEXT_PUBLIC_APP_URL}/verify-kandidat?token=${encodeURIComponent(kandidat.verifikasi_token)}`
+    : `${process.env.NEXT_PUBLIC_APP_URL}/verify-kandidat`;
+  const blokVerifikasi = kandidat.lolos
+    ? ` <p style="margin: 24px 0 8px 0;"> Silakan melakukan verifikasi melalui web SAKTI: </p> <p style="margin: 0 0 24px 0;"> <a href="${linkVerifikasi}" style="color: #003580; font-weight: 600; text-decoration: underline;" > Verifikasi Kandidat </a> </p> `
+    : "";
 
-        <div style="padding: 32px;">
-          <p style="font-size: 16px; margin-top: 0; color: #1f2937;">Halo, <strong>${kandidat.nama}</strong>! 👋</p>
-          
-          <p style="font-size: 15px; line-height: 1.6; color: #4b5563;">
-            ${teksPembuka} sebagai Penerima Beasiswa KIP Kuliah Universitas Diponegoro Tahun Akademik 2025/2026. ${emoticon}
-          </p>
-
-          <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 16px; margin: 24px 0;">
-            <p style="margin: 0 0 10px 0; font-size: 14px;">
-              <span style="color: #64748b; display: inline-block; width: 130px;">Nama</span> 
-              <strong style="color: #1e293b;">${kandidat.nama}</strong>
-            </p>
-            <p style="margin: 0 0 10px 0; font-size: 14px;">
-              <span style="color: #64748b; display: inline-block; width: 130px;">NISN</span> 
-              <strong style="color: #1e293b;">${kandidat.nisn}</strong>
-            </p>
-            <p style="margin: 0 0 10px 0; font-size: 14px;">
-              <span style="color: #64748b; display: inline-block; width: 130px;">Program Studi</span> 
-              <strong style="color: #1e293b;">${kandidat.prodi}</strong>
-            </p>
-            <p style="margin: 0; font-size: 14px;">
-              <span style="color: #64748b; display: inline-block; width: 130px;">No. KIPK</span> 
-              <strong style="color: #1e293b;">${kandidat.no_pendaftaran_kipk}</strong>
-            </p>
-          </div>
-
-          <p style="font-size: 15px; line-height: 1.6; color: #4b5563;">
-            ${teksPenutup}
-          </p>
-          
-          <hr style="border: none; border-top: 1px solid #e2e8f0; margin: 32px 0 24px 0;" />
-          
-          <p style="font-size: 13px; color: #94a3b8; margin: 0; text-align: center; line-height: 1.5;">
-            <strong>Direktorat Kemahasiswaan</strong><br/>
-            Universitas Diponegoro<br/>
-            Tahun 2025
-          </p>
-        </div>
-      </div>
-    </div>
-  `;
+  return `<div style=" margin: 0; padding: 32px 16px; background-color: #ffffff; font-family: Arial, Helvetica, sans-serif; color: #333333; font-size: 14px; line-height: 1.6; "> <div style=" max-width: 600px; margin: 0 auto; "> <p style=" margin: 0 0 24px 0; font-size: 16px; font-weight: 600; color: #222222; "> Pengumuman KIP Kuliah Universitas Diponegoro </p> <p style="margin: 0 0 16px 0;"> Halo, <strong>${kandidat.nama}</strong>. </p> <p style="margin: 0 0 20px 0;"> ${teksPembuka} </p> <p style=" margin: 0 0 8px 0; font-weight: 600; "> Data Pendaftar </p> <table cellpadding="0" cellspacing="0" border="0" style=" width: 100%; margin: 0 0 20px 0; border-collapse: collapse; " > <tr> <td style="padding: 5px 0; width: 150px; color: #666666;"> Nama </td> <td style="padding: 5px 0;"> ${kandidat.nama} </td> </tr> <tr> <td style="padding: 5px 0; color: #666666;"> NISN </td> <td style="padding: 5px 0;"> ${kandidat.nisn} </td> </tr> <tr> <td style="padding: 5px 0; color: #666666;"> Program Studi </td> <td style="padding: 5px 0;"> ${kandidat.prodi} </td> </tr> <tr> <td style="padding: 5px 0; color: #666666;"> No. Pendaftaran KIPK </td> <td style="padding: 5px 0;"> ${kandidat.no_pendaftaran_kipk} </td> </tr> </table> <p style="margin: 0 0 20px 0;"> ${teksPenutup} </p> ${blokVerifikasi} <p style=" margin: 32px 0 0 0; padding-top: 16px; border-top: 1px solid #eeeeee; color: #777777; font-size: 13px; "> Demikian informasi ini disampaikan. Mohon diperhatikan dan ditindaklanjuti sesuai dengan ketentuan yang berlaku. </p> <p style=" margin: 24px 0 0 0; color: #555555; font-size: 13px; "> Hormat kami,<br /> <strong>Direktorat Kemahasiswaan</strong><br /> Universitas Diponegoro </p> </div> </div> `;
 }

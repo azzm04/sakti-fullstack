@@ -1,14 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { resolveJalurAliases } from "@/lib/jalur";
+import { isLolosAkhir } from "@/lib/kelulusan";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
-
-// "Diusulkan" adalah kandidat yang direkomendasikan (lolos)
-const LOLOS_VALUES = ["Diusulkan", "DIUSULKAN", "Lolos", "LOLOS"];
 
 export async function GET(req: NextRequest) {
   try {
@@ -42,7 +40,8 @@ export async function GET(req: NextRequest) {
         prodi_pendaftar,
         jalur_masuk,
         hasil_wawancara!inner (
-          hasil_akhir
+          hasil_akhir,
+          status_final
         ),
         impor_data!inner (
           tahun_seleksi
@@ -58,10 +57,8 @@ export async function GET(req: NextRequest) {
     // 3. ── MAPPING DATA KE FRONTEND ──
     const rows = (data ?? []).map((row, i) => {
       const wawancaraArr = row.hasil_wawancara as any;
-      const statusAkhir = Array.isArray(wawancaraArr) 
-        ? wawancaraArr[0]?.hasil_akhir 
-        : wawancaraArr?.hasil_akhir;
-      const isLolos = LOLOS_VALUES.includes(statusAkhir);
+      const hw = Array.isArray(wawancaraArr) ? wawancaraArr[0] : wawancaraArr;
+      const isLolos = isLolosAkhir(row.jalur_masuk, hw?.hasil_akhir, hw?.status_final);
 
       return {
         no:           i + 1,

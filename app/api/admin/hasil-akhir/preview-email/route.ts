@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { resolveJalurAliases } from "@/lib/jalur";
+import { isDitetapkanSk } from "@/lib/kelulusan";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -26,12 +27,9 @@ export async function GET(req: NextRequest) {
         email,
         prodi_pendaftar,
         jalur_masuk,
-        hasil_wawancara (
-          hasil_akhir
-        )
+        status_sk
       `)
       .in("jalur_masuk", jalurValues)
-      // .in("hasil_wawancara.hasil_akhir", LOLOS_VALUES) 
       .not("email", "is", null)
       .neq("email", "")
       .order("nama_pendaftar", { ascending: true });
@@ -39,10 +37,9 @@ export async function GET(req: NextRequest) {
     if (error) throw error;
 
     const rows = (data ?? []).map((row) => {
-      // Sama seperti di fungsi kirim, kita ekstrak hasil wawancaranya
-      const wawancaraArr = row.hasil_wawancara as any;
-      const statusAkhir = Array.isArray(wawancaraArr) ? wawancaraArr[0]?.hasil_akhir : wawancaraArr?.hasil_akhir;
-      const isLolos = ["Diusulkan", "DIUSULKAN", "Lolos", "LOLOS"].includes(statusAkhir);
+      // "Lolos" ditentukan dari status_sk (hasil Penetapan SK Massal) —
+      // status resmi pasca SK, bukan lagi rekomendasi wawancara internal.
+      const isLolos = isDitetapkanSk(row.status_sk);
 
       return {
         nama:  row.nama_pendaftar ?? "",

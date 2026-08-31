@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import nodemailer from "nodemailer";
+import { isLolosAkhir } from "@/lib/kelulusan";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -56,7 +57,8 @@ export async function POST(req: NextRequest) {
         nisn, 
         no_pendaftaran_kipk,
         hasil_wawancara!inner (
-          hasil_akhir
+          hasil_akhir,
+          status_final
         )
       `)
       .in("jalur_masuk", jalurValues)
@@ -73,15 +75,16 @@ export async function POST(req: NextRequest) {
     for (const item of data) {
       // Supabase mengembalikan relasi one-to-many sebagai array
       const wawancara = item.hasil_wawancara as
-        | Array<{ hasil_akhir?: string }>
-        | { hasil_akhir?: string }
+        | Array<{ hasil_akhir?: string; status_final?: string }>
+        | { hasil_akhir?: string; status_final?: string }
         | null
         | undefined;
 
-      const statusAkhir = Array.isArray(wawancara) ? wawancara[0]?.hasil_akhir : wawancara?.hasil_akhir;
-      
-      // Ubah teks "Diusulkan" menjadi true (lolos), selain itu false (tidak lolos)
-      const isLolos = statusAkhir === "Diusulkan";
+      const hw = Array.isArray(wawancara) ? wawancara[0] : wawancara;
+
+      // Untuk UM/SBUB, "lolos" juga mensyaratkan lolos tahap Filtering Kuota
+      // (status_final) — lihat lib/kelulusan.ts.
+      const isLolos = isLolosAkhir(jalur, hw?.hasil_akhir, hw?.status_final);
 
       // Bentuk ulang objek kandidat agar sesuai dengan kebutuhan fungsi buildEmailTemplate
       const kandidat = {
