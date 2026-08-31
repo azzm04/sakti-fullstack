@@ -2,13 +2,15 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "motion/react";
-import { FileSpreadsheet, FileUp, Mail } from "lucide-react";
+import { FileSpreadsheet, FileUp, ShieldCheck, Mail } from "lucide-react";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import SectionExportExcel from "./SectionExportExcel";
 import SectionImportSK from "./SectionImportSK";
+import SectionPenetapanSK, { type PenetapanSKCounts } from "./SectionPenetapanSK";
 import SectionKirimEmail from "./SectionKirimEmail";
 import PenerimaPerJalurCard from "./PenerimaPerJalurCard";
 import SKTersimpanCard from "./SKTersimpanCard";
+import PenetapanSKStatusCard from "./PenetapanSKStatusCard";
 import AntrianPengirimanCard from "./AntrianPengirimanCard";
 import { SK_ENDPOINT } from "./SKTersimpanCard";
 import { SUMMARY_ENDPOINT, summaryFetcher, type HasilAkhirSummary } from "./HasilAkhirSummary";
@@ -31,9 +33,16 @@ const TABS = [
     desc: "Unggah & kelola dokumen SK final",
   },
   {
+    key: "penetapan_sk",
+    label: "Penetapan SK",
+    step: "Langkah 3",
+    icon: ShieldCheck,
+    desc: "Cocokkan & tetapkan status resmi pasca SK",
+  },
+  {
     key: "email",
     label: "Kirim Email SK",
-    step: "Langkah 3",
+    step: "Langkah 4",
     icon: Mail,
     desc: "Kirim pengumuman ke email kandidat",
   },
@@ -55,6 +64,7 @@ export default function HasilAkhirClient() {
   const [queueStats, setQueueStats] = useState<QueueStats | null>(null);
   const [processingQueue, setProcessingQueue] = useState(false);
   const [deletingSkId, setDeletingSkId] = useState<string | null>(null);
+  const [skCounts, setSkCounts] = useState<PenetapanSKCounts | null>(null);
 
   const fetchSummary = useCallback(async (year: number) => {
     setLoadingSummary(true);
@@ -116,7 +126,7 @@ export default function HasilAkhirClient() {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3, ease }}
-          className="grid grid-cols-1 sm:grid-cols-3 gap-3"
+          className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3"
         >
           {TABS.map(({ key, label, step, icon: Icon, desc }) => {
             const active = activeTab === key;
@@ -174,6 +184,13 @@ export default function HasilAkhirClient() {
             <>
               <SectionImportSK />
               <SKTersimpanCard onDelete={handleDeleteSK} deletingId={deletingSkId} />
+            </>
+          )}
+
+          {activeTab === "penetapan_sk" && (
+            <>
+              <SectionPenetapanSK onCountsChange={setSkCounts} />
+              <PenetapanSKStatusCard counts={skCounts} />
             </>
           )}
 

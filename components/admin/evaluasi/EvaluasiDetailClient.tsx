@@ -25,6 +25,7 @@ import { toast } from "sonner";
 import type { Kandidat } from "@/schemas";
 import { isPerluReview, autoHasilAkhir } from "@/schemas";
 import type { EvaluasiInsight } from "@/lib/evaluasi-insight";
+import { needsKuotaFiltering } from "@/lib/jalur";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { Pill } from "@/components/admin/ui/Pill";
 import { Timeline, type TimelineItem } from "@/components/admin/ui/Timeline";
@@ -224,6 +225,42 @@ export default function EvaluasiDetailClient({
   });
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [showDelete, setShowDelete] = useState(false);
+
+  // ── Penetapan SK (alat bantu sementara — lihat plan Phase 1) ──────────────
+  const [nimResmi, setNimResmi] = useState(kandidat.nim_resmi ?? "");
+  const [statusSk, setStatusSk] = useState<string | null>(kandidat.status_sk ?? null);
+  const [skSaveStatus, setSkSaveStatus] = useState<SaveStatus>("idle");
+
+  async function handleSetStatusSk(next: "Ditetapkan" | "Tidak Ditetapkan") {
+    if (next === "Ditetapkan" && !/^\d{14}$/.test(nimResmi.trim())) {
+      toast.error("NIM tidak valid", {
+        description: "NIM resmi harus berupa 14 digit angka.",
+      });
+      return;
+    }
+
+    setSkSaveStatus("saving");
+    try {
+      const res = await fetch(`/api/admin/kandidat/${id}/status-sk`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status_sk: next, nim_resmi: nimResmi.trim() || null }),
+      });
+      const resData = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        toast.error("Gagal menyimpan", { description: resData.error || "Terjadi kesalahan." });
+        setSkSaveStatus("error");
+        return;
+      }
+      setStatusSk(next);
+      setSkSaveStatus("saved");
+      toast.success(next === "Ditetapkan" ? "Ditetapkan sebagai penerima SK" : "Ditandai Tidak Ditetapkan");
+      router.refresh();
+    } catch {
+      setSkSaveStatus("error");
+      toast.error("Gagal menyimpan", { description: "Terjadi kesalahan jaringan." });
+    }
+  }
 
   const [showTugaskan, setShowTugaskan] = useState(false);
   const [pewawancaraOptions, setPewawancaraOptions] = useState<
@@ -431,6 +468,12 @@ export default function EvaluasiDetailClient({
               {kandidat.jalur_masuk && (
                 <Pill tone="neutral">{kandidat.jalur_masuk}</Pill>
               )}
+              {kandidat.status_final && (
+                <Pill tone={kandidat.status_final === "Lolos Kuota" ? "accent" : "danger"}>
+                  {kandidat.status_final}
+                  {kandidat.ranking_kuota ? ` · Peringkat #${kandidat.ranking_kuota}` : ""}
+                </Pill>
+              )}
             </div>
           </div>
 
@@ -590,6 +633,12 @@ export default function EvaluasiDetailClient({
                     label="Kondisi Rumah"
                     value={kandidat.kondisi_rumah}
                   />
+                  {needsKuotaFiltering(kandidat.jalur_masuk) && (
+                    <ReadField
+                      label="Golongan UKT"
+                      value={kandidat.golongan_ukt}
+                    />
+                  )}
                 </div>
               </div>
 
@@ -718,6 +767,12 @@ export default function EvaluasiDetailClient({
                       label="Sosial Media"
                       value={kandidat.sosial_media}
                     />
+                    {needsKuotaFiltering(kandidat.jalur_masuk) && (
+                      <ReadField
+                        label="Kondisi Orang Tua"
+                        value={kandidat.kondisi_orang_tua}
+                      />
+                    )}
                   </div>
                 </div>
 
@@ -954,6 +1009,67 @@ export default function EvaluasiDetailClient({
           </motion.div>
 
           <div className="space-y-4">
+            {/* Penetapan SK — alat bantu sementara (Phase 1), sebelum UI pencocokan SK massal (Phase 2) */}
+            {kandidat.hasil_akhir === "Diusulkan" && (
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="bg-white rounded-2xl border border-admin-border shadow-sm p-6"
+              >
+                <div className="flex items-center gap-2 mb-1">
+                  <h3 className="font-admin-heading font-bold text-admin-text text-sm">
+                    Penetapan SK
+                  </h3>
+                  <span className="text-[9.5px] font-bold px-1.5 py-0.5 rounded bg-admin-warn-bg-2 text-admin-warn-text border border-admin-warn-border">
+                    SEMENTARA
+                  </span>
+                </div>
+                <p className="text-[11px] text-admin-text-3 mb-4">
+                  Status resmi pasca SK dari DIKTI/pimpinan — terpisah dari rekomendasi wawancara di atas.
+                </p>
+
+                {statusSk && (
+                  <div className="mb-3">
+                    <Pill tone={statusSk === "Ditetapkan" ? "accent" : "danger"}>
+                      {statusSk}
+                      {kandidat.nim_resmi ? ` · NIM ${kandidat.nim_resmi}` : ""}
+                    </Pill>
+                  </div>
+                )}
+
+                <label className="block text-xs font-semibold text-admin-text-3 mb-1.5">
+                  NIM Resmi (14 digit)
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={nimResmi}
+                  onChange={(e) => setNimResmi(e.target.value)}
+                  placeholder="Contoh: 24010125130071"
+                  className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-1 focus:ring-admin-accent/20 bg-admin-surface-soft mb-3"
+                />
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleSetStatusSk("Ditetapkan")}
+                    disabled={skSaveStatus === "saving"}
+                    className="flex-1 px-4 py-2 rounded-xl text-xs font-semibold border bg-admin-accent text-white border-admin-accent hover:bg-admin-accent-hover transition-all disabled:opacity-60"
+                  >
+                    Tetapkan Lolos SK
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSetStatusSk("Tidak Ditetapkan")}
+                    disabled={skSaveStatus === "saving"}
+                    className="flex-1 px-4 py-2 rounded-xl text-xs font-semibold border bg-white text-admin-text-3 border-admin-border hover:border-admin-danger-bar transition-all disabled:opacity-60"
+                  >
+                    Tidak Ditetapkan
+                  </button>
+                </div>
+              </motion.div>
+            )}
+
             {/* Ringkasan Keputusan — insight heuristik */}
             <motion.div
               initial={{ opacity: 0, y: 8 }}
