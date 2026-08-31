@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import * as XLSX from "xlsx";
 import { CandidateData, ValidationSummary } from "@/schemas";
 import { UploadCloud, AlertTriangle } from "lucide-react";
+import { needsKuotaFiltering } from "@/lib/jalur";
 
 // Normalize header: collapse whitespace, trim, uppercase
 const normalize = (s: unknown) =>
@@ -60,6 +61,15 @@ export default function UploadZone({
         keys: ["ALAMAT EMAIL", "EMAIL"],
       },
     ];
+
+    // Golongan UKT hanya wajib untuk jalur yang melewati tahap Filtering
+    // Kuota (UM/SBUB) — lihat lib/jalur.ts needsKuotaFiltering().
+    if (needsKuotaFiltering(jalurMasuk)) {
+      required.push({
+        label: "GOLONGAN UKT",
+        keys: ["GOLONGAN UKT", "GOL. UKT", "GOL UKT", "GOLONGAN"],
+      });
+    }
 
     const missingFields: string[] = [];
     required.forEach(({ label, keys }) => {
@@ -289,6 +299,7 @@ export default function UploadZone({
 
               // ── Lainnya ──
               jalur_masuk: get(row, "JALUR MASUK", "JALUR"),
+              golongan_ukt: getNum(row, "GOLONGAN UKT", "GOL. UKT", "GOL UKT", "GOLONGAN"),
 
               hasErrors: validation.hasErrors,
               missingFields: validation.missingFields,

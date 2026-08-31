@@ -180,6 +180,9 @@ export async function POST(req: NextRequest) {
       jalur_masuk: jalurMasuk || null,
 
       jarak_pusat_kota: row.jarak_pusat_kota || null,
+      // Golongan UKT — khusus jalur UM/SBUB (wajib divalidasi di UploadZone)
+      golongan_ukt:
+        (row.golongan_ukt ?? 0) > 0 ? Math.round(Number(row.golongan_ukt)) : null,
 
       // diisi saat wawancara, bukan saat import:
       // valdasi_aktif_dtsen, valdasi_desil_dtsen, validasi_kip, validasi_kks

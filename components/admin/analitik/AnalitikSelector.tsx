@@ -16,7 +16,7 @@ import {
   BarChart3,
 } from "lucide-react";
 import type { DashboardAnalitikData } from "@/types/analitik";
-import { JALUR_OPTIONS } from "@/app/admin/import/page";
+import { JALUR_VALUE_OPTIONS as JALUR_OPTIONS } from "@/lib/jalur";
 
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { EmptyState } from "@/components/admin/ui/EmptyState";
@@ -373,7 +373,7 @@ export default function AnalitikSelector() {
                         className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold border border-admin-border text-admin-text-3 hover:text-admin-text hover:border-admin-accent/30"
                       >
                         <RefreshCw size={13} />
-                        Perbarui Cache
+                        Perbarui Data Analisis
                       </motion.button>
 
                       <span className="text-xs text-admin-text-3">

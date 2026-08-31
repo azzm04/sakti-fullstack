@@ -17,17 +17,14 @@ import ImportStatusBadge from "@/components/admin/import/ImportStatusBadge";
 import ImportSuccessBanner from "@/components/admin/import/ImportSuccessBanner";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { KpiCard } from "@/components/admin/ui/KpiCard";
+import { JALUR_VALUE_OPTIONS } from "@/lib/jalur";
 
 // ── Shared constants & types (re-exported for other modules) ─────────────────
 export type SaveStatus = "idle" | "saving" | "saved" | "error";
 
-export const JALUR_OPTIONS = [
-  { value: "SNBP Eligible", label: "SNBP Eligible" },
-  { value: "SNBP Non Eligible", label: "SNBP Non Eligible" },
-  { value: "SNBT Eligible", label: "SNBT Eligible" },
-  { value: "SNBT Non Eligible", label: "SNBT Non Eligible" },
-  { value: "UM", label: "UM (Ujian Mandiri)" },
-] as const;
+// Sumber tunggal ada di lib/jalur.ts — re-export di sini supaya komponen lama
+// (JalurMasukPicker, dsb) tidak perlu ganti import path sekaligus.
+export const JALUR_OPTIONS = JALUR_VALUE_OPTIONS;
 
 export type JalurMasuk = (typeof JALUR_OPTIONS)[number]["value"];
 

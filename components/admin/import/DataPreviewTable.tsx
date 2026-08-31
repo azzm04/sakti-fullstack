@@ -354,6 +354,20 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
         },
         size: 110,
       }),
+      columnHelper.accessor("golongan_ukt" as keyof CandidateData, {
+        header: "Golongan UKT",
+        cell: (info) => {
+          const v = info.getValue() as number;
+          return v ? (
+            <span className="inline-flex px-2 py-0.5 rounded text-[11px] font-semibold bg-admin-surface-soft text-admin-text-2 border border-admin-border">
+              Golongan {v}
+            </span>
+          ) : (
+            <span className="text-admin-text-5">—</span>
+          );
+        },
+        size: 120,
+      }),
     ],
     [],
   );

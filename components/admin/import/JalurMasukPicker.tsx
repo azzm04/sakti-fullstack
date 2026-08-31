@@ -2,7 +2,8 @@
 
 import { motion } from "framer-motion"
 import { AlertTriangle } from "lucide-react"
-import { JALUR_OPTIONS, type JalurMasuk } from "@/app/admin/import/page"
+import { JALUR_VALUE_OPTIONS as JALUR_OPTIONS } from "@/lib/jalur"
+import type { JalurMasuk } from "@/app/admin/import/page"
 import { RadioRow } from "@/components/admin/ui/RadioRow"
 
 interface Props {

@@ -35,12 +35,14 @@ model AdminUser {
 }
 
 model OtpToken {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId    String   @db.Uuid
-  code      String
-  expiresAt DateTime
-  createdAt DateTime @default(now())
-  users     User     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId      String    @db.Uuid
+  code        String
+  expiresAt   DateTime
+  createdAt   DateTime  @default(now())
+  kandidatId  String?   @map("kandidat_id") @db.Uuid
+  users       User      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  kandidat    kandidat? @relation(fields: [kandidatId], references: [id], onDelete: SetNull, onUpdate: NoAction)
 
   @@map("otp_tokens")
 }
@@ -217,6 +219,9 @@ model hasil_wawancara {
   validasi_sktm            Boolean?
   aset                     String?
   kondisi_rumah            String?                    @db.VarChar(60)
+  kondisi_orang_tua        String?                    @db.VarChar(30)
+  status_final             String?                    @db.VarChar(30)
+  ranking_kuota            Int?
   detail_ekonomi_wawancara detail_ekonomi_wawancara[]
   pewawancara              Pewawancara?               @relation(fields: [pewawancara_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_hasil_wawancara_pewawancara")
   kandidat                 kandidat                   @relation(fields: [kandidat_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "hasil_wawancara_kandidat_id_fkey1")
@@ -284,11 +289,17 @@ model kandidat {
   tempat_lahir              String?                     @db.VarChar(100)
   tanggal_lahir             DateTime?                   @db.Date
   jarak_pusat_kota          Decimal?                    @db.Decimal
+  golongan_ukt              Int?                        @db.SmallInt
+  nim_resmi                 String?                     @db.VarChar(20)
+  status_sk                 String?                     @db.VarChar(30)
+  verifikasi_token          String?                     @unique @db.VarChar(64)
+  verifikasi_token_used_at  DateTime?                   @db.Timestamptz(6)
   email_queue               email_queue[]
   hasil_wawancara           hasil_wawancara[]
   jadwal_wawancara_kandidat jadwal_wawancara_kandidat[]
   impor_data                impor_data?                 @relation(fields: [impor_data_id], references: [id], onUpdate: NoAction)
   kandidat_riwayat          kandidat_riwayat[]
+  otp_tokens                OtpToken[]
 }
 
 model kandidat_lama {

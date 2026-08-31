@@ -114,6 +114,7 @@ export enum JalurMasuk {
   SNBT_Eligible = "SNBT Eligible",
   SNBT_Non_Eligible = "SNBT Non Eligible",
   UM = "UM",
+  SBUB = "SBUB",
 }
 
 export enum ValidasiMonev {
@@ -194,6 +195,12 @@ const FilterIcon = ({ type }: { type: string }) => {
       return (
         <span className="text-[9px] font-bold px-1 py-0.5 bg-orange-100 text-orange-700 rounded">
           UM
+        </span>
+      );
+    case JalurMasuk.SBUB:
+      return (
+        <span className="text-[9px] font-bold px-1 py-0.5 bg-emerald-100 text-emerald-700 rounded">
+          SBUB
         </span>
       );
     // Monev
