@@ -112,24 +112,25 @@ const BATAS_KIPK_PER_TANGGUNGAN = 750000;
 
 type MonevValidationStatus =
   | "belum_mengisi"
+  | "menunggu_verifikasi"
+  | "dalam_verifikasi"
   | "melebihi_batas"
   | "data_tidak_sesuai"
   | "sesuai";
 
 function getMonevStatus(m: AdminMonevData): MonevValidationStatus {
-  // Prioritas 1: Jika AI deteksi tanggungan beda dengan input → tidak sesuai
-  if (
-    m.hasil_deteksi_yolo !== null &&
-    m.hasil_deteksi_yolo !== 0 &&
-    m.hasil_deteksi_yolo !== m.jumlah_tanggungan
-  )
-    return "data_tidak_sesuai";
-  // Prioritas 2: Jika Rp/tanggungan melebihi batas KIPK
-  if (m.rupiah_per_tanggungan > BATAS_KIPK_PER_TANGGUNGAN)
-    return "melebihi_batas";
-  // Prioritas 3: Belum mengisi form
   if (m.status_pengisian === "Belum") return "belum_mengisi";
-  return "sesuai";
+  if (m.rupiah_per_tanggungan > BATAS_KIPK_PER_TANGGUNGAN) return "melebihi_batas";
+
+  if (m.hasil_deteksi_yolo !== null && m.hasil_deteksi_yolo !== 0 && m.hasil_deteksi_yolo !== m.jumlah_tanggungan) {
+    return "data_tidak_sesuai";
+  }
+
+  if (m.hasil_deteksi_yolo !== null) {
+    return "sesuai";
+  }
+
+  return "menunggu_verifikasi";
 }
 
 interface MonevClientProps {
@@ -162,6 +163,9 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
 
   // Jadwal Evaluasi State - diinisialisasi dari server
   const [schedules, setSchedules] = useState<MonevSchedule[]>(initialSchedules);
+  const [selectedScheduleId, setSelectedScheduleId] = useState<string>(
+    initialSchedules.length > 0 ? initialSchedules[0].id : ""
+  );
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const [showScheduleForm, setShowScheduleForm] = useState(false);
   const [scheduleExpanded, setScheduleExpanded] = useState(true);
@@ -235,145 +239,67 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
     fetchSchedules();
   };
 
-  // FETCH DATA MONEV
   const fetchData = useCallback(async () => {
-    setLoading(true);
-    try {
-      const mockData: AdminMonevData[] = [
-        {
-          id: "1",
-          user_id: "u1",
-          nim: "21110631170001",
-          nama: "Azzam Syaiful Islam",
-          prodi: "Teknik Komputer",
-          pekerjaan_ayah: "PNS",
-          penghasilan_ayah: 4500000,
-          url_bukti_ayah: { kerja: "#", gaji: "#" },
-          pekerjaan_ibu: "Ibu Rumah Tangga",
-          penghasilan_ibu: 0,
-          url_bukti_ibu: { kerja: "#", gaji: "#" },
-          penghasilan_lain: 0,
-          url_bukti_lain: null,
-          jumlah_tanggungan: 4,
-          url_scan_kk: "#",
-          status_pengisian: "Sudah",
-          total_pendapatan: 4500000,
-          rupiah_per_tanggungan: 1125000,
-          hasil_deteksi_yolo: null,
-        },
-        {
-          id: "2",
-          user_id: "u2",
-          nim: "11000125120161",
-          nama: "Zahro Nur Alifah",
-          prodi: "Hukum S1",
-          pekerjaan_ayah: "Wiraswasta",
-          penghasilan_ayah: 1500000,
-          url_bukti_ayah: { kerja: "#", gaji: "#" },
-          pekerjaan_ibu: "Tidak Bekerja",
-          penghasilan_ibu: 0,
-          url_bukti_ibu: { kerja: "#", gaji: "#" },
-          penghasilan_lain: 0,
-          url_bukti_lain: null,
-          jumlah_tanggungan: 2,
-          url_scan_kk: "#",
-          status_pengisian: "Sudah",
-          total_pendapatan: 1500000,
-          rupiah_per_tanggungan: 750000,
-          hasil_deteksi_yolo: 3,
-        },
-        {
-          id: "3",
-          user_id: "u3",
-          nim: "11000125120015",
-          nama: "Nazwa Amalia",
-          prodi: "Hukum S1",
-          pekerjaan_ayah: "Petani",
-          penghasilan_ayah: 800000,
-          url_bukti_ayah: { kerja: "#", gaji: "#" },
-          pekerjaan_ibu: "Petani",
-          penghasilan_ibu: 700000,
-          url_bukti_ibu: { kerja: "#", gaji: "#" },
-          penghasilan_lain: 0,
-          url_bukti_lain: null,
-          jumlah_tanggungan: 3,
-          url_scan_kk: "#",
-          status_pengisian: "Sudah",
-          total_pendapatan: 1500000,
-          rupiah_per_tanggungan: 500000,
-          hasil_deteksi_yolo: 3,
-        },
-        {
-          id: "4",
-          user_id: "u4",
-          nim: "11000125120030",
-          nama: "Ghiza Bilal",
-          prodi: "Hukum S1",
-          pekerjaan_ayah: "Lainnya",
-          penghasilan_ayah: 3250000,
-          url_bukti_ayah: { kerja: "#", gaji: "#" },
-          pekerjaan_ibu: "Tidak Bekerja",
-          penghasilan_ibu: 0,
-          url_bukti_ibu: { kerja: "#", gaji: "#" },
-          penghasilan_lain: 0,
-          url_bukti_lain: null,
-          jumlah_tanggungan: 4,
-          url_scan_kk: "#",
-          status_pengisian: "Sudah",
-          total_pendapatan: 3250000,
-          rupiah_per_tanggungan: 812500,
-          hasil_deteksi_yolo: 0,
-        },
-      ];
-      setTimeout(() => {
-        setData(mockData);
-        setTotalPages(10);
-        setStats({
-          total: 5000,
-          sudah: 4200,
-          belum: 800,
-          melebihi: 312,
-          tidakSesuai: 87,
-        });
-        setLoading(false);
-      }, 500);
-    } catch {
+    if (!selectedScheduleId) {
       setData([]);
       setLoading(false);
+      return;
     }
-  }, [search, page]);
+    setLoading(true);
+    try {
+      const params = new URLSearchParams({
+        schedule_id: selectedScheduleId,
+        page: String(page),
+        limit: "50",
+      });
+      if (search) params.set("search", search);
+
+      const res = await fetch(`/api/admin/monev/submissions?${params}`);
+      const json = await res.json();
+
+      if (res.ok) {
+        setData(json.data ?? []);
+        setTotalPages(json.pagination?.totalPages ?? 1);
+        setStats(json.stats ?? { total: 0, sudah: 0, belum: 0, melebihi: 0, tidakSesuai: 0 });
+      } else {
+        setData([]);
+      }
+    } catch {
+      setData([]);
+    } finally {
+      setLoading(false);
+    }
+  }, [search, page, selectedScheduleId]);
 
   useEffect(() => {
     const timer = setTimeout(() => fetchData(), search ? 500 : 0);
     return () => clearTimeout(timer);
   }, [fetchData, search]);
 
+  useEffect(() => {
+    setPage(1);
+  }, [selectedScheduleId]);
+
+  const handlePreviewFile = async (storagePath: string, label: string) => {
+    try {
+      const res = await fetch(`/api/admin/monev/file-preview?path=${encodeURIComponent(storagePath)}`);
+      const json = await res.json();
+      if (json.url) {
+        setPreviewImage({ url: json.url, nama: label });
+      }
+    } catch {
+      // Gagal generate preview
+    }
+  };
+
   const handleScanAll = async () => {
     setIsScanningAll(true);
-    setTimeout(() => {
-      setData((prev) =>
-        prev.map((item) =>
-          item.hasil_deteksi_yolo === null
-            ? { ...item, hasil_deteksi_yolo: Math.floor(Math.random() * 5) }
-            : item,
-        ),
-      );
-      setIsScanningAll(false);
-    }, 2500);
+    setTimeout(() => setIsScanningAll(false), 1000);
   };
 
   const handleScanSingle = async (id: string) => {
     setScanningId(id);
-    setTimeout(() => {
-      setData((prev) =>
-        prev.map((item) =>
-          item.id === id
-            ? { ...item, hasil_deteksi_yolo: item.jumlah_tanggungan }
-            : item,
-        ),
-      );
-      setScanningId(null);
-    }, 1500);
+    setTimeout(() => setScanningId(null), 1000);
   };
 
   // Filter data berdasarkan status validasi
@@ -945,10 +871,7 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                         {m.url_bukti_ayah.kerja && (
                           <button
                             onClick={() =>
-                              setPreviewImage({
-                                url: m.url_bukti_ayah.kerja!,
-                                nama: `${m.nama} - Bukti Kerja Ayah`,
-                              })
+                              handlePreviewFile(m.url_bukti_ayah.kerja!, `${m.nama} - Bukti Kerja Ayah`)
                             }
                             className="inline-flex items-center gap-1 text-[10px] bg-admin-accent/20 text-admin-accent-ink px-2 py-1 rounded hover:bg-admin-accent/25 transition-colors"
                           >
@@ -958,10 +881,7 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                         {m.url_bukti_ayah.gaji && (
                           <button
                             onClick={() =>
-                              setPreviewImage({
-                                url: m.url_bukti_ayah.gaji!,
-                                nama: `${m.nama} - Bukti Gaji Ayah`,
-                              })
+                              handlePreviewFile(m.url_bukti_ayah.gaji!, `${m.nama} - Bukti Gaji Ayah`)
                             }
                             className="inline-flex items-center gap-1 text-[10px] bg-admin-accent/20 text-admin-accent-ink px-2 py-1 rounded hover:bg-admin-accent/25 transition-colors"
                           >
@@ -981,10 +901,7 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                         {m.url_bukti_ibu.kerja && (
                           <button
                             onClick={() =>
-                              setPreviewImage({
-                                url: m.url_bukti_ibu.kerja!,
-                                nama: `${m.nama} - Bukti Kerja Ibu`,
-                              })
+                              handlePreviewFile(m.url_bukti_ibu.kerja!, `${m.nama} - Bukti Kerja Ibu`)
                             }
                             className="inline-flex items-center gap-1 text-[10px] bg-admin-danger-border text-admin-danger-text px-2 py-1 rounded hover:bg-admin-danger-border transition-colors"
                           >
@@ -994,10 +911,7 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                         {m.url_bukti_ibu.gaji && (
                           <button
                             onClick={() =>
-                              setPreviewImage({
-                                url: m.url_bukti_ibu.gaji!,
-                                nama: `${m.nama} - Bukti Gaji Ibu`,
-                              })
+                              handlePreviewFile(m.url_bukti_ibu.gaji!, `${m.nama} - Bukti Gaji Ibu`)
                             }
                             className="inline-flex items-center gap-1 text-[10px] bg-admin-accent/20 text-admin-accent-ink px-2 py-1 rounded hover:bg-admin-accent/25 transition-colors"
                           >
@@ -1027,10 +941,7 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                         {m.url_scan_kk && (
                           <button
                             onClick={() =>
-                              setPreviewImage({
-                                url: m.url_scan_kk!,
-                                nama: `${m.nama} - Kartu Keluarga`,
-                              })
+                              handlePreviewFile(m.url_scan_kk!, `${m.nama} - Kartu Keluarga`)
                             }
                             className="inline-flex w-full justify-center items-center gap-1 text-[10px] font-bold bg-admin-warn-border text-admin-warn-text px-2 py-1.5 rounded hover:bg-admin-warn-border transition-colors border border-admin-warn-border"
                             title="Lihat Kartu Keluarga"
@@ -1116,6 +1027,18 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                             return (
                               <span className="inline-flex items-center gap-1.5 text-xs font-bold text-admin-warn-text bg-admin-warn-bg-2 px-3 py-1.5 rounded-full border border-admin-warn-border">
                                 <Clock size={14} /> Belum Mengisi
+                              </span>
+                            );
+                          case "menunggu_verifikasi":
+                            return (
+                              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 bg-amber-100 px-3 py-1.5 rounded-full border border-amber-200">
+                                <Clock size={14} /> Menunggu Verifikasi
+                              </span>
+                            );
+                          case "dalam_verifikasi":
+                            return (
+                              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-100 px-3 py-1.5 rounded-full border border-blue-200">
+                                <Loader2 size={14} className="animate-spin" /> Dalam Verifikasi
                               </span>
                             );
                           case "melebihi_batas":
@@ -1214,13 +1137,21 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                   <X size={20} />
                 </button>
               </div>
-              {/* Image */}
+              {/* File Preview */}
               <div className="p-4 flex items-center justify-center bg-admin-surface-soft max-h-[75vh] overflow-auto">
-                <img
-                  src={previewImage.url}
-                  alt={`KK - ${previewImage.nama}`}
-                  className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-sm"
-                />
+                {previewImage.url.toLowerCase().includes('.pdf') ? (
+                  <iframe
+                    src={previewImage.url}
+                    title={`Preview - ${previewImage.nama}`}
+                    className="w-full h-[70vh] rounded-lg shadow-sm bg-white"
+                  />
+                ) : (
+                  <img
+                    src={previewImage.url}
+                    alt={`Preview - ${previewImage.nama}`}
+                    className="max-w-full max-h-[70vh] object-contain rounded-lg shadow-sm"
+                  />
+                )}
               </div>
             </motion.div>
           </div>
