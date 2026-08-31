@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,7 @@ import {
 
 export default function VerifyKandidatPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [step, setStep] = useState<1 | 2>(1);
 
   const [formData, setFormData] = useState({
@@ -34,11 +35,46 @@ export default function VerifyKandidatPage() {
   });
 
   const [emailSSO, setEmailSSO] = useState("");
-  const [kandidatId, setKandidatId] = useState<number | null>(null);
+  const [kandidatId, setKandidatId] = useState<string | null>(null);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+
+  // Cek link personal (?token=...) dari email "Lolos" — kalau valid & belum
+  // pernah dipakai, skip langsung ke step OTP tanpa isi ulang 3 data manual.
+  // Gagal (token salah/kedaluwarsa/sudah dipakai) → tetap jatuh ke form
+  // manual step 1 seperti biasa, tidak ada yang buntu.
+  const [checkingToken, setCheckingToken] = useState(false);
+
+  useEffect(() => {
+    const token = searchParams.get("token");
+    if (!token) return;
+
+    setCheckingToken(true);
+    fetch("/api/auth/verify-kandidat/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ token }),
+    })
+      .then(async (res) => {
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || "Link tidak valid");
+
+        setKandidatId(data.kandidat.id);
+        setSuccess("Identitas Anda terverifikasi otomatis. Silakan masukkan email SSO Undip Anda.");
+        setStep(2);
+      })
+      .catch((err: unknown) => {
+        setError(
+          err instanceof Error
+            ? err.message
+            : "Link tidak valid atau sudah kedaluwarsa. Silakan verifikasi manual di bawah.",
+        );
+      })
+      .finally(() => setCheckingToken(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleVerifyData = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,7 +135,8 @@ export default function VerifyKandidatPage() {
 
       if (typeof window !== "undefined") {
         sessionStorage.setItem("otp_email", emailSSO.trim().toLowerCase());
-        sessionStorage.setItem("otp_jalur", "sso");
+        sessionStorage.setItem("otp_flow", "kipk-sso");
+        sessionStorage.setItem("otp_kandidat_id", kandidatId ?? "");
       }
 
       setTimeout(() => {
@@ -155,7 +192,14 @@ export default function VerifyKandidatPage() {
           </Alert>
         )}
 
-        {step === 1 && (
+        {checkingToken && (
+          <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
+            <Loader2 className="h-4 w-4 animate-spin" />
+            Memeriksa link verifikasi...
+          </div>
+        )}
+
+        {!checkingToken && step === 1 && (
           <form onSubmit={handleVerifyData} className="space-y-4">
             <div className="space-y-1.5">
               <Label className="text-xs font-semibold text-secondary">

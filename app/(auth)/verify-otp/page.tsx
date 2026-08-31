@@ -39,8 +39,9 @@ export default function VerifyOtpPage() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [resendCooldown, setResendCooldown] = useState(0);
-  // "pewawancara" | "mahasiswa" — menentukan endpoint resend yang tepat
-  const [loginFlow, setLoginFlow] = useState<"pewawancara" | "mahasiswa">("mahasiswa");
+  // "pewawancara" | "mahasiswa" | "kipk-sso" — menentukan endpoint resend yang tepat
+  const [loginFlow, setLoginFlow] = useState<"pewawancara" | "mahasiswa" | "kipk-sso">("mahasiswa");
+  const [kandidatId, setKandidatId] = useState("");
 
   useEffect(() => {
     const urlEmail = searchParams.get("email");
@@ -49,7 +50,10 @@ export default function VerifyOtpPage() {
       searchParams.get("flow") ??
       sessionStorage.getItem("otp_flow") ??
       "mahasiswa";
-    setLoginFlow(flow === "pewawancara" ? "pewawancara" : "mahasiswa");
+    setLoginFlow(
+      flow === "pewawancara" ? "pewawancara" : flow === "kipk-sso" ? "kipk-sso" : "mahasiswa",
+    );
+    setKandidatId(sessionStorage.getItem("otp_kandidat_id") ?? "");
 
     if (urlEmail) {
       setEmail(urlEmail);
@@ -116,12 +120,19 @@ export default function VerifyOtpPage() {
     const resendEndpoint =
       loginFlow === "pewawancara"
         ? "/api/auth/pewawancara/login"
-        : "/api/auth/login";
+        : loginFlow === "kipk-sso"
+          ? "/api/auth/send-otp-sso"
+          : "/api/auth/login";
+
+    const resendBody =
+      loginFlow === "kipk-sso"
+        ? { kandidat_id: kandidatId, email_sso: email }
+        : { email };
 
     try {
       const res = await fetch(resendEndpoint, {
         method: "POST",
-        body: JSON.stringify({ email }),
+        body: JSON.stringify(resendBody),
         headers: { "Content-Type": "application/json" },
       });
 

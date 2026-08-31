@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { supabaseAdmin } from "@/lib/supabase"
+import { resolveProdiId } from "@/lib/penerima-kipk"
 import { z } from "zod"
 
 const VerifyKandidatSchema = z.object({
@@ -22,14 +23,17 @@ export async function POST(req: NextRequest) {
 
     const { no_pendaftaran_kipk, nama, email } = result.data
 
-    // ── Cari kandidat di database Supabase ────────────────────────────────
-    const { data: kandidat, error: dbError } = await supabaseAdmin
+    // ── Cari kandidat di database (skema kandidat baru) ─────────────────────
+    // Pakai order+limit(1) bukan maybeSingle() supaya tidak error kalau ada
+    // duplikat data lama yang cocok di ketiga kolom sekaligus.
+    const { data: kandidatRows, error: dbError } = await supabaseAdmin
       .from("kandidat")
-      .select("id, no_pendaftaran_kipk, nama, email, prodi, status_seleksi, jalur_masuk")
+      .select("id, no_pendaftaran_kipk, nama_pendaftar, email, prodi_pendaftar, jalur_masuk, status_sk")
       .eq("no_pendaftaran_kipk", no_pendaftaran_kipk.trim())
-      .ilike("nama", nama.trim()) // Case-insensitive match
+      .ilike("nama_pendaftar", nama.trim())
       .eq("email", email.toLowerCase().trim())
-      .maybeSingle()
+      .order("created_at", { ascending: false })
+      .limit(1)
 
     if (dbError) {
       console.error("[verify-kandidat] DB error:", dbError)
@@ -39,6 +43,8 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    const kandidat = kandidatRows?.[0]
+
     // ── Validasi: Data tidak cocok ─────────────────────────────────────────
     if (!kandidat) {
       return NextResponse.json(
@@ -47,27 +53,38 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // ── Validasi: Status seleksi bukan "lolos" ─────────────────────────────
-    if (kandidat.status_seleksi !== "lolos") {
+    // ── Validasi: belum ditetapkan resmi lewat SK ───────────────────────────
+    if (kandidat.status_sk !== "Ditetapkan") {
       return NextResponse.json(
-        { 
-          error: "Mohon maaf, Anda belum dinyatakan LOLOS dalam seleksi KIPK.", 
-          status_seleksi: kandidat.status_seleksi 
+        {
+          error: "Mohon maaf, Anda belum dinyatakan LOLOS/DITETAPKAN dalam SK resmi penerima KIP-K.",
+          status_sk: kandidat.status_sk,
         },
         { status: 403 }
       )
     }
 
-    // ── Berhasil: Data valid & status LOLOS ────────────────────────────────
+    // ── Fail-fast: pastikan prodi bisa dipetakan sebelum lanjut ke step OTP ──
+    const prodiId = await resolveProdiId(kandidat.prodi_pendaftar)
+    if (!prodiId) {
+      return NextResponse.json(
+        {
+          error: `Program studi "${kandidat.prodi_pendaftar ?? "-"}" belum terdaftar di sistem. Silakan hubungi admin sebelum melanjutkan registrasi.`,
+        },
+        { status: 409 }
+      )
+    }
+
+    // ── Berhasil: Data valid & status Ditetapkan ────────────────────────────
     return NextResponse.json({
       success: true,
       message: "Data terverifikasi! Silakan lanjut ke verifikasi email SSO Undip.",
       kandidat: {
         id: kandidat.id,
         no_pendaftaran_kipk: kandidat.no_pendaftaran_kipk,
-        nama: kandidat.nama,
+        nama: kandidat.nama_pendaftar,
         email: kandidat.email,
-        prodi: kandidat.prodi,
+        prodi: kandidat.prodi_pendaftar,
         jalur_masuk: kandidat.jalur_masuk,
       }
     })

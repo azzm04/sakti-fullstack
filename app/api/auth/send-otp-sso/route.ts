@@ -6,7 +6,7 @@ import { sendOtpEmail } from "@/lib/mailer"
 import { z } from "zod"
 
 const SendOtpSsoSchema = z.object({
-  kandidat_id: z.number().int().positive("ID kandidat tidak valid"),
+  kandidat_id: z.string().uuid("ID kandidat tidak valid"),
   email_sso: z.string()
     .email("Format email tidak valid")
     .regex(/@students\.undip\.ac\.id$/, "Email harus menggunakan domain @students.undip.ac.id"),
@@ -27,12 +27,12 @@ export async function POST(req: NextRequest) {
     const { kandidat_id, email_sso } = result.data
     const normalizedEmailSSO = email_sso.toLowerCase().trim()
 
-    // ── Validasi kandidat exists & status LOLOS ─────────────────────────────
+    // ── Validasi kandidat exists & sudah Ditetapkan SK ──────────────────────
     const { data: kandidat, error: kandErr } = await supabaseAdmin
       .from("kandidat")
-      .select("id, nama, email, no_pendaftaran_kipk, status_seleksi")
+      .select("id, nama_pendaftar, no_pendaftaran_kipk, status_sk")
       .eq("id", kandidat_id)
-      .eq("status_seleksi", "lolos")
+      .eq("status_sk", "Ditetapkan")
       .maybeSingle()
 
     if (kandErr) {
@@ -45,53 +45,35 @@ export async function POST(req: NextRequest) {
 
     if (!kandidat) {
       return NextResponse.json(
-        { error: "Data kandidat tidak valid atau belum dinyatakan LOLOS" },
+        { error: "Data kandidat tidak valid atau belum Ditetapkan SK" },
         { status: 403 }
       )
     }
 
-    // ── Cek apakah email SSO sudah terdaftar di whitelist ───────────────────
-    const existingWhitelist = await prisma.ssoWhitelist.findUnique({
+    // ── Cek apakah email SSO sudah dipakai user lain ────────────────────────
+    const existingUser = await prisma.user.findUnique({
       where: { email: normalizedEmailSSO },
+      include: { penerimaKipk: true },
     })
 
-    if (existingWhitelist && existingWhitelist.isActive) {
+    if (existingUser?.penerimaKipk) {
       return NextResponse.json(
         { error: "Email SSO ini sudah terdaftar. Silakan login langsung." },
         { status: 409 }
       )
     }
 
-    // ── Upsert sso_whitelist (BELUM AKTIF, menunggu OTP verification) ───────
-    const whitelist = await prisma.ssoWhitelist.upsert({
-      where: { email: normalizedEmailSSO },
-      create: {
-        email: normalizedEmailSSO,
-        nama: kandidat.nama,
-        role: "MAHASISWA_KIPK",
-        isActive: false, // Belum aktif sampai OTP verified
-      },
-      update: {
-        nama: kandidat.nama,
-        isActive: false,
-      },
-    })
-
-    // ── Upsert user (BELUM AKTIF) ───────────────────────────────────────────
+    // ── Upsert user (belum aktif sampai OTP diverifikasi) ───────────────────
     const user = await prisma.user.upsert({
       where: { email: normalizedEmailSSO },
       create: {
         email: normalizedEmailSSO,
-        nama: kandidat.nama,
         role: "MAHASISWA_KIPK",
-        whitelistId: whitelist.id,
       },
-      update: {
-        whitelistId: whitelist.id,
-      },
+      update: {},
     })
 
-    // ── Hapus OTP lama & generate OTP baru ──────────────────────────────────
+    // ── Hapus OTP lama & generate OTP baru, sertakan link ke kandidat ───────
     await prisma.otpToken.deleteMany({ where: { userId: user.id } })
 
     const otp = generateOtp()
@@ -100,13 +82,14 @@ export async function POST(req: NextRequest) {
     await prisma.otpToken.create({
       data: {
         userId: user.id,
+        kandidatId: kandidat.id,
         code: hashed,
         expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 menit
       },
     })
 
     // ── Kirim OTP ke email SSO Undip ─────────────────────────────────────────
-    await sendOtpEmail(normalizedEmailSSO, otp, kandidat.nama)
+    await sendOtpEmail(normalizedEmailSSO, otp, kandidat.nama_pendaftar ?? "Mahasiswa")
 
     return NextResponse.json({
       success: true,

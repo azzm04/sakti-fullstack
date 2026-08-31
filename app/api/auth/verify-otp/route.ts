@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { verifyOtp } from "@/lib/otp";
+import { buatPenerimaKipk } from "@/lib/penerima-kipk";
 import { SignJWT } from "jose";
 import { z } from "zod";
 
@@ -75,6 +76,18 @@ export async function POST(req: NextRequest) {
         { error: "Kode OTP salah." },
         { status: 401 }
       );
+    }
+
+    // ── Alur registrasi Mahasiswa KIP-K (verify-kandidat → send-otp-sso) —
+    //    kandidatId hanya terisi untuk alur ini, bukan login role lain
+    //    (Pewawancara/Admin/login SSO biasa). Buat penerima_kipk di sini,
+    //    titik terakhir sebelum JWT dikeluarkan.
+    if (otpToken.kandidatId) {
+      const hasil = await buatPenerimaKipk(otpToken.kandidatId, user.id);
+      if (!hasil.ok) {
+        await prisma.otpToken.delete({ where: { id: otpToken.id } });
+        return NextResponse.json({ error: hasil.error }, { status: 403 });
+      }
     }
 
     // ── Hapus OTP setelah berhasil diverifikasi ──────────────────────────
