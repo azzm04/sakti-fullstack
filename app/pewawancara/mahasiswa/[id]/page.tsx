@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Loader2, ClipboardList } from "lucide-react";
 import { toast } from "sonner";
 import type { MahasiswaEvaluasi } from "@/schemas";
+import { needsKuotaFiltering } from "@/lib/jalur";
 import {
   DetailHeader,
   ProfilReadOnly,
@@ -33,11 +34,12 @@ export default function PewawancaraDetailPage({
         const d = res.data || res;
         setKandidat(d);
 
-        let mappedHasil = null;
-        const rekDb = d.rekomendasi?.toLowerCase() || "";
-        if (rekDb.includes("tidak")) mappedHasil = 3;
-        else if (rekDb.includes("pertimbang")) mappedHasil = 2;
-        else if (rekDb.includes("layak")) mappedHasil = 1;
+        // Cocokkan persis ke text_db (bukan substring .includes()) — dengan 4
+        // nilai kanonik, "Tidak Layak Dipertimbangkan" juga mengandung kata
+        // "tidak" DAN "pertimbang" sekaligus, jadi heuristik substring lama
+        // salah mengklasifikasikannya sebagai "Tidak Layak" biasa.
+        const mappedHasil =
+          OPT_HASIL_AKHIR.find((o) => o.text_db === d.rekomendasi)?.value ?? null;
 
         setForm({ ...d, hasil_akhir: mappedHasil });
       })
@@ -64,6 +66,9 @@ export default function PewawancaraDetailPage({
     if (!form.sumber_air) missing.push("Sumber Air");
     if (!form.mck) missing.push("MCK");
     if (!form.kondisi_rumah) missing.push("Kondisi Fisik Rumah");
+    if (needsKuotaFiltering(form.jalur_masuk) && !form.kondisi_orang_tua) {
+      missing.push("Kondisi Orang Tua");
+    }
     if (!form.hasil_akhir) missing.push("Rekomendasi Akhir");
 
     if (missing.length > 0) {
@@ -97,6 +102,7 @@ export default function PewawancaraDetailPage({
         mck: form.mck,
         aset: form.aset,
         kondisi_rumah: form.kondisi_rumah,
+        kondisi_orang_tua: form.kondisi_orang_tua,
         jarak_pusat_kota: form.jarak_pusat_kota,
         rekomendasi: textRekomendasi,
         alasan: form.alasan,

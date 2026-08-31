@@ -63,6 +63,7 @@ async function getKandidatDetail(id: string) {
       kelayakan_rumah: hw?.kelayakan_rumah,
       aset: hw?.aset,
       kondisi_rumah: hw?.kondisi_rumah,
+      kondisi_orang_tua: hw?.kondisi_orang_tua ?? null,
       rekomendasi: hw?.rekomendasi,
       alasan: hw?.alasan,
       status_wawancara: hw?.status_wawancara,
@@ -71,6 +72,8 @@ async function getKandidatDetail(id: string) {
       interviewed_at: hw?.interviewed_at,
       hasil_akhir: hw?.hasil_akhir ?? null,
       catatan_admin: hw?.catatan_admin ?? null,
+      status_final: hw?.status_final ?? null,
+      ranking_kuota: hw?.ranking_kuota ?? null,
       // dari detail_ekonomi_wawancara
       luas_tanah: dew?.luas_tanah,
       luas_bangunan: dew?.luas_bangunan,

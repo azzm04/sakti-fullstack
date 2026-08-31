@@ -3,6 +3,8 @@
 import { motion } from "framer-motion";
 import { ClipboardList } from "lucide-react";
 import type { MahasiswaEvaluasi } from "@/schemas";
+import { KONDISI_ORANG_TUA_OPTIONS, REKOMENDASI_OPTIONS } from "@/schemas";
+import { needsKuotaFiltering } from "@/lib/jalur";
 import {
   RadioGroupBoolean,
   RadioGroupNumeric,
@@ -29,11 +31,23 @@ const OPT_MCK = [
 ];
 const OPT_KONDISI = ["Layak Menerima Beasiswa", "Tidak Layak Beasiswa"];
 
-export const OPT_HASIL_AKHIR = [
-  { label: "Layak", value: 1, text_db: "Layak", color: "bg-emerald-500 text-white border-emerald-500" },
-  { label: "Dipertimbangkan", value: 2, text_db: "Dipertimbangkan", color: "bg-amber-500 text-white border-amber-500" },
-  { label: "Tidak Layak", value: 3, text_db: "Tidak Layak", color: "bg-destructive text-white border-destructive" },
-];
+// Nilai (text_db) HARUS persis sama dengan REKOMENDASI_OPTIONS canonical di
+// schemas/index.ts — jangan ketik ulang string manual di sini, supaya
+// rekomendasi yang diisi lewat portal pewawancara selalu match ke salah satu
+// dari 4 nilai yang dikenali sistem (autoHasilAkhir/isPerluReview).
+const REKOMENDASI_COLOR: Record<(typeof REKOMENDASI_OPTIONS)[number], string> = {
+  Layak: "bg-emerald-500 text-white border-emerald-500",
+  "Layak Dipertimbangkan": "bg-teal-500 text-white border-teal-500",
+  "Tidak Layak Dipertimbangkan": "bg-amber-500 text-white border-amber-500",
+  "Tidak Layak": "bg-destructive text-white border-destructive",
+};
+
+export const OPT_HASIL_AKHIR = REKOMENDASI_OPTIONS.map((text_db, index) => ({
+  label: text_db,
+  value: index + 1,
+  text_db,
+  color: REKOMENDASI_COLOR[text_db],
+}));
 
 interface FormObservasiProps {
   form: Partial<MahasiswaEvaluasi>;
@@ -80,6 +94,17 @@ export function FormObservasi({ form, onChange }: FormObservasiProps) {
             <NumberInput label="Jml. Tanggungan Keluarga (Riil)" value={form.jml_tanggungan_sebenarnya ?? null} onChange={onChange("jml_tanggungan_sebenarnya")} />
             <NumberInput label="Jml. Orang Tinggal Serumah (Riil)" value={form.validasi_orang_rumah ?? null} onChange={onChange("validasi_orang_rumah")} />
           </div>
+
+          {needsKuotaFiltering(form.jalur_masuk) && (
+            <div className="mt-6">
+              <RadioGroupString
+                label="Kondisi Orang Tua"
+                value={form.kondisi_orang_tua ?? null}
+                options={[...KONDISI_ORANG_TUA_OPTIONS]}
+                onChange={onChange("kondisi_orang_tua")}
+              />
+            </div>
+          )}
         </div>
 
         {/* Kondisi Rumah */}

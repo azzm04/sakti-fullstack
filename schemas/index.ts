@@ -168,6 +168,8 @@ export const CandidateDataSchema = z.object({
   jarak_pusat_kota: z.number().nonnegative().default(0),
   // Jalur masuk
   jalur_masuk: z.string().default(""),
+  // Golongan UKT — khusus jalur UM/SBUB (lihat lib/jalur.ts needsKuotaFiltering)
+  golongan_ukt: z.number().nonnegative().default(0),
   // Validation flags (client-side only)
   hasErrors: z.boolean().default(false),
   missingFields: z.array(z.string()).default([]),
@@ -247,6 +249,9 @@ export const KandidatBaseSchema = z.object({
   provinsi: z.string().nullable().optional(),
   jarak_pusat_kota: z.number().nullable().optional(),
   jalur_masuk: z.string().nullable().optional(),
+  golongan_ukt: z.number().nullable().optional(),
+  nim_resmi: z.string().nullable().optional(),
+  status_sk: z.string().nullable().optional(),
   skor_total: z.number().nullable().optional(),
   ranking: z.number().nullable().optional(),
   status_seleksi: z.string().nullable().optional(),
@@ -289,6 +294,10 @@ export const HasilWawancaraBaseSchema = z.object({
   interviewed_at: z.string().nullable().optional(),
   hasil_akhir: z.string().nullable().optional(),
   catatan_admin: z.string().nullable().optional(),
+  // Khusus jalur UM/SBUB — lihat lib/jalur.ts needsKuotaFiltering()
+  kondisi_orang_tua: z.string().nullable().optional(),
+  status_final: z.string().nullable().optional(),
+  ranking_kuota: z.number().nullable().optional(),
 });
 export type HasilWawancaraBase = z.infer<typeof HasilWawancaraBaseSchema>;
 
@@ -327,6 +336,20 @@ export function isPerluReview(rekomendasi: string | null | undefined): boolean {
     rekomendasi === "Tidak Layak Dipertimbangkan"
   );
 }
+
+/* =========================
+   Kondisi Orang Tua (khusus jalur UM/SBUB)
+   Dipakai sebagai salah satu kriteria Filtering Kuota — lihat lib/ranking.ts
+========================= */
+export const KONDISI_ORANG_TUA_OPTIONS = [
+  "Aman",
+  "Cerai Menafkahi",
+  "Cerai Tidak Menafkahi",
+  "Yatim",
+  "Piatu",
+  "Yatim Piatu",
+] as const;
+export type KondisiOrangTua = (typeof KONDISI_ORANG_TUA_OPTIONS)[number];
 
 export type StatusWawancara =
   | "Belum Diwawancarai"
@@ -506,7 +529,7 @@ export const MahasiswaListItemSchema = z.object({
   no_pendaftaran_kipk: z.string(),
   nama: z.string(),
   prodi: z.string(),
-  pewawancara_id: z.number().nullable().optional(),
+  pewawancara_id: z.string().nullable().optional(),
   pewawancara: z.string().nullable().optional(),
   rekomendasi: z.string().nullable().optional(),
   alasan: z.string().nullable().optional(),
