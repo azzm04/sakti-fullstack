@@ -122,11 +122,16 @@ function getMonevStatus(m: AdminMonevData): MonevValidationStatus {
   if (m.status_pengisian === "Belum") return "belum_mengisi";
   if (m.rupiah_per_tanggungan > BATAS_KIPK_PER_TANGGUNGAN) return "melebihi_batas";
 
-  if (m.hasil_deteksi_yolo !== null && m.hasil_deteksi_yolo !== 0 && m.hasil_deteksi_yolo !== m.jumlah_tanggungan) {
+  // Gunakan flag status_anomali langsung dari DB (hasil update AI)
+  if (m.status_anomali === true) {
     return "data_tidak_sesuai";
   }
 
-  if (m.hasil_deteksi_yolo !== null) {
+  // Jika AI sudah menscan (hasil tidak null dan tidak undefined) dan tidak ada anomali
+  if (
+    (m.hasil_deteksi_yolo !== null && m.hasil_deteksi_yolo !== undefined) ||
+    (m.hasil_scan_ai !== null && m.hasil_scan_ai !== undefined)
+  ) {
     return "sesuai";
   }
 
@@ -254,7 +259,9 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
       });
       if (search) params.set("search", search);
 
-      const res = await fetch(`/api/admin/monev/submissions?${params}`);
+      const res = await fetch(`/api/admin/monev/submissions?${params}`, {
+        cache: "no-store",
+      });
       const json = await res.json();
 
       if (res.ok) {
@@ -292,14 +299,92 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
     }
   };
 
-  const handleScanAll = async () => {
-    setIsScanningAll(true);
-    setTimeout(() => setIsScanningAll(false), 1000);
-  };
-
+  const [isScanningMass, setIsScanningMass] = useState(false);
+  const [massScanProgress, setMassScanProgress] = useState({ current: 0, total: 0, success: 0, fail: 0 });
+  const [showMassScanModal, setShowMassScanModal] = useState(false);
   const handleScanSingle = async (id: string) => {
     setScanningId(id);
-    setTimeout(() => setScanningId(null), 1000);
+    try {
+      const res = await fetch("/api/admin/monev/run-ai-single", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        setData((prev) =>
+          prev.map((item) =>
+            item.id === id
+              ? {
+                ...item,
+                hasil_deteksi_yolo: result.hasil_deteksi_yolo,
+                status_anomali: result.status_anomali,
+                hasil_scan_ai: result.hasil_scan_ai,
+              }
+              : item
+          )
+        );
+      } else {
+        alert("Gagal memproses AI untuk data ini.");
+      }
+    } catch (e) {
+      alert("Terjadi kesalahan koneksi.");
+    } finally {
+      setScanningId(null);
+    }
+  };
+
+  const handleMassScan = async () => {
+    const pendingData = data.filter((m) => m.status_pengisian === "Sudah" && m.hasil_deteksi_yolo === null);
+    if (pendingData.length === 0) {
+      alert("Tidak ada data yang menunggu verifikasi AI.");
+      return;
+    }
+
+    setMassScanProgress({ current: 0, total: pendingData.length, success: 0, fail: 0 });
+    setShowMassScanModal(true);
+    setIsScanningMass(true);
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (let i = 0; i < pendingData.length; i++) {
+      setMassScanProgress((prev) => ({ ...prev, current: i + 1 }));
+
+      try {
+        const res = await fetch("/api/admin/monev/run-ai-single", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: pendingData[i].id }),
+        });
+
+        if (res.ok) {
+          successCount++;
+          const result = await res.json();
+          setData((prev) =>
+            prev.map((item) =>
+              item.id === pendingData[i].id
+                ? {
+                  ...item,
+                  hasil_deteksi_yolo: result.hasil_deteksi_yolo,
+                  status_anomali: result.status_anomali,
+                }
+                : item
+            )
+          );
+        } else {
+          failCount++;
+        }
+      } catch (err) {
+        failCount++;
+      }
+
+      setMassScanProgress((prev) => ({ ...prev, success: successCount, fail: failCount }));
+    }
+
+    setIsScanningMass(false);
+    fetchData();
   };
 
   // Filter data berdasarkan status validasi
@@ -523,7 +608,15 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                       return (
                         <div
                           key={s.id}
-                          className={`flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 rounded-xl border transition-all ${s.is_active && !passed ? "bg-admin-accent/10/50 border-admin-accent/25" : passed ? "bg-admin-accent/5 border-admin-border opacity-70" : "bg-admin-accent/5 border-admin-border"}`}
+                          onClick={() => setSelectedScheduleId(s.id)}
+                          className={`flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 rounded-xl border transition-all cursor-pointer ${selectedScheduleId === s.id
+                            ? "ring-2 ring-admin-accent bg-admin-accent/10 border-admin-accent"
+                            : s.is_active && !passed
+                              ? "bg-admin-accent/10/50 border-admin-accent/25 hover:bg-admin-accent/10"
+                              : passed
+                                ? "bg-admin-accent/5 border-admin-border opacity-70 hover:opacity-100"
+                                : "bg-admin-accent/5 border-admin-border hover:bg-admin-accent/10"
+                            }`}
                         >
                           <div className="flex items-start gap-3 flex-1 min-w-0">
                             <div
@@ -564,9 +657,10 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                           </div>
                           <div className="flex items-center gap-2 shrink-0">
                             <button
-                              onClick={() =>
-                                handleToggleSchedule(s.id, s.is_active)
-                              }
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleToggleSchedule(s.id, s.is_active);
+                              }}
                               title={s.is_active ? "Nonaktifkan" : "Aktifkan"}
                               className="p-2 rounded-lg hover:bg-admin-surface border border-transparent hover:border-admin-border transition-all text-admin-text-2 hover:text-admin-accent"
                             >
@@ -580,7 +674,10 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                               )}
                             </button>
                             <button
-                              onClick={() => handleDeleteSchedule(s.id)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteSchedule(s.id);
+                              }}
                               title="Hapus jadwal"
                               className="p-2 rounded-lg hover:bg-admin-danger-bg border border-transparent hover:border-admin-danger-border transition-all text-admin-text-2 hover:text-admin-danger-bar"
                             >
@@ -762,17 +859,17 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
             </Popover>
 
             <button
-              onClick={handleScanAll}
-              disabled={isScanningAll}
+              onClick={handleMassScan}
+              disabled={isScanningMass}
               className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-admin-accent text-white text-sm font-bold rounded-xl hover:bg-admin-accent/90 transition-all shadow-md active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed whitespace-nowrap"
             >
-              {isScanningAll ? (
+              {isScanningMass ? (
                 <>
                   <Loader2 size={16} className="animate-spin" /> Memindai AI...
                 </>
               ) : (
                 <>
-                  <ScanSearch size={16} /> Pindai Foto{" "}
+                  <ScanSearch size={16} /> Pindai AI Massal
                 </>
               )}
             </button>
@@ -938,6 +1035,17 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                         </span>
                       </div>
                       <div className="flex flex-col gap-1.5 mt-2 pt-2 border-t border-admin-warn-border/50">
+                        {m.url_bukti_lain && (
+                          <button
+                            onClick={() =>
+                              handlePreviewFile(m.url_bukti_lain!, `${m.nama} - Bukti Pendapatan Lain`)
+                            }
+                            className="inline-flex w-full justify-center items-center gap-1 text-[10px] font-bold bg-admin-surface text-admin-text-2 px-2 py-1.5 rounded hover:bg-admin-accent/5 hover:text-admin-accent transition-colors border border-admin-border"
+                            title="Lihat Bukti Pendapatan Lain"
+                          >
+                            <FileImage size={12} /> Penghasilan Lain
+                          </button>
+                        )}
                         {m.url_scan_kk && (
                           <button
                             onClick={() =>
@@ -946,7 +1054,7 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                             className="inline-flex w-full justify-center items-center gap-1 text-[10px] font-bold bg-admin-warn-border text-admin-warn-text px-2 py-1.5 rounded hover:bg-admin-warn-border transition-colors border border-admin-warn-border"
                             title="Lihat Kartu Keluarga"
                           >
-                            <ExternalLink size={12} /> Lihat KK
+                            <ExternalLink size={12} /> Kartu Keluarga
                           </button>
                         )}
                         {m.hasil_deteksi_yolo === null ? (
@@ -973,13 +1081,12 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                           </div>
                         ) : (
                           <div
-                            className={`inline-flex w-full justify-center items-center gap-1 text-[10px] font-bold px-2 py-1.5 rounded border ${m.hasil_deteksi_yolo !== m.jumlah_tanggungan ? "bg-admin-danger-bg text-admin-danger-text border-admin-danger-border" : "bg-admin-accent/10 text-admin-accent-ink border-admin-accent/25"}`}
+                            className={`inline-flex w-full justify-center items-center gap-1 text-[10px] font-bold px-2 py-1.5 rounded border ${m.status_anomali ? "bg-admin-danger-bg text-admin-danger-text border-admin-danger-border" : "bg-admin-accent/10 text-admin-accent-ink border-admin-accent/25"}`}
                           >
-                            {m.hasil_deteksi_yolo !== m.jumlah_tanggungan ? (
+                            {m.status_anomali ? (
                               <>
                                 <AlertCircle size={12} className="shrink-0" />{" "}
-                                Beda: AI ({m.hasil_deteksi_yolo}) vs Input (
-                                {m.jumlah_tanggungan})
+                                Data Tidak Sesuai
                               </>
                             ) : (
                               <>
@@ -1012,10 +1119,10 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                           </p>
                           {m.rupiah_per_tanggungan >
                             BATAS_KIPK_PER_TANGGUNGAN && (
-                            <p className="text-[9px] text-admin-danger-bar font-semibold mt-0.5">
-                              Maks: {formatRp(BATAS_KIPK_PER_TANGGUNGAN)}
-                            </p>
-                          )}
+                              <p className="text-[9px] text-admin-danger-bar font-semibold mt-0.5">
+                                Maks: {formatRp(BATAS_KIPK_PER_TANGGUNGAN)}
+                              </p>
+                            )}
                         </div>
                       </div>
                     </td>
@@ -1155,6 +1262,76 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+      <AnimatePresence>
+        {showMassScanModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-admin-surface rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col"
+            >
+              <div className="p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-2 bg-admin-accent/10 text-admin-accent rounded-xl">
+                    <ScanSearch size={24} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-admin-accent text-lg">
+                      Pemindaian AI Massal
+                    </h3>
+                    <p className="text-xs text-admin-text-2">
+                      Memproses dokumen yang Menunggu Verifikasi
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between text-sm font-semibold text-admin-text-1">
+                    <span>Progres: {massScanProgress.current} / {massScanProgress.total}</span>
+                    <span>{Math.round((massScanProgress.current / (massScanProgress.total || 1)) * 100)}%</span>
+                  </div>
+
+                  <div className="w-full bg-admin-border h-3 rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-admin-accent transition-all duration-300"
+                      style={{ width: `${(massScanProgress.current / (massScanProgress.total || 1)) * 100}%` }}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mt-4">
+                    <div className="bg-admin-accent/5 rounded-xl p-3 border border-admin-accent/10">
+                      <p className="text-[10px] uppercase font-bold text-admin-text-2">Berhasil Diproses</p>
+                      <p className="text-xl font-black text-admin-accent">{massScanProgress.success}</p>
+                    </div>
+                    <div className="bg-admin-warn-bg/20 rounded-xl p-3 border border-admin-warn-border">
+                      <p className="text-[10px] uppercase font-bold text-admin-warn-text">Gagal Diproses</p>
+                      <p className="text-xl font-black text-admin-warn-text">{massScanProgress.fail}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4 bg-admin-background border-t border-admin-border flex justify-end">
+                <Button
+                  variant="outline"
+                  className="rounded-xl border-admin-border"
+                  onClick={() => {
+                    setIsScanningMass(false);
+                    setShowMassScanModal(false);
+                  }}
+                >
+                  {isScanningMass ? "Hentikan Pemindaian" : "Tutup"}
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
     </div>

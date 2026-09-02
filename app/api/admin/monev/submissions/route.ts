@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 
+export const dynamic = "force-dynamic";
+
 // GET /api/admin/monev/submissions?schedule_id=xxx&page=1&limit=50&search=
 export async function GET(req: NextRequest) {
   try {
@@ -106,6 +108,8 @@ export async function GET(req: NextRequest) {
           total_pendapatan: totalPendapatan,
           rupiah_per_tanggungan: rpPerTanggungan,
           hasil_deteksi_yolo: sub.hasil_deteksi_yolo ?? null,
+          hasil_scan_ai: sub.hasil_scan_ai ?? null,
+          status_anomali: sub.status_anomali ?? false,
           waktu_lapor: sub.waktu_lapor ?? null,
         };
       } else {
@@ -129,6 +133,8 @@ export async function GET(req: NextRequest) {
           total_pendapatan: 0,
           rupiah_per_tanggungan: 0,
           hasil_deteksi_yolo: null,
+          hasil_scan_ai: null,
+          status_anomali: false,
           waktu_lapor: null,
         };
       }
