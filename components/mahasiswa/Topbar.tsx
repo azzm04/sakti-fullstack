@@ -71,10 +71,10 @@ export default function Topbar() {
           className="flex items-center gap-3 md:gap-4 relative"
           ref={menuRef}
         >
-          <div className="h-8 w-px bg-slate-200 hidden sm:block"></div>
+          <div className="h-8 w-px bg-slate-200 hidden lg:block"></div>
 
           {/* Info User (Desktop Only) */}
-          <div className="hidden sm:flex items-center gap-3 text-right">
+          <div className="hidden lg:flex items-center gap-3 text-right">
             {loading ? (
               <div className="flex flex-col gap-1 items-end">
                 <div className="h-3 w-24 bg-slate-200 rounded animate-pulse" />
@@ -98,7 +98,7 @@ export default function Topbar() {
           {/* Hamburger Menu Toggle (Mobile/Tablet Only) */}
           <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="sm:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
+            className="lg:hidden p-2 text-slate-500 hover:bg-slate-100 rounded-lg transition-colors"
           >
             {isMobileMenuOpen ? (
               <X className="w-6 h-6" />
@@ -109,7 +109,7 @@ export default function Topbar() {
 
           {/* ── Dropdown Menu Kanan Atas (Mobile Only) ── */}
           {isMobileMenuOpen && (
-            <div className="absolute top-14 right-0 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl py-2 flex flex-col sm:hidden z-50 transition-all duration-200">
+            <div className="absolute top-14 right-0 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl py-2 flex flex-col lg:hidden z-50 transition-all duration-200">
               {/* User Info Header di Mobile Menu */}
               <div className="px-4 py-3 border-b border-slate-100 mb-1">
                 <div className="flex items-center gap-3 mb-2">
