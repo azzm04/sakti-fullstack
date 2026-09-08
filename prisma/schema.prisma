@@ -17,6 +17,7 @@ model User {
   otp_tokens            OtpToken[]
   penerimaKipk          PenerimaKipk?
   pewawancara           Pewawancara?
+  prestasi_mahasiswa    prestasi_mahasiswa[]
   tokenAktivasiTelegram TokenAktivasiTelegram?
 
   @@map("users")
@@ -35,14 +36,14 @@ model AdminUser {
 }
 
 model OtpToken {
-  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId      String    @db.Uuid
-  code        String
-  expiresAt   DateTime
-  createdAt   DateTime  @default(now())
-  kandidatId  String?   @map("kandidat_id") @db.Uuid
-  users       User      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  kandidat    kandidat? @relation(fields: [kandidatId], references: [id], onDelete: SetNull, onUpdate: NoAction)
+  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId     String    @db.Uuid
+  code       String
+  expiresAt  DateTime
+  createdAt  DateTime  @default(now())
+  kandidatId String?   @map("kandidat_id") @db.Uuid
+  kandidat   kandidat? @relation(fields: [kandidatId], references: [id], onUpdate: NoAction)
+  users      User      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("otp_tokens")
 }
@@ -568,6 +569,27 @@ model sk_dokumen {
   email_queue   email_queue[]
 }
 
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model prestasi_mahasiswa {
+  id                String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id           String           @db.Uuid
+  admin_id          String?          @db.Uuid
+  jenis_prestasi    JenisPrestasi
+  tingkat           TingkatPrestasi
+  nama_kegiatan     String           @db.VarChar(255)
+  prestasi_dicapai  String           @db.VarChar(150)
+  penyelenggara     String           @db.VarChar(255)
+  tanggal_mulai     DateTime         @db.Date
+  tanggal_selesai   DateTime         @db.Date
+  url_bukti         String
+  status_verifikasi StatusVerifikasi @default(MENUNGGU)
+  catatan_admin     String?
+  diverifikasi_at   DateTime?        @db.Timestamptz(6)
+  created_at        DateTime         @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime         @default(now()) @db.Timestamptz(6)
+  users             User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
 enum Role {
   MAHASISWA_KIPK
   PEWAWANCARA
@@ -620,4 +642,28 @@ enum StatusBerita {
 enum jenjang_pendidikan {
   S1
   D4
+}
+
+enum JenisPrestasi {
+  AKADEMIK
+  NON_AKADEMIK
+  ORGANISASI
+  KEPANITIAAN
+  PENGABDIAN_MASYARAKAT
+}
+
+enum StatusVerifikasi {
+  MENUNGGU
+  DISETUJUI
+  DITOLAK
+}
+
+enum TingkatPrestasi {
+  INTERNASIONAL
+  NASIONAL
+  PROVINSI
+  KAB_KOTA
+  UNIVERSITAS
+  FAKULTAS
+  PROGRAM_STUDI
 }
