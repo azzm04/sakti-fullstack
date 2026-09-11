@@ -28,6 +28,7 @@ const navItems = [
   { href: "/admin/hasil-akhir", label: "Hasil Akhir",    icon: Award           },
   { href: "/admin/monev",       label: "Monev",          icon: BookMarked      },
   { href: "/admin/analitik",    label: "Analitik",       icon: BarChart3       },
+  { href: "/admin/prestasi",    label: "Prestasi",       icon: Award           },
 ];
 
 const sidebarVariants: Variants = {
@@ -54,7 +55,6 @@ const overlayVariants: Variants = {
   exit: { opacity: 0 },
 };
 
-/** SAKTI medallion logo — accent circle, white ring, mortarboard, open book. */
 function SaktiLogo({ size = 38 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 48 48" className="shrink-0" role="img" aria-label="Logo SAKTI">
@@ -70,7 +70,6 @@ function SaktiLogo({ size = 38 }: { size?: number }) {
   );
 }
 
-// Dipindahkan keluar supaya identitas komponen stabil antar render
 function SidebarContent({
   pathname,
   adminName,
