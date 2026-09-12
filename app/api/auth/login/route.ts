@@ -35,13 +35,18 @@ export async function POST(req: NextRequest) {
       where: { email: normalizedEmail },
       create: {
         email: normalizedEmail,
-        role: "MAHASISWA_KIPK",
         statusAkun: "AKTIF",
       },
       update: {},
       include: {
         pewawancara: true,
       },
+    });
+
+    await prisma.userRole.upsert({
+      where: { userId_role: { userId: user.id, role: "MAHASISWA_KIPK" } },
+      create: { userId: user.id, role: "MAHASISWA_KIPK" },
+      update: {},
     });
 
     // ── 2. Bersihkan OTP lama sebelum buat yang baru ──────────────────────────
@@ -58,6 +63,10 @@ export async function POST(req: NextRequest) {
         userId: user.id,
         code: hashed,
         expiresAt: new Date(Date.now() + 5 * 60 * 1000), // OTP berlaku 5 menit
+        // Login lewat halaman ini selalu dimaksudkan sebagai Mahasiswa
+        // KIP-K — dipakai verify-otp untuk langsung menerbitkan sesi
+        // dengan role itu, walau akunnya multi-role.
+        intendedRole: "MAHASISWA_KIPK",
       },
     });
 
@@ -66,7 +75,7 @@ export async function POST(req: NextRequest) {
     await sendOtpEmail(
       normalizedEmail,
       otp,
-      user.pewawancara?.[0]?.nama || "Mahasiswa",
+      user.pewawancara?.nama || "Mahasiswa",
     );
 
     return NextResponse.json({

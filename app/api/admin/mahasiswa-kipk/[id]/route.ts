@@ -22,12 +22,13 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     const { data: user, error: userGetErr } = await supabaseAdmin
       .from("users")
-      .select("id, role")
+      .select("id, user_roles!inner(role)")
       .eq("id", id)
-      .single();
+      .eq("user_roles.role", "MAHASISWA_KIPK")
+      .maybeSingle();
 
     if (userGetErr) throw userGetErr;
-    if (user.role !== "MAHASISWA_KIPK") {
+    if (!user) {
       return NextResponse.json({ error: "Akun ini bukan Mahasiswa KIP-K" }, { status: 400 });
     }
 
@@ -84,10 +85,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 }
 
-// DELETE — hapus profil penerima_kipk (jika ada) & nonaktifkan akunnya.
-// Tidak menghapus baris users itu sendiri, agar riwayat wawancara/monev
-// yang mereferensikannya tetap konsisten — sama seperti pola di
-// /api/admin/pewawancara.
+// DELETE — cabut role MAHASISWA_KIPK: hapus profil penerima_kipk (jika ada)
+// & baris user_roles terkait. Akun (`users`) hanya dinonaktifkan kalau ini
+// SATU-SATUNYA role user (mis. dia juga PEWAWANCARA, akun tetap aktif untuk
+// akses itu) — sebelum multi-role, endpoint ini selalu menonaktifkan akun;
+// sekarang itu akan salah untuk user dual-role.
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const admin = await getCurrentUser();
@@ -99,12 +101,13 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
     const { data: user, error: userGetErr } = await supabaseAdmin
       .from("users")
-      .select("id, role")
+      .select("id, user_roles!inner(role)")
       .eq("id", id)
-      .single();
+      .eq("user_roles.role", "MAHASISWA_KIPK")
+      .maybeSingle();
 
     if (userGetErr) throw userGetErr;
-    if (user.role !== "MAHASISWA_KIPK") {
+    if (!user) {
       return NextResponse.json({ error: "Akun ini bukan Mahasiswa KIP-K" }, { status: 400 });
     }
 
@@ -115,12 +118,29 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
     if (deleteErr) throw deleteErr;
 
-    const { error: userErr } = await supabaseAdmin
-      .from("users")
-      .update({ status_akun: "NONAKTIF" })
-      .eq("id", id);
+    const { error: roleErr } = await supabaseAdmin
+      .from("user_roles")
+      .delete()
+      .eq("user_id", id)
+      .eq("role", "MAHASISWA_KIPK");
 
-    if (userErr) throw userErr;
+    if (roleErr) throw roleErr;
+
+    const { data: remainingRoles, error: remainingErr } = await supabaseAdmin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", id);
+
+    if (remainingErr) throw remainingErr;
+
+    if ((remainingRoles ?? []).length === 0) {
+      const { error: userErr } = await supabaseAdmin
+        .from("users")
+        .update({ status_akun: "NONAKTIF" })
+        .eq("id", id);
+
+      if (userErr) throw userErr;
+    }
 
     return NextResponse.json({ success: true, message: "Akun mahasiswa berhasil dihapus" });
   } catch (err) {

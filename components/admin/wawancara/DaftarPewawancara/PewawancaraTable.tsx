@@ -49,6 +49,11 @@ export default function PewawancaraTable({
           <tr key={p.id} className="hover:bg-admin-surface-soft/60 transition-colors">
             <td className="px-4 py-3">
               <p className="font-semibold text-admin-text">{p.nama ?? "—"}</p>
+              {(p.users?.user_roles ?? []).some((r) => r.role === "MAHASISWA_KIPK") && (
+                <span className="inline-block mt-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-admin-accent/10 text-admin-accent-ink border border-admin-accent/25">
+                  Juga: Mahasiswa KIP-K
+                </span>
+              )}
             </td>
             <td className="px-4 py-3">
               <p className="text-[11px] font-semibold text-admin-text">

@@ -199,9 +199,15 @@ export default function DaftarPewawancara() {
         open={!!deleteTarget}
         variant="danger"
         title="Hapus Pewawancara?"
-        description={`Akun ${
-          deleteTarget?.nama ?? deleteTarget?.users?.email_sso ?? ""
-        } akan dihapus dan akses loginnya dinonaktifkan.`}
+        description={
+          (deleteTarget?.users?.user_roles ?? []).some((r) => r.role === "MAHASISWA_KIPK")
+            ? `Role Pewawancara untuk ${
+                deleteTarget?.nama ?? deleteTarget?.users?.email_sso ?? ""
+              } akan dicabut. Akun tetap aktif karena masih punya role Mahasiswa KIP-K.`
+            : `Akun ${
+                deleteTarget?.nama ?? deleteTarget?.users?.email_sso ?? ""
+              } akan dihapus dan akses loginnya dinonaktifkan.`
+        }
         loading={deleting}
         onConfirm={confirmDelete}
         onCancel={() => setDeleteTarget(null)}

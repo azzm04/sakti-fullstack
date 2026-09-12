@@ -23,6 +23,9 @@ import {
   AuthCardWrapper,
 } from "@/components/auth";
 
+// Role sesi ditentukan oleh halaman/URL login yang dipakai (server yang
+// memutuskan lewat otp_tokens.intended_role, bukan dipilih di sini) —
+// map ini cuma untuk redirect setelah backend mengembalikan role final.
 const ROLE_REDIRECT: Record<string, string> = {
   MAHASISWA_KIPK: "/mahasiswa/dashboard",
   PEWAWANCARA: "/pewawancara",

@@ -55,7 +55,11 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   }
 }
 
-// DELETE — hapus pewawancara + nonaktifkan user terkait
+// DELETE — cabut role PEWAWANCARA: hapus baris pewawancara + user_roles
+// terkait. Akun (`users`) hanya dinonaktifkan kalau ini SATU-SATUNYA role
+// user (mis. dia juga MAHASISWA_KIPK, akun tetap aktif untuk akses itu) —
+// sebelum multi-role, endpoint ini selalu menonaktifkan akun; sekarang itu
+// akan salah untuk user dual-role.
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
@@ -77,15 +81,32 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
     if (deleteErr) throw deleteErr;
 
-    // Nonaktifkan user terkait agar tidak bisa login lagi
     if (existing?.user_id) {
-      const { error: userErr } = await supabaseAdmin
-        .from("users")
-        .update({ status_akun: "NONAKTIF" })
-        .eq("id", existing.user_id);
+      const { error: roleErr } = await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", existing.user_id)
+        .eq("role", "PEWAWANCARA");
 
-      if (userErr) {
-        console.warn("[DELETE pewawancara] Gagal nonaktifkan users:", userErr);
+      if (roleErr) {
+        console.warn("[DELETE pewawancara] Gagal hapus user_roles:", roleErr);
+      }
+
+      const { data: remainingRoles } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", existing.user_id);
+
+      // Nonaktifkan user hanya kalau ini role terakhirnya
+      if ((remainingRoles ?? []).length === 0) {
+        const { error: userErr } = await supabaseAdmin
+          .from("users")
+          .update({ status_akun: "NONAKTIF" })
+          .eq("id", existing.user_id);
+
+        if (userErr) {
+          console.warn("[DELETE pewawancara] Gagal nonaktifkan users:", userErr);
+        }
       }
     }
 

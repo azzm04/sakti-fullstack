@@ -1,5 +1,5 @@
 import { cookies } from "next/headers"
-import { jwtVerify } from "jose"
+import { jwtVerify, SignJWT } from "jose"
 import { redirect } from "next/navigation"
 
 export interface AuthUser {
@@ -7,6 +7,33 @@ export interface AuthUser {
   nama: string
   email: string
   role: "MAHASISWA_KIPK" | "PEWAWANCARA" | "ADMIN_DIRMAWA"
+}
+
+/**
+ * Terbitkan JWT sesi final (cookie `sakti_token`) untuk satu role AKTIF.
+ * Dipakai baik saat login langsung (user 1 role) maupun setelah user
+ * memilih role di /api/auth/select-role (user >1 role) — supaya kedua
+ * jalur menghasilkan token yang identik strukturnya.
+ */
+export async function signSessionToken(user: {
+  id: string
+  email: string
+  role: AuthUser["role"]
+}): Promise<string> {
+  const secret = new TextEncoder().encode(process.env.JWT_SECRET!)
+  return new SignJWT({ sub: user.id, role: user.role, email: user.email })
+    .setProtectedHeader({ alg: "HS256" })
+    .setIssuedAt()
+    .setExpirationTime("7d")
+    .sign(secret)
+}
+
+export const SESSION_COOKIE_OPTIONS = {
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax" as const,
+  maxAge: 60 * 60 * 24 * 7, // 7 hari
+  path: "/",
 }
 
 export async function getCurrentUser(): Promise<AuthUser | null> {

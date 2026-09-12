@@ -18,6 +18,7 @@ interface MahasiswaRow {
   email_sso: string;
   status_akun: string;
   created_at: string;
+  user_roles: { role: string }[] | null;
   penerima_kipk: PenerimaKipkRow | PenerimaKipkRow[] | null;
 }
 
@@ -34,14 +35,18 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get("search") ?? "";
 
-    const query = supabaseAdmin
-      .from("users")
-      .select(
-        `
+    // Sengaja TANPA user_roles!inner + .eq di query — filter embedded resource
+    // PostgREST juga MEMOTONG array yang dikembalikan ke baris yang match saja,
+    // jadi role lain (mis. PEWAWANCARA) yang dibutuhkan untuk badge "Juga: ..."
+    // ikut hilang. Ambil semua role per user, filter keanggotaan MAHASISWA_KIPK
+    // di sisi aplikasi — sama seperti pola search di bawah.
+    const { data, error } = await supabaseAdmin.from("users").select(
+      `
         id,
         email_sso,
         status_akun,
         created_at,
+        user_roles ( role ),
         penerima_kipk (
           id,
           nim,
@@ -50,12 +55,8 @@ export async function GET(req: NextRequest) {
           prodi:prodi_id ( id, nama_prodi, fakultas )
         )
       `,
-        { count: "exact" },
-      )
-      .eq("role", "MAHASISWA_KIPK")
-      .order("created_at", { ascending: false });
+    ).order("created_at", { ascending: false });
 
-    const { data, count, error } = await query;
     if (error) throw error;
 
     // penerima_kipk (dan prodi di dalamnya) adalah relasi ke-satu — PostgREST
@@ -64,17 +65,19 @@ export async function GET(req: NextRequest) {
     const one = <T,>(v: T | T[] | null | undefined): T | null =>
       Array.isArray(v) ? (v[0] ?? null) : (v ?? null);
 
-    const normalized: MahasiswaKipk[] = (data ?? []).map((row) => {
-      const raw = row as unknown as MahasiswaRow;
-      const pk = one(raw.penerima_kipk);
-      return {
-        id: raw.id,
-        email_sso: raw.email_sso,
-        status_akun: raw.status_akun,
-        created_at: raw.created_at,
-        penerima_kipk: pk ? { ...pk, prodi: one(pk.prodi) } : null,
-      };
-    });
+    const normalized: MahasiswaKipk[] = ((data ?? []) as unknown as MahasiswaRow[])
+      .filter((raw) => (raw.user_roles ?? []).some((r) => r.role === "MAHASISWA_KIPK"))
+      .map((raw) => {
+        const pk = one(raw.penerima_kipk);
+        return {
+          id: raw.id,
+          email_sso: raw.email_sso,
+          status_akun: raw.status_akun,
+          created_at: raw.created_at,
+          roles: (raw.user_roles ?? []).map((r) => r.role),
+          penerima_kipk: pk ? { ...pk, prodi: one(pk.prodi) } : null,
+        };
+      });
 
     if (search) {
       const q = search.toLowerCase();
@@ -89,7 +92,7 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ data: filtered, total: filtered.length });
     }
 
-    return NextResponse.json({ data: normalized, total: count ?? 0 });
+    return NextResponse.json({ data: normalized, total: normalized.length });
   } catch (err) {
     return NextResponse.json(
       { error: "Gagal mengambil data", detail: err instanceof Error ? err.message : String(err) },

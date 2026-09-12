@@ -80,7 +80,9 @@ export default function PewawancaraFormModal({
       </div>
       {!editing && (
         <p className="text-[11px] text-admin-text-5 bg-admin-surface-soft rounded-xl px-3 py-2 border border-admin-border-soft">
-          Pengguna otomatis bisa login via OTP menggunakan email ini.
+          Pengguna otomatis bisa login via OTP menggunakan email ini. Kalau email ini sudah
+          terdaftar (mis. sebagai Mahasiswa KIP-K), role Pewawancara akan ditambahkan ke akun
+          itu — bukan membuat akun baru.
         </p>
       )}
       {formError && (

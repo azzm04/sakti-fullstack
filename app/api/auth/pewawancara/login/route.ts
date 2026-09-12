@@ -24,12 +24,13 @@ export async function POST(req: NextRequest) {
     const { email } = result.data;
     const normalizedEmail = email.toLowerCase().trim();
 
-    // 1. Cari user di tabel users dengan role PEWAWANCARA
+    // 1. Cari user yang punya role PEWAWANCARA lewat pivot user_roles
+    //    (satu user bisa punya role lain juga, mis. MAHASISWA_KIPK)
     const { data: userRow, error: userErr } = await supabaseAdmin
       .from("users")
-      .select("id, email_sso, role, status_akun")
+      .select("id, email_sso, status_akun, user_roles!inner(role)")
       .eq("email_sso", normalizedEmail)
-      .eq("role", "PEWAWANCARA")
+      .eq("user_roles.role", "PEWAWANCARA")
       .maybeSingle();
 
     if (userErr) {
@@ -71,9 +72,14 @@ export async function POST(req: NextRequest) {
       where: { email: normalizedEmail },
       create: {
         email: normalizedEmail,
-        role: "PEWAWANCARA",
         statusAkun: "AKTIF",
       },
+      update: {},
+    });
+
+    await prisma.userRole.upsert({
+      where: { userId_role: { userId: user.id, role: "PEWAWANCARA" } },
+      create: { userId: user.id, role: "PEWAWANCARA" },
       update: {},
     });
 
@@ -88,6 +94,9 @@ export async function POST(req: NextRequest) {
         userId: user.id,
         code: hashed,
         expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 menit
+        // Login lewat halaman pewawancara — verify-otp langsung menerbitkan
+        // sesi role PEWAWANCARA, walau akunnya juga MAHASISWA_KIPK.
+        intendedRole: "PEWAWANCARA",
       },
     });
 

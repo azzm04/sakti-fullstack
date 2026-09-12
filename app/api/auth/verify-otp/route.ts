@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { verifyOtp } from "@/lib/otp";
 import { buatPenerimaKipk } from "@/lib/penerima-kipk";
-import { SignJWT } from "jose";
+import { signSessionToken, SESSION_COOKIE_OPTIONS } from "@/lib/auth-server";
 import { z } from "zod";
 
 const VerifyOtpSchema = z.object({
@@ -90,6 +90,42 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // ── Tentukan role sesi dari halaman/URL login yang dipakai ────────────
+    // (otpToken.intendedRole diisi saat OTP dikirim — /login ->
+    // MAHASISWA_KIPK, /pewawancara-login -> PEWAWANCARA). Ini menggantikan
+    // users.role skalar tanpa perlu menanyakan ulang ke user meski akunnya
+    // multi-role: role ditentukan oleh URL yang dipakai untuk login, bukan
+    // dipilih di layar terpisah.
+    let role = otpToken.intendedRole;
+
+    // Fallback untuk baris OTP lama (dibuat sebelum kolom ini ada) atau
+    // kasus tak terduga lain — pakai role satu-satunya kalau memang cuma
+    // ada 1, supaya tidak mengunci user yang OTP-nya sempat tertunda.
+    if (!role) {
+      const roles = await prisma.userRole.findMany({ where: { userId: user.id } });
+      if (roles.length !== 1) {
+        await prisma.otpToken.delete({ where: { id: otpToken.id } });
+        return NextResponse.json(
+          { error: "Tidak bisa menentukan role login. Silakan kirim ulang OTP." },
+          { status: 400 }
+        );
+      }
+      role = roles[0].role;
+    }
+
+    // Defense-in-depth: pastikan user BENAR-BENAR masih punya role ini
+    // sekarang (bisa saja dicabut admin di antara request OTP & verifikasi).
+    const ownedRole = await prisma.userRole.findUnique({
+      where: { userId_role: { userId: user.id, role } },
+    });
+    if (!ownedRole) {
+      await prisma.otpToken.delete({ where: { id: otpToken.id } });
+      return NextResponse.json(
+        { error: "Akun ini tidak lagi memiliki role tersebut. Hubungi admin." },
+        { status: 403 }
+      );
+    }
+
     // ── Hapus OTP setelah berhasil diverifikasi ──────────────────────────
     await prisma.otpToken.delete({
       where: {
@@ -97,38 +133,15 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // ── Generate JWT ──────────────────────────────────────────────────────
-    const secret = new TextEncoder().encode(
-      process.env.JWT_SECRET!
-    );
-
-    const jwt = await new SignJWT({
-      sub: user.id,
-      role: user.role,
-      email: user.email,
-    })
-      .setProtectedHeader({ alg: "HS256" })
-      .setIssuedAt()
-      .setExpirationTime("7d")
-      .sign(secret);
+    const jwt = await signSessionToken({ id: user.id, email: user.email, role });
 
     const response = NextResponse.json({
       success: true,
       message: "Verifikasi OTP berhasil",
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-      },
+      user: { id: user.id, email: user.email, role },
     });
 
-    response.cookies.set("sakti_token", jwt, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 7, // 7 hari
-      path: "/",
-    });
+    response.cookies.set("sakti_token", jwt, SESSION_COOKIE_OPTIONS);
 
     return response;
   } catch (err) {

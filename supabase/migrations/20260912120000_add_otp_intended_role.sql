@@ -1,0 +1,12 @@
+-- Simpan "role yang dimaksud" pada OTP itu sendiri — dipakai untuk
+-- menentukan role sesi langsung dari URL/halaman login yang dipakai user
+-- (mis. /pewawancara-login → PEWAWANCARA, /login → MAHASISWA_KIPK), tanpa
+-- perlu menanyakan ulang ke user saat verifikasi OTP.
+--
+-- Pola ini sama dengan otp_tokens.kandidat_id yang sudah ada — menempelkan
+-- intent ke token, bukan mempercayai field yang dikirim ulang oleh client
+-- saat verify. app/api/auth/verify-otp/route.ts tetap memvalidasi bahwa
+-- user benar-benar punya role ini di user_roles sebelum menerbitkan sesi —
+-- jadi walau field ini rusak/dimanipulasi, tidak bisa dipakai untuk
+-- eskalasi ke role yang tidak dimiliki.
+ALTER TABLE public.otp_tokens ADD COLUMN IF NOT EXISTS intended_role role_enum;

@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import type { MahasiswaKipk } from "@/types/wawancara";
 import MahasiswaTable from "./MahasiswaTable";
 import MahasiswaFormModal from "./MahasiswaFormModal";
+import JadikanPewawancaraModal from "./JadikanPewawancaraModal";
 import ConfirmModal from "../shared/ConfirmModal";
 
 export default function DaftarMahasiswa() {
@@ -19,6 +20,11 @@ export default function DaftarMahasiswa() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ nama: "", nim: "", angkatan: "" });
   const [formError, setFormError] = useState("");
+
+  const [pewawancaraTarget, setPewawancaraTarget] = useState<MahasiswaKipk | null>(null);
+  const [pewawancaraNama, setPewawancaraNama] = useState("");
+  const [pewawancaraError, setPewawancaraError] = useState("");
+  const [assigningPewawancara, setAssigningPewawancara] = useState(false);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
@@ -104,6 +110,44 @@ export default function DaftarMahasiswa() {
     }
   }
 
+  function openJadikanPewawancara(m: MahasiswaKipk) {
+    setPewawancaraTarget(m);
+    setPewawancaraNama(m.penerima_kipk?.nama ?? "");
+    setPewawancaraError("");
+  }
+
+  async function handleAssignPewawancara() {
+    if (!pewawancaraTarget) return;
+    setPewawancaraError("");
+    if (!pewawancaraNama.trim()) {
+      setPewawancaraError("Nama wajib diisi");
+      return;
+    }
+    setAssigningPewawancara(true);
+    try {
+      // Endpoint yang sama dengan "+ Tambah" di tab Pewawancara — email
+      // sudah dikenal (sudah ada akunnya sebagai Mahasiswa KIP-K), backend
+      // akan menambahkan role PEWAWANCARA ke akun ini, bukan membuat baru.
+      const res = await fetch("/api/admin/pewawancara", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: pewawancaraTarget.email_sso, nama: pewawancaraNama.trim() }),
+      });
+      const json = await res.json();
+      if (!res.ok) {
+        setPewawancaraError(json.error ?? "Gagal menambah role");
+        return;
+      }
+      setPewawancaraTarget(null);
+      toast.success("Role Pewawancara ditambahkan", {
+        description: `${pewawancaraTarget.email_sso} sekarang juga bisa masuk sebagai pewawancara.`,
+      });
+      fetchData();
+    } finally {
+      setAssigningPewawancara(false);
+    }
+  }
+
   async function confirmDelete() {
     if (!deleteTarget) return;
     setDeleting(true);
@@ -168,6 +212,7 @@ export default function DaftarMahasiswa() {
           onEdit={openEdit}
           onDelete={setDeleteTarget}
           onToggleActive={handleToggleActive}
+          onJadikanPewawancara={openJadikanPewawancara}
         />
       </div>
 
@@ -182,13 +227,30 @@ export default function DaftarMahasiswa() {
         onSave={handleSave}
       />
 
+      <JadikanPewawancaraModal
+        open={!!pewawancaraTarget}
+        email={pewawancaraTarget?.email_sso ?? ""}
+        nama={pewawancaraNama}
+        formError={pewawancaraError}
+        saving={assigningPewawancara}
+        onChangeNama={setPewawancaraNama}
+        onClose={() => setPewawancaraTarget(null)}
+        onSave={handleAssignPewawancara}
+      />
+
       <ConfirmModal
         open={!!deleteTarget}
         variant="danger"
         title="Hapus Akun Mahasiswa?"
-        description={`Profil KIP-K untuk ${
-          deleteTarget?.penerima_kipk?.nama ?? deleteTarget?.email_sso ?? ""
-        } akan dihapus dan akses loginnya dinonaktifkan.`}
+        description={
+          deleteTarget && deleteTarget.roles.length > 1
+            ? `Profil KIP-K untuk ${
+                deleteTarget?.penerima_kipk?.nama ?? deleteTarget?.email_sso ?? ""
+              } akan dihapus. Akun tetap aktif karena masih punya role Pewawancara.`
+            : `Profil KIP-K untuk ${
+                deleteTarget?.penerima_kipk?.nama ?? deleteTarget?.email_sso ?? ""
+              } akan dihapus dan akses loginnya dinonaktifkan.`
+        }
         loading={deleting}
         onConfirm={confirmDelete}
         onCancel={() => setDeleteTarget(null)}

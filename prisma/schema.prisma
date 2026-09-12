@@ -10,7 +10,7 @@ datasource db {
 model User {
   id                    String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   email                 String                 @unique @map("email_sso")
-  role                  role_enum
+  role                  role_enum?
   statusAkun            status_akun_enum       @default(AKTIF) @map("status_akun")
   createdAt             DateTime               @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("created_at") @db.Timestamptz(6)
   updatedAt             DateTime               @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @updatedAt @map("updated_at") @db.Timestamptz(6)
@@ -19,6 +19,7 @@ model User {
   pewawancara           Pewawancara?
   prestasi_mahasiswa    prestasi_mahasiswa[]
   tokenAktivasiTelegram TokenAktivasiTelegram?
+  userRoles             UserRole[]
 
   @@map("users")
 }
@@ -36,14 +37,19 @@ model AdminUser {
 }
 
 model OtpToken {
-  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId     String    @db.Uuid
-  code       String
-  expiresAt  DateTime
-  createdAt  DateTime  @default(now())
-  kandidatId String?   @map("kandidat_id") @db.Uuid
-  kandidat   kandidat? @relation(fields: [kandidatId], references: [id], onUpdate: NoAction)
-  users      User      @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId       String     @db.Uuid
+  code         String
+  expiresAt    DateTime
+  createdAt    DateTime   @default(now())
+  kandidatId   String?    @map("kandidat_id") @db.Uuid
+  /// Role yang dituju login ini (ditentukan oleh URL/halaman login yang
+  /// dipakai, mis. /pewawancara-login -> PEWAWANCARA) — dibaca saat
+  /// verify-otp untuk langsung menerbitkan sesi dengan role itu, tanpa
+  /// menanyakan ulang ke user meski akunnya multi-role.
+  intendedRole role_enum? @map("intended_role")
+  kandidat     kandidat?  @relation(fields: [kandidatId], references: [id], onUpdate: NoAction)
+  users        User       @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("otp_tokens")
 }
@@ -379,16 +385,16 @@ model pengumuman_seleksi {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model sso_whitelist {
-  id        String   @id
-  email     String   @unique
+  id        String    @id
+  email     String    @unique
   nama      String
-  role      Role     @default(MAHASISWA_KIPK)
-  isActive  Boolean  @default(true)
-  createdAt DateTime @default(now())
+  role      role_enum @default(MAHASISWA_KIPK)
+  isActive  Boolean   @default(true)
+  createdAt DateTime  @default(now())
   updatedAt DateTime
   prodi     String?
   fakultas  String?
-  nim       String?  @unique
+  nim       String?   @unique
 }
 
 model wawancara_assignment {
@@ -590,10 +596,17 @@ model prestasi_mahasiswa {
   users             User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
-enum Role {
-  MAHASISWA_KIPK
-  PEWAWANCARA
-  ADMIN_DIRMAWA
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model UserRole {
+  id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  userId    String    @map("user_id") @db.Uuid
+  role      role_enum
+  createdAt DateTime  @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @map("created_at") @db.Timestamptz(6)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@unique([userId, role])
+  @@index([userId])
+  @@map("user_roles")
 }
 
 enum role_enum {

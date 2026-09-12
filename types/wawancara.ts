@@ -10,6 +10,9 @@ export interface Pewawancara {
     id: string;
     email_sso: string;
     status_akun: string;
+    // Role lain yang dipegang user ini selain PEWAWANCARA (mis. juga
+    // MAHASISWA_KIPK) — dipakai untuk badge "Juga: ..." di tabel.
+    user_roles?: { role: string }[];
   };
 }
 
@@ -18,6 +21,9 @@ export interface MahasiswaKipk {
   email_sso: string;
   status_akun: string;
   created_at: string;
+  // Semua role yang dipegang user ini (selalu berisi MAHASISWA_KIPK, bisa
+  // juga PEWAWANCARA) — dipakai untuk badge "Juga: ..." di tabel.
+  roles: string[];
   penerima_kipk: {
     id: string;
     nim: string | null;

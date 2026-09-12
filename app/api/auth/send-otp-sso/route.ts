@@ -68,8 +68,13 @@ export async function POST(req: NextRequest) {
       where: { email: normalizedEmailSSO },
       create: {
         email: normalizedEmailSSO,
-        role: "MAHASISWA_KIPK",
       },
+      update: {},
+    })
+
+    await prisma.userRole.upsert({
+      where: { userId_role: { userId: user.id, role: "MAHASISWA_KIPK" } },
+      create: { userId: user.id, role: "MAHASISWA_KIPK" },
       update: {},
     })
 
@@ -85,6 +90,7 @@ export async function POST(req: NextRequest) {
         kandidatId: kandidat.id,
         code: hashed,
         expiresAt: new Date(Date.now() + 5 * 60 * 1000), // 5 menit
+        intendedRole: "MAHASISWA_KIPK",
       },
     })
 
