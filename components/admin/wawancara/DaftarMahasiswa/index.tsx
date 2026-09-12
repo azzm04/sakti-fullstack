@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { Search } from "lucide-react";
 import { toast } from "sonner";
-import type { MahasiswaKipk } from "@/types/wawancara";
+import type { MahasiswaKipk, Prodi } from "@/types/wawancara";
 import MahasiswaTable from "./MahasiswaTable";
 import MahasiswaFormModal from "./MahasiswaFormModal";
 import JadikanPewawancaraModal from "./JadikanPewawancaraModal";
@@ -18,8 +18,9 @@ export default function DaftarMahasiswa() {
   const [deleteTarget, setDeleteTarget] = useState<MahasiswaKipk | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ nama: "", nim: "", angkatan: "" });
+  const [form, setForm] = useState({ nama: "", nim: "", angkatan: "", prodi_id: "" });
   const [formError, setFormError] = useState("");
+  const [prodiOptions, setProdiOptions] = useState<Prodi[]>([]);
 
   const [pewawancaraTarget, setPewawancaraTarget] = useState<MahasiswaKipk | null>(null);
   const [pewawancaraNama, setPewawancaraNama] = useState("");
@@ -52,12 +53,25 @@ export default function DaftarMahasiswa() {
     return () => clearTimeout(t);
   }, [fetchData, search]);
 
+  useEffect(() => {
+    fetch("/api/admin/prodi")
+      .then((res) => res.json())
+      .then((json) => setProdiOptions(json.data ?? []))
+      .catch(() => {
+        // Diam-diam gagal — dropdown Prodi cukup tampil kosong, tidak
+        // menghalangi admin edit field lain.
+      });
+  }, []);
+
+  const isNewProfile = !editing?.penerima_kipk;
+
   function openEdit(m: MahasiswaKipk) {
     setEditing(m);
     setForm({
       nama: m.penerima_kipk?.nama ?? "",
       nim: m.penerima_kipk?.nim ?? "",
       angkatan: m.penerima_kipk?.angkatan?.toString() ?? "",
+      prodi_id: m.penerima_kipk?.prodi?.id ?? "",
     });
     setFormError("");
   }
@@ -65,6 +79,12 @@ export default function DaftarMahasiswa() {
   async function handleSave() {
     if (!editing) return;
     setFormError("");
+
+    if (isNewProfile && (!form.nama.trim() || !form.nim.trim() || !form.angkatan || !form.prodi_id)) {
+      setFormError("Profil belum ada — Nama, NIM, Angkatan, dan Program Studi wajib diisi semua");
+      return;
+    }
+
     setSaving(true);
     try {
       const res = await fetch(`/api/admin/mahasiswa-kipk/${editing.id}`, {
@@ -74,6 +94,7 @@ export default function DaftarMahasiswa() {
           nama: form.nama || null,
           nim: form.nim || null,
           angkatan: form.angkatan ? parseInt(form.angkatan, 10) : null,
+          prodi_id: form.prodi_id || null,
         }),
       });
       const json = await res.json();
@@ -222,6 +243,8 @@ export default function DaftarMahasiswa() {
         form={form}
         formError={formError}
         saving={saving}
+        isNewProfile={isNewProfile}
+        prodiOptions={prodiOptions}
         onChange={setForm}
         onClose={() => setEditing(null)}
         onSave={handleSave}

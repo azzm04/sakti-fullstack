@@ -16,6 +16,12 @@ export interface Pewawancara {
   };
 }
 
+export interface Prodi {
+  id: string;
+  nama_prodi: string;
+  fakultas: string | null;
+}
+
 export interface MahasiswaKipk {
   id: string; // users.id (uuid) — identitas stabil terlepas apakah profil penerima_kipk sudah ada
   email_sso: string;

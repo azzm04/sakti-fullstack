@@ -16,9 +16,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
     const { id } = await params;
     const body = await req.json();
-    // Prodi TIDAK bisa diedit di sini — kolomnya sekarang foreign key ke
-    // tabel `prodi` (lookup), bukan teks bebas, dan tabel itu masih kosong.
-    const { nama, nim, angkatan, status_akun } = body;
+    const { nama, nim, angkatan, prodi_id, status_akun } = body;
 
     const { data: user, error: userGetErr } = await supabaseAdmin
       .from("users")
@@ -44,12 +42,38 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     if (nama !== undefined) profileUpdate.nama = nama;
     if (nim !== undefined) profileUpdate.nim = nim;
     if (angkatan !== undefined) profileUpdate.angkatan = angkatan;
+    if (prodi_id !== undefined) profileUpdate.prodi_id = prodi_id;
 
     if (Object.keys(profileUpdate).length > 0) {
-      const { error: upsertErr } = await supabaseAdmin
+      const { data: existingProfile, error: existingErr } = await supabaseAdmin
         .from("penerima_kipk")
-        .upsert({ user_id: id, ...profileUpdate }, { onConflict: "user_id" });
-      if (upsertErr) throw upsertErr;
+        .select("id")
+        .eq("user_id", id)
+        .maybeSingle();
+      if (existingErr) throw existingErr;
+
+      if (existingProfile) {
+        // Profil sudah ada — update parsial, field yang tidak dikirim tetap.
+        const { error: updateErr } = await supabaseAdmin
+          .from("penerima_kipk")
+          .update(profileUpdate)
+          .eq("user_id", id);
+        if (updateErr) throw updateErr;
+      } else {
+        // Belum ada profil (mis. akun dibuat lewat multi-role, bukan alur
+        // verifikasi SK) — nim, nama, angkatan, prodi_id semua NOT NULL di
+        // skema, jadi wajib lengkap sekaligus saat pertama kali dibuat.
+        if (!nama || !nim || !angkatan || !prodi_id) {
+          return NextResponse.json(
+            { error: "Profil belum ada — Nama, NIM, Angkatan, dan Program Studi wajib diisi semua untuk membuat profil baru" },
+            { status: 400 },
+          );
+        }
+        const { error: insertErr } = await supabaseAdmin
+          .from("penerima_kipk")
+          .insert({ user_id: id, nama, nim, angkatan, prodi_id });
+        if (insertErr) throw insertErr;
+      }
     }
 
     const { data, error } = await supabaseAdmin
