@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { LayoutDashboard, Bot, BookMarked, Award, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { LayoutDashboard, Bot, BookMarked, Award, PanelLeftClose, PanelLeftOpen, LogOut } from "lucide-react";
 
 const EXPANDED  = 248;
 const COLLAPSED = 64;
@@ -16,10 +16,11 @@ const BG_ACTIVE = "rgba(255,255,255,0.14)";
 const BG_HOVER  = "rgba(255,255,255,0.06)";
 
 const menuItems = [
-  { href: "/mahasiswa/dashboard", icon: LayoutDashboard, label: "Dashboard" },
-  { href: "/mahasiswa/chatbot",   icon: Bot,             label: "SAKABOT"   },
-  { href: "/mahasiswa/monev",     icon: BookMarked,      label: "Evaluasi"  },
-  { href: "/mahasiswa/prestasi",  icon: Award,           label: "Prestasi"  },
+  { href: "/mahasiswa/dashboard",       icon: LayoutDashboard, label: "Dashboard"     },
+  { href: "/mahasiswa/chatbot",         icon: Bot,             label: "SAKABOT"       },
+  { href: "/mahasiswa/monev",           icon: BookMarked,      label: "Evaluasi"      },
+  { href: "/mahasiswa/prestasi",        icon: Award,           label: "Prestasi"      },
+  { href: "/mahasiswa/pengunduran-diri",icon: LogOut,          label: "Undur Diri"    },
 ];
 
 export default function SidebarMahasiswa() {

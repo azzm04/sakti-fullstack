@@ -16,19 +16,21 @@ import {
   BarChart3,
   Award,
   ListFilter,
+  UserMinus,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const navItems = [
-  { href: "/admin",             label: "Dashboard",      icon: LayoutDashboard },
-  { href: "/admin/import",      label: "Import Data",    icon: Upload          },
-  { href: "/admin/wawancara",   label: "Wawancara",      icon: Zap             },
-  { href: "/admin/evaluasi",    label: "Evaluasi",       icon: ClipboardCheck  },
-  { href: "/admin/filtering",   label: "Filtering Kuota", icon: ListFilter     },
-  { href: "/admin/hasil-akhir", label: "Hasil Akhir",    icon: Award           },
-  { href: "/admin/monev",       label: "Monev",          icon: BookMarked      },
-  { href: "/admin/analitik",    label: "Analitik",       icon: BarChart3       },
-  { href: "/admin/prestasi",    label: "Prestasi",       icon: Award           },
+  { href: "/admin",                    label: "Dashboard",        icon: LayoutDashboard },
+  { href: "/admin/import",             label: "Import Data",      icon: Upload          },
+  { href: "/admin/wawancara",          label: "Wawancara",        icon: Zap             },
+  { href: "/admin/evaluasi",           label: "Evaluasi",         icon: ClipboardCheck  },
+  { href: "/admin/filtering",          label: "Filtering Kuota",  icon: ListFilter      },
+  { href: "/admin/hasil-akhir",        label: "Hasil Akhir",      icon: Award           },
+  { href: "/admin/monev",              label: "Monev",            icon: BookMarked      },
+  { href: "/admin/analitik",           label: "Analitik",         icon: BarChart3       },
+  { href: "/admin/prestasi",           label: "Prestasi",         icon: Award           },
+  { href: "/admin/pengunduran-diri",   label: "Undur Diri",       icon: UserMinus       },
 ];
 
 const sidebarVariants: Variants = {
