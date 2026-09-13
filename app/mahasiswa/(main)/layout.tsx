@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import SidebarMahasiswa from "@/components/layout/SidebarMahasiswa";
 import Topbar from "@/components/mahasiswa/Topbar";
@@ -12,31 +12,33 @@ export default function MahasiswaLayout({
   children: React.ReactNode;
 }) {
   const router = useRouter();
+  const [checked, setChecked] = useState(false);
 
-  // Validasi role mahasiswa
   useEffect(() => {
     const checkMahasiswaRole = async () => {
       try {
         const res = await fetch("/api/auth/me");
         const data = await res.json();
-        
+
         if (!res.ok || data.role !== "MAHASISWA_KIPK") {
-          // Redirect ke halaman berdasarkan role
           const roleRoutes: Record<string, string> = {
             PEWAWANCARA: "/pewawancara",
             ADMIN_DIRMAWA: "/admin",
           };
-          const redirectPath = roleRoutes[data.role] || "/login";
-          router.push(redirectPath);
+          router.push(roleRoutes[data.role] || "/login");
           return;
         }
       } catch {
         router.push("/login");
+        return;
       }
+      setChecked(true);
     };
 
     checkMahasiswaRole();
   }, [router]);
+
+  if (!checked) return null;
 
   return (
     <UserProvider>
