@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="320" viewBox="0 0 480 320" role="img" aria-labelledby="sakabot-animated-title"><title id="sakabot-animated-title">SAKABOT — ilustrasi animasi SAKTI</title><defs>
+<linearGradient id="sakabot-animated-paper" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#F8FAFC"/><stop offset="1" stop-color="#EEF2FF"/></linearGradient>
+<linearGradient id="sakabot-animated-ink" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#3730A3"/><stop offset="1" stop-color="#000352"/></linearGradient>
+<linearGradient id="sakabot-animated-violet" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#818CF8"/><stop offset="1" stop-color="#3730A3"/></linearGradient>
+<linearGradient id="sakabot-animated-edge" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#818CF8" stop-opacity=".4"/><stop offset="1" stop-color="#818CF8" stop-opacity=".12"/></linearGradient>
+<radialGradient id="sakabot-animated-shadow"><stop stop-color="#000352" stop-opacity=".12"/><stop offset="1" stop-color="#000352" stop-opacity="0"/></radialGradient>
+</defs><style>
+.lift{animation:sakti-lift 6s cubic-bezier(.45,0,.55,1) infinite}.drift{animation:sakti-drift 6s cubic-bezier(.45,0,.55,1) infinite}.blink{transform-box:fill-box;transform-origin:center;animation:sakti-blink 6s ease-in-out infinite}.typing{animation:sakti-typing 2.4s ease-in-out infinite}.second{animation-delay:.2s}.third{animation-delay:.4s}.notice{animation:sakti-notice 6s cubic-bezier(.45,0,.55,1) infinite}.pulse{animation:sakti-pulse 6s ease-in-out infinite}.pen{animation:sakti-pen 6s cubic-bezier(.45,0,.55,1) infinite}.signature{stroke-dasharray:100;stroke-dashoffset:0;animation:sakti-sign 6s ease-in-out infinite}
+@keyframes sakti-lift{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes sakti-drift{0%,100%{transform:translate(0,0)}50%{transform:translate(7px,-5px)}}
+@keyframes sakti-blink{0%,39%,46%,100%{transform:scaleY(1)}42%,43%{transform:scaleY(.12)}}
+@keyframes sakti-typing{0%,70%,100%{opacity:.4}35%{opacity:1}}
+@keyframes sakti-notice{0%,100%{opacity:.7;transform:translateY(3px)}30%,70%{opacity:1;transform:translateY(-2px)}}
+@keyframes sakti-pulse{0%,100%{opacity:.45}50%{opacity:1}}
+@keyframes sakti-pen{0%,100%{transform:translate(0,0)}35%{transform:translate(5px,-3px)}65%{transform:translate(11px,-1px)}}
+@keyframes sakti-sign{0%,100%{stroke-dashoffset:100;opacity:0}15%{opacity:1;stroke-dashoffset:100}65%,85%{opacity:1;stroke-dashoffset:0}95%{opacity:0;stroke-dashoffset:0}}
+@media(prefers-reduced-motion:reduce){.lift,.drift,.blink,.typing,.notice,.pulse,.pen,.signature{animation:none}.signature{stroke-dashoffset:0;opacity:1}}
+</style><ellipse cx="242" cy="281" rx="148" ry="24" fill="url(#sakabot-animated-shadow)"/>
+<path d="M94 255 205 220 240 231 275 220 386 255 274 285 240 276 206 285Z" fill="#EEF2FF"/>
+<path d="m94 255 112 23 34-9 34 9 112-23v7l-112 30-34-10-34 10-112-30Z" fill="#818CF8" opacity=".15"/>
+<path d="m121 253 85 18 34-8 34 8 85-18" fill="none" stroke="#818CF8" stroke-opacity=".3"/>
+<path d="M240 241v22" stroke="#818CF8" stroke-opacity=".25"/>
+<path d="M112 126 148 105 180 123v75l-33 20-35-19Z" fill="#EEF2FF" stroke="#818CF8" stroke-opacity=".2"/>
+<path d="m147 129 25-14v67l-25 14Z" fill="#818CF8" opacity=".17"/>
+<path d="m123 146 16 9m-16 5 16 9m-16 5 16 9" stroke="#818CF8" stroke-width="3" stroke-linecap="round"/>
+<g class="lift">
+<path d="M194 211q-28 6-28 30m120-30q24 0 29-23" fill="none" stroke="#3730A3" stroke-width="13" stroke-linecap="round"/>
+<path d="m201 207 72-1 15 43-48 19-49-19Z" fill="url(#sakabot-animated-paper)" stroke="#818CF8" stroke-opacity=".45"/>
+<path d="m240 217 33-11 15 43-48 19Z" fill="#818CF8" opacity=".12"/>
+<path d="m217 230 22 7 24-7v14l-24 8-22-8Z" fill="#3730A3"/>
+<path d="M239 237v15" stroke="#818CF8" stroke-width="2"/>
+<rect x="174" y="146" width="17" height="39" rx="6" fill="url(#sakabot-animated-violet)"/>
+<rect x="289" y="146" width="17" height="39" rx="6" fill="url(#sakabot-animated-ink)"/>
+<path d="M203 115h73q20 0 20 20v59q0 19-20 19h-73q-20 0-20-19v-59q0-20 20-20Z" fill="url(#sakabot-animated-paper)" stroke="#818CF8" stroke-opacity=".5"/>
+<path d="M207 128h65q12 0 12 12v42q0 13-12 13h-65q-12 0-12-13v-42q0-12 12-12Z" fill="url(#sakabot-animated-ink)"/>
+<rect class="blink" x="212" y="147" width="10" height="16" rx="5" fill="#818CF8"/>
+<rect class="blink" x="258" y="147" width="10" height="16" rx="5" fill="#818CF8"/>
+<path d="M231 176q9 6 18 0" stroke="#EEF2FF" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+<path d="m206 100 34-14 34 14v16q-34 14-68 0Z" fill="#3730A3"/>
+<path d="m190 96 50-23 51 23-51 24Z" fill="url(#sakabot-animated-ink)"/>
+<path d="m240 73 51 23-51 24V96Z" fill="#818CF8" opacity=".3"/>
+<path d="m240 96 40 10v21" stroke="#818CF8" stroke-width="2.5" fill="none"/>
+<path d="M277 125h6v9h-6Z" fill="#818CF8"/>
+</g>
+<g class="notice"><path d="M311 61h55q12 0 12 12v32q0 12-12 12h-35l-14 13v-13h-6q-12 0-12-12V73q0-12 12-12Z" fill="url(#sakabot-animated-violet)"/>
+<circle class="typing" cx="319" cy="90" r="3.5" fill="#EEF2FF"/><circle class="typing second" cx="339" cy="90" r="3.5" fill="#EEF2FF"/><circle class="typing third" cx="359" cy="90" r="3.5" fill="#EEF2FF"/></g>
+<circle class="pulse" cx="128" cy="86" r="4" fill="#818CF8"/><path d="m343 173 8 4-8 4-8-4Z" fill="#818CF8" opacity=".45"/></svg>

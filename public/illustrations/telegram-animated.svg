@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="320" viewBox="0 0 480 320" role="img" aria-labelledby="telegram-animated-title"><title id="telegram-animated-title">Notifikasi Telegram — ilustrasi animasi SAKTI</title><defs>
+<linearGradient id="telegram-animated-paper" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#F8FAFC"/><stop offset="1" stop-color="#EEF2FF"/></linearGradient>
+<linearGradient id="telegram-animated-ink" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#3730A3"/><stop offset="1" stop-color="#000352"/></linearGradient>
+<linearGradient id="telegram-animated-violet" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#818CF8"/><stop offset="1" stop-color="#3730A3"/></linearGradient>
+<linearGradient id="telegram-animated-edge" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#818CF8" stop-opacity=".4"/><stop offset="1" stop-color="#818CF8" stop-opacity=".12"/></linearGradient>
+<radialGradient id="telegram-animated-shadow"><stop stop-color="#000352" stop-opacity=".12"/><stop offset="1" stop-color="#000352" stop-opacity="0"/></radialGradient>
+</defs><style>
+.lift{animation:sakti-lift 6s cubic-bezier(.45,0,.55,1) infinite}.drift{animation:sakti-drift 6s cubic-bezier(.45,0,.55,1) infinite}.blink{transform-box:fill-box;transform-origin:center;animation:sakti-blink 6s ease-in-out infinite}.typing{animation:sakti-typing 2.4s ease-in-out infinite}.second{animation-delay:.2s}.third{animation-delay:.4s}.notice{animation:sakti-notice 6s cubic-bezier(.45,0,.55,1) infinite}.pulse{animation:sakti-pulse 6s ease-in-out infinite}.pen{animation:sakti-pen 6s cubic-bezier(.45,0,.55,1) infinite}.signature{stroke-dasharray:100;stroke-dashoffset:0;animation:sakti-sign 6s ease-in-out infinite}
+@keyframes sakti-lift{0%,100%{transform:translateY(0)}50%{transform:translateY(-5px)}}
+@keyframes sakti-drift{0%,100%{transform:translate(0,0)}50%{transform:translate(7px,-5px)}}
+@keyframes sakti-blink{0%,39%,46%,100%{transform:scaleY(1)}42%,43%{transform:scaleY(.12)}}
+@keyframes sakti-typing{0%,70%,100%{opacity:.4}35%{opacity:1}}
+@keyframes sakti-notice{0%,100%{opacity:.7;transform:translateY(3px)}30%,70%{opacity:1;transform:translateY(-2px)}}
+@keyframes sakti-pulse{0%,100%{opacity:.45}50%{opacity:1}}
+@keyframes sakti-pen{0%,100%{transform:translate(0,0)}35%{transform:translate(5px,-3px)}65%{transform:translate(11px,-1px)}}
+@keyframes sakti-sign{0%,100%{stroke-dashoffset:100;opacity:0}15%{opacity:1;stroke-dashoffset:100}65%,85%{opacity:1;stroke-dashoffset:0}95%{opacity:0;stroke-dashoffset:0}}
+@media(prefers-reduced-motion:reduce){.lift,.drift,.blink,.typing,.notice,.pulse,.pen,.signature{animation:none}.signature{stroke-dashoffset:0;opacity:1}}
+</style><ellipse cx="242" cy="281" rx="148" ry="24" fill="url(#telegram-animated-shadow)"/>
+<path d="M94 255 205 220 240 231 275 220 386 255 274 285 240 276 206 285Z" fill="#EEF2FF"/>
+<path d="m94 255 112 23 34-9 34 9 112-23v7l-112 30-34-10-34 10-112-30Z" fill="#818CF8" opacity=".15"/>
+<path d="m121 253 85 18 34-8 34 8 85-18" fill="none" stroke="#818CF8" stroke-opacity=".3"/>
+<path d="M240 241v22" stroke="#818CF8" stroke-opacity=".25"/>
+<g transform="translate(133 87) skewY(-5)">
+<path d="M8 9h143v167H8Z" fill="#3730A3" opacity=".15"/>
+<rect width="145" height="168" rx="7" fill="url(#telegram-animated-paper)" stroke="#818CF8" stroke-opacity=".5"/>
+<path d="M7 0h131q7 0 7 7v36H0V7q0-7 7-7Z" fill="url(#telegram-animated-ink)"/>
+<path d="M31-9v22M111-9v22" stroke="#818CF8" stroke-width="6" stroke-linecap="round"/>
+<path d="M22 60h18v17H22Zm40 0h18v17H62Zm40 0h18v17h-18ZM22 93h18v17H22Zm80 0h18v17h-18ZM22 126h18v17H22Zm40 0h18v17H62Z" fill="#818CF8" opacity=".3"/>
+<rect x="56" y="87" width="31" height="30" rx="4" fill="url(#telegram-animated-violet)"/>
+<path d="m64 102 5 5 11-12" stroke="#F8FAFC" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+<path d="m119 142 26-20v39q0 7-7 7h-39Z" fill="#818CF8" opacity=".13"/>
+</g>
+<path d="M297 181c32 24 67 14 65-8-2-20-35-17-27 3 4 10 18 8 23-9" stroke="#818CF8" stroke-opacity=".45" stroke-width="1.5" stroke-dasharray="4 7" fill="none"/>
+<g class="drift"><path d="m261 106 111-52-26 107-35-31-20 16 4-33Z" fill="#EEF2FF"/>
+<path d="m261 106 111-52-61 76-16-17Z" fill="url(#telegram-animated-violet)"/>
+<path d="m311 130 61-76-26 107Z" fill="url(#telegram-animated-ink)"/>
+<path d="m295 113 61-43-46 52-4 18Z" fill="#EEF2FF"/>
+<path d="m291 146 4-33 15 9-4 18Z" fill="#818CF8"/>
+</g>
+<g class="notice"><rect x="261" y="211" width="120" height="47" rx="6" fill="url(#telegram-animated-paper)" stroke="#818CF8" stroke-opacity=".55"/>
+<rect x="272" y="223" width="24" height="24" rx="5" fill="url(#telegram-animated-ink)"/>
+<path d="m277 234 14-6-3 14-5-4-3 2 1-4Z" fill="#EEF2FF"/>
+<path d="M308 228h57M308 239h39" stroke="#818CF8" stroke-width="4" stroke-linecap="round" opacity=".65"/>
+<circle cx="376" cy="211" r="7" fill="#3730A3" stroke="#EEF2FF" stroke-width="2"/>
+</g><path d="m104 147 7 4-7 4-7-4Z" fill="#818CF8" opacity=".5"/></svg>

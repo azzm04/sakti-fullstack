@@ -1,20 +1,35 @@
 "use client";
 
 import { motion } from "framer-motion";
-import Image from "next/image";
+import { ServiceCarousel, type Service } from "@/components/ui/services-card";
 
-const layanan = [
+const layanan: Service[] = [
   {
-    image: "/layanan/informasi-ai.png",
+    number: "001",
     title: "Layanan Informasi berbasis Kecerdasan Buatan",
+    description:
+      "Asisten virtual AI yang siap menjawab pertanyaan seputar beasiswa KIP-Kuliah secara cepat dan akurat.",
+    image: "/layanan/informasi-ai.png",
+    gradient:
+      "from-sky-100 to-sky-200 dark:from-sky-900/50 dark:to-sky-800/50",
   },
   {
-    image: "/layanan/monitoring-evaluasi.png",
+    number: "002",
     title: "Monitoring & Evaluasi",
+    description:
+      "Pantau progres pelaporan dan evaluasi penerima beasiswa secara transparan dan terukur.",
+    image: "/layanan/monitoring-evaluasi.png",
+    gradient:
+      "from-emerald-100 to-emerald-200 dark:from-emerald-900/50 dark:to-emerald-800/50",
   },
   {
-    image: "/layanan/sistem-pengaduan.png",
+    number: "003",
     title: "Sistem Pengaduan",
+    description:
+      "Kanal pengaduan resmi dan aman untuk melaporkan permasalahan terkait penyaluran beasiswa.",
+    image: "/layanan/sistem-pengaduan.png",
+    gradient:
+      "from-rose-100 to-rose-200 dark:from-rose-900/50 dark:to-rose-800/50",
   },
 ];
 
@@ -47,84 +62,7 @@ export default function LayananSection() {
       </motion.div>
 
       {/* Carousel */}
-      <div className="relative overflow-hidden">
-        <motion.div
-          className="flex gap-6 w-max"
-          animate={{
-            x: ["0%", "-50%"],
-          }}
-          transition={{
-            duration: 25,
-            ease: "linear",
-            repeat: Infinity,
-          }}
-        >
-          {/* SET 1 */}
-          {layanan.map((item, index) => (
-            <LayananCard
-              key={`first-${index}`}
-              image={item.image}
-              title={item.title}
-            />
-          ))}
-
-          {/* SET 2 - DUPLIKAT UNTUK LOOP */}
-          {layanan.map((item, index) => (
-            <LayananCard
-              key={`second-${index}`}
-              image={item.image}
-              title={item.title}
-            />
-          ))}
-        </motion.div>
-      </div>
+      <ServiceCarousel services={layanan} />
     </section>
-  );
-}
-
-/* =========================================================
-   CARD
-========================================================= */
-
-function LayananCard({
-  image,
-  title,
-}: {
-  image: string;
-  title: string;
-}) {
-  return (
-    <div
-      className="
-        shrink-0
-        w-[150px]
-        sm:w-[220px]
-        lg:w-[320px]
-        bg-gradient-to-r from-[#005B96] to-primary
-        rounded-2xl
-        overflow-hidden
-        shadow-xl
-      "
-    >
-      <div className="p-4 flex flex-col items-center">
-
-        {/* Gambar */}
-        <div className="relative w-full h-[80px] sm:h-[90px] mb-3">
-          <Image
-            src={image}
-            alt={title}
-            fill
-            sizes="320px"
-            className="object-contain"
-          />
-        </div>
-
-        {/* Judul */}
-        <h3 className="text-xs sm:text-sm lg:text-base font-bold text-white text-center leading-snug">
-          {title}
-        </h3>
-
-      </div>
-    </div>
   );
 }
