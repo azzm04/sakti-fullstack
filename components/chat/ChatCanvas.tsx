@@ -21,7 +21,6 @@ import {
   Square,
 } from "lucide-react";
 import { twMerge } from "tailwind-merge";
-import { chatAPI } from "@/lib/api";
 import { ChatMessageSchema, type ChatMessage } from "@/schemas";
 import ChatMessages from "./ChatMessage";
 
@@ -185,7 +184,7 @@ function MultimodalInput({
     const ta = textareaRef.current;
     if (!ta) return;
     ta.style.height = "auto";
-    ta.style.height = `${Math.min(ta.scrollHeight, 200)}px`; // Max height 200px
+    ta.style.height = `${Math.min(ta.scrollHeight, 200)}px`;
   };
 
   const resetHeight = useCallback(() => {
@@ -273,7 +272,6 @@ function MultimodalInput({
         />
       )}
 
-      {/* Hidden file input */}
       <input
         ref={fileInputRef}
         type="file"
@@ -285,14 +283,12 @@ function MultimodalInput({
         title="Input File"
       />
 
-      {/* Modern Input Container */}
       <div
         className={cn(
           "relative flex flex-col w-full bg-white border border-slate-200 shadow-sm rounded-3xl overflow-hidden transition-all duration-200",
           "focus-within:ring-4 focus-within:ring-primary/10 focus-within:border-primary focus-within:shadow-md",
         )}
       >
-        {/* Attachment Previews Area */}
         {(attachments.length > 0 || uploadQueue.length > 0) && (
           <div className="flex gap-4 px-4 pt-4 pb-2 overflow-x-auto scrollbar-hide">
             {attachments.map((att) => (
@@ -312,7 +308,6 @@ function MultimodalInput({
           </div>
         )}
 
-        {/* Textarea */}
         <textarea
           ref={textareaRef}
           value={input}
@@ -334,7 +329,6 @@ function MultimodalInput({
           className="w-full bg-transparent resize-none px-5 py-4 text-sm text-slate-800 placeholder:text-slate-400 outline-none disabled:opacity-50"
         />
 
-        {/* Action Bar (Bottom) */}
         <div className="flex items-center justify-between px-3 pb-3">
           <button
             onClick={(e) => {
@@ -387,14 +381,51 @@ const INITIAL_MESSAGE: ChatMessage = ChatMessageSchema.parse({
   timestamp: new Date().toISOString(),
 });
 
+// ── Types for Props ───────────────────────────────────────────────────────────
+interface ChatCanvasProps {
+  userId?: string; // Menangkap userId dari Props
+  currentSessionId?: string | null;
+  onMessageSent?: (sessionId: string) => void;
+}
+
 // ── ChatCanvas ────────────────────────────────────────────────────────────────
-export default function ChatCanvas() {
+export default function ChatCanvas({ userId, currentSessionId, onMessageSent }: ChatCanvasProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE]);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dropError, setDropError] = useState("");
   const dragCounter = useRef(0);
+
+  useEffect(() => {
+    async function fetchSessionMessages() {
+      if (!currentSessionId) {
+        setMessages([INITIAL_MESSAGE]);
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/chat/messages?sessionId=${currentSessionId}`);
+        const data = await res.json();
+        
+        if (data.messages && data.messages.length > 0) {
+          const loadedMessages = data.messages.map((msg: any) => ({
+            id: msg.id,
+            role: msg.role,
+            content: msg.content,
+            timestamp: msg.createdAt,
+          }));
+          setMessages(loadedMessages);
+        } else {
+          setMessages([INITIAL_MESSAGE]);
+        }
+      } catch (err) {
+        console.error("Gagal memuat pesan sesi:", err);
+      }
+    }
+
+    fetchSessionMessages();
+  }, [currentSessionId]);
 
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -455,12 +486,14 @@ export default function ChatCanvas() {
         timestamp: new Date().toISOString(),
       });
 
-      setMessages((prev) => [
-        ...prev,
+      const updatedMessages = [
+        ...messages,
         atts.length > 0
           ? ({ ...userMsg, imageUrl: atts[0].url } as ChatMessage)
           : userMsg,
-      ]);
+      ];
+      
+      setMessages(updatedMessages);
       setIsLoading(true);
 
       try {
@@ -479,24 +512,57 @@ export default function ChatCanvas() {
               )
           : null;
 
-        const res = await chatAPI.sendMessage(
-          input || "Tolong analisis gambar ini.",
-          base64,
-        );
+        // Menggunakan userId dari props
+        const response = await fetch('/api/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            messages: updatedMessages,
+            data: {
+              userId: userId, // Pastikan userId terkirim!
+              sessionId: currentSessionId,
+              imageBase64: base64,
+            }
+          })
+        });
+
+       
+
+        const rawText = await response.text();
+        let botReply = rawText;
+        
+        if (rawText.includes('0:')) {
+          botReply = rawText
+            .split('\n')
+            .filter(line => line.startsWith('0:'))
+            .map(line => {
+              try { 
+                return JSON.parse(line.substring(2)); 
+              } catch { 
+                return ""; 
+              }
+            })
+            .join('');
+        }
+
         setMessages((prev) => [
           ...prev,
           ChatMessageSchema.parse({
             id: (Date.now() + 1).toString(),
             role: "assistant",
-            content:
-              res.jawaban ??
-              res.reply ??
-              res.message ??
-              "Maaf, tidak ada respons.",
+            content: botReply || "Maaf, tidak ada respons.",
             timestamp: new Date().toISOString(),
           }),
         ]);
-      } catch {
+
+         const newSessionId = response.headers.get('x-session-id');
+        if (newSessionId && onMessageSent) {
+          onMessageSent(newSessionId);
+        }
+
+
+      } catch (err) {
+        console.error("Gagal mengirim pesan:", err);
         setMessages((prev) => [
           ...prev,
           ChatMessageSchema.parse({
@@ -510,24 +576,25 @@ export default function ChatCanvas() {
         setIsLoading(false);
       }
     },
-    [isLoading],
+    [isLoading, messages, currentSessionId, userId, onMessageSent],
   );
 
   const handleCopy = useCallback((text: string) => {
     navigator.clipboard.writeText(text);
   }, []);
 
-  return (
+ return (
     <main
-      className="flex flex-col h-dvh w-full bg-[#f9fafb] relative overflow-hidden"
+      // 1. Ubah menjadi flex-1 agar mengisi sisa ruang secara dinamis
+      className="flex-1 flex flex-col w-full bg-[#f9fafb] overflow-hidden"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      {/* Area Pesan Chat (Scrollable) */}
-      <div className="flex-1 overflow-y-auto scrollbar-hide pb-36">
-        <div className="max-w-3xl mx-auto px-4 md:px-0">
+      {/* 2. AREA PESAN (Otomatis Scroll) */}
+      <div className="flex-1 overflow-y-auto px-4 py-6 scroll-smooth">
+        <div className="max-w-3xl mx-auto">
           <ChatMessages
             messages={messages}
             isLoading={isLoading}
@@ -536,8 +603,8 @@ export default function ChatCanvas() {
         </div>
       </div>
 
-      {/* Area Input (Fixed at bottom) */}
-      <div className="absolute bottom-0 left-0 w-full bg-gradient-to-t from-[#f9fafb] via-[#f9fafb]/95 to-transparent pt-10 pb-4 px-4">
+      {/* 3. AREA INPUT (Sejajar, Bukan Absolute, dengan shrink-0) */}
+      <div className="w-full bg-[#f9fafb] border-t border-slate-200/60 pt-4 pb-4 px-4 shrink-0 z-10">
         <div className="max-w-3xl mx-auto">
           <MultimodalInput
             messages={messages}
@@ -554,7 +621,7 @@ export default function ChatCanvas() {
         </div>
       </div>
 
-      {/* Drag Overlay */}
+      {/* OVERLAY DRAG & DROP TETAP SAMA */}
       <AnimatePresence>
         {isDragging && (
           <motion.div
@@ -588,7 +655,6 @@ export default function ChatCanvas() {
         )}
       </AnimatePresence>
 
-      {/* Error Toast */}
       <AnimatePresence>
         {dropError && (
           <motion.div
