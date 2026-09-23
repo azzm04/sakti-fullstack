@@ -37,14 +37,13 @@ export async function POST(request: Request) {
     // 2. SIMPAN PESAN USER KE DATABASE
     // ==========================================
     await prisma.chatMessage.create({
-      data: {
-        sessionId: sessionId,
-        role: "user",
-        content: messageContent,
-        // Jangan simpan base64 mentah ke DB agar tidak bengkak. Beri penanda saja.
-        imageUrl: imageBase64 ? "Gambar terlampir" : null, 
-      }
-    });
+  data: {
+    // Baris 'id' dihapus total, biarkan Prisma yang membuatkan otomatis
+    sessionId: sessionId,
+    role: "USER",   // Ubah menjadi huruf kapital (sesuai ENUM)
+  content: messages[messages.length - 1].content
+  }
+});
 
     // ==========================================
     // 3. SIAPKAN RIWAYAT & KIRIM KE FASTAPI
@@ -83,7 +82,7 @@ export async function POST(request: Request) {
     await prisma.chatMessage.create({
       data: {
         sessionId: sessionId,
-        role: "assistant",
+        role: "MODEL",
         content: botReply,
       }
     });
