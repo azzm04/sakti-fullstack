@@ -16,23 +16,14 @@ model User {
   updatedAt             DateTime               @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @updatedAt @map("updated_at") @db.Timestamptz(6)
   otp_tokens            OtpToken[]
   penerimaKipk          PenerimaKipk?
-<<<<<<< HEAD
+  pengunduran_diri      pengunduran_diri[]
   pewawancara           Pewawancara?
   prestasi_mahasiswa    prestasi_mahasiswa[]
-  pengunduran_diri      pengunduran_diri[]
   tokenAktivasiTelegram TokenAktivasiTelegram?
   userRoles             UserRole[]
-=======
-  pengunduran_diri      pengunduran_diri[]
-  pewawancara           Pewawancara?
-  prestasi_mahasiswa    prestasi_mahasiswa[]
-  tokenAktivasiTelegram TokenAktivasiTelegram?
-  user_roles            user_roles[]
->>>>>>> 2098dc07b769c39f27f029294e467a43d327f549
 
   @@map("users")
 }
-
 model AdminUser {
   id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   username       String          @unique(map: "admin_users_adminid_key") @db.VarChar(100)
@@ -46,7 +37,6 @@ model AdminUser {
 }
 
 model OtpToken {
-<<<<<<< HEAD
   id           String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId       String     @db.Uuid
   code         String
@@ -60,17 +50,6 @@ model OtpToken {
   intendedRole role_enum? @map("intended_role")
   kandidat     kandidat?  @relation(fields: [kandidatId], references: [id], onUpdate: NoAction)
   users        User       @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
-=======
-  id            String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  userId        String     @db.Uuid
-  code          String
-  expiresAt     DateTime
-  createdAt     DateTime   @default(now())
-  kandidat_id   String?    @db.Uuid
-  intended_role role_enum?
-  kandidat      kandidat?  @relation(fields: [kandidat_id], references: [id], onUpdate: NoAction)
-  users         User       @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
->>>>>>> 2098dc07b769c39f27f029294e467a43d327f549
 
   @@map("otp_tokens")
 }
@@ -153,8 +132,6 @@ model SlotSesi {
   @@map("slot_sesi")
 }
 
-<<<<<<< HEAD
-=======
 model ChatSession {
   // Dibatasi menjadi VarChar(255) agar sinkron dengan sessionId di ChatMessage
   id        String        @id @default(cuid()) @db.VarChar(255)
@@ -229,7 +206,6 @@ model BeritaInformasi {
   @@map("berita_informasi")
 }
 
->>>>>>> 2098dc07b769c39f27f029294e467a43d327f549
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model detail_ekonomi_wawancara {
   id                        String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -507,60 +483,6 @@ model wawancara_assignment {
   kandidat_lama  kandidat_lama @relation(fields: [kandidat_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
-<<<<<<< HEAD
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model aduan {
-  id               String      @id
-  admin_id         String?
-  user_id          String?
-  kode_laporan     String      @unique @db.VarChar(20)
-  jenis_aduan      JenisAduan
-  nama_terlapor    String      @db.VarChar(150)
-  uraian_kronologi String
-  url_bukti        String
-  status           StatusAduan @default(MENUNGGU)
-  created_at       DateTime    @default(now())
-  angkatan         String?     @db.VarChar(20)
-  fakultas_prodi   String?     @db.VarChar(150)
-  nim_terlapor     String?     @db.VarChar(50)
-  is_anonim        Boolean     @default(true)
-  nama_pelapor     String?     @db.VarChar(150)
-  whatsapp_pelapor String?     @db.VarChar(20)
-}
-
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model berita_informasi {
-  id             String       @id
-  admin_id       String
-  judul          String       @db.VarChar(255)
-  konten         String
-  jenis          JenisBerita
-  thumbnail_url  String
-  status         StatusBerita @default(DRAFT)
-  diterbitkan_at DateTime?
-  created_at     DateTime     @default(now())
-}
-
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model chat_message {
-  id           String       @id
-  sessionId    String
-  role         String
-  content      String
-  imageUrl     String?
-  createdAt    DateTime     @default(now())
-  chat_session chat_session @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-}
-
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model chat_session {
-  id           String         @id
-  userId       String?
-  judul        String         @default("Percakapan Baru")
-  createdAt    DateTime       @default(now())
-  updatedAt    DateTime
-  chat_message chat_message[]
-=======
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model prodi {
@@ -571,7 +493,6 @@ model prodi {
   updated_at    DateTime?          @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
   prodi         jenjang_pendidikan
   penerima_kipk PenerimaKipk[]
->>>>>>> 2098dc07b769c39f27f029294e467a43d327f549
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -661,27 +582,25 @@ model pengisian_monev {
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-<<<<<<< HEAD
-=======
 model pengunduran_diri {
-  id            String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id       String                @db.Uuid
-  semester      Int                   @db.SmallInt
-  alasan        String
-  storage_path  String
-  status        StatusPengunduranDiri @default(MENUNGGU_VERIFIKASI)
-  catatan_admin String?
-  diproses_at   DateTime?             @db.Timestamptz(6)
-  diputuskan_at DateTime?             @db.Timestamptz(6)
-  created_at    DateTime              @default(now()) @db.Timestamptz(6)
-  updated_at    DateTime              @default(now()) @db.Timestamptz(6)
-  users         User                  @relation(fields: [user_id], references: [id], onUpdate: NoAction)
+  id             String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id        String                @db.Uuid
+  semester       Int                   @db.SmallInt
+  alasan         String
+  storage_path   String
+  status         StatusPengunduranDiri @default(MENUNGGU_VERIFIKASI)
+  catatan_admin  String?
+  diproses_at    DateTime?             @db.Timestamptz(6)
+  diputuskan_at  DateTime?             @db.Timestamptz(6)
+  created_at     DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime              @default(now()) @db.Timestamptz(6)
+  user           User                  @relation(fields: [user_id], references: [id], onDelete: Restrict)
 
-  @@index([user_id], map: "idx_pengunduran_diri_user_id")
+  @@map("pengunduran_diri")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
->>>>>>> 2098dc07b769c39f27f029294e467a43d327f549
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model periode_monev {
   id              String            @id(map: "monev_schedules_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   label           String
@@ -695,35 +614,6 @@ model periode_monev {
   pengisian_monev pengisian_monev[]
 }
 
-<<<<<<< HEAD
-/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model prodi {
-  id            String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  nama_prodi    String
-  fakultas      String
-  created_at    DateTime           @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
-  updated_at    DateTime?          @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
-  prodi         jenjang_pendidikan
-  penerima_kipk PenerimaKipk[]
-}
-
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model sk_dokumen {
-  id            String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  created_at    DateTime      @default(now()) @db.Timestamptz(6)
-  nama_file     String
-  storage_path  String
-  jalur_masuk   String[]
-  tahun         Int           @default(dbgenerated("(EXTRACT(year FROM now()))::integer"))
-  ukuran_kb     Int           @default(0)
-  diunggah_oleh String?
-  catatan       String?       @default("")
-  email_queue   email_queue[]
-}
-
-=======
->>>>>>> 2098dc07b769c39f27f029294e467a43d327f549
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model prestasi_mahasiswa {
   id                String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -745,24 +635,6 @@ model prestasi_mahasiswa {
   users             User             @relation(fields: [user_id], references: [id], onDelete: Cascade)
 }
 
-<<<<<<< HEAD
-model pengunduran_diri {
-  id             String                   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id        String                   @db.Uuid
-  semester       Int                      @db.SmallInt
-  alasan         String
-  storage_path   String
-  status         StatusPengunduranDiri    @default(MENUNGGU_VERIFIKASI)
-  catatan_admin  String?
-  diproses_at    DateTime?                @db.Timestamptz(6)
-  diputuskan_at  DateTime?                @db.Timestamptz(6)
-  created_at     DateTime                 @default(now()) @db.Timestamptz(6)
-  updated_at     DateTime                 @default(now()) @db.Timestamptz(6)
-  user           User                     @relation(fields: [user_id], references: [id], onDelete: Restrict)
-
-  @@map("pengunduran_diri")
-}
-
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model UserRole {
   id        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -774,17 +646,12 @@ model UserRole {
   @@unique([userId, role])
   @@index([userId])
   @@map("user_roles")
-=======
-/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
-model user_roles {
-  id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id    String    @db.Uuid
-  role       role_enum
-  created_at DateTime  @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
-  users      User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-
-  @@unique([user_id, role])
-  @@index([user_id])
+}
+  
+enum JenisBerita {
+  PENGUMUMAN
+  INFORMASI
+  PANDUAN
 }
 
 enum JenisAduan {
@@ -792,24 +659,17 @@ enum JenisAduan {
   PENYALAHGUNAAN
 }
 
+enum StatusBerita {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
 enum StatusAduan {
   MENUNGGU
   DIPROSES
   SELESAI
   DITOLAK
-}
-
-enum JenisBerita {
-  PENGUMUMAN
-  INFORMASI
-  PANDUAN
-}
-
-enum StatusBerita {
-  DRAFT
-  PUBLISHED
-  ARCHIVED
->>>>>>> 2098dc07b769c39f27f029294e467a43d327f549
 }
 
 enum role_enum {
@@ -831,33 +691,6 @@ enum tipe_monev {
   Evaluasi_Akhir    @map("Evaluasi Akhir")
 }
 
-<<<<<<< HEAD
-enum JenisAduan {
-  KETIDAKTEPATAN
-  PENYALAHGUNAAN
-}
-
-enum JenisBerita {
-  PENGUMUMAN
-  INFORMASI
-  PANDUAN
-}
-
-enum StatusAduan {
-  MENUNGGU
-  DIPROSES
-  SELESAI
-  DITOLAK
-}
-
-enum StatusBerita {
-  DRAFT
-  PUBLISHED
-  ARCHIVED
-}
-
-=======
->>>>>>> 2098dc07b769c39f27f029294e467a43d327f549
 enum jenjang_pendidikan {
   S1
   D4
@@ -871,16 +704,7 @@ enum JenisPrestasi {
   PENGABDIAN_MASYARAKAT
 }
 
-<<<<<<< HEAD
-=======
-enum StatusPengunduranDiri {
-  MENUNGGU_VERIFIKASI
-  DIPROSES
-  DITERIMA
-  DITOLAK
-}
 
->>>>>>> 2098dc07b769c39f27f029294e467a43d327f549
 enum StatusVerifikasi {
   TERCATAT
   TERVERIFIKASI
@@ -895,7 +719,6 @@ enum TingkatPrestasi {
   FAKULTAS
   PROGRAM_STUDI
 }
-<<<<<<< HEAD
 
 enum StatusPengunduranDiri {
   MENUNGGU_VERIFIKASI
@@ -903,5 +726,3 @@ enum StatusPengunduranDiri {
   DITERIMA
   DITOLAK
 }
-=======
->>>>>>> 2098dc07b769c39f27f029294e467a43d327f549

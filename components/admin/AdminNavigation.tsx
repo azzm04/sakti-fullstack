@@ -31,6 +31,7 @@ const navItems = [
   { href: "/admin/analitik",           label: "Analitik",         icon: BarChart3       },
   { href: "/admin/prestasi",           label: "Prestasi",         icon: Award           },
   { href: "/admin/pengunduran-diri",   label: "Undur Diri",       icon: UserMinus       },
+  { href: "/admin/aduan",   label: "Aduan",       icon: UserMinus       },
 ];
 
 const sidebarVariants: Variants = {
