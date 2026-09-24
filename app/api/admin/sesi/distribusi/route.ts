@@ -25,15 +25,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Distribusi sudah pernah dilakukan untuk sesi ini" }, { status: 409 });
     }
 
-    // 2. Ambil semua kuota pewawancara yang terisi, urut by kuota_ke
-    const { data: kuotaList, error: kuotaErr } = await supabaseAdmin
-      .from("kuota_pewawancara")
-      .select("kuota_ke, pewawancara_id")
+    // 2. Ambil semua pewawancara yang sudah klaim slot di sesi ini, urut by slot_ke
+    const { data: slotList, error: slotErr } = await supabaseAdmin
+      .from("slot_sesi")
+      .select("slot_ke, pewawancara_id")
       .eq("sesi_id", sesi_id)
-      .order("kuota_ke", { ascending: true });
+      .order("slot_ke", { ascending: true });
 
-    if (kuotaErr) throw kuotaErr;
-    if (!kuotaList || kuotaList.length === 0) {
+    if (slotErr) throw slotErr;
+    if (!slotList || slotList.length === 0) {
       return NextResponse.json({ error: "Belum ada pewawancara yang mengisi kuota" }, { status: 400 });
     }
 
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
     // 4. Cari Kandidat yang BELUM di-assign
     let queryKandidat = supabaseAdmin
       .from("kandidat")
-      .select("id, no, nama")
+      .select("id, no, nama_pendaftar")
       .order("no", { ascending: true });
 
     // HANYA filter IN jika array tidak kosong untuk menghindari error syntax Supabase
@@ -65,63 +65,67 @@ export async function POST(req: NextRequest) {
     }
 
     // 5. Proses Distribusi Round-Robin (Bagi rata satu-satu)
-    const assignments: {
-      kandidat_id: number;
-      pewawancara_id: number;
-      sesi_id: number;
-      is_draft: boolean;
-      created_at: string;
-      updated_at: string;
-    }[] = [];
-
-    // Bagi rata mahasiswa ke pewawancara yang ada (Misal Mhs 1 ke P1, Mhs 2 ke P2, Mhs 21 ke P1)
-    kandidats.forEach((mhs, index) => {
+    const assignments: { kandidat_id: string; pewawancara_id: string }[] = kandidats.map((mhs, index) => {
       // Modulo untuk memutar index pewawancara (0, 1, 2... kembali ke 0)
-      const pewawancaraIndex = index % kuotaList.length; 
-      const kuotaTujuan = kuotaList[pewawancaraIndex];
-
-      assignments.push({
-        kandidat_id: mhs.id,
-        pewawancara_id: kuotaTujuan.pewawancara_id,
-        sesi_id: sesi.id,
-        is_draft: true, // Masih draft (menunggu pewawancara)
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
+      const slotTujuan = slotList[index % slotList.length];
+      return { kandidat_id: mhs.id, pewawancara_id: slotTujuan.pewawancara_id };
     });
 
     if (assignments.length === 0) {
       return NextResponse.json({ error: "Gagal membuat daftar tugas" }, { status: 400 });
     }
 
-    // 6. Bulk UPSERT ke tabel hasil_wawancara
-    const { error: upsertErr } = await supabaseAdmin
+    // 6. hasil_wawancara.kandidat_id tidak punya unique constraint di database, jadi
+    //    tidak bisa upsert dengan onConflict -- cek per kandidat dulu, lalu UPDATE kalau
+    //    barisnya sudah ada (mis. dibuat manual lewat endpoint tugaskan) atau INSERT kalau
+    //    belum, mengikuti pola yang sama dengan app/api/admin/evaluasi/[id]/tugaskan.
+    const kandidatIds = assignments.map((a) => a.kandidat_id);
+    const { data: existingRows, error: existingErr } = await supabaseAdmin
       .from("hasil_wawancara")
-      .upsert(assignments, { onConflict: "kandidat_id" });
+      .select("id, kandidat_id")
+      .in("kandidat_id", kandidatIds);
 
-    if (upsertErr) {
-      console.error("[distribusi] hasil_wawancara upsert:", upsertErr);
-      throw upsertErr;
+    if (existingErr) throw existingErr;
+
+    const existingByKandidat = new Map((existingRows ?? []).map((r) => [r.kandidat_id, r.id]));
+
+    const toInsert = assignments
+      .filter((a) => !existingByKandidat.has(a.kandidat_id))
+      .map((a) => ({ kandidat_id: a.kandidat_id, pewawancara_id: a.pewawancara_id, is_draft: true }));
+
+    if (toInsert.length > 0) {
+      const { error: insertErr } = await supabaseAdmin.from("hasil_wawancara").insert(toInsert);
+      if (insertErr) throw insertErr;
+    }
+
+    for (const a of assignments) {
+      const existingId = existingByKandidat.get(a.kandidat_id);
+      if (!existingId) continue;
+      const { error: updateErr } = await supabaseAdmin
+        .from("hasil_wawancara")
+        .update({ pewawancara_id: a.pewawancara_id, updated_at: new Date().toISOString() })
+        .eq("id", existingId);
+      if (updateErr) throw updateErr;
     }
 
     // 7. Update total_assigned untuk setiap pewawancara
-    const countByPw: Record<number, number> = {};
+    const countByPw: Record<string, number> = {};
     for (const a of assignments) {
       countByPw[a.pewawancara_id] = (countByPw[a.pewawancara_id] ?? 0) + 1;
     }
-    
+
     for (const [pwId, count] of Object.entries(countByPw)) {
       const { data: pw } = await supabaseAdmin
         .from("pewawancara")
         .select("total_assigned")
-        .eq("id", Number(pwId))
+        .eq("id", pwId)
         .single();
-        
+
       if (pw) {
         await supabaseAdmin
           .from("pewawancara")
           .update({ total_assigned: (pw.total_assigned ?? 0) + count })
-          .eq("id", Number(pwId));
+          .eq("id", pwId);
       }
     }
 
@@ -134,7 +138,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       success: true,
       total_assigned: assignments.length,
-      pewawancara_count: kuotaList.length,
+      pewawancara_count: slotList.length,
     });
   } catch (err) {
     console.error("[POST /api/admin/sesi/distribusi]", err);

@@ -69,12 +69,12 @@ export async function GET(req: NextRequest) {
       }
 
       const { data: kuotaList } = await supabaseAdmin
-        .from("kuota_pewawancara")
+        .from("slot_sesi")
         .select(
-          "id, kuota_ke, claimed_at, pewawancara_id, pewawancara(nama, email)",
+          "id, kuota_ke:slot_ke, claimed_at, pewawancara_id, pewawancara(nama, email)",
         )
         .eq("sesi_id", sesi.id)
-        .order("kuota_ke", { ascending: true });
+        .order("slot_ke", { ascending: true });
 
       let kuotaSaya = null;
       if (pw) {
@@ -118,7 +118,7 @@ export async function GET(req: NextRequest) {
     let sesiDenganKuotaSaya: typeof upcomingSesi = [];
     if (pw) {
       const { data: myKuotaAll } = await supabaseAdmin
-        .from("kuota_pewawancara")
+        .from("slot_sesi")
         .select("sesi_id")
         .eq("pewawancara_id", pw.id);
 
@@ -138,7 +138,7 @@ export async function GET(req: NextRequest) {
 
     // Gabungkan dan deduplikasi berdasarkan id
     const sesiMap = new Map<
-      number,
+      string,
       typeof upcomingSesi extends (infer T)[] | null ? T : never
     >();
     for (const s of [
@@ -164,13 +164,13 @@ export async function GET(req: NextRequest) {
     }
 
     // Ambil semua kuota milik pewawancara ini di sesi-sesi upcoming
-    const kuotaSayaMap: Record<number, { kuota_ke: number; claimed_at: string }> =
+    const kuotaSayaMap: Record<string, { kuota_ke: number; claimed_at: string }> =
       {};
     if (pw) {
       const sesiIds = allSesi.map((s) => s.id);
       const { data: myKuota } = await supabaseAdmin
-        .from("kuota_pewawancara")
-        .select("sesi_id, kuota_ke, claimed_at")
+        .from("slot_sesi")
+        .select("sesi_id, kuota_ke:slot_ke, claimed_at")
         .eq("pewawancara_id", pw.id)
         .in("sesi_id", sesiIds);
 
@@ -185,12 +185,12 @@ export async function GET(req: NextRequest) {
     // Hitung kuota terisi per sesi
     const sesiIds = allSesi.map((s) => s.id);
     const { data: allKuota } = await supabaseAdmin
-      .from("kuota_pewawancara")
-      .select("sesi_id, kuota_ke, pewawancara_id, pewawancara(nama, email)")
+      .from("slot_sesi")
+      .select("sesi_id, kuota_ke:slot_ke, pewawancara_id, pewawancara(nama, email)")
       .in("sesi_id", sesiIds)
-      .order("kuota_ke", { ascending: true });
+      .order("slot_ke", { ascending: true });
 
-    const kuotaBySesi: Record<number, NonNullable<typeof allKuota>> = {};
+    const kuotaBySesi: Record<string, NonNullable<typeof allKuota>> = {};
     for (const kuota of allKuota ?? []) {
       if (!kuotaBySesi[kuota.sesi_id]) kuotaBySesi[kuota.sesi_id] = [];
       kuotaBySesi[kuota.sesi_id]!.push(kuota);
@@ -371,8 +371,8 @@ export async function POST(req: NextRequest) {
 
     // Cek sudah punya kuota di sesi ini
     const { data: existing } = await supabaseAdmin
-      .from("kuota_pewawancara")
-      .select("id, kuota_ke")
+      .from("slot_sesi")
+      .select("id, kuota_ke:slot_ke")
       .eq("sesi_id", sesi.id)
       .eq("pewawancara_id", pw.id)
       .maybeSingle();
@@ -390,7 +390,7 @@ export async function POST(req: NextRequest) {
     let kuota_ke: number;
     if (!requestedKuota || requestedKuota < 1) {
       const { count: kuotaTerisi } = await supabaseAdmin
-        .from("kuota_pewawancara")
+        .from("slot_sesi")
         .select("id", { count: "exact", head: true })
         .eq("sesi_id", sesi.id);
       kuota_ke = (kuotaTerisi ?? 0) + 1;
@@ -409,10 +409,10 @@ export async function POST(req: NextRequest) {
 
     // Cek kuota sudah terisi
     const { data: existingKuota } = await supabaseAdmin
-      .from("kuota_pewawancara")
+      .from("slot_sesi")
       .select("id")
       .eq("sesi_id", sesi.id)
-      .eq("kuota_ke", kuota_ke)
+      .eq("slot_ke", kuota_ke)
       .maybeSingle();
 
     if (existingKuota) {
@@ -423,8 +423,8 @@ export async function POST(req: NextRequest) {
     }
 
     const { data: newKuota, error: insertErr } = await supabaseAdmin
-      .from("kuota_pewawancara")
-      .insert({ sesi_id: sesi.id, kuota_ke, pewawancara_id: pw.id })
+      .from("slot_sesi")
+      .insert({ sesi_id: sesi.id, slot_ke: kuota_ke, pewawancara_id: pw.id })
       .select()
       .single();
 
@@ -440,7 +440,7 @@ export async function POST(req: NextRequest) {
 
     // Tutup WAR otomatis jika penuh
     const { count: totalKuota } = await supabaseAdmin
-      .from("kuota_pewawancara")
+      .from("slot_sesi")
       .select("id", { count: "exact", head: true })
       .eq("sesi_id", sesi.id);
 
@@ -453,8 +453,8 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      kuota_ke: newKuota.kuota_ke,
-      message: `Selamat! Kamu mendapatkan kuota ${newKuota.kuota_ke}`,
+      kuota_ke: newKuota.slot_ke,
+      message: `Selamat! Kamu mendapatkan kuota ${newKuota.slot_ke}`,
     });
   } catch (err) {
     return NextResponse.json(
@@ -553,7 +553,7 @@ export async function DELETE(req: NextRequest) {
       );
 
     const { data: kuotaItem } = await supabaseAdmin
-      .from("kuota_pewawancara")
+      .from("slot_sesi")
       .select("id")
       .eq("sesi_id", sesi.id)
       .eq("pewawancara_id", pw.id)
@@ -566,7 +566,7 @@ export async function DELETE(req: NextRequest) {
       );
 
     const { error: delErr } = await supabaseAdmin
-      .from("kuota_pewawancara")
+      .from("slot_sesi")
       .delete()
       .eq("id", kuotaItem.id);
 

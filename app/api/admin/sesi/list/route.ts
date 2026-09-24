@@ -22,12 +22,12 @@ export async function GET() {
     // Untuk setiap sesi, hitung berapa kuota yang sudah terisi
     const sesiIds = sesiList.map(s => s.id);
     const { data: kuotaCounts } = await supabaseAdmin
-      .from("kuota_pewawancara")
+      .from("slot_sesi")
       .select("sesi_id")
       .in("sesi_id", sesiIds);
 
     // Count per sesi_id
-    const countMap: Record<number, number> = {};
+    const countMap: Record<string, number> = {};
     (kuotaCounts ?? []).forEach(k => {
       countMap[k.sesi_id] = (countMap[k.sesi_id] ?? 0) + 1;
     });

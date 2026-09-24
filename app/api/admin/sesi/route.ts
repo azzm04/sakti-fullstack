@@ -21,10 +21,10 @@ export async function GET(req: NextRequest) {
 
     // Ambil kuota yang sudah terisi beserta nama pewawancara
     const { data: kuotaList } = await supabaseAdmin
-      .from("kuota_pewawancara")
-      .select("id, kuota_ke, claimed_at, pewawancara_id, pewawancara(id, nama, email)")
+      .from("slot_sesi")
+      .select("id, kuota_ke:slot_ke, claimed_at, pewawancara_id, pewawancara(id, nama, email)")
       .eq("sesi_id", sesi.id)
-      .order("kuota_ke", { ascending: true });
+      .order("slot_ke", { ascending: true });
 
     // Hitung offset: sum kuota_mahasiswa dari sesi-sesi sebelumnya (tanggal < sesi ini)
     const { data: sesiSebelumnya } = await supabaseAdmin
@@ -149,9 +149,9 @@ export async function DELETE(req: NextRequest) {
         return NextResponse.json({ error: "Sesi yang sudah didistribusikan tidak bisa dihapus" }, { status: 400 });
       }
 
-      // Hapus semua kuota_pewawancara terkait sesi ini
+      // Hapus semua slot_sesi terkait sesi ini
       await supabaseAdmin
-        .from("kuota_pewawancara")
+        .from("slot_sesi")
         .delete()
         .eq("sesi_id", sesiId);
 
@@ -173,7 +173,7 @@ export async function DELETE(req: NextRequest) {
 
     // Ambil data kuota sebelum dihapus
     const { data: kuotaItem } = await supabaseAdmin
-      .from("kuota_pewawancara")
+      .from("slot_sesi")
       .select("id, pewawancara_id, sesi_id")
       .eq("id", slotId)
       .single();
@@ -184,7 +184,7 @@ export async function DELETE(req: NextRequest) {
 
     // Hapus kuota
     const { error } = await supabaseAdmin
-      .from("kuota_pewawancara")
+      .from("slot_sesi")
       .delete()
       .eq("id", slotId);
 
