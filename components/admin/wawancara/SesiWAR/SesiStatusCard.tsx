@@ -149,7 +149,7 @@ export default function SesiStatusCard({
       {sesi.war_aktif && (
         <p className="text-xs text-admin-warn-text mt-3 flex items-center gap-1.5">
           <AlertTriangle size={12} />
-          Tutup WAR terlebih dahulu sebelum melakukan distribusi mahasiswa
+          Tutup Pengambilan Kuota terlebih dahulu sebelum melakukan distribusi mahasiswa
         </p>
       )}
     </div>

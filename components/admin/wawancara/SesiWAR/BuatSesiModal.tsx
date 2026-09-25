@@ -7,6 +7,7 @@ export interface FormSesiState {
   kuota_pewawancara: string;
   kuota_mahasiswa: string;
   jalur_masuk: string;
+  tahun_seleksi: string;
   tanggal_mulai: string;
   tanggal_selesai: string;
 }
@@ -18,7 +19,8 @@ interface BuatSesiModalProps {
   loadingCount: boolean;
   saving: boolean;
   onChange: (form: FormSesiState) => void;
-  onJalurChange: (jalur: string) => void;
+  /** Dipanggil tiap jalur masuk ATAU tahun seleksi berubah — dua-duanya menentukan hitungan kandidat. */
+  onFilterChange: (jalur: string, tahunSeleksi: string) => void;
   onClose: () => void;
   onSubmit: () => void;
 }
@@ -30,7 +32,7 @@ export default function BuatSesiModal({
   loadingCount,
   saving,
   onChange,
-  onJalurChange,
+  onFilterChange,
   onClose,
   onSubmit,
 }: BuatSesiModalProps) {
@@ -40,6 +42,8 @@ export default function BuatSesiModal({
   const jumlahHari = rentangValid
     ? Math.floor(((end as Date).getTime() - (start as Date).getTime()) / (1000 * 60 * 60 * 24)) + 1
     : 0;
+
+  const tahunValid = /^\d{4}$/.test(form.tahun_seleksi);
 
   const showPreview = rentangValid && kandidatCount !== null && kandidatCount > 0;
   const perHari = showPreview ? Math.floor((kandidatCount as number) / jumlahHari) : 0;
@@ -68,7 +72,7 @@ export default function BuatSesiModal({
           </button>
           <button
             onClick={onSubmit}
-            disabled={saving || !form.tanggal_mulai || !form.tanggal_selesai || !kandidatCount}
+            disabled={saving || !form.tanggal_mulai || !form.tanggal_selesai || !tahunValid || !kandidatCount}
             className="flex-1 py-2.5 text-sm font-semibold bg-admin-accent text-white rounded-xl hover:bg-admin-accent/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
           >
             {saving && <Loader2 size={14} className="animate-spin" />}
@@ -77,40 +81,66 @@ export default function BuatSesiModal({
         </>
       }
     >
-      {/* Jalur Masuk */}
-      <div>
-        <label className="block text-xs font-semibold text-admin-text-4 mb-1.5">
-          Jalur Masuk <span className="text-admin-danger-bar">*</span>
-        </label>
-        <select
-          value={form.jalur_masuk}
-          title="Jalur masuk"
-          onChange={(e) => {
-            onChange({ ...form, jalur_masuk: e.target.value });
-            onJalurChange(e.target.value);
-          }}
-          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
-        >
-          <option value="SNBT ELIGIBLE">SNBT (Eligible)</option>
-          <option value="SNBT NON ELIGIBLE">SNBT (Non-Eligible)</option>
-          <option value="SNBP ELIGIBLE">SNBP (Eligible)</option>
-          <option value="SNBP NON ELIGIBLE">SNBP (Non-Eligible)</option>
-          <option value="UM">UM (Ujian Mandiri)</option>
-        </select>
-        {kandidatCount !== null && (
-          <p className="text-[11px] text-admin-text-4 mt-1 flex items-center gap-1">
-            <Users size={11} />
-            {loadingCount ? (
-              "Menghitung..."
-            ) : (
-              <>
-                Total kandidat <b className="text-admin-accent">{form.jalur_masuk}</b>:{" "}
-                <b className="text-admin-text">{kandidatCount}</b> mahasiswa
-              </>
-            )}
-          </p>
-        )}
+      {/* Jalur Masuk & Tahun Seleksi */}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-xs font-semibold text-admin-text-4 mb-1.5">
+            Jalur Masuk <span className="text-admin-danger-bar">*</span>
+          </label>
+          <select
+            value={form.jalur_masuk}
+            title="Jalur masuk"
+            onChange={(e) => {
+              const next = { ...form, jalur_masuk: e.target.value };
+              onChange(next);
+              onFilterChange(next.jalur_masuk, next.tahun_seleksi);
+            }}
+            className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
+          >
+            <option value="SNBT ELIGIBLE">SNBT (Eligible)</option>
+            <option value="SNBT NON ELIGIBLE">SNBT (Non-Eligible)</option>
+            <option value="SNBP ELIGIBLE">SNBP (Eligible)</option>
+            <option value="SNBP NON ELIGIBLE">SNBP (Non-Eligible)</option>
+            <option value="UM">UM (Ujian Mandiri)</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs font-semibold text-admin-text-4 mb-1.5">
+            Tahun Seleksi <span className="text-admin-danger-bar">*</span>
+          </label>
+          <input
+            type="number"
+            min={2020}
+            max={2099}
+            value={form.tahun_seleksi}
+            title="Tahun seleksi"
+            onChange={(e) => {
+              const next = { ...form, tahun_seleksi: e.target.value };
+              onChange(next);
+              if (/^\d{4}$/.test(next.tahun_seleksi)) {
+                onFilterChange(next.jalur_masuk, next.tahun_seleksi);
+              }
+            }}
+            className={`w-full px-3 py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200 ${
+              tahunValid ? "border-admin-border focus:border-admin-accent" : "border-admin-danger-text"
+            }`}
+          />
+        </div>
       </div>
+      {kandidatCount !== null && (
+        <p className="text-[11px] text-admin-text-4 -mt-2.5 flex items-center gap-1">
+          <Users size={11} />
+          {loadingCount ? (
+            "Menghitung..."
+          ) : (
+            <>
+              Total kandidat <b className="text-admin-accent">{form.jalur_masuk}</b> tahun{" "}
+              <b className="text-admin-accent">{form.tahun_seleksi}</b>:{" "}
+              <b className="text-admin-text">{kandidatCount}</b> mahasiswa
+            </>
+          )}
+        </p>
+      )}
 
       {/* Rentang Tanggal */}
       <div className="grid grid-cols-2 gap-3">

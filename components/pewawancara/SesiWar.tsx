@@ -111,8 +111,8 @@ export default function SesiWAR() {
       setMsg({
         type: "ok",
         text: newState
-          ? "WAR dibuka! Pewawancara bisa klaim Slot."
-          : "WAR ditutup.",
+          ? "Pengambilan Kuota dibuka! Pewawancara bisa klaim Slot."
+          : "Pengambilan Kuota ditutup.",
       });
       setTimeout(() => setMsg(null), 3000);
     } finally {
@@ -151,7 +151,7 @@ export default function SesiWAR() {
   }
 
   async function handleHapusSlot(slotId: number, namaPewawancara: string) {
-    if (!confirm(`Hapus ${namaPewawancara} dari Slot WAR?\nMereka bisa klaim Slot lagi jika WAR masih aktif.`)) return;
+    if (!confirm(`Hapus ${namaPewawancara} dari Slot Pengambilan Kuota?\nMereka bisa klaim Slot lagi jika WAR masih aktif.`)) return;
     
     setDeletingSlot(slotId);
     try {
@@ -676,7 +676,7 @@ export default function SesiWAR() {
                   />
                   <p className="text-[11px] text-slate-500 mt-2 leading-relaxed">
                     Tentukan jumlah maksimal pewawancara yang bisa melakukan
-                    klaim (WAR) pada hari ini.
+                    klaim (Pengambilan Kuota) pada hari ini.
                   </p>
                 </div>
                 <div>
@@ -751,7 +751,7 @@ export default function SesiWAR() {
               </div>
 
               <h3 className="text-xl font-extrabold text-slate-900 mb-2">
-                Buka Sesi WAR?
+                Buka Sesi Pengambilan Kuota?
               </h3>
               <p className="text-sm text-slate-500 mb-8 leading-relaxed">
                 Pewawancara akan dapat mulai mengklaim slot wawancara untuk

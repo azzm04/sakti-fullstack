@@ -19,12 +19,15 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ sesi: null });
     }
 
-    // Ambil kuota yang sudah terisi beserta nama pewawancara
-    const { data: kuotaList } = await supabaseAdmin
+    // Ambil kuota yang sudah terisi beserta nama pewawancara — email ada di
+    // users.email_sso (tabel pewawancara sendiri tidak punya kolom email).
+    const { data: kuotaList, error: kuotaErr } = await supabaseAdmin
       .from("slot_sesi")
-      .select("id, kuota_ke:slot_ke, claimed_at, pewawancara_id, pewawancara(id, nama, email)")
+      .select("id, kuota_ke:slot_ke, claimed_at, pewawancara_id, pewawancara(id, nama, user:users(email_sso))")
       .eq("sesi_id", sesi.id)
       .order("slot_ke", { ascending: true });
+
+    if (kuotaErr) throw kuotaErr;
 
     // Hitung offset: sum kuota_mahasiswa dari sesi-sesi sebelumnya (tanggal < sesi ini)
     const { data: sesiSebelumnya } = await supabaseAdmin

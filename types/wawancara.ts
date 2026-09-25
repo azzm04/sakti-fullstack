@@ -56,11 +56,12 @@ export interface Sesi {
 }
 
 export interface KuotaItem {
-  id: number;
+  id: string;
   kuota_ke: number;
   claimed_at: string;
-  pewawancara_id: number;
-  pewawancara: { nama: string; email: string } | null;
+  pewawancara_id: string;
+  // Email tinggal di users.email_sso (bukan kolom di tabel pewawancara).
+  pewawancara: { nama: string; user: { email_sso: string } | null } | null;
 }
 
 export type WawancaraTab = "daftar" | "sesi";

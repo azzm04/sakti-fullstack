@@ -1,6 +1,11 @@
+"use client";
+
 import type { ReactNode } from "react";
+import { usePathname } from "next/navigation";
+import { findActiveAdminNavItem } from "@/lib/admin-nav";
 
 interface PageHeaderProps {
+  /** Override breadcrumb kalau halaman butuh teks kustom (mis. bukan alur "Admin / "). Kalau tidak diisi, breadcrumb diturunkan otomatis dari menu sidebar sesuai halaman yang sedang aktif. */
   breadcrumb?: string;
   title: string;
   right?: ReactNode;
@@ -8,11 +13,15 @@ interface PageHeaderProps {
 
 /** Sticky top header shared by every admin page: breadcrumb + H1 + right-side actions. */
 export function PageHeader({ breadcrumb, title, right }: PageHeaderProps) {
+  const pathname = usePathname();
+  const activeNavItem = findActiveAdminNavItem(pathname);
+  const resolvedBreadcrumb = breadcrumb ?? (activeNavItem ? `Admin / ${activeNavItem.label}` : undefined);
+
   return (
     <header className="flex flex-wrap items-center gap-x-[18px] gap-y-3 px-4 sm:px-[30px] py-4 border-b border-admin-border bg-admin-surface sticky top-0 z-20">
       <div className="min-w-0 basis-full sm:basis-auto sm:flex-1">
-        {breadcrumb && (
-          <div className="text-[11px] text-admin-text-4 tracking-[0.04em] truncate">{breadcrumb}</div>
+        {resolvedBreadcrumb && (
+          <div className="text-[11px] text-admin-text-4 tracking-[0.04em] truncate">{resolvedBreadcrumb}</div>
         )}
         <h1 className="font-admin-heading text-[20px] sm:text-[23px] font-semibold mt-[3px] tracking-[-0.01em] text-admin-text truncate">
           {title}

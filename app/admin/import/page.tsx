@@ -181,7 +181,6 @@ export default function ImportDataPage() {
   return (
     <div className="min-h-screen bg-admin-bg font-admin-body text-admin-text flex flex-col">
       <PageHeader
-        breadcrumb="Admin / Seleksi KIP-K / Import Data"
         title="Import Data Pendaftar"
         right={
           <>

@@ -58,7 +58,7 @@ export async function GET(req: NextRequest) {
         .select(
           "id, tanggal, kuota_pewawancara, kuota_mahasiswa, war_aktif, war_dibuka_at, distribusi_done",
         )
-        .eq("id", Number(sesiIdParam))
+        .eq("id", sesiIdParam)
         .single();
 
       if (error || !sesi) {
@@ -68,10 +68,11 @@ export async function GET(req: NextRequest) {
         );
       }
 
+      // Email ada di users.email_sso (tabel pewawancara sendiri tidak punya kolom email).
       const { data: kuotaList } = await supabaseAdmin
         .from("slot_sesi")
         .select(
-          "id, kuota_ke:slot_ke, claimed_at, pewawancara_id, pewawancara(nama, email)",
+          "id, kuota_ke:slot_ke, claimed_at, pewawancara_id, pewawancara(nama, user:users(email_sso))",
         )
         .eq("sesi_id", sesi.id)
         .order("slot_ke", { ascending: true });
@@ -186,7 +187,7 @@ export async function GET(req: NextRequest) {
     const sesiIds = allSesi.map((s) => s.id);
     const { data: allKuota } = await supabaseAdmin
       .from("slot_sesi")
-      .select("sesi_id, kuota_ke:slot_ke, pewawancara_id, pewawancara(nama, email)")
+      .select("sesi_id, kuota_ke:slot_ke, pewawancara_id, pewawancara(nama, user:users(email_sso))")
       .in("sesi_id", sesiIds)
       .order("slot_ke", { ascending: true });
 
@@ -490,7 +491,7 @@ export async function DELETE(req: NextRequest) {
 
     // Cari sesi target
     let sesi: {
-      id: number;
+      id: string;
       distribusi_done: boolean;
     } | null = null;
 
@@ -498,7 +499,7 @@ export async function DELETE(req: NextRequest) {
       const { data } = await supabaseAdmin
         .from("sesi_wawancara")
         .select("id, distribusi_done")
-        .eq("id", Number(sesiIdParam))
+        .eq("id", sesiIdParam)
         .single();
       sesi = data;
     } else {

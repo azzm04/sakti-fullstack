@@ -1,7 +1,10 @@
 export { JatahProgressBar } from "./JatahProgressBar";
 export { SesiFilter } from "./SesiFilter";
 export { ModeFilterTabs } from "./ModeFilterTabs";
+export { StatusFilter } from "./StatusFilter";
+export { JalurFilter } from "./JalurFilter";
 export { SearchInput } from "./SearchInput";
 export { LockedAlert } from "./LockedAlert";
 export { MahasiswaTable } from "./MahasiswaTable";
 export type { Mode } from "./ModeFilterTabs";
+export type { StatusFilterValue } from "./StatusFilter";

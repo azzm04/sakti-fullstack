@@ -350,7 +350,6 @@ export default function EvaluasiClient() {
   return (
     <div className="min-h-screen bg-admin-bg font-admin-body text-admin-text flex flex-col">
       <PageHeader
-        breadcrumb="Admin / Seleksi KIP-K / Evaluasi"
         title="Evaluasi Wawancara"
         right={
           <>

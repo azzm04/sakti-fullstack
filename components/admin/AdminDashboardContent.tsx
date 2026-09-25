@@ -180,7 +180,7 @@ export default function AdminDashboardContent({ stats }: Props) {
   return (
     <div className="min-h-screen bg-admin-bg font-admin-body text-admin-text flex flex-col">
       <PageHeader
-        breadcrumb="Dirmawa / Seleksi KIP-K / Ringkasan"
+        breadcrumb="Dirmawa / Ringkasan"
         title="Ringkasan Keseluruhan"
         right={
           <Pill tone="accent" dot>

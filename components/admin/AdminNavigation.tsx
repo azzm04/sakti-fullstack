@@ -4,35 +4,9 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
 import { motion, AnimatePresence, type Variants } from "motion/react";
-import {
-  LayoutDashboard,
-  LogOut,
-  Menu,
-  X,
-  Upload,
-  Zap,
-  ClipboardCheck,
-  BookMarked,
-  BarChart3,
-  Award,
-  ListFilter,
-  UserMinus,
-} from "lucide-react";
+import { LogOut, Menu, X } from "lucide-react";
 import { cn } from "@/lib/utils";
-
-const navItems = [
-  { href: "/admin",                    label: "Dashboard",        icon: LayoutDashboard },
-  { href: "/admin/import",             label: "Import Data",      icon: Upload          },
-  { href: "/admin/wawancara",          label: "Wawancara",        icon: Zap             },
-  { href: "/admin/evaluasi",           label: "Evaluasi",         icon: ClipboardCheck  },
-  { href: "/admin/filtering",          label: "Filtering Kuota",  icon: ListFilter      },
-  { href: "/admin/hasil-akhir",        label: "Hasil Akhir",      icon: Award           },
-  { href: "/admin/monev",              label: "Monev",            icon: BookMarked      },
-  { href: "/admin/analitik",           label: "Analitik",         icon: BarChart3       },
-  { href: "/admin/prestasi",           label: "Prestasi",         icon: Award           },
-  { href: "/admin/pengunduran-diri",   label: "Undur Diri",       icon: UserMinus       },
-  { href: "/admin/aduan",   label: "Aduan",       icon: UserMinus       },
-];
+import { ADMIN_NAV_ITEMS as navItems } from "@/lib/admin-nav";
 
 const sidebarVariants: Variants = {
   hidden: { x: -20, opacity: 0 },

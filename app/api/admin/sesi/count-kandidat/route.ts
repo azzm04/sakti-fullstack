@@ -5,16 +5,23 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const jalurMasuk = searchParams.get("jalur_masuk");
+    const tahunSeleksiParam = searchParams.get("tahun_seleksi");
+    const tahunSeleksi = tahunSeleksiParam ? parseInt(tahunSeleksiParam) : null;
 
     if (!jalurMasuk) {
       return NextResponse.json({ error: "jalur_masuk wajib diisi" }, { status: 400 });
     }
 
-    // 1. Cari semua ID batch impor yang memiliki jenis_impor sesuai (misal: "SNBT")
-    const { data: batches, error: batchErr } = await supabaseAdmin
+    // 1. Cari semua ID batch impor yang memiliki jenis_impor sesuai (misal: "SNBT"),
+    // dibatasi ke tahun_seleksi yang dipilih — tanpa ini, jalur yang sama dari
+    // tahun seleksi lain ikut terhitung padahal beda angkatan.
+    let batchQuery = supabaseAdmin
       .from("impor_data")
       .select("id")
       .ilike("jenis_impor", `${jalurMasuk}%`);
+    if (tahunSeleksi) batchQuery = batchQuery.eq("tahun_seleksi", tahunSeleksi);
+
+    const { data: batches, error: batchErr } = await batchQuery;
 
     if (batchErr) throw batchErr;
 
@@ -24,6 +31,7 @@ export async function GET(req: NextRequest) {
     if (batchIds.length === 0) {
       return NextResponse.json({
         jalur_masuk: jalurMasuk,
+        tahun_seleksi: tahunSeleksi,
         total: 0,
         total_assigned: 0,
         total_belum_assign: 0,
@@ -53,6 +61,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       jalur_masuk: jalurMasuk,
+      tahun_seleksi: tahunSeleksi,
       total: count ?? 0,
       total_assigned: totalAssigned,
       total_belum_assign: Math.max(0, totalBelumAssign),

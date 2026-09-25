@@ -15,6 +15,7 @@ import EditKuotaModal, { EditKuotaFormState } from "./EditKuotaModal";
 
 export default function SesiWAR() {
   const today = new Date().toISOString().split("T")[0];
+  const currentYear = new Date().getFullYear();
   const [tanggal, setTanggal] = useState(today);
   const [sesi, setSesi] = useState<Sesi | null>(null);
   const [kuotaList, setKuotaList] = useState<KuotaItem[]>([]);
@@ -28,6 +29,7 @@ export default function SesiWAR() {
     kuota_pewawancara: "20",
     kuota_mahasiswa: "120",
     jalur_masuk: "SNBT",
+    tahun_seleksi: String(currentYear),
     tanggal_mulai: "",
     tanggal_selesai: "",
   });
@@ -77,11 +79,11 @@ export default function SesiWAR() {
     if (timeout) setTimeout(() => setMsg(null), timeout);
   }
 
-  async function fetchKandidatCount(jalur: string) {
+  async function fetchKandidatCount(jalur: string, tahunSeleksi: string) {
     setLoadingCount(true);
     try {
       const res = await fetch(
-        `/api/admin/sesi/count-kandidat?jalur_masuk=${encodeURIComponent(jalur)}`,
+        `/api/admin/sesi/count-kandidat?jalur_masuk=${encodeURIComponent(jalur)}&tahun_seleksi=${encodeURIComponent(tahunSeleksi)}`,
         { cache: "no-store" },
       );
       const json = await res.json();
@@ -95,7 +97,7 @@ export default function SesiWAR() {
 
   function openBuatSesi() {
     setFormSesi((f) => ({ ...f, tanggal_mulai: tanggal, tanggal_selesai: tanggal }));
-    fetchKandidatCount(formSesi.jalur_masuk);
+    fetchKandidatCount(formSesi.jalur_masuk, formSesi.tahun_seleksi);
     setShowBuatSesi(true);
   }
 
@@ -103,7 +105,7 @@ export default function SesiWAR() {
     setSavingSesi(true);
     setMsg(null);
     try {
-      const { tanggal_mulai, tanggal_selesai, jalur_masuk, kuota_pewawancara } = formSesi;
+      const { tanggal_mulai, tanggal_selesai, jalur_masuk, tahun_seleksi, kuota_pewawancara } = formSesi;
 
       if (tanggal_mulai && tanggal_selesai) {
         // Rentang tanggal diisi → batch create
@@ -114,6 +116,7 @@ export default function SesiWAR() {
             tanggal_mulai,
             tanggal_selesai,
             jalur_masuk,
+            tahun_seleksi: parseInt(tahun_seleksi),
             kuota_pewawancara: parseInt(kuota_pewawancara),
             total_mahasiswa: kandidatCount ?? undefined,
           }),
@@ -141,6 +144,7 @@ export default function SesiWAR() {
             kuota_pewawancara: parseInt(kuota_pewawancara),
             kuota_mahasiswa: parseInt(formSesi.kuota_mahasiswa),
             jalur_masuk,
+            tahun_seleksi: parseInt(tahun_seleksi),
           }),
         });
         const json = await res.json();
@@ -405,7 +409,7 @@ export default function SesiWAR() {
         loadingCount={loadingCount}
         saving={savingSesi}
         onChange={setFormSesi}
-        onJalurChange={fetchKandidatCount}
+        onFilterChange={fetchKandidatCount}
         onClose={() => setShowBuatSesi(false)}
         onSubmit={handleBuatSesi}
       />

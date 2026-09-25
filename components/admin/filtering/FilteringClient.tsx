@@ -96,10 +96,7 @@ export default function FilteringClient() {
 
   return (
     <div className="min-h-screen bg-admin-bg font-admin-body text-admin-text flex flex-col">
-      <PageHeader
-        breadcrumb="Admin / Seleksi KIP-K / Filtering Kuota"
-        title="Filtering Kuota (UM & SBUB)"
-      />
+      <PageHeader title="Filtering Kuota (UM & SBUB)" />
 
       <div className="px-[30px] pt-[22px] pb-[34px] flex flex-col gap-[18px]">
         {/* Pilih Data */}

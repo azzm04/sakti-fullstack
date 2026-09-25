@@ -47,7 +47,7 @@ export default function KuotaTable({ sesi, kuotaList, offset }: KuotaTableProps)
                 <td className="px-4 py-3 font-semibold text-admin-text">
                   {s.pewawancara?.nama ?? "—"}
                 </td>
-                <td className="px-4 py-3 text-xs text-admin-text-5">{s.pewawancara?.email}</td>
+                <td className="px-4 py-3 text-xs text-admin-text-5">{s.pewawancara?.user?.email_sso ?? "—"}</td>
                 <td className="px-4 py-3 text-xs text-admin-text-4">
                   {new Date(s.claimed_at).toLocaleTimeString("id-ID", {
                     hour: "2-digit",

@@ -1,16 +1,18 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import type { MahasiswaListItem, MahasiswaApiResponse } from "@/schemas";
+import type { MahasiswaListItem, MahasiswaApiResponse, JalurFilterOption } from "@/schemas";
 import {
   JatahProgressBar,
   SesiFilter,
   ModeFilterTabs,
+  StatusFilter,
+  JalurFilter,
   SearchInput,
   LockedAlert,
   MahasiswaTable,
 } from "@/components/pewawancara/mahasiswa";
-import type { Mode } from "@/components/pewawancara/mahasiswa";
+import type { Mode, StatusFilterValue } from "@/components/pewawancara/mahasiswa";
 
 export default function PewawancaraMahasiswaPage() {
   const [mode, setMode] = useState<Mode>("saya");
@@ -27,13 +29,17 @@ export default function PewawancaraMahasiswaPage() {
   const [canEdit, setCanEdit] = useState(true);
   const [sesiList, setSesiList] = useState<{ id: number; tanggal: string }[]>([]);
   const [selectedSesiId, setSelectedSesiId] = useState<number | null>(null);
+  const [status, setStatus] = useState<StatusFilterValue>("semua");
+  const [jalur, setJalur] = useState("");
+  const [jalurOptions, setJalurOptions] = useState<JalurFilterOption[]>([]);
 
   // ── Data Fetching ──
   const fetchData = useCallback(async () => {
     setLoading(true);
     setLocked(false);
     try {
-      const params = new URLSearchParams({ mode, search, page: String(page) });
+      const params = new URLSearchParams({ mode, search, status, page: String(page) });
+      if (jalur) params.set("jalur", jalur);
       if (selectedSesiId) params.set("sesi_id", String(selectedSesiId));
       const res = await fetch(`/api/pewawancara/mahasiswa?${params}`);
       const json: MahasiswaApiResponse = await res.json();
@@ -55,17 +61,18 @@ export default function PewawancaraMahasiswaPage() {
       setJatahSudahSelesai(json.jatah_sudah_selesai ?? false);
       setCanEdit((json as any).can_edit ?? true);
       if ((json as any).sesi_list) setSesiList((json as any).sesi_list);
+      setJalurOptions(json.jalur_list ?? []);
     } finally {
       setLoading(false);
     }
-  }, [mode, search, page, selectedSesiId]);
+  }, [mode, search, status, jalur, page, selectedSesiId]);
 
   useEffect(() => {
     const t = setTimeout(fetchData, search ? 400 : 0);
     return () => clearTimeout(t);
   }, [fetchData, search]);
 
-  useEffect(() => { setPage(1); }, [mode, search]);
+  useEffect(() => { setPage(1); }, [mode, search, status, jalur]);
 
   // ── Render ──
   return (
@@ -97,6 +104,11 @@ export default function PewawancaraMahasiswaPage() {
         jatahSudahSelesai={jatahSudahSelesai}
         total={total}
       />
+
+      <div className="flex items-center gap-2 flex-wrap mb-4">
+        <StatusFilter value={status} onChange={setStatus} />
+        <JalurFilter options={jalurOptions} value={jalur} onChange={setJalur} />
+      </div>
 
       <SearchInput value={search} onChange={setSearch} />
 

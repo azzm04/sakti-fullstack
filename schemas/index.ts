@@ -529,6 +529,7 @@ export const MahasiswaListItemSchema = z.object({
   no_pendaftaran_kipk: z.string(),
   nama: z.string(),
   prodi: z.string(),
+  jalur_masuk: z.string().nullable().optional(),
   pewawancara_id: z.string().nullable().optional(),
   pewawancara: z.string().nullable().optional(),
   rekomendasi: z.string().nullable().optional(),
@@ -537,6 +538,12 @@ export const MahasiswaListItemSchema = z.object({
   status_wawancara: z.string().optional(),
 });
 export type MahasiswaListItem = z.infer<typeof MahasiswaListItemSchema>;
+
+export const JalurFilterOptionSchema = z.object({
+  key: z.string(),
+  label: z.string(),
+});
+export type JalurFilterOption = z.infer<typeof JalurFilterOptionSchema>;
 
 export const MahasiswaApiResponseSchema = z.object({
   data: z.array(MahasiswaListItemSchema),
@@ -548,6 +555,7 @@ export const MahasiswaApiResponseSchema = z.object({
   jatah_sudah_selesai: z.boolean().optional(),
   locked: z.boolean().optional(),
   error: z.string().optional(),
+  jalur_list: z.array(JalurFilterOptionSchema).optional(),
 });
 export type MahasiswaApiResponse = z.infer<typeof MahasiswaApiResponseSchema>;
 

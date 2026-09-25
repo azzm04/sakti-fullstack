@@ -24,6 +24,7 @@ export async function POST(req: NextRequest) {
       tanggal_mulai,
       tanggal_selesai,
       jalur_masuk,
+      tahun_seleksi,
       kuota_pewawancara = 20,
       total_mahasiswa: inputTotal,
     } = body;
@@ -52,14 +53,31 @@ export async function POST(req: NextRequest) {
     // Tentukan total mahasiswa
     let totalMahasiswa = inputTotal;
     if (!totalMahasiswa) {
-      // Hitung dari database: kandidat yang belum di-assign untuk jalur ini
-      const { count, error: countErr } = await supabaseAdmin
-        .from("kandidat")
-        .select("id", { count: "exact", head: true })
-        .eq("jalur_masuk", jalur_masuk);
+      // Hitung dari database: kandidat untuk jalur (+ tahun seleksi, kalau
+      // diisi) ini — dicari lewat impor_data supaya jalur yang sama dari
+      // tahun seleksi lain tidak ikut terhitung, sama seperti di
+      // /api/admin/sesi/count-kandidat.
+      let batchQuery = supabaseAdmin
+        .from("impor_data")
+        .select("id")
+        .ilike("jenis_impor", `${jalur_masuk}%`);
+      if (tahun_seleksi) batchQuery = batchQuery.eq("tahun_seleksi", tahun_seleksi);
 
-      if (countErr) throw countErr;
-      totalMahasiswa = count ?? 0;
+      const { data: batches, error: batchErr } = await batchQuery;
+      if (batchErr) throw batchErr;
+      const batchIds = batches?.map((b) => b.id) || [];
+
+      if (batchIds.length === 0) {
+        totalMahasiswa = 0;
+      } else {
+        const { count, error: countErr } = await supabaseAdmin
+          .from("kandidat")
+          .select("id", { count: "exact", head: true })
+          .in("impor_data_id", batchIds);
+
+        if (countErr) throw countErr;
+        totalMahasiswa = count ?? 0;
+      }
     }
 
     if (totalMahasiswa <= 0) {

@@ -38,7 +38,7 @@ export function WarActiveCard({
             className="h-2 w-2 rounded-full bg-primary inline-block"
           />
           <span className="text-xs font-bold text-primary uppercase tracking-wider">
-            WAR Sedang Berlangsung
+            Pengambilan Kuota Sedang Berlangsung
           </span>
         </div>
         <span className="text-xs text-muted-foreground font-medium">
