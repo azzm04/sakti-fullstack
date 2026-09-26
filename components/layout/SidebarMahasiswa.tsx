@@ -312,11 +312,11 @@ export default function SidebarMahasiswa() {
             ].join(" ")}
           >
             <Image
-              src="/Logo SAKTI.png"
+              src="/Logo Sakti.png"
               alt=""
               width={40}
               height={40}
-              className="h-10 w-10 shrink-0 object-contain"
+              className="h-14 w-14 shrink-0 object-contain"
             />
 
             {expanded && (
