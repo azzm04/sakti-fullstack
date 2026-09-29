@@ -8,6 +8,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type FocusEvent as ReactFocusEvent,
 } from "react";
 import { createPortal } from "react-dom";
 import {
@@ -24,17 +25,18 @@ import {
   LayoutDashboard,
   LoaderCircle,
   LogOut,
-  PanelLeftClose,
-  PanelLeftOpen,
 } from "lucide-react";
 import { useCurrentUser } from "@/hook/useCurrentUser";
 
 const EXPANDED_WIDTH = 264;
 const COLLAPSED_WIDTH = 72;
 
-const EASE: [number, number, number, number] = [
-  0.4, 0, 0.2, 1,
-];
+/** Jeda sebelum melebar (ms) — mencegah buka saat kursor hanya lewat */
+const OPEN_DELAY = 80;
+/** Jeda sebelum menutup (ms) — mencegah kedip saat kursor keluar sebentar */
+const CLOSE_DELAY = 180;
+
+const EASE: [number, number, number, number] = [0.4, 0, 0.2, 1];
 
 const FOCUS_STYLE =
   "focus-visible:outline-none focus-visible:ring-2 " +
@@ -80,7 +82,8 @@ export default function SidebarMahasiswa() {
   const reduceMotion = useReducedMotion();
   const { user, loading } = useCurrentUser();
 
-  const [expanded, setExpanded] = useState(true);
+  const [hovered, setHovered] = useState(false);
+  const [focusWithin, setFocusWithin] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState("");
@@ -91,6 +94,15 @@ export default function SidebarMahasiswa() {
   const profilePopupRef = useRef<HTMLDivElement>(null);
   const logoutButtonRef = useRef<HTMLButtonElement>(null);
   const logoutPendingRef = useRef(false);
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /**
+   * Sidebar melebar jika:
+   * - kursor berada di atas sidebar, ATAU
+   * - fokus keyboard ada di dalam sidebar, ATAU
+   * - popup akun sedang terbuka
+   */
+  const expanded = hovered || focusWithin || profileOpen;
 
   const displayName = user?.nama?.trim() || "Mahasiswa";
 
@@ -111,6 +123,52 @@ export default function SidebarMahasiswa() {
     ease: EASE,
   };
 
+  // ==========================================================
+  // HOVER EXPAND / COLLAPSE
+  // ==========================================================
+
+  const clearHoverTimer = () => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+  };
+
+  const handleMouseEnter = () => {
+    clearHoverTimer();
+    hoverTimerRef.current = setTimeout(
+      () => setHovered(true),
+      OPEN_DELAY,
+    );
+  };
+
+  const handleMouseLeave = () => {
+    clearHoverTimer();
+    hoverTimerRef.current = setTimeout(
+      () => setHovered(false),
+      CLOSE_DELAY,
+    );
+  };
+
+  const handleFocus = () => {
+    setFocusWithin(true);
+  };
+
+  const handleBlur = (e: ReactFocusEvent<HTMLElement>) => {
+    // Tetap "fokus" jika fokus hanya pindah antar elemen di dalam sidebar
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+      setFocusWithin(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => clearHoverTimer();
+  }, []);
+
+  // ==========================================================
+  // POPUP AKUN
+  // ==========================================================
+
   const updatePopupPosition = useCallback(() => {
     const button = profileButtonRef.current;
 
@@ -119,43 +177,24 @@ export default function SidebarMahasiswa() {
     const rect = button.getBoundingClientRect();
     const margin = 12;
     const gap = 8;
-    const width = Math.min(
-      240,
-      window.innerWidth - margin * 2,
-    );
+    const width = Math.min(240, window.innerWidth - margin * 2);
 
-    const preferredLeft = expanded
-      ? rect.left
-      : rect.right + gap;
+    const preferredLeft = expanded ? rect.left : rect.right + gap;
 
     const left = Math.max(
       margin,
-      Math.min(
-        preferredLeft,
-        window.innerWidth - width - margin,
-      ),
+      Math.min(preferredLeft, window.innerWidth - width - margin),
     );
 
-    const bottom = Math.max(
-      margin,
-      window.innerHeight - rect.top + gap,
-    );
+    const bottom = Math.max(margin, window.innerHeight - rect.top + gap);
 
     setPopupPosition({
       left,
       bottom,
       width,
-      maxHeight: Math.max(
-        0,
-        window.innerHeight - bottom - margin,
-      ),
+      maxHeight: Math.max(0, window.innerHeight - bottom - margin),
     });
   }, [expanded]);
-
-  function toggleSidebar() {
-    setProfileOpen(false);
-    setExpanded((current) => !current);
-  }
 
   function toggleProfile() {
     if (!profileOpen) {
@@ -186,20 +225,26 @@ export default function SidebarMahasiswa() {
     } catch {
       logoutPendingRef.current = false;
       setIsLoggingOut(false);
-      setLogoutError(
-        "Belum berhasil keluar. Silakan coba lagi.",
-      );
+      setLogoutError("Belum berhasil keluar. Silakan coba lagi.");
     }
   }
 
+  // Tutup popup & sidebar saat pindah halaman
   useEffect(() => {
     setProfileOpen(false);
+    setHovered(false);
+    setFocusWithin(false);
   }, [pathname]);
 
   useEffect(() => {
     if (!profileOpen) return;
 
+    // Tunggu animasi lebar selesai agar posisi popup akurat
     updatePopupPosition();
+    const positionTimer = setTimeout(
+      updatePopupPosition,
+      reduceMotion ? 0 : 240,
+    );
 
     const focusFrame = window.requestAnimationFrame(() => {
       logoutButtonRef.current?.focus();
@@ -243,282 +288,224 @@ export default function SidebarMahasiswa() {
       updatePopupPosition();
     }
 
-    document.addEventListener(
-      "pointerdown",
-      handlePointerDown,
-    );
+    document.addEventListener("pointerdown", handlePointerDown);
     document.addEventListener("focusin", handleFocusIn);
     document.addEventListener("keydown", handleKeyDown);
     window.addEventListener("resize", handleResize);
-    window.addEventListener(
-      "scroll",
-      updatePopupPosition,
-      true,
-    );
+    window.addEventListener("scroll", updatePopupPosition, true);
 
     return () => {
+      clearTimeout(positionTimer);
       window.cancelAnimationFrame(focusFrame);
 
-      document.removeEventListener(
-        "pointerdown",
-        handlePointerDown,
-      );
-      document.removeEventListener(
-        "focusin",
-        handleFocusIn,
-      );
-      document.removeEventListener(
-        "keydown",
-        handleKeyDown,
-      );
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("focusin", handleFocusIn);
+      document.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("resize", handleResize);
-      window.removeEventListener(
-        "scroll",
-        updatePopupPosition,
-        true,
-      );
+      window.removeEventListener("scroll", updatePopupPosition, true);
     };
-  }, [profileOpen, updatePopupPosition]);
+  }, [profileOpen, updatePopupPosition, reduceMotion]);
+
+  // ==========================================================
+  // RENDER
+  // ==========================================================
 
   return (
     <>
-      <motion.aside
-        initial={false}
-        animate={{
-          width: expanded
-            ? EXPANDED_WIDTH
-            : COLLAPSED_WIDTH,
-        }}
-        transition={sidebarTransition}
-        aria-label="Sidebar mahasiswa"
-        className="sticky top-0 z-40 hidden h-dvh shrink-0 flex-col overflow-hidden border-r border-white/10 bg-[#000352] md:flex"
-        style={{ fontFamily: "Roboto, sans-serif" }}
+      {/*
+       * Placeholder selebar sidebar tertutup (72px).
+       * Konten halaman selalu diberi ruang 72px, sehingga saat
+       * sidebar melebar ia MENIMPA konten, bukan mendorongnya.
+       */}
+      <div
+        className="sticky top-0 z-70 hidden h-dvh shrink-0 md:block"
+        style={{ width: COLLAPSED_WIDTH }}
       >
-        {/* Identitas */}
-        <header
+        <motion.aside
+          initial={false}
+          animate={{
+            width: expanded ? EXPANDED_WIDTH : COLLAPSED_WIDTH,
+          }}
+          transition={sidebarTransition}
+          aria-label="Sidebar mahasiswa"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
           className={[
-            "flex h-24 shrink-0 items-center border-b border-white/10",
-            expanded ? "px-5" : "justify-center px-3",
+            "absolute inset-y-0 left-0 flex flex-col overflow-hidden",
+            "border-r border-white/10 bg-[#000352]",
+            "transition-shadow duration-200",
+            expanded
+              ? "shadow-[8px_0_32px_rgba(0,3,82,0.25)]"
+              : "shadow-none",
           ].join(" ")}
+          style={{ fontFamily: "Roboto, sans-serif" }}
         >
-          <Link
-            href="/mahasiswa/dashboard"
-            aria-label="SAKTI — Dashboard mahasiswa"
-            title={!expanded ? "SAKTI" : undefined}
+          {/* Identitas */}
+          <header
             className={[
-              "flex min-h-12 items-center rounded-[4px]",
-              expanded ? "w-full gap-3" : "w-12 justify-center",
-              FOCUS_STYLE,
+              "flex h-24 shrink-0 items-center border-b border-white/10",
+              expanded ? "px-5" : "justify-center px-3",
             ].join(" ")}
           >
-            <Image
-              src="/Logo Sakti.png"
-              alt=""
-              width={40}
-              height={40}
-              className="h-14 w-14 shrink-0 object-contain"
-            />
+            <Link
+              href="/mahasiswa/dashboard"
+              aria-label="SAKTI — Dashboard mahasiswa"
+              title={!expanded ? "SAKTI" : undefined}
+              className={[
+                "flex min-h-12 items-center rounded-[4px]",
+                expanded ? "w-full gap-3" : "w-12 justify-center",
+                FOCUS_STYLE,
+              ].join(" ")}
+            >
+              <Image
+                src="/Logo Sakti.png"
+                alt=""
+                width={40}
+                height={40}
+                className="h-14 w-14 shrink-0 object-contain"
+              />
 
-            {expanded && (
-              <div className="min-w-0 whitespace-nowrap">
-                <span className="block text-[22px] font-bold leading-7 tracking-[-0.02em] text-white">
-                  SAKTI
+              {expanded && (
+                <div className="min-w-0 whitespace-nowrap">
+                  <span className="block text-[22px] font-bold leading-7 tracking-[-0.02em] text-white">
+                    SAKTI
+                  </span>
+
+                  <span className="mt-0.5 block text-[12px] leading-5 text-[#EEF2FF]/70">
+                    Portal mahasiswa
+                  </span>
+                </div>
+              )}
+            </Link>
+          </header>
+
+          {/* Navigasi */}
+          <nav
+            id="mahasiswa-sidebar-nav"
+            aria-label="Navigasi mahasiswa"
+            className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 pb-6 pt-6 [scrollbar-width:thin] [scrollbar-color:#3730A3_#000352]"
+          >
+            <div className="mb-3 flex h-4 items-center px-3">
+              {expanded ? (
+                <span className="whitespace-nowrap text-[10px] font-medium uppercase leading-4 tracking-[0.12em] text-[#EEF2FF]/60">
+                  Menu utama
                 </span>
+              ) : (
+                <span
+                  aria-hidden="true"
+                  className="mx-auto h-px w-5 bg-white/15"
+                />
+              )}
+            </div>
 
-                <span className="mt-0.5 block text-[12px] leading-5 text-[#EEF2FF]/70">
-                  Portal mahasiswa
-                </span>
-              </div>
-            )}
-          </Link>
-        </header>
+            <ul className="space-y-1">
+              {menuItems.map(({ href, icon: Icon, label }) => {
+                const isActive =
+                  pathname === href || pathname?.startsWith(`${href}/`);
 
-        {/* Navigasi */}
-        <nav
-          id="mahasiswa-sidebar-nav"
-          aria-label="Navigasi mahasiswa"
-          className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 pb-6 pt-6 [scrollbar-width:thin] [scrollbar-color:#3730A3_#000352]"
-        >
-          <div className="mb-3 flex h-4 items-center px-3">
-            {expanded ? (
-              <span className="whitespace-nowrap text-[10px] font-medium uppercase leading-4 tracking-[0.12em] text-[#EEF2FF]/60">
-                Menu utama
-              </span>
-            ) : (
+                return (
+                  <li key={href}>
+                    <Link
+                      href={href}
+                      aria-label={label}
+                      aria-current={isActive ? "page" : undefined}
+                      title={!expanded ? label : undefined}
+                      className={[
+                        "group flex h-11 items-center overflow-hidden rounded-[4px]",
+                        "transition-colors duration-150 motion-reduce:transition-none",
+                        expanded ? "gap-3 px-3" : "justify-center",
+                        isActive
+                          ? "bg-[#3730A3] text-white"
+                          : "text-[#EEF2FF]/80 hover:bg-[#818CF8]/10 hover:text-white",
+                        FOCUS_STYLE,
+                      ].join(" ")}
+                    >
+                      <Icon
+                        aria-hidden="true"
+                        size={18}
+                        strokeWidth={1.7}
+                        className={[
+                          "shrink-0 transition-colors",
+                          isActive
+                            ? "text-white"
+                            : "text-[#A5ACF9] group-hover:text-white",
+                        ].join(" ")}
+                      />
+
+                      {expanded && (
+                        <span
+                          className={[
+                            "min-w-0 whitespace-nowrap text-[13px] leading-5",
+                            isActive ? "font-semibold" : "font-medium",
+                          ].join(" ")}
+                        >
+                          {label}
+                        </span>
+                      )}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </nav>
+
+          {/* Akun mahasiswa */}
+          <footer className="shrink-0 border-t border-white/10 p-3">
+            <button
+              ref={profileButtonRef}
+              type="button"
+              onClick={toggleProfile}
+              aria-label={`Opsi akun ${displayName}`}
+              aria-expanded={profileOpen}
+              aria-controls={
+                profileOpen ? "mahasiswa-profile-popup" : undefined
+              }
+              title={!expanded ? displayName : undefined}
+              className={[
+                "flex min-h-14 w-full items-center rounded-[4px] text-left",
+                "transition-colors duration-150",
+                expanded ? "gap-3 px-2 py-2" : "justify-center py-2",
+                profileOpen ? "bg-[#818CF8]/15" : "hover:bg-[#818CF8]/10",
+                FOCUS_STYLE,
+              ].join(" ")}
+            >
               <span
                 aria-hidden="true"
-                className="mx-auto h-px w-5 bg-white/15"
-              />
-            )}
-          </div>
-
-          <ul className="space-y-1">
-            {menuItems.map(({ href, icon: Icon, label }) => {
-              const isActive =
-                pathname === href ||
-                pathname?.startsWith(`${href}/`);
-
-              return (
-                <li key={href}>
-                  <Link
-                    href={href}
-                    aria-label={label}
-                    aria-current={
-                      isActive ? "page" : undefined
-                    }
-                    title={!expanded ? label : undefined}
-                    className={[
-                      "group flex h-11 items-center overflow-hidden rounded-[4px]",
-                      "transition-colors duration-150 motion-reduce:transition-none",
-                      expanded
-                        ? "gap-3 px-3"
-                        : "justify-center",
-                      isActive
-                        ? "bg-[#3730A3] text-white"
-                        : "text-[#EEF2FF]/80 hover:bg-[#818CF8]/10 hover:text-white",
-                      FOCUS_STYLE,
-                    ].join(" ")}
-                  >
-                    <Icon
-                      aria-hidden="true"
-                      size={18}
-                      strokeWidth={1.7}
-                      className={[
-                        "shrink-0 transition-colors",
-                        isActive
-                          ? "text-white"
-                          : "text-[#A5ACF9] group-hover:text-white",
-                      ].join(" ")}
-                    />
-
-                    {expanded && (
-                      <span
-                        className={[
-                          "min-w-0 whitespace-nowrap text-[13px] leading-5",
-                          isActive
-                            ? "font-semibold"
-                            : "font-medium",
-                        ].join(" ")}
-                      >
-                        {label}
-                      </span>
-                    )}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
-        </nav>
-
-        {/* Kontrol sidebar */}
-        <div className="shrink-0 px-3 pb-3">
-          <button
-            type="button"
-            onClick={toggleSidebar}
-            aria-label={
-              expanded ? "Tutup sidebar" : "Buka sidebar"
-            }
-            aria-expanded={expanded}
-            aria-controls="mahasiswa-sidebar-nav"
-            title={
-              expanded ? "Tutup sidebar" : "Buka sidebar"
-            }
-            className={[
-              "flex h-11 w-full items-center rounded-[4px]",
-              "text-[#EEF2FF]/65 transition-colors",
-              "hover:bg-[#818CF8]/10 hover:text-white",
-              expanded
-                ? "gap-3 px-3"
-                : "justify-center",
-              FOCUS_STYLE,
-            ].join(" ")}
-          >
-            {expanded ? (
-              <PanelLeftClose
-                aria-hidden="true"
-                size={18}
-                strokeWidth={1.7}
-                className="shrink-0"
-              />
-            ) : (
-              <PanelLeftOpen
-                aria-hidden="true"
-                size={18}
-                strokeWidth={1.7}
-                className="shrink-0"
-              />
-            )}
-
-            {expanded && (
-              <span className="whitespace-nowrap text-[12px] font-medium">
-                Tutup sidebar
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[4px] border border-[#818CF8]/25 bg-[#EEF2FF]/10 text-[12px] font-semibold text-[#EEF2FF]"
+              >
+                {loading ? "–" : displayInitials}
               </span>
-            )}
-          </button>
-        </div>
 
-        {/* Akun mahasiswa */}
-        <footer className="shrink-0 border-t border-white/10 p-3">
-          <button
-            ref={profileButtonRef}
-            type="button"
-            onClick={toggleProfile}
-            aria-label={`Opsi akun ${displayName}`}
-            aria-expanded={profileOpen}
-            aria-controls={
-              profileOpen
-                ? "mahasiswa-profile-popup"
-                : undefined
-            }
-            title={!expanded ? displayName : undefined}
-            className={[
-              "flex min-h-14 w-full items-center rounded-[4px] text-left",
-              "transition-colors duration-150",
-              expanded
-                ? "gap-3 px-2 py-2"
-                : "justify-center py-2",
-              profileOpen
-                ? "bg-[#818CF8]/15"
-                : "hover:bg-[#818CF8]/10",
-              FOCUS_STYLE,
-            ].join(" ")}
-          >
-            <span
-              aria-hidden="true"
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[4px] border border-[#818CF8]/25 bg-[#EEF2FF]/10 text-[12px] font-semibold text-[#EEF2FF]"
-            >
-              {loading ? "–" : displayInitials}
-            </span>
+              {expanded && (
+                <>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] font-semibold leading-5 text-white">
+                      {loading ? "Memuat profil…" : displayName}
+                    </p>
 
-            {expanded && (
-              <>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-[13px] font-semibold leading-5 text-white">
-                    {loading
-                      ? "Memuat profil…"
-                      : displayName}
-                  </p>
+                    <p className="mt-0.5 whitespace-nowrap text-[11px] leading-4 text-[#EEF2FF]/65">
+                      Mahasiswa KIP Kuliah
+                    </p>
+                  </div>
 
-                  <p className="mt-0.5 whitespace-nowrap text-[11px] leading-4 text-[#EEF2FF]/65">
-                    Mahasiswa KIP Kuliah
-                  </p>
-                </div>
-
-                <ChevronUp
-                  aria-hidden="true"
-                  size={15}
-                  strokeWidth={1.7}
-                  className={[
-                    "shrink-0 text-[#EEF2FF]/60",
-                    "transition-transform duration-150 motion-reduce:transition-none",
-                    profileOpen ? "rotate-180" : "",
-                  ].join(" ")}
-                />
-              </>
-            )}
-          </button>
-        </footer>
-      </motion.aside>
+                  <ChevronUp
+                    aria-hidden="true"
+                    size={15}
+                    strokeWidth={1.7}
+                    className={[
+                      "shrink-0 text-[#EEF2FF]/60",
+                      "transition-transform duration-150 motion-reduce:transition-none",
+                      profileOpen ? "rotate-180" : "",
+                    ].join(" ")}
+                  />
+                </>
+              )}
+            </button>
+          </footer>
+        </motion.aside>
+      </div>
 
       {/* Popup akun berada di luar area sidebar */}
       {typeof document !== "undefined" &&
@@ -531,15 +518,9 @@ export default function SidebarMahasiswa() {
                 id="mahasiswa-profile-popup"
                 role="region"
                 aria-label="Opsi akun mahasiswa"
-                initial={{
-                  opacity: 0,
-                  y: reduceMotion ? 0 : 4,
-                }}
+                initial={{ opacity: 0, y: reduceMotion ? 0 : 4 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{
-                  opacity: 0,
-                  y: reduceMotion ? 0 : 4,
-                }}
+                exit={{ opacity: 0, y: reduceMotion ? 0 : 4 }}
                 transition={popupTransition}
                 style={{
                   position: "fixed",
@@ -584,11 +565,7 @@ export default function SidebarMahasiswa() {
                     />
                   )}
 
-                  <span>
-                    {isLoggingOut
-                      ? "Sedang keluar…"
-                      : "Keluar"}
-                  </span>
+                  <span>{isLoggingOut ? "Sedang keluar…" : "Keluar"}</span>
                 </button>
 
                 {logoutError && (

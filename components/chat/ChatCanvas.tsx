@@ -10,7 +10,9 @@ import React, {
   type ChangeEvent,
   memo,
 } from "react";
+
 import { AnimatePresence, motion } from "framer-motion";
+
 import {
   Loader2,
   X,
@@ -19,22 +21,50 @@ import {
   Paperclip,
   ArrowUp,
   Square,
+  ChevronUp,
+  ChevronDown,
 } from "lucide-react";
+
 import { twMerge } from "tailwind-merge";
+
 import { ChatMessageSchema, type ChatMessage } from "@/schemas";
+
 import ChatMessages from "./ChatMessage";
 
-// ── Utils ─────────────────────────────────────────────────────────────────────
+// ============================================================
+// UTILITY
+// ============================================================
+
 const cn = (...args: (string | undefined | null | false)[]) =>
   twMerge(args.filter(Boolean).join(" "));
 
-// ── Types ─────────────────────────────────────────────────────────────────────
+// ============================================================
+// TYPES
+// ============================================================
+
 interface Attachment {
   url: string;
   name: string;
   contentType: string;
   size: number;
 }
+
+type ScrollDir = "none" | "up" | "down";
+
+// ============================================================
+// MIDDLE MOUSE AUTOSCROLL CONFIG
+// ============================================================
+
+/** Jarak (px) dari titik anchor sebelum mulai scroll */
+const AUTOSCROLL_DEADZONE = 12;
+/** Kecepatan maksimum (px per frame) */
+const AUTOSCROLL_MAX_SPEED = 70;
+/** Kalau tombol tengah ditahan lebih lama dari ini, lepas = berhenti */
+const AUTOSCROLL_HOLD_MS = 250;
+
+// ============================================================
+// ACCEPTED FILE TYPES
+// ============================================================
 
 export const ACCEPTED_TYPES = [
   "image/png",
@@ -43,6 +73,10 @@ export const ACCEPTED_TYPES = [
   "image/svg+xml",
   "image/webp",
 ];
+
+// ============================================================
+// BASE64 UTILITY
+// ============================================================
 
 export function toBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -53,7 +87,10 @@ export function toBase64(file: File): Promise<string> {
   });
 }
 
-// ── Suggested Actions ─────────────────────────────────────────────────────────
+// ============================================================
+// SUGGESTED ACTIONS
+// ============================================================
+
 const SUGGESTED = [
   {
     title: "Syarat Ekonomi",
@@ -76,6 +113,10 @@ const SUGGESTED = [
     action: "Kapan batas waktu pendaftaran KIPK 2026?",
   },
 ];
+
+// ============================================================
+// SUGGESTED ACTION COMPONENT
+// ============================================================
 
 const SuggestedActions = memo(
   ({ onSelect }: { onSelect: (a: string) => void }) => (
@@ -105,9 +146,13 @@ const SuggestedActions = memo(
     </div>
   ),
 );
+
 SuggestedActions.displayName = "SuggestedActions";
 
-// ── Attachment Preview ────────────────────────────────────────────────────────
+// ============================================================
+// ATTACHMENT PREVIEW
+// ============================================================
+
 const PreviewAttachment = memo(
   ({
     att,
@@ -121,11 +166,7 @@ const PreviewAttachment = memo(
     <div className="relative group flex flex-col gap-1.5 shrink-0">
       <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-100 rounded-2xl overflow-hidden border border-slate-200 flex items-center justify-center relative shadow-sm">
         {att.contentType.startsWith("image/") && att.url ? (
-          <img
-            src={att.url}
-            alt={att.name}
-            className="size-full object-cover"
-          />
+          <img src={att.url} alt={att.name} className="size-full object-cover" />
         ) : (
           <span className="text-[10px] font-bold text-slate-400 text-center px-1">
             {att.name.split(".").pop()?.toUpperCase()}
@@ -147,7 +188,7 @@ const PreviewAttachment = memo(
         <button
           onClick={onRemove}
           className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-slate-800 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-rose-500 hover:scale-110 transition-all z-10 shadow-md"
-          title="Tutup Modal"
+          title="Hapus Lampiran"
         >
           <X size={12} strokeWidth={3} />
         </button>
@@ -155,9 +196,13 @@ const PreviewAttachment = memo(
     </div>
   ),
 );
+
 PreviewAttachment.displayName = "PreviewAttachment";
 
-// ── Main Input Component ──────────────────────────────────────────────────────
+// ============================================================
+// INPUT PROPS
+// ============================================================
+
 interface InputProps {
   messages: ChatMessage[];
   attachments: Attachment[];
@@ -166,6 +211,10 @@ interface InputProps {
   onStop: () => void;
   isLoading: boolean;
 }
+
+// ============================================================
+// MULTIMODAL INPUT
+// ============================================================
 
 function MultimodalInput({
   messages,
@@ -177,9 +226,11 @@ function MultimodalInput({
 }: InputProps) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
   const [input, setInput] = useState("");
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);
 
+  // TEXTAREA HEIGHT
   const adjustHeight = () => {
     const ta = textareaRef.current;
     if (!ta) return;
@@ -200,6 +251,7 @@ function MultimodalInput({
     adjustHeight();
   }, [input]);
 
+  // UPLOAD
   const uploadFile = async (file: File): Promise<Attachment | undefined> => {
     return new Promise((resolve) => {
       setTimeout(() => {
@@ -223,10 +275,16 @@ function MultimodalInput({
     async (e: ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(e.target.files ?? []);
       if (!files.length) return;
+
       setUploadQueue((q) => [...q, ...files.map((f) => f.name)]);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+
       const valid = files.filter((f) => f.size <= 5 * 1024 * 1024);
       const results = await Promise.all(valid.map(uploadFile));
+
       setAttachments((prev) => [
         ...prev,
         ...results.filter((r): r is Attachment => !!r),
@@ -235,28 +293,37 @@ function MultimodalInput({
     [setAttachments],
   );
 
+  // REMOVE ATTACHMENT
   const removeAttachment = useCallback(
     (att: Attachment) => {
-      if (att.url.startsWith("blob:")) URL.revokeObjectURL(att.url);
+      if (att.url.startsWith("blob:")) {
+        URL.revokeObjectURL(att.url);
+      }
       setAttachments((prev) => prev.filter((a) => a.url !== att.url));
       textareaRef.current?.focus();
     },
     [setAttachments],
   );
 
+  // SUBMIT
   const submitForm = useCallback(() => {
     if (!input.trim() && !attachments.length) return;
+
     onSend({ input, attachments });
+
     setInput("");
     setAttachments([]);
     resetHeight();
     textareaRef.current?.focus();
   }, [input, attachments, onSend, setAttachments, resetHeight]);
 
+  // STATES
   const showSuggested =
     messages.length === 1 && !attachments.length && !uploadQueue.length;
+
   const canSend = !isLoading && !uploadQueue.length;
-  const sendDisabled = !canSend || (!input.trim() && !attachments.length);
+
+  const sendDisabled = !canSend && !input.trim() && !attachments.length;
 
   return (
     <div className="w-full flex flex-col gap-2">
@@ -298,6 +365,7 @@ function MultimodalInput({
                 onRemove={() => removeAttachment(att)}
               />
             ))}
+
             {uploadQueue.map((name, i) => (
               <PreviewAttachment
                 key={`${name}-${i}`}
@@ -372,7 +440,10 @@ function MultimodalInput({
   );
 }
 
-// ── Initial Message ───────────────────────────────────────────────────────────
+// ============================================================
+// INITIAL MESSAGE
+// ============================================================
+
 const INITIAL_MESSAGE: ChatMessage = ChatMessageSchema.parse({
   id: "1",
   role: "assistant",
@@ -381,21 +452,57 @@ const INITIAL_MESSAGE: ChatMessage = ChatMessageSchema.parse({
   timestamp: new Date().toISOString(),
 });
 
-// ── Types for Props ───────────────────────────────────────────────────────────
+// ============================================================
+// CHAT CANVAS
+// ============================================================
+
 interface ChatCanvasProps {
-  userId?: string; // Menangkap userId dari Props
+  userId?: string;
   currentSessionId?: string | null;
   onMessageSent?: (sessionId: string) => void;
 }
 
-// ── ChatCanvas ────────────────────────────────────────────────────────────────
-export default function ChatCanvas({ userId, currentSessionId, onMessageSent }: ChatCanvasProps) {
+export default function ChatCanvas({
+  userId,
+  currentSessionId,
+  onMessageSent,
+}: ChatCanvasProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE]);
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [dropError, setDropError] = useState("");
+
   const dragCounter = useRef(0);
+
+  // ==========================================================
+  // SCROLL CONTAINER + AUTOSCROLL STATE
+  // ==========================================================
+
+  const chatScrollRef = useRef<HTMLDivElement>(null);
+
+  const autoScrollRef = useRef({
+    active: false,
+    anchorX: 0,
+    anchorY: 0,
+    mouseY: 0,
+    downAt: 0,
+    moved: false,
+    acc: 0, // akumulasi sub-pixel agar scroll pelan tetap jalan
+    dir: "none" as ScrollDir,
+    rafId: 0,
+  });
+
+  const [autoScrollAnchor, setAutoScrollAnchor] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+
+  const [scrollDir, setScrollDir] = useState<ScrollDir>("none");
+
+  // ==========================================================
+  // LOAD SESSION
+  // ==========================================================
 
   useEffect(() => {
     async function fetchSessionMessages() {
@@ -405,9 +512,11 @@ export default function ChatCanvas({ userId, currentSessionId, onMessageSent }: 
       }
 
       try {
-        const res = await fetch(`/api/chat/messages?sessionId=${currentSessionId}`);
+        const res = await fetch(
+          `/api/chat/messages?sessionId=${currentSessionId}`,
+        );
         const data = await res.json();
-        
+
         if (data.messages && data.messages.length > 0) {
           const loadedMessages = data.messages.map((msg: any) => ({
             id: msg.id,
@@ -427,16 +536,24 @@ export default function ChatCanvas({ userId, currentSessionId, onMessageSent }: 
     fetchSessionMessages();
   }, [currentSessionId]);
 
+  // ==========================================================
+  // DRAG & DROP FILE
+  // ==========================================================
+
   const handleDragEnter = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     dragCounter.current += 1;
-    if (e.dataTransfer.types.includes("Files")) setIsDragging(true);
+    if (e.dataTransfer.types.includes("Files")) {
+      setIsDragging(true);
+    }
   }, []);
 
   const handleDragLeave = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     dragCounter.current -= 1;
-    if (dragCounter.current === 0) setIsDragging(false);
+    if (dragCounter.current === 0) {
+      setIsDragging(false);
+    }
   }, []);
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -449,24 +566,33 @@ export default function ChatCanvas({ userId, currentSessionId, onMessageSent }: 
     dragCounter.current = 0;
     setIsDragging(false);
     setDropError("");
+
     const file = e.dataTransfer.files?.[0];
     if (!file) return;
+
     if (!ACCEPTED_TYPES.includes(file.type)) {
       setDropError("Format tidak didukung. Gunakan PNG, JPG, SVG, atau WebP.");
       setTimeout(() => setDropError(""), 3000);
       return;
     }
+
     if (file.size > 5 * 1024 * 1024) {
       setDropError("Ukuran gambar maksimal 5MB.");
       setTimeout(() => setDropError(""), 3000);
       return;
     }
+
     const url = URL.createObjectURL(file);
+
     setAttachments((prev) => [
       ...prev,
       { url, name: file.name, contentType: file.type, size: file.size },
     ]);
   }, []);
+
+  // ==========================================================
+  // SEND MESSAGE
+  // ==========================================================
 
   const handleSend = useCallback(
     async ({
@@ -492,59 +618,60 @@ export default function ChatCanvas({ userId, currentSessionId, onMessageSent }: 
           ? ({ ...userMsg, imageUrl: atts[0].url } as ChatMessage)
           : userMsg,
       ];
-      
+
       setMessages(updatedMessages);
       setIsLoading(true);
 
       try {
+        // CONVERT IMAGE TO BASE64
         const base64 = atts[0]?.url.startsWith("blob:")
           ? await fetch(atts[0].url)
-              .then((r) => r.blob())
-              .then(
-                (b) =>
-                  new Promise<string>((res, rej) => {
-                    const reader = new FileReader();
-                    reader.onload = () =>
-                      res((reader.result as string).split(",")[1]);
-                    reader.onerror = rej;
-                    reader.readAsDataURL(b);
-                  }),
-              )
+            .then((r) => r.blob())
+            .then(
+              (b) =>
+                new Promise<string>((res, rej) => {
+                  const reader = new FileReader();
+                  reader.onload = () =>
+                    res((reader.result as string).split(",")[1]);
+                  reader.onerror = rej;
+                  reader.readAsDataURL(b);
+                }),
+            )
           : null;
 
-        // Menggunakan userId dari props
-        const response = await fetch('/api/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        // API REQUEST
+        const response = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             messages: updatedMessages,
             data: {
-              userId: userId, // Pastikan userId terkirim!
+              userId: userId,
               sessionId: currentSessionId,
               imageBase64: base64,
-            }
-          })
+            },
+          }),
         });
 
-       
-
+        // PARSE RESPONSE
         const rawText = await response.text();
         let botReply = rawText;
-        
-        if (rawText.includes('0:')) {
+
+        if (rawText.includes("0:")) {
           botReply = rawText
-            .split('\n')
-            .filter(line => line.startsWith('0:'))
-            .map(line => {
-              try { 
-                return JSON.parse(line.substring(2)); 
-              } catch { 
-                return ""; 
+            .split("\n")
+            .filter((line) => line.startsWith("0:"))
+            .map((line) => {
+              try {
+                return JSON.parse(line.substring(2));
+              } catch {
+                return "";
               }
             })
-            .join('');
+            .join("");
         }
 
+        // ADD BOT MESSAGE
         setMessages((prev) => [
           ...prev,
           ChatMessageSchema.parse({
@@ -555,14 +682,14 @@ export default function ChatCanvas({ userId, currentSessionId, onMessageSent }: 
           }),
         ]);
 
-         const newSessionId = response.headers.get('x-session-id');
+        // SESSION ID
+        const newSessionId = response.headers.get("x-session-id");
         if (newSessionId && onMessageSent) {
           onMessageSent(newSessionId);
         }
-
-
       } catch (err) {
         console.error("Gagal mengirim pesan:", err);
+
         setMessages((prev) => [
           ...prev,
           ChatMessageSchema.parse({
@@ -579,21 +706,252 @@ export default function ChatCanvas({ userId, currentSessionId, onMessageSent }: 
     [isLoading, messages, currentSessionId, userId, onMessageSent],
   );
 
+  // ==========================================================
+  // COPY
+  // ==========================================================
+
   const handleCopy = useCallback((text: string) => {
     navigator.clipboard.writeText(text);
   }, []);
 
- return (
+  // ==========================================================
+  // WHEEL SCROLL (RODA MOUSE)
+  //
+  // Ditangani manual agar tidak "dimakan" handler global
+  // (Lenis / Locomotive / listener wheel lain yang preventDefault).
+  // ==========================================================
+
+  useEffect(() => {
+    const el = chatScrollRef.current;
+    if (!el) return;
+
+    const onWheel = (e: WheelEvent) => {
+      // Biarkan Ctrl + wheel untuk zoom browser
+      if (e.ctrlKey) return;
+
+      // Abaikan scroll horizontal (touchpad geser samping)
+      if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
+
+      const max = el.scrollHeight - el.clientHeight;
+      if (max <= 0) return;
+
+      // Normalisasi satuan delta (pixel / baris / halaman)
+      let dy = e.deltaY;
+      if (e.deltaMode === 1) dy *= 16;
+      else if (e.deltaMode === 2) dy *= el.clientHeight;
+
+      e.preventDefault();
+      e.stopPropagation();
+
+      el.scrollTop = Math.max(0, Math.min(max, el.scrollTop + dy));
+    };
+
+    // passive: false WAJIB agar preventDefault berfungsi
+    el.addEventListener("wheel", onWheel, { passive: false });
+
+    return () => el.removeEventListener("wheel", onWheel);
+  }, []);
+
+  // ==========================================================
+  // MIDDLE MOUSE AUTOSCROLL (KLIK TOMBOL TENGAH)
+  //
+  // - Klik tengah sekali  → autoscroll aktif; gerakkan mouse ke
+  //   atas/bawah untuk scroll, klik apa saja / Esc untuk berhenti.
+  // - Tahan tengah + geser → scroll selama ditahan, lepas = berhenti.
+  // ==========================================================
+
+  const stopAutoScroll = useCallback(() => {
+    const s = autoScrollRef.current;
+    if (!s.active) return;
+
+    s.active = false;
+    cancelAnimationFrame(s.rafId);
+
+    setAutoScrollAnchor(null);
+    setScrollDir("none");
+  }, []);
+
+  const handleChatMouseDown = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      // Hanya tombol tengah mouse
+      if (e.button !== 1) return;
+
+      // Matikan autoscroll bawaan browser & paste tombol tengah (Linux)
+      e.preventDefault();
+
+      const s = autoScrollRef.current;
+
+      if (s.active) {
+        stopAutoScroll();
+        return;
+      }
+
+      const container = chatScrollRef.current;
+      if (!container) return;
+
+      // Tidak ada yang bisa di-scroll
+      if (container.scrollHeight <= container.clientHeight) return;
+
+      s.active = true;
+      s.anchorX = e.clientX;
+      s.anchorY = e.clientY;
+      s.mouseY = e.clientY;
+      s.downAt = performance.now();
+      s.moved = false;
+      s.acc = 0;
+      s.dir = "none";
+
+      setAutoScrollAnchor({ x: e.clientX, y: e.clientY });
+
+      const loop = () => {
+        const el = chatScrollRef.current;
+        if (!s.active || !el) return;
+
+        const dy = s.mouseY - s.anchorY;
+        const dist = Math.abs(dy);
+
+        if (dist > AUTOSCROLL_DEADZONE) {
+          const speed = Math.min(
+            Math.pow((dist - AUTOSCROLL_DEADZONE) / 10, 1.3),
+            AUTOSCROLL_MAX_SPEED,
+          );
+
+          s.acc += Math.sign(dy) * speed;
+
+          const step = Math.trunc(s.acc);
+          if (step !== 0) {
+            el.scrollTop += step;
+            s.acc -= step;
+          }
+        }
+
+        s.rafId = requestAnimationFrame(loop);
+      };
+
+      s.rafId = requestAnimationFrame(loop);
+    },
+    [stopAutoScroll],
+  );
+
+  // Cegah klik tengah membuka link di tab baru / paste
+  const handleChatAuxClick = useCallback(
+    (e: React.MouseEvent<HTMLDivElement>) => {
+      if (e.button === 1) e.preventDefault();
+    },
+    [],
+  );
+
+  // Listener global selama autoscroll aktif
+  useEffect(() => {
+    if (!autoScrollAnchor) return;
+
+    const s = autoScrollRef.current;
+
+    const onMove = (e: MouseEvent) => {
+      s.mouseY = e.clientY;
+
+      const dx = e.clientX - s.anchorX;
+      const dy = e.clientY - s.anchorY;
+
+      if (
+        Math.abs(dx) > AUTOSCROLL_DEADZONE ||
+        Math.abs(dy) > AUTOSCROLL_DEADZONE
+      ) {
+        s.moved = true;
+      }
+
+      const dir: ScrollDir =
+        Math.abs(dy) <= AUTOSCROLL_DEADZONE ? "none" : dy < 0 ? "up" : "down";
+
+      if (dir !== s.dir) {
+        s.dir = dir;
+        setScrollDir(dir);
+      }
+    };
+
+    const onUp = (e: MouseEvent) => {
+      if (e.button !== 1) return;
+
+      const held = performance.now() - s.downAt;
+
+      // Tahan-geser: lepas = berhenti. Klik sekali: tetap aktif.
+      if (s.moved || held > AUTOSCROLL_HOLD_MS) {
+        stopAutoScroll();
+      }
+    };
+
+    const onDown = (e: MouseEvent) => {
+      // Klik apa pun saat aktif hanya menghentikan autoscroll
+      e.preventDefault();
+      e.stopPropagation();
+      stopAutoScroll();
+    };
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") stopAutoScroll();
+    };
+
+    const onWheel = () => stopAutoScroll();
+    const onBlur = () => stopAutoScroll();
+
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseup", onUp);
+    window.addEventListener("mousedown", onDown, true);
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("wheel", onWheel, { passive: true });
+    window.addEventListener("blur", onBlur);
+
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseup", onUp);
+      window.removeEventListener("mousedown", onDown, true);
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("wheel", onWheel);
+      window.removeEventListener("blur", onBlur);
+    };
+  }, [autoScrollAnchor, stopAutoScroll]);
+
+  // Bersihkan animation frame saat unmount
+  useEffect(() => {
+    const s = autoScrollRef.current;
+    return () => {
+      s.active = false;
+      cancelAnimationFrame(s.rafId);
+    };
+  }, []);
+
+  const autoScrollCursor =
+    scrollDir === "up"
+      ? "n-resize"
+      : scrollDir === "down"
+        ? "s-resize"
+        : "all-scroll";
+
+  // ==========================================================
+  // RENDER
+  // ==========================================================
+
+  return (
     <main
-      // 1. Ubah menjadi flex-1 agar mengisi sisa ruang secara dinamis
-      className="flex-1 flex flex-col w-full bg-[#f9fafb] overflow-hidden"
+      /*
+       * flex-1          = mengisi sisa tinggi setelah header
+       * min-h-0         = mengizinkan child flex mengecil
+       * overflow-hidden = mencegah BODY ikut scrolling
+       */
+      className="flex-1 min-h-0 flex flex-col w-full bg-[#f9fafb] overflow-hidden relative"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      {/* 2. AREA PESAN (Otomatis Scroll) */}
-      <div className="flex-1 overflow-y-auto px-4 py-6 scroll-smooth">
+      {/* AREA PESAN — HANYA BAGIAN INI YANG BOLEH SCROLL */}
+      <div
+        ref={chatScrollRef}
+        data-lenis-prevent
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-6"
+        onMouseDown={handleChatMouseDown}
+        onAuxClick={handleChatAuxClick}
+      >
         <div className="max-w-3xl mx-auto">
           <ChatMessages
             messages={messages}
@@ -603,7 +961,7 @@ export default function ChatCanvas({ userId, currentSessionId, onMessageSent }: 
         </div>
       </div>
 
-      {/* 3. AREA INPUT (Sejajar, Bukan Absolute, dengan shrink-0) */}
+      {/* AREA INPUT — TETAP DI BAWAH */}
       <div className="w-full bg-[#f9fafb] border-t border-slate-200/60 pt-4 pb-4 px-4 shrink-0 z-10">
         <div className="max-w-3xl mx-auto">
           <MultimodalInput
@@ -614,6 +972,7 @@ export default function ChatCanvas({ userId, currentSessionId, onMessageSent }: 
             onStop={() => setIsLoading(false)}
             isLoading={isLoading}
           />
+
           <p className="text-center mt-3 text-[10px] text-slate-400 font-medium">
             SAKABOT dapat memberikan informasi yang tidak akurat. Mohon
             verifikasi melalui panduan resmi Puslapdik.
@@ -621,7 +980,34 @@ export default function ChatCanvas({ userId, currentSessionId, onMessageSent }: 
         </div>
       </div>
 
-      {/* OVERLAY DRAG & DROP TETAP SAMA */}
+      {/* MIDDLE MOUSE AUTOSCROLL OVERLAY + INDIKATOR */}
+      {autoScrollAnchor && (
+        <div
+          className="fixed inset-0 z-[60] select-none"
+          style={{ cursor: autoScrollCursor }}
+        >
+          <div
+            className="absolute -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white/90 border border-slate-300 shadow-md flex flex-col items-center justify-center"
+            style={{ left: autoScrollAnchor.x, top: autoScrollAnchor.y }}
+          >
+            <ChevronUp
+              size={12}
+              strokeWidth={3}
+              className={scrollDir === "up" ? "text-indigo-600" : "text-slate-400"}
+            />
+            <span className="w-1 h-1 rounded-full bg-slate-400" />
+            <ChevronDown
+              size={12}
+              strokeWidth={3}
+              className={
+                scrollDir === "down" ? "text-indigo-600" : "text-slate-400"
+              }
+            />
+          </div>
+        </div>
+      )}
+
+      {/* DRAG & DROP OVERLAY */}
       <AnimatePresence>
         {isDragging && (
           <motion.div
@@ -632,6 +1018,7 @@ export default function ChatCanvas({ userId, currentSessionId, onMessageSent }: 
             className="absolute inset-0 z-50 flex items-center justify-center p-4 pointer-events-none"
           >
             <div className="absolute inset-0 bg-slate-900/20 backdrop-blur-sm" />
+
             <motion.div
               initial={{ scale: 0.95, y: 10 }}
               animate={{ scale: 1, y: 0 }}
@@ -642,6 +1029,7 @@ export default function ChatCanvas({ userId, currentSessionId, onMessageSent }: 
               <div className="w-16 h-16 rounded-2xl bg-primary/50 flex items-center justify-center border-2 border-dashed border-indigo-300">
                 <ImagePlus className="w-8 h-8 text-primary/60" />
               </div>
+
               <div className="text-center">
                 <p className="text-base font-bold text-slate-800 mb-1">
                   Lepaskan gambar di sini
@@ -655,6 +1043,7 @@ export default function ChatCanvas({ userId, currentSessionId, onMessageSent }: 
         )}
       </AnimatePresence>
 
+      {/* DROP ERROR */}
       <AnimatePresence>
         {dropError && (
           <motion.div
