@@ -27,12 +27,12 @@ export default function ChatSidebar({
 
   useEffect(() => {
     async function fetchSessions() {
-      if (!userId) return; 
+      if (!userId) return;
 
       try {
         const res = await fetch(`/api/chat/sessions?userId=${userId}`);
         if (!res.ok) throw new Error("Gagal mengambil data");
-        
+
         const data = await res.json();
         if (data.sessions) {
           setHistory(data.sessions);
@@ -65,7 +65,7 @@ export default function ChatSidebar({
 
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
         <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-2">
-          Riwayat Terakhir (Maks. 3)
+          Riwayat Terakhir
         </h3>
 
         {history.length === 0 ? (
