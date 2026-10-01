@@ -1,7 +1,6 @@
 import axios from 'axios';
 import { prisma } from '@/lib/prisma';
 
-
 const FASTAPI_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export async function POST(request: Request) {
@@ -19,10 +18,34 @@ export async function POST(request: Request) {
     let isNewSession = false;
 
     // ==========================================
-    // 1. MANAJEMEN SESI (PRISMA)
+    // 1. MANAJEMEN SESI (PRISMA) & HARD LIMIT
     // ==========================================
     if (!sessionId) {
       isNewSession = true;
+
+      // --- LOGIKA HARD LIMIT ---
+      // Hanya berlaku jika user login (userId tidak null)
+      if (userId) {
+        // Ambil semua sesi milik user, urutkan dari yang paling baru
+        const existingSessions = await prisma.chatSession.findMany({
+          where: { userId: userId },
+          orderBy: { createdAt: 'desc' },
+        });
+
+        // Jika user sudah memiliki 3 sesi atau lebih, kita sisakan 2 yang terbaru.
+        // Sisa sesi terlama akan dihapus, agar ketika sesi baru ini masuk, totalnya pas 3.
+        if (existingSessions.length >= 3) {
+          const sessionsToDelete = existingSessions.slice(2).map(s => s.id);
+          
+          await prisma.chatSession.deleteMany({
+            where: {
+              id: { in: sessionsToDelete },
+            },
+          });
+        }
+      }
+      // --------------------------
+
       // Buat sesi baru di database
       const newSession = await prisma.chatSession.create({
         data: {
@@ -37,13 +60,12 @@ export async function POST(request: Request) {
     // 2. SIMPAN PESAN USER KE DATABASE
     // ==========================================
     await prisma.chatMessage.create({
-  data: {
-    // Baris 'id' dihapus total, biarkan Prisma yang membuatkan otomatis
-    sessionId: sessionId,
-    role: "USER",   // Ubah menjadi huruf kapital (sesuai ENUM)
-  content: messages[messages.length - 1].content
-  }
-});
+      data: {
+        sessionId: sessionId,
+        role: "USER",   // Ubah menjadi huruf kapital (sesuai ENUM)
+        content: messages[messages.length - 1].content
+      }
+    });
 
     // ==========================================
     // 3. SIAPKAN RIWAYAT & KIRIM KE FASTAPI
@@ -110,7 +132,7 @@ export async function POST(request: Request) {
     const encoder = new TextEncoder();
     const words = botReply.split(' ');
 
-    const customStream = new ReadableStream<Uint8Array>({
+    const customStream = new ReadableStream({
       async start(controller) {
         try {
           for (let i = 0; i < words.length; i++) {
