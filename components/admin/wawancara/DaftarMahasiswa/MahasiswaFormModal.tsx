@@ -1,7 +1,8 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import ModalShell from "../shared/ModalShell";
+import ModalFooter from "../shared/ModalFooter";
+import RoleSection from "../shared/RoleSection";
 import type { Prodi } from "@/types/wawancara";
 
 interface MahasiswaForm {
@@ -22,6 +23,9 @@ interface MahasiswaFormModalProps {
   onChange: (form: MahasiswaForm) => void;
   onClose: () => void;
   onSave: () => void;
+  roles: string[];
+  onDelete: () => void;
+  onJadikanPewawancara: () => void;
 }
 
 export default function MahasiswaFormModal({
@@ -35,30 +39,27 @@ export default function MahasiswaFormModal({
   onChange,
   onClose,
   onSave,
+  roles,
+  onDelete,
+  onJadikanPewawancara,
 }: MahasiswaFormModalProps) {
+  const isPewawancara = roles.includes("PEWAWANCARA");
+
   return (
     <ModalShell
       open={open}
       title="Edit Profil Mahasiswa"
       subtitle={email}
       onClose={onClose}
+      maxWidth="md"
       footer={
-        <>
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 text-sm font-semibold border border-admin-border rounded-xl hover:bg-admin-surface-soft transition-all"
-          >
-            Batal
-          </button>
-          <button
-            onClick={onSave}
-            disabled={saving}
-            className="flex-1 py-2.5 text-sm font-semibold bg-admin-accent text-white rounded-xl hover:bg-admin-accent/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-          >
-            {saving && <Loader2 size={14} className="animate-spin" />}
-            {saving ? "Menyimpan..." : "Simpan"}
-          </button>
-        </>
+        <ModalFooter
+          saving={saving}
+          onClose={onClose}
+          onSave={onSave}
+          onDelete={onDelete}
+          deleteLabel={isPewawancara ? "Cabut role" : "Hapus akun"}
+        />
       }
     >
       {isNewProfile && (
@@ -120,6 +121,13 @@ export default function MahasiswaFormModal({
           ))}
         </select>
       </div>
+      <RoleSection
+        roles={roles}
+        current="MAHASISWA_KIPK"
+        addAction={
+          isPewawancara ? undefined : { label: "Jadikan Pewawancara", onClick: onJadikanPewawancara }
+        }
+      />
       <p className="text-[11px] text-admin-text-5 bg-admin-surface-soft rounded-xl px-3 py-2 border border-admin-border-soft">
         Email tidak bisa diubah di sini — akun ini terverifikasi lewat SSO Undip.
       </p>

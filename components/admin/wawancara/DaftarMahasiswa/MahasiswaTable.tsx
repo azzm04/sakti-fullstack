@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Trash2, CheckCircle2, GraduationCap, UserPlus } from "lucide-react";
+import { Pencil, CheckCircle2, GraduationCap } from "lucide-react";
 import type { MahasiswaKipk } from "@/types/wawancara";
 import LoadingState from "../shared/LoadingState";
 
@@ -8,18 +8,14 @@ interface MahasiswaTableProps {
   data: MahasiswaKipk[];
   loading: boolean;
   onEdit: (m: MahasiswaKipk) => void;
-  onDelete: (m: MahasiswaKipk) => void;
   onToggleActive: (m: MahasiswaKipk) => void;
-  onJadikanPewawancara: (m: MahasiswaKipk) => void;
 }
 
 export default function MahasiswaTable({
   data,
   loading,
   onEdit,
-  onDelete,
   onToggleActive,
-  onJadikanPewawancara,
 }: MahasiswaTableProps) {
   if (loading) return <LoadingState />;
 
@@ -50,11 +46,10 @@ export default function MahasiswaTable({
         {data.map((m) => (
           <tr key={m.id} className="hover:bg-admin-surface-soft/60 transition-colors">
             <td className="px-4 py-3">
-              <p className="font-semibold text-admin-text">{m.penerima_kipk?.nama ?? "—"}</p>
-              {m.roles.includes("PEWAWANCARA") && (
-                <span className="inline-block mt-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-admin-accent/10 text-admin-accent-ink border border-admin-accent/25">
-                  Juga: Pewawancara
-                </span>
+              {m.penerima_kipk?.nama ? (
+                <p className="font-semibold text-admin-text">{m.penerima_kipk.nama}</p>
+              ) : (
+                <p className="text-[12px] italic text-admin-text-5">Profil belum diisi</p>
               )}
             </td>
             <td className="px-4 py-3">
@@ -85,31 +80,13 @@ export default function MahasiswaTable({
               </button>
             </td>
             <td className="px-4 py-3">
-              <div className="flex items-center gap-1">
-                {!m.roles.includes("PEWAWANCARA") && (
-                  <button
-                    onClick={() => onJadikanPewawancara(m)}
-                    className="w-7 h-7 flex items-center justify-center rounded-lg text-admin-text-5 hover:bg-admin-border-soft hover:text-admin-accent transition-colors"
-                    title="Jadikan Pewawancara"
-                  >
-                    <UserPlus size={13} />
-                  </button>
-                )}
-                <button
-                  onClick={() => onEdit(m)}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg text-admin-text-5 hover:bg-admin-border-soft hover:text-admin-accent transition-colors"
-                  title="Edit"
-                >
-                  <Pencil size={13} />
-                </button>
-                <button
-                  onClick={() => onDelete(m)}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg text-admin-text-5 hover:bg-admin-danger-bg hover:text-admin-danger-bar transition-colors"
-                  title="Hapus"
-                >
-                  <Trash2 size={13} />
-                </button>
-              </div>
+              <button
+                onClick={() => onEdit(m)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-admin-border px-2.5 py-1.5 text-[12px] font-semibold text-admin-text-2 transition-colors hover:border-admin-accent hover:text-admin-accent"
+                title="Kelola akun"
+              >
+                <Pencil size={12} /> Kelola
+              </button>
             </td>
           </tr>
         ))}

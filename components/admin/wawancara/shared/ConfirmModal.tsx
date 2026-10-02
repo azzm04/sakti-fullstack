@@ -1,7 +1,7 @@
 "use client";
 
 import { motion, AnimatePresence } from "framer-motion";
-import { Loader2, Trash2, Zap, Play } from "lucide-react";
+import { Loader2, Trash2, LockOpen, Play } from "lucide-react";
 
 export type ConfirmVariant = "warning" | "danger" | "info";
 
@@ -35,10 +35,10 @@ const VARIANT_CONFIG: Record<
     defaultLabel: "Hapus",
   },
   warning: {
-    icon: Zap,
-    iconBg: "bg-admin-warn-border",
-    iconColor: "text-admin-warn-text",
-    btnClass: "bg-admin-warn-bar hover:bg-admin-warn-text",
+    icon: LockOpen,
+    iconBg: "bg-admin-accent/15",
+    iconColor: "text-admin-accent",
+    btnClass: "bg-admin-accent hover:bg-admin-accent-hover",
     defaultLabel: "Ya, Lanjutkan",
   },
   info: {

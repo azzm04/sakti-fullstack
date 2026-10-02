@@ -342,7 +342,7 @@ export default function AdminDashboardContent({ stats }: Props) {
                 <button disabled title="Template unduhan belum tersedia" className={quickActionBtn}>
                   Unduh template .xlsx
                 </button>
-                <Link href="/admin/wawancara" className={quickActionBtn}>
+                <Link href="/admin/wawancara/urutan" className={quickActionBtn}>
                   Aktifkan sesi wawancara
                 </Link>
                 <Link href="/admin/monev" className={quickActionBtn}>

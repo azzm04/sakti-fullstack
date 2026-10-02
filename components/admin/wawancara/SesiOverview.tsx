@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Zap, ZapOff, CheckCircle2, CalendarDays, Users, ChevronRight, Loader2,
+  Radio, Lock, CheckCircle2, CalendarDays, Users, ChevronRight, Loader2,
 } from 'lucide-react';
 
 interface SesiItem {
@@ -71,13 +71,13 @@ export default function SesiOverview({ onSelectTanggal, activeTanggal }: Props) 
         </h3>
         <div className="flex items-center gap-3 text-[11px] font-semibold">
           {activeCount > 0 && (
-            <span className="flex items-center gap-1 text-admin-warn-text bg-admin-warn-bg-2 px-2 py-0.5 rounded-full border border-admin-warn-border">
-              <Zap size={10} /> {activeCount} Aktif
+            <span className="flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              <Radio size={10} /> {activeCount} Aktif
             </span>
           )}
           {pendingCount > 0 && (
             <span className="flex items-center gap-1 text-admin-text-4 bg-admin-border-soft px-2 py-0.5 rounded-full border border-admin-border">
-              <ZapOff size={10} /> {pendingCount} Menunggu
+              <Lock size={10} /> {pendingCount} Menunggu
             </span>
           )}
           {doneCount > 0 && (
@@ -107,7 +107,7 @@ export default function SesiOverview({ onSelectTanggal, activeTanggal }: Props) 
                 isActive
                   ? 'bg-admin-accent text-white border-admin-accent shadow-lg shadow-primary/20'
                   : sesi.war_aktif
-                  ? 'bg-admin-warn-bg-2 border-admin-warn-border hover:border-admin-warn-bar'
+                  ? 'bg-emerald-50 border-emerald-200 hover:border-emerald-400'
                   : sesi.distribusi_done
                   ? 'bg-admin-accent/10 border-admin-accent/25 hover:border-admin-accent/40'
                   : 'bg-white border-admin-border hover:border-admin-text-6 hover:shadow-sm'
@@ -115,7 +115,7 @@ export default function SesiOverview({ onSelectTanggal, activeTanggal }: Props) 
             >
               {/* Live indicator */}
               {sesi.war_aktif && !isActive && (
-                <span className="absolute top-2 right-2 w-2 h-2 bg-admin-warn-bar rounded-full animate-pulse" />
+                <span className="absolute top-2 right-2 w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
               )}
 
               {/* Date */}
@@ -147,7 +147,7 @@ export default function SesiOverview({ onSelectTanggal, activeTanggal }: Props) 
 
                 {sesi.war_aktif ? (
                   <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                    isActive ? 'bg-white/20 text-white' : 'bg-admin-warn-border text-admin-warn-text'
+                    isActive ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-700'
                   }`}>
                     LIVE
                   </span>

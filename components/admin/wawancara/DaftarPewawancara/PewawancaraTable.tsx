@@ -1,6 +1,6 @@
 "use client";
 
-import { Pencil, Trash2, CheckCircle2, UserCheck } from "lucide-react";
+import { Pencil, CheckCircle2, UserCheck } from "lucide-react";
 import type { Pewawancara } from "@/types/wawancara";
 import LoadingState from "../shared/LoadingState";
 
@@ -8,7 +8,6 @@ interface PewawancaraTableProps {
   data: Pewawancara[];
   loading: boolean;
   onEdit: (p: Pewawancara) => void;
-  onDelete: (p: Pewawancara) => void;
   onToggleActive: (p: Pewawancara) => void;
 }
 
@@ -16,7 +15,6 @@ export default function PewawancaraTable({
   data,
   loading,
   onEdit,
-  onDelete,
   onToggleActive,
 }: PewawancaraTableProps) {
   if (loading) return <LoadingState />;
@@ -49,11 +47,6 @@ export default function PewawancaraTable({
           <tr key={p.id} className="hover:bg-admin-surface-soft/60 transition-colors">
             <td className="px-4 py-3">
               <p className="font-semibold text-admin-text">{p.nama ?? "—"}</p>
-              {(p.users?.user_roles ?? []).some((r) => r.role === "MAHASISWA_KIPK") && (
-                <span className="inline-block mt-1 text-[10px] font-semibold px-1.5 py-0.5 rounded-full bg-admin-accent/10 text-admin-accent-ink border border-admin-accent/25">
-                  Juga: Mahasiswa KIP-K
-                </span>
-              )}
             </td>
             <td className="px-4 py-3">
               <p className="text-[11px] font-semibold text-admin-text">
@@ -79,22 +72,13 @@ export default function PewawancaraTable({
               </button>
             </td>
             <td className="px-4 py-3">
-              <div className="flex items-center gap-1">
-                <button
-                  onClick={() => onEdit(p)}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg text-admin-text-5 hover:bg-admin-border-soft hover:text-admin-accent transition-colors"
-                  title="Edit"
-                >
-                  <Pencil size={13} />
-                </button>
-                <button
-                  onClick={() => onDelete(p)}
-                  className="w-7 h-7 flex items-center justify-center rounded-lg text-admin-text-5 hover:bg-admin-danger-bg hover:text-admin-danger-bar transition-colors"
-                  title="Hapus"
-                >
-                  <Trash2 size={13} />
-                </button>
-              </div>
+              <button
+                onClick={() => onEdit(p)}
+                className="inline-flex items-center gap-1.5 rounded-lg border border-admin-border px-2.5 py-1.5 text-[12px] font-semibold text-admin-text-2 transition-colors hover:border-admin-accent hover:text-admin-accent"
+                title="Kelola akun"
+              >
+                <Pencil size={12} /> Kelola
+              </button>
             </td>
           </tr>
         ))}

@@ -231,9 +231,7 @@ export default function DaftarMahasiswa() {
           data={data}
           loading={loading}
           onEdit={openEdit}
-          onDelete={setDeleteTarget}
           onToggleActive={handleToggleActive}
-          onJadikanPewawancara={openJadikanPewawancara}
         />
       </div>
 
@@ -248,6 +246,16 @@ export default function DaftarMahasiswa() {
         onChange={setForm}
         onClose={() => setEditing(null)}
         onSave={handleSave}
+        roles={editing?.roles ?? []}
+        onDelete={() => {
+          setDeleteTarget(editing);
+          setEditing(null);
+        }}
+        onJadikanPewawancara={() => {
+          if (!editing) return;
+          openJadikanPewawancara(editing);
+          setEditing(null);
+        }}
       />
 
       <JadikanPewawancaraModal
@@ -264,7 +272,11 @@ export default function DaftarMahasiswa() {
       <ConfirmModal
         open={!!deleteTarget}
         variant="danger"
-        title="Hapus Akun Mahasiswa?"
+        title={
+          deleteTarget && deleteTarget.roles.length > 1
+            ? "Cabut Role Mahasiswa KIP-K?"
+            : "Hapus Akun Mahasiswa?"
+        }
         description={
           deleteTarget && deleteTarget.roles.length > 1
             ? `Profil KIP-K untuk ${

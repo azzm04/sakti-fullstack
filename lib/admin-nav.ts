@@ -10,7 +10,8 @@
 import {
   LayoutDashboard,
   Upload,
-  Zap,
+  ListOrdered,
+  Users,
   ClipboardCheck,
   BookMarked,
   BarChart3,
@@ -29,7 +30,8 @@ export interface AdminNavItem {
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { href: "/admin",                    label: "Dashboard",        icon: LayoutDashboard },
   { href: "/admin/import",             label: "Import Data",      icon: Upload          },
-  { href: "/admin/wawancara",          label: "Wawancara",        icon: Zap             },
+  { href: "/admin/wawancara/pengguna",  label: "Daftar Pengguna",  icon: Users           },
+  { href: "/admin/wawancara/urutan",    label: "Urutan Pewawancara", icon: ListOrdered         },
   { href: "/admin/evaluasi",           label: "Evaluasi",         icon: ClipboardCheck  },
   { href: "/admin/filtering",          label: "Filtering Kuota",  icon: ListFilter      },
   { href: "/admin/hasil-akhir",        label: "Hasil Akhir",      icon: Award           },
