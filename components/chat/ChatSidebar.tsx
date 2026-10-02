@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { MessageSquare, Plus, Pencil, Trash2, Check, X } from "lucide-react";
 import { twMerge } from "tailwind-merge";
+import ConfirmDeleteModal from "./ConfirmDeleteModal";
 
 interface ChatSidebarProps {
   userId?: string;
@@ -29,6 +30,7 @@ export default function ChatSidebar({
   const [editingSessionId, setEditingSessionId] = useState<string | null>(null);
   const [editedTitle, setEditedTitle] = useState<string>("");
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [sessionToDelete, setSessionToDelete] = useState<string | null>(null);
 
   // Fungsi untuk mengambil data sesi
   const fetchSessions = async () => {
@@ -83,10 +85,16 @@ export default function ChatSidebar({
   };
 
   // Fungsi untuk menghapus riwayat chat (DELETE)
-  const handleDeleteSession = async (sessionId: string, e: React.MouseEvent) => {
-    e.stopPropagation(); // Mencegah event klik memicu onSelectSession
+  // Hanya membuka modal, belum menghapus
+  const requestDeleteSession = (sessionId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSessionToDelete(sessionId);
+  };
 
-    if (!confirm("Apakah Anda yakin ingin menghapus riwayat percakapan ini?")) return;
+  // Dijalankan saat tombol "Hapus" di modal ditekan
+  const confirmDeleteSession = async () => {
+    if (!sessionToDelete) return;
+    const sessionId = sessionToDelete;
 
     try {
       setIsLoading(true);
@@ -96,10 +104,8 @@ export default function ChatSidebar({
 
       if (!res.ok) throw new Error("Gagal menghapus riwayat");
 
-      // Hapus dari state lokal
       setHistory((prev) => prev.filter((item) => item.id !== sessionId));
 
-      // Jika sesi yang dihapus sedang aktif, buat chat baru atau kosongkan seleksi
       if (currentSessionId === sessionId) {
         onNewChat?.();
       }
@@ -107,6 +113,7 @@ export default function ChatSidebar({
       console.error("Error deleting session:", err);
     } finally {
       setIsLoading(false);
+      setSessionToDelete(null);
     }
   };
 
@@ -227,7 +234,7 @@ export default function ChatSidebar({
                       </button>
                       <button
                         title="Hapus Riwayat"
-                        onClick={(e) => handleDeleteSession(session.id, e)}
+                        onClick={(e) => requestDeleteSession(session.id, e)}
                         disabled={isLoading}
                         className="p-1 hover:bg-rose-100 text-slate-400 hover:text-rose-600 rounded transition-colors"
                       >
@@ -241,6 +248,12 @@ export default function ChatSidebar({
           })
         )}
       </div>
+      <ConfirmDeleteModal
+        open={sessionToDelete !== null}
+        loading={isLoading}
+        onCancel={() => setSessionToDelete(null)}
+        onConfirm={confirmDeleteSession}
+      />
     </aside>
   );
 }
