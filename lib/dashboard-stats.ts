@@ -162,7 +162,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .eq("is_draft", false)
       .not("interviewed_at", "is", null)
       .order("interviewed_at", { ascending: false })
-      .limit(5),
+      .limit(6),
     supabaseAdmin
       .from("pewawancara")
       .select("id", { count: "exact", head: true })
