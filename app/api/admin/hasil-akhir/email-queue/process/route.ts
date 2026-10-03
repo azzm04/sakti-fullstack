@@ -208,5 +208,122 @@ function buildTemplate(kandidat: {
     ? ` <p style="margin: 24px 0 8px 0;"> Silakan melakukan verifikasi melalui web SAKTI: </p> <p style="margin: 0 0 24px 0;"> <a href="${linkVerifikasi}" style="color: #003580; font-weight: 600; text-decoration: underline;" > Verifikasi Kandidat </a> </p> `
     : "";
 
-  return `<div style=" margin: 0; padding: 32px 16px; background-color: #ffffff; font-family: Arial, Helvetica, sans-serif; color: #333333; font-size: 14px; line-height: 1.6; "> <div style=" max-width: 600px; margin: 0 auto; "> <p style=" margin: 0 0 24px 0; font-size: 16px; font-weight: 600; color: #222222; "> Pengumuman KIP Kuliah Universitas Diponegoro </p> <p style="margin: 0 0 16px 0;"> Halo, <strong>${kandidat.nama}</strong>. </p> <p style="margin: 0 0 20px 0;"> ${teksPembuka} </p> <p style=" margin: 0 0 8px 0; font-weight: 600; "> Data Pendaftar </p> <table cellpadding="0" cellspacing="0" border="0" style=" width: 100%; margin: 0 0 20px 0; border-collapse: collapse; " > <tr> <td style="padding: 5px 0; width: 150px; color: #666666;"> Nama </td> <td style="padding: 5px 0;"> ${kandidat.nama} </td> </tr> <tr> <td style="padding: 5px 0; color: #666666;"> NISN </td> <td style="padding: 5px 0;"> ${kandidat.nisn} </td> </tr> <tr> <td style="padding: 5px 0; color: #666666;"> Program Studi </td> <td style="padding: 5px 0;"> ${kandidat.prodi} </td> </tr> <tr> <td style="padding: 5px 0; color: #666666;"> No. Pendaftaran KIPK </td> <td style="padding: 5px 0;"> ${kandidat.no_pendaftaran_kipk} </td> </tr> </table> <p style="margin: 0 0 20px 0;"> ${teksPenutup} </p> ${blokVerifikasi} <p style=" margin: 32px 0 0 0; padding-top: 16px; border-top: 1px solid #eeeeee; color: #777777; font-size: 13px; "> Demikian informasi ini disampaikan. Mohon diperhatikan dan ditindaklanjuti sesuai dengan ketentuan yang berlaku. </p> <p style=" margin: 24px 0 0 0; color: #555555; font-size: 13px; "> Hormat kami,<br /> <strong>Direktorat Kemahasiswaan</strong><br /> Universitas Diponegoro </p> </div> </div> `;
+  return `<div style="margin:0; padding:32px 16px; background-color:#f7f8fa; font-family:Arial, Helvetica, sans-serif; color:#30343b; font-size:14px; line-height:1.65;">
+
+  <div style="max-width:600px; margin:0 auto;">
+
+    <!-- Email Container -->
+    <div style="background:#ffffff; border:1px solid #e5e7eb; border-radius:6px; padding:36px 38px;">
+
+      <!-- Institution -->
+      <div style="margin:0 0 30px 0; padding-bottom:20px; border-bottom:1px solid #e5e7eb; text-align:center;">
+        <div style="font-size:12px; letter-spacing:0.5px; color:#6b7280;">
+          UNIVERSITAS DIPONEGORO
+        </div>
+        <div style="margin-top:4px; font-size:12px; color:#9ca3af;">
+          Direktorat Kemahasiswaan
+        </div>
+      </div>
+
+      <!-- Title -->
+      <div style="margin:0 0 20px 0;">
+        <div style="font-size:20px; line-height:1.4; font-weight:600; color:#1f2937;">
+          Pengumuman KIP Kuliah Universitas Diponegoro
+        </div>
+      </div>
+
+      <!-- Greeting -->
+      <p style="margin:0 0 16px 0;">
+        Halo, <strong>${kandidat.nama}</strong>.
+      </p>
+
+      <!-- Opening -->
+      <p style="margin:0 0 26px 0;">
+        ${teksPembuka}
+      </p>
+
+      <!-- Applicant Data -->
+      <div style="margin:0 0 26px 0;">
+
+        <div style="font-size:13px; font-weight:600; color:#374151; margin-bottom:10px;">
+          Data Pendaftar
+        </div>
+
+        <table cellpadding="0" cellspacing="0" border="0" width="100%"
+               style="border-collapse:collapse; font-size:13px;">
+
+          <tr>
+            <td style="width:150px; padding:9px 0; color:#6b7280; border-bottom:1px solid #f0f1f3;">
+              Nama
+            </td>
+            <td style="padding:9px 0; color:#30343b; border-bottom:1px solid #f0f1f3;">
+              ${kandidat.nama}
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:9px 0; color:#6b7280; border-bottom:1px solid #f0f1f3;">
+              NISN
+            </td>
+            <td style="padding:9px 0; color:#30343b; border-bottom:1px solid #f0f1f3;">
+              ${kandidat.nisn}
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:9px 0; color:#6b7280; border-bottom:1px solid #f0f1f3;">
+              Program Studi
+            </td>
+            <td style="padding:9px 0; color:#30343b; border-bottom:1px solid #f0f1f3;">
+              ${kandidat.prodi}
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding:9px 0; color:#6b7280;">
+              No. Pendaftaran KIPK
+            </td>
+            <td style="padding:9px 0; color:#30343b;">
+              ${kandidat.no_pendaftaran_kipk}
+            </td>
+          </tr>
+
+        </table>
+
+      </div>
+
+      <!-- Closing Information -->
+      <p style="margin:0 0 24px 0;">
+        ${teksPenutup}
+      </p>
+
+      <!-- Verification Block -->
+      ${blokVerifikasi}
+
+      <!-- Final Notice -->
+      <p style="margin:32px 0 0 0; padding-top:18px; border-top:1px solid #e5e7eb; color:#626975; font-size:13px;">
+        Demikian informasi ini disampaikan. Mohon diperhatikan dan ditindaklanjuti
+        sesuai dengan ketentuan yang berlaku.
+      </p>
+
+      <!-- Signature -->
+      <p style="margin:24px 0 0 0; color:#4b5563; font-size:13px; line-height:1.7;">
+        Hormat kami,<br />
+        <strong style="color:#30343b;">Direktorat Kemahasiswaan</strong><br />
+        Universitas Diponegoro
+      </p>
+
+    </div>
+
+    <!-- Footer -->
+    <div style="padding:16px 8px 0 8px; text-align:center;">
+      <div style="font-size:11px; color:#9ca3af; line-height:1.5;">
+        Email ini dikirim secara otomatis oleh sistem KIP Kuliah.<br />
+        Mohon tidak membalas email ini.
+      </div>
+    </div>
+
+  </div>
+
+</div>`;
 }
