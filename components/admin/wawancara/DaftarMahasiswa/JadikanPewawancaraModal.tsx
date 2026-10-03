@@ -49,7 +49,7 @@ export default function JadikanPewawancaraModal({
             className="flex-1 py-2.5 text-sm font-semibold bg-admin-accent text-white rounded-xl hover:bg-admin-accent/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
           >
             {saving && <Loader2 size={14} className="animate-spin" />}
-            {saving ? "Menyimpan..." : "Jadikan Pewawancara"}
+            {saving ? "Menyimpan & mengirim email..." : "Jadikan Pewawancara"}
           </button>
         </>
       }
@@ -68,7 +68,8 @@ export default function JadikanPewawancaraModal({
       </div>
       <p className="text-[11px] text-admin-text-5 bg-admin-surface-soft rounded-xl px-3 py-2 border border-admin-border-soft">
         Akun ini akan tetap sebagai Mahasiswa KIP-K — role Pewawancara ditambahkan,
-        bukan menggantikan. Akan muncul juga di tab Pewawancara.
+        bukan menggantikan. Akan muncul juga di tab Pewawancara, dan email pemberitahuan
+        penunjukan pewawancara dikirim ke alamat ini.
       </p>
       {formError && (
         <p role="alert" className="text-xs text-admin-danger-text bg-admin-danger-bg rounded-xl px-3 py-2">

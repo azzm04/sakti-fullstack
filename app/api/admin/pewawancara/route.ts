@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
 import { getCurrentUser } from "@/lib/auth-server";
 import { assignPewawancaraRole } from "@/lib/pewawancara";
+import { sendPewawancaraAssignedEmail } from "@/lib/mailer";
 
 // GET — list semua pewawancara (join ke users untuk nama & email)
 export async function GET(req: NextRequest) {
@@ -76,7 +77,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: result.error }, { status: result.status });
     }
 
-    return NextResponse.json({ success: true, data: result.pewawancara }, { status: 201 });
+    // Email pemberitahuan — kegagalan kirim tidak membatalkan pembuatan akun,
+    // cukup dilaporkan ke admin lewat `email_sent`.
+    let emailSent = true;
+    let emailError: string | undefined;
+    try {
+      await sendPewawancaraAssignedEmail(email.toLowerCase().trim(), nama);
+    } catch (mailErr) {
+      emailSent = false;
+      emailError = mailErr instanceof Error ? mailErr.message : String(mailErr);
+      console.error("[POST /api/admin/pewawancara] gagal kirim email:", mailErr);
+    }
+
+    return NextResponse.json(
+      { success: true, data: result.pewawancara, email_sent: emailSent, email_error: emailError },
+      { status: 201 },
+    );
   } catch (err) {
     console.error("[POST /api/admin/pewawancara] unexpected:", err);
     return NextResponse.json(

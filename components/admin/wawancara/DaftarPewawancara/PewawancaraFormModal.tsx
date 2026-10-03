@@ -46,6 +46,8 @@ export default function PewawancaraFormModal({
       footer={
         <ModalFooter
           saving={saving}
+          saveLabel={editing ? "Simpan" : "Simpan & Kirim Email"}
+          savingLabel={editing ? undefined : "Menyimpan & mengirim email..."}
           onClose={onClose}
           onSave={onSave}
           onDelete={editing ? onDelete : undefined}
@@ -81,7 +83,8 @@ export default function PewawancaraFormModal({
       {editing && <RoleSection roles={roles} current="PEWAWANCARA" />}
       {!editing && (
         <p className="text-[11px] text-admin-text-5 bg-admin-surface-soft rounded-xl px-3 py-2 border border-admin-border-soft">
-          Pengguna otomatis bisa login via OTP menggunakan email ini. Kalau email ini sudah
+          Email pemberitahuan penunjukan pewawancara akan dikirim ke alamat ini, dan pengguna
+          bisa langsung login via OTP. Kalau email ini sudah
           terdaftar (mis. sebagai Mahasiswa KIP-K), role Pewawancara akan ditambahkan ke akun
           itu — bukan membuat akun baru.
         </p>

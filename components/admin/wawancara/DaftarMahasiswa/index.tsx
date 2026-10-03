@@ -8,6 +8,7 @@ import MahasiswaTable from "./MahasiswaTable";
 import MahasiswaFormModal from "./MahasiswaFormModal";
 import JadikanPewawancaraModal from "./JadikanPewawancaraModal";
 import ConfirmModal from "../shared/ConfirmModal";
+import { notifyPewawancaraEmail } from "../shared/notifyPewawancaraEmail";
 
 export default function DaftarMahasiswa() {
   const [data, setData] = useState<MahasiswaKipk[]>([]);
@@ -160,9 +161,7 @@ export default function DaftarMahasiswa() {
         return;
       }
       setPewawancaraTarget(null);
-      toast.success("Role Pewawancara ditambahkan", {
-        description: `${pewawancaraTarget.email_sso} sekarang juga bisa masuk sebagai pewawancara.`,
-      });
+      notifyPewawancaraEmail(json, pewawancaraTarget.email_sso);
       fetchData();
     } finally {
       setAssigningPewawancara(false);

@@ -7,6 +7,7 @@ import type { Pewawancara } from "@/types/wawancara";
 import PewawancaraTable from "./PewawancaraTable";
 import PewawancaraFormModal from "./PewawancaraFormModal";
 import ConfirmModal from "../shared/ConfirmModal";
+import { notifyPewawancaraEmail } from "../shared/notifyPewawancaraEmail";
 
 export default function DaftarPewawancara() {
   const [data, setData] = useState<Pewawancara[]>([]);
@@ -83,6 +84,7 @@ export default function DaftarPewawancara() {
         return;
       }
       setShowModal(false);
+      if (!editing) notifyPewawancaraEmail(json, form.email);
       fetchData();
     } finally {
       setSaving(false);
