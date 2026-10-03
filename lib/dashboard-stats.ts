@@ -8,17 +8,13 @@ import type {
 interface KandidatRow {
   jalur_masuk: string | null;
   impor_data: { tahun_seleksi: number | null } | null;
-  hasil_wawancara: { hasil_akhir: string | null; is_draft: boolean | null }[] | null;
+  hasil_wawancara:
+    | { hasil_akhir: string | null; is_draft: boolean | null }[]
+    | null;
 }
 
 const SUPABASE_MAX_ROWS = 1000;
 
-/**
- * Supabase membatasi setiap response ke SUPABASE_MAX_ROWS baris di sisi
- * server (db.max_rows) — `.limit()` di client TIDAK bisa melewati batas ini,
- * jadi query dengan banyak baris (seperti seluruh tabel kandidat) harus
- * di-paginate manual via `.range()`.
- */
 async function fetchAllKandidat(): Promise<KandidatRow[]> {
   const rows: KandidatRow[] = [];
   let from = 0;
@@ -96,7 +92,9 @@ async function getActivityFeed(): Promise<DashboardActivityItem[]> {
 
   if (interviews.status === "fulfilled" && interviews.value.data) {
     for (const row of interviews.value.data) {
-      const kandidat = Array.isArray(row.kandidat) ? row.kandidat[0] : row.kandidat;
+      const kandidat = Array.isArray(row.kandidat)
+        ? row.kandidat[0]
+        : row.kandidat;
       items.push({
         at: row.interviewed_at,
         time: row.interviewed_at,
@@ -150,7 +148,9 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     fetchAllKandidat(),
     supabaseAdmin
       .from("hasil_analitik_dt")
-      .select("akurasi_model, jumlah_fitur, tahun_seleksi, jalur_masuk, analyzed_at")
+      .select(
+        "akurasi_model, jumlah_fitur, tahun_seleksi, jalur_masuk, analyzed_at",
+      )
       .order("analyzed_at", { ascending: false })
       .limit(1),
     getActivityFeed(),
@@ -196,20 +196,23 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     }
   }
 
-  // 5 siklus seleksi terakhir yang benar-benar ada datanya — tidak diisi-isi
-  // supaya tetap 5 tahun; grafik akan terisi penuh secara alami seiring
-  // bertambahnya siklus penerimaan di tahun-tahun berikutnya.
   const pendaftarPenerimaTrend: DashboardTrendPoint[] = Array.from(
     trendMap.entries(),
   )
-    .map(([tahun, v]) => ({ tahun, pendaftar: v.pendaftar, penerima: v.penerima }))
+    .map(([tahun, v]) => ({
+      tahun,
+      pendaftar: v.pendaftar,
+      penerima: v.penerima,
+    }))
     .sort((a, b) => a.tahun - b.tahun)
     .slice(-5);
 
   const dtRow = dtRes.data?.[0] ?? null;
 
   const recentInterviews = (recentInterviewsRes.data ?? []).map((row) => {
-    const kandidat = Array.isArray(row.kandidat) ? row.kandidat[0] : row.kandidat;
+    const kandidat = Array.isArray(row.kandidat)
+      ? row.kandidat[0]
+      : row.kandidat;
     const pewawancara = Array.isArray(row.pewawancara)
       ? row.pewawancara[0]
       : row.pewawancara;

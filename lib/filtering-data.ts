@@ -44,8 +44,6 @@ interface RawKandidatRow {
 }
 
 // Ambil kandidat "Diusulkan" (is_draft=false) untuk satu tahun+jalur — dipakai
-// bareng oleh GET /api/admin/filtering (preview) dan POST .../run (eksekusi)
-// supaya urutan & data yang dinilai konsisten di kedua tempat.
 export async function ambilKandidatUntukRanking(
   tahun: number,
   jalur: JalurKey,
@@ -73,35 +71,37 @@ export async function ambilKandidatUntukRanking(
 
   if (error) throw error;
 
-  return ((data ?? []) as unknown as RawKandidatRow[]).map((row): KandidatRankingRow => {
-    const hw = Array.isArray(row.hasil_wawancara)
-      ? row.hasil_wawancara[0]
-      : row.hasil_wawancara;
-    const dew = Array.isArray(hw?.detail_ekonomi_wawancara)
-      ? hw?.detail_ekonomi_wawancara[0]
-      : hw?.detail_ekonomi_wawancara;
+  return ((data ?? []) as unknown as RawKandidatRow[]).map(
+    (row): KandidatRankingRow => {
+      const hw = Array.isArray(row.hasil_wawancara)
+        ? row.hasil_wawancara[0]
+        : row.hasil_wawancara;
+      const dew = Array.isArray(hw?.detail_ekonomi_wawancara)
+        ? hw?.detail_ekonomi_wawancara[0]
+        : hw?.detail_ekonomi_wawancara;
 
-    const penghasilanTotal =
-      Number(hw?.ket_penghasilan_ayah ?? row.penghasilan_ayah ?? 0) +
-      Number(hw?.ket_penghasilan_ibu ?? row.penghasilan_ibu ?? 0) +
-      Number(hw?.penghasilan_lain ?? 0);
-    const jumlahTanggungan = Number(
-      dew?.jml_tanggungan_sebenarnya ?? row.jumlah_tanggungan ?? 1,
-    );
+      const penghasilanTotal =
+        Number(hw?.ket_penghasilan_ayah ?? row.penghasilan_ayah ?? 0) +
+        Number(hw?.ket_penghasilan_ibu ?? row.penghasilan_ibu ?? 0) +
+        Number(hw?.penghasilan_lain ?? 0);
+      const jumlahTanggungan = Number(
+        dew?.jml_tanggungan_sebenarnya ?? row.jumlah_tanggungan ?? 1,
+      );
 
-    return {
-      id: row.id,
-      nama_pendaftar: row.nama_pendaftar,
-      no_pendaftaran_kipk: row.no_pendaftaran_kipk,
-      prodi_pendaftar: row.prodi_pendaftar,
-      golongan_ukt: row.golongan_ukt,
-      kondisi_orang_tua: hw?.kondisi_orang_tua ?? null,
-      penghasilan_total: penghasilanTotal,
-      jumlah_tanggungan: jumlahTanggungan > 0 ? jumlahTanggungan : 1,
-      // hasil_wawancara!inner di query di atas menjamin hw selalu ada.
-      hasil_wawancara_id: hw!.id,
-      status_final_saat_ini: hw?.status_final ?? null,
-      ranking_kuota_saat_ini: hw?.ranking_kuota ?? null,
-    };
-  });
+      return {
+        id: row.id,
+        nama_pendaftar: row.nama_pendaftar,
+        no_pendaftaran_kipk: row.no_pendaftaran_kipk,
+        prodi_pendaftar: row.prodi_pendaftar,
+        golongan_ukt: row.golongan_ukt,
+        kondisi_orang_tua: hw?.kondisi_orang_tua ?? null,
+        penghasilan_total: penghasilanTotal,
+        jumlah_tanggungan: jumlahTanggungan > 0 ? jumlahTanggungan : 1,
+        // hasil_wawancara!inner di query di atas menjamin hw selalu ada.
+        hasil_wawancara_id: hw!.id,
+        status_final_saat_ini: hw?.status_final ?? null,
+        ranking_kuota_saat_ini: hw?.ranking_kuota ?? null,
+      };
+    },
+  );
 }

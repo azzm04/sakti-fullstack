@@ -23,12 +23,9 @@ function stripJenjang(text: string): string {
     .trim();
 }
 
-/**
- * Cocokkan teks bebas `kandidat.prodi_pendaftar` (mis. "S1 SEJARAH" / "Sejarah S1")
- * ke baris `prodi` yang sudah ada. Return null kalau tidak ketemu — dipakai baik
- * untuk pre-check (verify-kandidat) maupun eksekusi final (verify-otp).
- */
-export async function resolveProdiId(prodiPendaftarText: string | null | undefined): Promise<string | null> {
+export async function resolveProdiId(
+  prodiPendaftarText: string | null | undefined,
+): Promise<string | null> {
   if (!prodiPendaftarText?.trim()) return null;
 
   const jenjang = extractJenjang(prodiPendaftarText);
@@ -48,14 +45,14 @@ export async function resolveProdiId(prodiPendaftarText: string | null | undefin
   return match?.id ?? null;
 }
 
-export type BuatPenerimaKipkResult = { ok: true } | { ok: false; error: string };
+export type BuatPenerimaKipkResult =
+  | { ok: true }
+  | { ok: false; error: string };
 
-/**
- * Buat baris `penerima_kipk` untuk kandidat yang sudah "Ditetapkan" SK, dipanggil
- * di titik registrasi akhir (/api/auth/verify-otp). Idempotent — kalau user sudah
- * punya penerima_kipk, langsung dianggap sukses tanpa insert ulang.
- */
-export async function buatPenerimaKipk(kandidatId: string, userId: string): Promise<BuatPenerimaKipkResult> {
+export async function buatPenerimaKipk(
+  kandidatId: string,
+  userId: string,
+): Promise<BuatPenerimaKipkResult> {
   const existing = await prisma.penerimaKipk.findUnique({ where: { userId } });
   if (existing) return { ok: true };
 
@@ -71,7 +68,10 @@ export async function buatPenerimaKipk(kandidatId: string, userId: string): Prom
     return { ok: false, error: "Kandidat belum dinyatakan Ditetapkan SK." };
   }
   if (!kandidat.nim_resmi || !NIM_REGEX.test(kandidat.nim_resmi)) {
-    return { ok: false, error: "NIM resmi kandidat belum valid (harus 14 digit angka)." };
+    return {
+      ok: false,
+      error: "NIM resmi kandidat belum valid (harus 14 digit angka).",
+    };
   }
   if (!kandidat.nama_pendaftar) {
     return { ok: false, error: "Nama kandidat tidak lengkap." };
@@ -87,7 +87,10 @@ export async function buatPenerimaKipk(kandidatId: string, userId: string): Prom
 
   const angkatan = kandidat.impor_data?.tahun_seleksi;
   if (!angkatan) {
-    return { ok: false, error: "Tahun seleksi (angkatan) tidak ditemukan untuk kandidat ini." };
+    return {
+      ok: false,
+      error: "Tahun seleksi (angkatan) tidak ditemukan untuk kandidat ini.",
+    };
   }
 
   await prisma.penerimaKipk.create({
@@ -100,9 +103,6 @@ export async function buatPenerimaKipk(kandidatId: string, userId: string): Prom
     },
   });
 
-  // Kunci link verifikasi personal begitu registrasi benar-benar sukses —
-  // berlaku baik yang masuk lewat token maupun lewat form manual, supaya
-  // link lama (kalau ada) tidak jadi risiko residual setelah akun jadi.
   await prisma.kandidat.update({
     where: { id: kandidatId },
     data: { verifikasi_token_used_at: new Date() },

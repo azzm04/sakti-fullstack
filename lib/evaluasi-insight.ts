@@ -1,13 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-/**
- * Ringkasan angka kunci untuk kartu "Ringkasan Keputusan" di halaman evaluasi
- * detail — murni rangkuman dari data kandidat & hasil wawancara yang sudah
- * ada (per-kapita, desil DTSEN, jarak pusat kota). Tidak ada skor, prediksi,
- * atau model di sini: keputusan kelayakan tetap sepenuhnya di tangan
- * pewawancara & admin.
- */
-
 export interface EvaluasiInsightInput {
   desilDtsen?: string | null;
   jarakPusatKota?: number | null;
@@ -57,7 +49,9 @@ function jarakLabelFromKm(km: number | null): string {
   return `${km} km — Jauh dari pusat kota`;
 }
 
-export function computeEvaluasiInsight(input: EvaluasiInsightInput): EvaluasiInsight {
+export function computeEvaluasiInsight(
+  input: EvaluasiInsightInput,
+): EvaluasiInsight {
   const jumlahOrang =
     input.jmlTanggunganSebenarnya ?? input.jumlahTanggungan ?? null;
   const totalPenghasilan =
@@ -70,7 +64,7 @@ export function computeEvaluasiInsight(input: EvaluasiInsightInput): EvaluasiIns
 
   const perKapita =
     hasPenghasilanData && jumlahOrang && jumlahOrang > 0
-      ? Math.round(totalPenghasilan / (jumlahOrang))
+      ? Math.round(totalPenghasilan / jumlahOrang)
       : null;
 
   const desilAngka = parseDesil(input.desilDtsen);
@@ -79,7 +73,9 @@ export function computeEvaluasiInsight(input: EvaluasiInsightInput): EvaluasiIns
   return {
     perKapita,
     perKapitaLabel:
-      perKapita === null ? "Data penghasilan belum lengkap" : formatRupiah(perKapita) + " / bulan",
+      perKapita === null
+        ? "Data penghasilan belum lengkap"
+        : formatRupiah(perKapita) + " / bulan",
     perKapitaFormula:
       hasPenghasilanData && jumlahOrang
         ? `${formatRupiahSingkat(totalPenghasilan)} ÷ ${jumlahOrang} orang`
@@ -87,11 +83,21 @@ export function computeEvaluasiInsight(input: EvaluasiInsightInput): EvaluasiIns
     desilAngka,
     desilLabel: desilLabelFromAngka(desilAngka),
     desilCaption:
-      desilAngka === null ? "Data desil belum tersedia" : desilAngka <= 4 ? "di bawah ambang batas" : "di atas ambang batas",
+      desilAngka === null
+        ? "Data desil belum tersedia"
+        : desilAngka <= 4
+          ? "di bawah ambang batas"
+          : "di atas ambang batas",
     jarakKm,
     jarakLabel: jarakLabelFromKm(jarakKm),
     jarakCaption:
-      jarakKm === null ? "Data jarak belum tersedia" : jarakKm <= 10 ? "pusat kota" : jarakKm <= 30 ? "wilayah pinggiran" : "wilayah terpencil",
+      jarakKm === null
+        ? "Data jarak belum tersedia"
+        : jarakKm <= 10
+          ? "pusat kota"
+          : jarakKm <= 30
+            ? "wilayah pinggiran"
+            : "wilayah terpencil",
   };
 }
 
@@ -102,18 +108,15 @@ function formatRupiah(n: number): string {
 /** Format ringkas untuk caption, mis. 2250000 -> "Rp 2,25 jt". Di bawah 1 juta tampil apa adanya. */
 function formatRupiahSingkat(n: number): string {
   if (n >= 1_000_000) {
-    return "Rp " + (n / 1_000_000).toLocaleString("id-ID", { maximumFractionDigits: 2 }) + " jt";
+    return (
+      "Rp " +
+      (n / 1_000_000).toLocaleString("id-ID", { maximumFractionDigits: 2 }) +
+      " jt"
+    );
   }
   return formatRupiah(n);
 }
 
-/**
- * Hitung berapa kandidat lain (jalur masuk + desil + kode kepemilikan rumah
- * yang sama, sudah selesai dievaluasi) berbagi karakteristik yang sama dengan
- * kandidat ini — dipakai untuk caption "ditemukan N kandidat lain dengan
- * karakteristik serupa". Query nyata ke data yang sudah diwawancarai, bukan
- * angka fiktif atau prediksi.
- */
 export async function countPolaSerupa(
   supabaseAdmin: SupabaseClient,
   params: {
@@ -123,7 +126,12 @@ export async function countPolaSerupa(
     kepemilikanRumah?: number | null;
   },
 ): Promise<number> {
-  if (!params.jalurMasuk || !params.desilDtsen || params.kepemilikanRumah === null || params.kepemilikanRumah === undefined) {
+  if (
+    !params.jalurMasuk ||
+    !params.desilDtsen ||
+    params.kepemilikanRumah === null ||
+    params.kepemilikanRumah === undefined
+  ) {
     return 0;
   }
 

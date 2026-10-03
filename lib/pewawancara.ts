@@ -4,19 +4,6 @@ export type AssignPewawancaraResult =
   | { ok: true; pewawancara: Record<string, unknown> }
   | { ok: false; error: string; status: number };
 
-/**
- * Pastikan satu email punya role PEWAWANCARA + baris `pewawancara` yang
- * terhubung & aktif — baik user itu baru maupun sudah ada dengan role lain
- * (mis. MAHASISWA_KIPK yang direkrut jadi pewawancara).
- *
- * Dipakai bersama oleh POST /api/admin/pewawancara dan
- * POST /api/admin/users/[id]/roles (assign PEWAWANCARA) supaya tidak ada
- * 2 implementasi yang bisa divergen. Sengaja tidak cukup insert
- * `user_roles` saja: gate login pewawancara (app/api/auth/pewawancara/login)
- * juga mensyaratkan baris `pewawancara.is_active = true` — kalau cuma
- * pivot yang diisi, user lolos gate role tapi gagal di gate berikutnya
- * dengan pesan 403 yang membingungkan.
- */
 export async function assignPewawancaraRole(params: {
   email: string;
   nama: string;
@@ -34,7 +21,11 @@ export async function assignPewawancaraRole(params: {
     (r: { role: string }) => r.role === "PEWAWANCARA",
   );
   if (alreadyPewawancara) {
-    return { ok: false, error: "Email ini sudah terdaftar sebagai pewawancara", status: 409 };
+    return {
+      ok: false,
+      error: "Email ini sudah terdaftar sebagai pewawancara",
+      status: 409,
+    };
   }
 
   let userId: string;
@@ -74,7 +65,11 @@ export async function assignPewawancaraRole(params: {
   if (pwErr) {
     // Rollback role yang baru ditambahkan, tapi JANGAN hapus user yang
     // sudah ada sebelum request ini (bisa punya role lain).
-    await supabaseAdmin.from("user_roles").delete().eq("user_id", userId).eq("role", "PEWAWANCARA");
+    await supabaseAdmin
+      .from("user_roles")
+      .delete()
+      .eq("user_id", userId)
+      .eq("role", "PEWAWANCARA");
     if (!existingUser) {
       await supabaseAdmin.from("users").delete().eq("id", userId);
     }
