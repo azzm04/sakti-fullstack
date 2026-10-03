@@ -154,8 +154,8 @@ export default function AnalitikSelector() {
   return (
     <div className="min-h-screen bg-admin-bg font-admin-body text-admin-text flex flex-col">
       <PageHeader
-        breadcrumb="Dashboard / Analitik Seleksi"
         title="Dashboard Analitik"
+        description="Analisis hasil seleksi dan model decision tree"
       />
 
       <div className="px-4 sm:px-[30px] pt-[22px] pb-[34px] flex flex-col gap-[18px]">

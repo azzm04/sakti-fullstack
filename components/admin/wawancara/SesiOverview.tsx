@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Zap, ZapOff, CheckCircle2, CalendarDays, Users, ChevronRight, Loader2,
+  Radio, Lock, CheckCircle2, CalendarDays, Users, ChevronRight,
 } from 'lucide-react';
 
 interface SesiItem {
@@ -20,42 +20,32 @@ interface SesiItem {
 interface Props {
   onSelectTanggal: (tanggal: string) => void;
   activeTanggal: string;
+  /** Berubah setiap ada sesi dibuat/dihapus/diubah — memicu muat ulang daftar. */
+  refreshKey?: number;
 }
 
-export default function SesiOverview({ onSelectTanggal, activeTanggal }: Props) {
+export default function SesiOverview({ onSelectTanggal, activeTanggal, refreshKey = 0 }: Props) {
   const [sesiList, setSesiList] = useState<SesiItem[]>([]);
-  const [loading, setLoading] = useState(true);
 
+
+  // Muat saat pertama tampil, saat tanggal aktif berubah, dan setelah ada
+  // perubahan sesi (refreshKey) — supaya kartu tidak menampilkan sesi yang sudah dihapus.
   useEffect(() => {
-    fetchAllSesi();
-  }, []);
+    let cancelled = false;
+    fetch('/api/admin/sesi/list')
+      .then(async (res) => {
+        const json = await res.json();
+        if (!cancelled && res.ok) setSesiList(json.data ?? []);
+      })
+      .catch(() => {
+        // Ringkasan bersifat pelengkap — kalau gagal, biarkan daftar terakhir.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTanggal, refreshKey]);
 
-  async function fetchAllSesi() {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/admin/sesi/list');
-      const json = await res.json();
-      if (res.ok) {
-        setSesiList(json.data ?? []);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Refresh saat activeTanggal berubah (mungkin ada sesi baru dibuat)
-  useEffect(() => {
-    fetchAllSesi();
-  }, [activeTanggal]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center gap-2 text-xs text-admin-text-5 py-3">
-        <Loader2 size={12} className="animate-spin" /> Memuat sesi...
-      </div>
-    );
-  }
-
+  // Indikator muat ditangani overlay di SesiWAR — di sini cukup tidak tampil dulu.
   if (sesiList.length === 0) return null;
 
   const activeCount = sesiList.filter(s => s.war_aktif).length;
@@ -71,13 +61,13 @@ export default function SesiOverview({ onSelectTanggal, activeTanggal }: Props) 
         </h3>
         <div className="flex items-center gap-3 text-[11px] font-semibold">
           {activeCount > 0 && (
-            <span className="flex items-center gap-1 text-admin-warn-text bg-admin-warn-bg-2 px-2 py-0.5 rounded-full border border-admin-warn-border">
-              <Zap size={10} /> {activeCount} Aktif
+            <span className="flex items-center gap-1 text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              <Radio size={10} /> {activeCount} Aktif
             </span>
           )}
           {pendingCount > 0 && (
             <span className="flex items-center gap-1 text-admin-text-4 bg-admin-border-soft px-2 py-0.5 rounded-full border border-admin-border">
-              <ZapOff size={10} /> {pendingCount} Menunggu
+              <Lock size={10} /> {pendingCount} Menunggu
             </span>
           )}
           {doneCount > 0 && (
@@ -107,7 +97,7 @@ export default function SesiOverview({ onSelectTanggal, activeTanggal }: Props) 
                 isActive
                   ? 'bg-admin-accent text-white border-admin-accent shadow-lg shadow-primary/20'
                   : sesi.war_aktif
-                  ? 'bg-admin-warn-bg-2 border-admin-warn-border hover:border-admin-warn-bar'
+                  ? 'bg-emerald-50 border-emerald-200 hover:border-emerald-400'
                   : sesi.distribusi_done
                   ? 'bg-admin-accent/10 border-admin-accent/25 hover:border-admin-accent/40'
                   : 'bg-white border-admin-border hover:border-admin-text-6 hover:shadow-sm'
@@ -115,7 +105,7 @@ export default function SesiOverview({ onSelectTanggal, activeTanggal }: Props) 
             >
               {/* Live indicator */}
               {sesi.war_aktif && !isActive && (
-                <span className="absolute top-2 right-2 w-2 h-2 bg-admin-warn-bar rounded-full animate-pulse" />
+                <span className="absolute top-2 right-2 w-2 h-2 bg-emerald-500 rounded-full animate-pulse" />
               )}
 
               {/* Date */}
@@ -147,7 +137,7 @@ export default function SesiOverview({ onSelectTanggal, activeTanggal }: Props) 
 
                 {sesi.war_aktif ? (
                   <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
-                    isActive ? 'bg-white/20 text-white' : 'bg-admin-warn-border text-admin-warn-text'
+                    isActive ? 'bg-white/20 text-white' : 'bg-emerald-100 text-emerald-700'
                   }`}>
                     LIVE
                   </span>

@@ -1,11 +1,3 @@
-/**
- * Pencocokan nama generik — dipakai untuk mencocokkan daftar Excel SK resmi
- * (Nama, NIM, Prodi) ke pool kandidat "Diusulkan" kita. Satu-satunya kunci
- * yang tersedia di dokumen SK cuma nama, jadi pencocokan harus toleran
- * terhadap perbedaan ejaan/spasi kecil — tapi tetap butuh review manusia
- * (lihat lib/penetapan-sk-pool.ts & endpoint cocokkan) sebelum difinalisasi.
- */
-
 export function normalizeName(s: string): string {
   return s
     .trim()
@@ -77,7 +69,10 @@ const FUZZY_THRESHOLD = 0.82;
  * Cocokkan pool kandidat ke baris Excel by nama: exact match dulu, sisanya
  * fuzzy match greedy (skor tertinggi duluan), 1:1 assignment.
  */
-export function matchNamesToPool(pool: PoolItem[], excelRows: ExcelRow[]): MatchResult {
+export function matchNamesToPool(
+  pool: PoolItem[],
+  excelRows: ExcelRow[],
+): MatchResult {
   const remainingPool = new Map(pool.map((p) => [p.id, p]));
   const remainingExcel = new Set(excelRows.map((_, i) => i));
   const matched: MatchedPair[] = [];
@@ -88,7 +83,12 @@ export function matchNamesToPool(pool: PoolItem[], excelRows: ExcelRow[]): Match
     const normP = normalizeName(p.nama);
     for (const i of remainingExcel) {
       if (normalizeName(excelRows[i].nama) === normP) {
-        matched.push({ kandidatId: p.id, namaKandidat: p.nama, excelRow: excelRows[i], skor: 1 });
+        matched.push({
+          kandidatId: p.id,
+          namaKandidat: p.nama,
+          excelRow: excelRows[i],
+          skor: 1,
+        });
         remainingPool.delete(p.id);
         remainingExcel.delete(i);
         break;
@@ -97,19 +97,30 @@ export function matchNamesToPool(pool: PoolItem[], excelRows: ExcelRow[]): Match
   }
 
   // Pass 2 — fuzzy match greedy, skor tertinggi duluan
-  const candidates: { kandidatId: string; namaKandidat: string; excelIdx: number; skor: number }[] = [];
+  const candidates: {
+    kandidatId: string;
+    namaKandidat: string;
+    excelIdx: number;
+    skor: number;
+  }[] = [];
   for (const p of remainingPool.values()) {
     for (const i of remainingExcel) {
       const skor = nameSimilarity(p.nama, excelRows[i].nama);
       if (skor >= FUZZY_THRESHOLD) {
-        candidates.push({ kandidatId: p.id, namaKandidat: p.nama, excelIdx: i, skor });
+        candidates.push({
+          kandidatId: p.id,
+          namaKandidat: p.nama,
+          excelIdx: i,
+          skor,
+        });
       }
     }
   }
   candidates.sort((a, b) => b.skor - a.skor);
 
   for (const c of candidates) {
-    if (!remainingPool.has(c.kandidatId) || !remainingExcel.has(c.excelIdx)) continue;
+    if (!remainingPool.has(c.kandidatId) || !remainingExcel.has(c.excelIdx))
+      continue;
     matched.push({
       kandidatId: c.kandidatId,
       namaKandidat: c.namaKandidat,

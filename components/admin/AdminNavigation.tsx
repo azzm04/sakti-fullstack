@@ -1,21 +1,38 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
-import { motion, AnimatePresence, type Variants } from "motion/react";
-import { LogOut, Menu, X } from "lucide-react";
-import { cn } from "@/lib/utils";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type FocusEvent as ReactFocusEvent,
+} from "react";
+import { createPortal } from "react-dom";
+import {
+  AnimatePresence,
+  motion,
+  useReducedMotion,
+  type Variants,
+} from "framer-motion";
+import { ChevronUp, LoaderCircle, LogOut, Menu, X } from "lucide-react";
 import { ADMIN_NAV_ITEMS as navItems } from "@/lib/admin-nav";
 
-const sidebarVariants: Variants = {
-  hidden: { x: -20, opacity: 0 },
-  visible: {
-    x: 0,
-    opacity: 1,
-    transition: { duration: 0.35, ease: [0.25, 0, 0, 1] },
-  },
-};
+const EXPANDED_WIDTH = 264;
+const COLLAPSED_WIDTH = 72;
+
+/** Jeda sebelum melebar (ms) — mencegah buka saat kursor hanya lewat */
+const OPEN_DELAY = 80;
+/** Jeda sebelum menutup (ms) — mencegah kedip saat kursor keluar sebentar */
+const CLOSE_DELAY = 180;
+
+const EASE: [number, number, number, number] = [0.4, 0, 0.2, 1];
+
+const FOCUS_STYLE =
+  "focus-visible:outline-none focus-visible:ring-2 " +
+  "focus-visible:ring-inset focus-visible:ring-[#818CF8]";
 
 const drawerVariants: Variants = {
   hidden: { x: "-100%" },
@@ -32,103 +49,135 @@ const overlayVariants: Variants = {
   exit: { opacity: 0 },
 };
 
-function SaktiLogo({ size = 38 }: { size?: number }) {
+type PopupPosition = {
+  left: number;
+  bottom: number;
+  width: number;
+  maxHeight: number;
+};
+
+function isItemActive(pathname: string, href: string) {
+  return href === "/admin"
+    ? pathname === "/admin"
+    : pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function BrandLink({
+  expanded,
+  onNavigate,
+}: {
+  expanded: boolean;
+  onNavigate?: () => void;
+}) {
   return (
-    <svg width={size} height={size} viewBox="0 0 48 48" className="shrink-0" role="img" aria-label="Logo SAKTI">
-      <circle cx="24" cy="24" r="23.2" fill="var(--color-admin-accent)" />
-      <circle cx="24" cy="24" r="19.4" fill="none" stroke="#FFFFFF" strokeWidth="1.7" />
-      <path d="M24 8.6 35.4 13.1 24 17.6 12.6 13.1Z" fill="#FFFFFF" />
-      <path d="M32.4 14.5c1.7 1.5 2.1 3.7 2 5.6" fill="none" stroke="#FFFFFF" strokeWidth="1.4" strokeLinecap="round" />
-      <circle cx="34.4" cy="21.4" r="1.5" fill="#FFFFFF" />
-      <text x="24" y="31.8" textAnchor="middle" fontFamily="'Source Serif 4',Georgia,serif" fontSize="16" fontWeight="700" fill="#FFFFFF">S</text>
-      <path d="M12.8 34.1c3.3-2 8.1-2 10.7-.1v5.3c-2.6-1.9-7.4-1.9-10.7.1z" fill="#FFFFFF" />
-      <path d="M35.2 34.1c-3.3-2-8.1-2-10.7-.1v5.3c2.6-1.9 7.4-1.9 10.7.1z" fill="#FFFFFF" />
-    </svg>
+    <Link
+      href="/admin"
+      onClick={onNavigate}
+      aria-label="SAKTI — Dashboard admin"
+      title={!expanded ? "SAKTI" : undefined}
+      className={[
+        "flex min-h-12 items-center rounded-[4px]",
+        expanded ? "w-full gap-3" : "w-12 justify-center",
+        FOCUS_STYLE,
+      ].join(" ")}
+    >
+      <Image
+        src="/Logo Sakti.png"
+        alt=""
+        width={40}
+        height={40}
+        className="h-14 w-14 shrink-0 object-contain"
+      />
+
+      {expanded && (
+        <div className="min-w-0 whitespace-nowrap">
+          <span className="block text-[22px] font-bold leading-7 tracking-[-0.02em] text-white">
+            SAKTI
+          </span>
+          <span className="mt-0.5 block text-[12px] leading-5 text-[#EEF2FF]/70">
+            Dashboard admin
+          </span>
+        </div>
+      )}
+    </Link>
   );
 }
 
-function SidebarContent({
+function NavList({
   pathname,
-  adminName,
-  initials,
+  expanded,
   onNavigate,
-  onLogout,
 }: {
   pathname: string;
-  adminName: string;
-  initials: string;
-  onNavigate: () => void;
-  onLogout: () => void;
+  expanded: boolean;
+  onNavigate?: () => void;
 }) {
   return (
-    <div className="flex flex-col h-full font-admin-body text-admin-text">
-      {/* Brand */}
-      <div className="flex items-center gap-[11px] px-2 pb-[22px]">
-        <SaktiLogo />
-        <div>
-          <div className="font-admin-heading text-[20px] font-bold leading-none tracking-[-0.01em]">
-            SAKTI
-          </div>
-          <div className="text-[10.5px] tracking-[0.14em] uppercase text-admin-text-3 mt-1">
-            Dashboard Admin
-          </div>
-        </div>
+    <nav
+      id="admin-sidebar-nav"
+      aria-label="Navigasi admin"
+      className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden px-3 pb-6 pt-6 [scrollbar-width:thin] [scrollbar-color:#3730A3_#000352]"
+    >
+      <div className="mb-3 flex h-4 items-center px-3">
+        {expanded ? (
+          <span className="whitespace-nowrap text-[10px] font-medium uppercase leading-4 tracking-[0.12em] text-[#EEF2FF]/60">
+            Alur kerja
+          </span>
+        ) : (
+          <span aria-hidden="true" className="mx-auto h-px w-5 bg-white/15" />
+        )}
       </div>
 
-      <div className="text-[10px] tracking-[0.16em] uppercase text-admin-placeholder px-2.5 pb-2">
-        Alur Kerja
-      </div>
-
-      {/* Navigation Links */}
-      <nav className="flex-1 flex flex-col gap-0.5">
-        {navItems.map(({ href, label, icon: Icon }) => {
-          const active =
-            href === "/admin"
-              ? pathname === "/admin"
-              : pathname === href || pathname.startsWith(href + "/");
+      <ul className="space-y-1">
+        {navItems.map(({ href, icon: Icon, label }) => {
+          const isActive = isItemActive(pathname, href);
 
           return (
-            <Link
-              key={href}
-              href={href}
-              onClick={onNavigate}
-              aria-current={active ? "page" : undefined}
-              className={cn(
-                "flex items-center gap-[11px] w-full px-[11px] py-[9.5px] rounded-[11px] text-[13.5px] transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-admin-accent focus-visible:outline-offset-2",
-                active
-                  ? "bg-admin-accent/[0.15] text-admin-accent-active font-bold"
-                  : "text-admin-text-2 font-medium hover:bg-admin-surface-soft"
-              )}
-            >
-              <Icon className="w-[17px] h-[17px] shrink-0 opacity-85" strokeWidth={1.6} />
-              <span className="flex-1 text-left">{label}</span>
-            </Link>
+            <li key={href}>
+              <Link
+                href={href}
+                onClick={onNavigate}
+                aria-label={label}
+                aria-current={isActive ? "page" : undefined}
+                title={!expanded ? label : undefined}
+                className={[
+                  "group flex h-11 items-center overflow-hidden rounded-[4px]",
+                  "transition-colors duration-150 motion-reduce:transition-none",
+                  expanded ? "gap-3 px-3" : "justify-center",
+                  isActive
+                    ? "bg-[#3730A3] text-white"
+                    : "text-[#EEF2FF]/80 hover:bg-[#818CF8]/10 hover:text-white",
+                  FOCUS_STYLE,
+                ].join(" ")}
+              >
+                <Icon
+                  aria-hidden="true"
+                  size={18}
+                  strokeWidth={1.7}
+                  className={[
+                    "shrink-0 transition-colors",
+                    isActive
+                      ? "text-white"
+                      : "text-[#A5ACF9] group-hover:text-white",
+                  ].join(" ")}
+                />
+
+                {expanded && (
+                  <span
+                    className={[
+                      "min-w-0 whitespace-nowrap text-[13px] leading-5",
+                      isActive ? "font-semibold" : "font-medium",
+                    ].join(" ")}
+                  >
+                    {label}
+                  </span>
+                )}
+              </Link>
+            </li>
           );
         })}
-      </nav>
-
-      {/* Bottom Actions */}
-      <div className="mt-auto flex flex-col gap-3.5">
-        <div className="flex items-center gap-[11px] pt-2.5 border-t border-admin-border">
-          <div className="w-[34px] h-[34px] rounded-[11px] bg-admin-accent/[0.16] text-admin-accent-ink flex items-center justify-center text-xs font-bold shrink-0">
-            {initials}
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-[13px] font-semibold truncate m-0">{adminName}</p>
-            <p className="text-[10.5px] tracking-[0.12em] uppercase text-admin-text-4 m-0">
-              Administrator
-            </p>
-          </div>
-          <button
-            onClick={onLogout}
-            title="Keluar"
-            className="border border-admin-border bg-transparent rounded-[9px] w-[30px] h-[30px] flex items-center justify-center text-admin-text-3 hover:bg-admin-surface-soft hover:text-admin-text transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-admin-accent focus-visible:outline-offset-2"
-          >
-            <LogOut className="w-[15px] h-[15px]" strokeWidth={1.6} />
-          </button>
-        </div>
-      </div>
-    </div>
+      </ul>
+    </nav>
   );
 }
 
@@ -140,66 +189,405 @@ export default function AdminNavigation({
   adminName = "Admin",
 }: AdminNavigationProps) {
   const pathname = usePathname();
+  const reduceMotion = useReducedMotion();
+
+  const [hovered, setHovered] = useState(false);
+  const [focusWithin, setFocusWithin] = useState(false);
+  const [profileOpen, setProfileOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState("");
+  const [popupPosition, setPopupPosition] = useState<PopupPosition | null>(
+    null,
+  );
 
-  async function handleLogout() {
-    await fetch("/api/auth/logout", { method: "POST" });
-    window.location.href = "/admin-login";
-  }
+  const profileButtonRef = useRef<HTMLButtonElement>(null);
+  const profilePopupRef = useRef<HTMLDivElement>(null);
+  const logoutButtonRef = useRef<HTMLButtonElement>(null);
+  const logoutPendingRef = useRef(false);
+  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const initials = adminName
-    .split(" ")
+  /** Melebar jika kursor di atas sidebar, fokus keyboard di dalamnya, atau popup akun terbuka. */
+  const expanded = hovered || focusWithin || profileOpen;
+
+  const displayName = adminName.trim() || "Admin";
+  const displayInitials = displayName
+    .split(/\s+/)
     .slice(0, 2)
-    .map((n) => n[0])
+    .map((word) => word.charAt(0))
     .join("")
     .toUpperCase();
 
+  const sidebarTransition = { duration: reduceMotion ? 0 : 0.22, ease: EASE };
+  const popupTransition = { duration: reduceMotion ? 0 : 0.14, ease: EASE };
+
+  // ==========================================================
+  // HOVER EXPAND / COLLAPSE
+  // ==========================================================
+
+  const clearHoverTimer = () => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+  };
+
+  const handleMouseEnter = () => {
+    clearHoverTimer();
+    hoverTimerRef.current = setTimeout(() => setHovered(true), OPEN_DELAY);
+  };
+
+  const handleMouseLeave = () => {
+    clearHoverTimer();
+    hoverTimerRef.current = setTimeout(() => setHovered(false), CLOSE_DELAY);
+  };
+
+  const handleFocus = () => setFocusWithin(true);
+
+  const handleBlur = (e: ReactFocusEvent<HTMLElement>) => {
+    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
+      setFocusWithin(false);
+    }
+  };
+
+  useEffect(() => {
+    return () => clearHoverTimer();
+  }, []);
+
+  // ==========================================================
+  // POPUP AKUN
+  // ==========================================================
+
+  const updatePopupPosition = useCallback(() => {
+    const button = profileButtonRef.current;
+    if (!button) return;
+
+    const rect = button.getBoundingClientRect();
+    const margin = 12;
+    const gap = 8;
+    const width = Math.min(240, window.innerWidth - margin * 2);
+    const preferredLeft = expanded ? rect.left : rect.right + gap;
+
+    const left = Math.max(
+      margin,
+      Math.min(preferredLeft, window.innerWidth - width - margin),
+    );
+    const bottom = Math.max(margin, window.innerHeight - rect.top + gap);
+
+    setPopupPosition({
+      left,
+      bottom,
+      width,
+      maxHeight: Math.max(0, window.innerHeight - bottom - margin),
+    });
+  }, [expanded]);
+
+  function toggleProfile() {
+    if (!profileOpen) updatePopupPosition();
+    setProfileOpen((current) => !current);
+  }
+
+  async function handleLogout() {
+    if (logoutPendingRef.current) return;
+
+    logoutPendingRef.current = true;
+    setIsLoggingOut(true);
+    setLogoutError("");
+
+    try {
+      const response = await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "same-origin",
+      });
+
+      if (!response.ok) throw new Error("Logout gagal");
+
+      window.location.assign("/admin-login");
+    } catch {
+      logoutPendingRef.current = false;
+      setIsLoggingOut(false);
+      setLogoutError("Belum berhasil keluar. Silakan coba lagi.");
+    }
+  }
+
+  // Tutup popup, sidebar & drawer saat pindah halaman
+  useEffect(() => {
+    setProfileOpen(false);
+    setHovered(false);
+    setFocusWithin(false);
+    setMobileOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!profileOpen) return;
+
+    // Tunggu animasi lebar selesai agar posisi popup akurat
+    updatePopupPosition();
+    const positionTimer = setTimeout(
+      updatePopupPosition,
+      reduceMotion ? 0 : 240,
+    );
+    const focusFrame = window.requestAnimationFrame(() => {
+      logoutButtonRef.current?.focus();
+    });
+
+    function isInsideProfile(target: EventTarget | null) {
+      if (!(target instanceof Node)) return false;
+      return (
+        profileButtonRef.current?.contains(target) ||
+        profilePopupRef.current?.contains(target)
+      );
+    }
+
+    function handlePointerDown(event: PointerEvent) {
+      if (!isInsideProfile(event.target)) setProfileOpen(false);
+    }
+
+    function handleFocusIn(event: FocusEvent) {
+      if (!isInsideProfile(event.target)) setProfileOpen(false);
+    }
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setProfileOpen(false);
+        profileButtonRef.current?.focus();
+      }
+    }
+
+    function handleResize() {
+      if (window.innerWidth < 768) {
+        setProfileOpen(false);
+        return;
+      }
+      updatePopupPosition();
+    }
+
+    document.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("focusin", handleFocusIn);
+    document.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("resize", handleResize);
+    window.addEventListener("scroll", updatePopupPosition, true);
+
+    return () => {
+      clearTimeout(positionTimer);
+      window.cancelAnimationFrame(focusFrame);
+      document.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("focusin", handleFocusIn);
+      document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", handleResize);
+      window.removeEventListener("scroll", updatePopupPosition, true);
+    };
+  }, [profileOpen, updatePopupPosition, reduceMotion]);
+
+  // ==========================================================
+  // RENDER
+  // ==========================================================
+
   return (
     <>
-      {/* Desktop Sidebar */}
-      <motion.aside
-        variants={sidebarVariants}
-        initial="hidden"
-        animate="visible"
-        className="hidden md:flex sticky top-0 h-screen w-[250px] flex-col bg-admin-surface border-r border-admin-border shrink-0 py-[26px] px-[18px] pb-5"
+      {/*
+       * Placeholder selebar sidebar tertutup (72px). Saat sidebar melebar
+       * ia MENIMPA konten, bukan mendorongnya.
+       */}
+      <div
+        className="sticky top-0 z-70 hidden h-dvh shrink-0 md:block"
+        style={{ width: COLLAPSED_WIDTH }}
       >
-        <SidebarContent
-          pathname={pathname}
-          adminName={adminName}
-          initials={initials}
-          onNavigate={() => setMobileOpen(false)}
-          onLogout={handleLogout}
-        />
-      </motion.aside>
+        <motion.aside
+          initial={false}
+          animate={{ width: expanded ? EXPANDED_WIDTH : COLLAPSED_WIDTH }}
+          transition={sidebarTransition}
+          aria-label="Sidebar admin"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+          onFocus={handleFocus}
+          onBlur={handleBlur}
+          className={[
+            "absolute inset-y-0 left-0 flex flex-col overflow-hidden",
+            "border-r border-white/10 bg-[#000352]",
+            "transition-shadow duration-200",
+            expanded ? "shadow-[8px_0_32px_rgba(0,3,82,0.25)]" : "shadow-none",
+          ].join(" ")}
+        >
+          <header
+            className={[
+              "flex h-24 shrink-0 items-center border-b border-white/10",
+              expanded ? "px-5" : "justify-center px-3",
+            ].join(" ")}
+          >
+            <BrandLink expanded={expanded} />
+          </header>
+
+          <NavList pathname={pathname} expanded={expanded} />
+
+          <footer className="shrink-0 border-t border-white/10 p-3">
+            <button
+              ref={profileButtonRef}
+              type="button"
+              onClick={toggleProfile}
+              aria-label={`Opsi akun ${displayName}`}
+              aria-expanded={profileOpen}
+              aria-controls={profileOpen ? "admin-profile-popup" : undefined}
+              title={!expanded ? displayName : undefined}
+              className={[
+                "flex min-h-14 w-full items-center rounded-[4px] text-left",
+                "transition-colors duration-150",
+                expanded ? "gap-3 px-2 py-2" : "justify-center py-2",
+                profileOpen ? "bg-[#818CF8]/15" : "hover:bg-[#818CF8]/10",
+                FOCUS_STYLE,
+              ].join(" ")}
+            >
+              <span
+                aria-hidden="true"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[4px] border border-[#818CF8]/25 bg-[#EEF2FF]/10 text-[12px] font-semibold text-[#EEF2FF]"
+              >
+                {displayInitials}
+              </span>
+
+              {expanded && (
+                <>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] font-semibold leading-5 text-white">
+                      {displayName}
+                    </p>
+                    <p className="mt-0.5 whitespace-nowrap text-[11px] leading-4 text-[#EEF2FF]/65">
+                      Administrator
+                    </p>
+                  </div>
+
+                  <ChevronUp
+                    aria-hidden="true"
+                    size={15}
+                    strokeWidth={1.7}
+                    className={[
+                      "shrink-0 text-[#EEF2FF]/60",
+                      "transition-transform duration-150 motion-reduce:transition-none",
+                      profileOpen ? "rotate-180" : "",
+                    ].join(" ")}
+                  />
+                </>
+              )}
+            </button>
+          </footer>
+        </motion.aside>
+      </div>
+
+      {/* Popup akun berada di luar area sidebar */}
+      {typeof document !== "undefined" &&
+        createPortal(
+          <AnimatePresence>
+            {profileOpen && popupPosition && (
+              <motion.div
+                key="admin-profile-popup"
+                ref={profilePopupRef}
+                id="admin-profile-popup"
+                role="region"
+                aria-label="Opsi akun admin"
+                initial={{ opacity: 0, y: reduceMotion ? 0 : 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: reduceMotion ? 0 : 4 }}
+                transition={popupTransition}
+                style={{
+                  position: "fixed",
+                  left: popupPosition.left,
+                  bottom: popupPosition.bottom,
+                  width: popupPosition.width,
+                  maxHeight: popupPosition.maxHeight,
+                }}
+                className="z-[100] overflow-y-auto rounded-[6px] border border-slate-200 bg-white p-1.5 shadow-[0_8px_24px_rgba(0,3,82,0.12)]"
+              >
+                <div className="border-b border-slate-200 px-3 pb-3 pt-2">
+                  <p className="break-words text-[13px] font-semibold leading-5 text-[#000352]">
+                    {displayName}
+                  </p>
+                  <p className="mt-1 text-[11px] leading-4 text-slate-500">
+                    Administrator
+                  </p>
+                </div>
+
+                <button
+                  ref={logoutButtonRef}
+                  type="button"
+                  onClick={handleLogout}
+                  disabled={isLoggingOut}
+                  className="mt-1 flex min-h-11 w-full items-center gap-3 rounded-[4px] px-3 py-2.5 text-left text-[13px] font-medium text-[#000352] transition-colors hover:bg-[#EEF2FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#818CF8] disabled:cursor-wait disabled:opacity-60"
+                >
+                  {isLoggingOut ? (
+                    <LoaderCircle
+                      aria-hidden="true"
+                      size={17}
+                      strokeWidth={1.7}
+                      className="shrink-0 animate-spin text-[#3730A3] motion-reduce:animate-none"
+                    />
+                  ) : (
+                    <LogOut
+                      aria-hidden="true"
+                      size={17}
+                      strokeWidth={1.7}
+                      className="shrink-0 text-[#3730A3]"
+                    />
+                  )}
+                  <span>{isLoggingOut ? "Sedang keluar…" : "Keluar"}</span>
+                </button>
+
+                {logoutError && (
+                  <p
+                    role="alert"
+                    className="px-3 pb-2 pt-1 text-[12px] leading-5 text-red-700"
+                  >
+                    {logoutError}
+                  </p>
+                )}
+              </motion.div>
+            )}
+          </AnimatePresence>,
+          document.body,
+        )}
 
       {/* Mobile Topbar */}
-      <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3.5 bg-admin-surface border-b border-admin-border">
-        <div className="flex items-center gap-2">
-          <SaktiLogo size={28} />
-          <span className="font-admin-heading font-bold text-[20px] leading-none text-admin-text">
+      <div className="fixed left-0 right-0 top-0 z-40 flex items-center justify-between border-b border-white/10 bg-[#000352] px-4 py-2.5 md:hidden">
+        <Link
+          href="/admin"
+          aria-label="SAKTI — Dashboard admin"
+          className={["flex items-center gap-2 rounded-[4px]", FOCUS_STYLE].join(
+            " ",
+          )}
+        >
+          <Image
+            src="/Logo Sakti.png"
+            alt=""
+            width={32}
+            height={32}
+            className="h-8 w-8 object-contain"
+          />
+          <span className="text-[20px] font-bold leading-none text-white">
             SAKTI
           </span>
-        </div>
+        </Link>
         <motion.button
           whileTap={{ scale: 0.92 }}
           onClick={() => setMobileOpen(true)}
           aria-label="Buka menu navigasi"
-          className="w-11 h-11 grid place-items-center rounded-[11px] border border-admin-border text-admin-text hover:bg-admin-surface-soft transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-admin-accent focus-visible:outline-offset-2"
+          className={[
+            "grid h-11 w-11 place-items-center rounded-[4px] border border-white/15 text-white transition-colors hover:bg-[#818CF8]/10",
+            FOCUS_STYLE,
+          ].join(" ")}
         >
-          <Menu size={20} strokeWidth={1.6} />
+          <Menu size={20} strokeWidth={1.7} />
         </motion.button>
       </div>
 
       {/* Mobile Drawer */}
       <AnimatePresence>
         {mobileOpen && (
-          <div className="md:hidden fixed inset-0 z-50 flex">
+          <div className="fixed inset-0 z-50 flex md:hidden">
             <motion.div
               variants={overlayVariants}
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="absolute inset-0 bg-admin-text/30 backdrop-blur-sm"
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
               onClick={() => setMobileOpen(false)}
             />
             <motion.aside
@@ -207,23 +595,76 @@ export default function AdminNavigation({
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="relative w-[270px] bg-admin-surface h-full border-r border-admin-border shadow-xl flex flex-col py-[26px] px-[18px] pb-5"
+              aria-label="Menu navigasi admin"
+              className="relative flex h-full w-[270px] flex-col border-r border-white/10 bg-[#000352] shadow-xl"
             >
+              <header className="flex h-24 shrink-0 items-center border-b border-white/10 px-5">
+                <BrandLink expanded onNavigate={() => setMobileOpen(false)} />
+              </header>
+
               <motion.button
                 whileTap={{ scale: 0.92 }}
                 onClick={() => setMobileOpen(false)}
                 aria-label="Tutup menu navigasi"
-                className="absolute top-4 right-4 w-11 h-11 grid place-items-center rounded-[11px] border border-admin-border text-admin-text-3 hover:bg-admin-surface-soft transition-colors focus:outline-none focus-visible:outline-2 focus-visible:outline-admin-accent focus-visible:outline-offset-2"
+                className={[
+                  "absolute right-3 top-3 grid h-10 w-10 place-items-center rounded-[4px] text-white/70 transition-colors hover:bg-[#818CF8]/10 hover:text-white",
+                  FOCUS_STYLE,
+                ].join(" ")}
               >
-                <X size={18} strokeWidth={1.6} />
+                <X size={18} strokeWidth={1.7} />
               </motion.button>
-              <SidebarContent
+
+              <NavList
                 pathname={pathname}
-                adminName={adminName}
-                initials={initials}
+                expanded
                 onNavigate={() => setMobileOpen(false)}
-                onLogout={handleLogout}
               />
+
+              <footer className="shrink-0 border-t border-white/10 p-3">
+                <div className="flex min-h-14 items-center gap-3 px-2 py-2">
+                  <span
+                    aria-hidden="true"
+                    className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[4px] border border-[#818CF8]/25 bg-[#EEF2FF]/10 text-[12px] font-semibold text-[#EEF2FF]"
+                  >
+                    {displayInitials}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-[13px] font-semibold leading-5 text-white">
+                      {displayName}
+                    </p>
+                    <p className="mt-0.5 text-[11px] leading-4 text-[#EEF2FF]/65">
+                      Administrator
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    disabled={isLoggingOut}
+                    title="Keluar"
+                    aria-label="Keluar"
+                    className={[
+                      "grid h-10 w-10 shrink-0 place-items-center rounded-[4px] border border-white/15 text-[#A5ACF9] transition-colors hover:bg-[#818CF8]/10 hover:text-white disabled:cursor-wait disabled:opacity-60",
+                      FOCUS_STYLE,
+                    ].join(" ")}
+                  >
+                    {isLoggingOut ? (
+                      <LoaderCircle
+                        aria-hidden="true"
+                        size={16}
+                        strokeWidth={1.7}
+                        className="animate-spin motion-reduce:animate-none"
+                      />
+                    ) : (
+                      <LogOut aria-hidden="true" size={16} strokeWidth={1.7} />
+                    )}
+                  </button>
+                </div>
+                {logoutError && (
+                  <p role="alert" className="px-2 pt-1 text-[12px] text-red-300">
+                    {logoutError}
+                  </p>
+                )}
+              </footer>
             </motion.aside>
           </div>
         )}

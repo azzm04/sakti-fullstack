@@ -182,6 +182,7 @@ export default function ImportDataPage() {
     <div className="min-h-screen bg-admin-bg font-admin-body text-admin-text flex flex-col">
       <PageHeader
         title="Import Data Pendaftar"
+        description="Unggah data pendaftar KIP-K per jalur masuk dan tahun seleksi"
         right={
           <>
             {hasData && (

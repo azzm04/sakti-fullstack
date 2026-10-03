@@ -118,7 +118,10 @@ export default function HasilAkhirClient() {
 
   return (
     <div className="min-h-screen bg-admin-bg font-admin-body text-admin-text flex flex-col">
-      <PageHeader title="Hasil Akhir Seleksi" />
+      <PageHeader
+        title="Hasil Akhir Seleksi"
+        description="Tetapkan SK, ekspor data, dan kirim pengumuman hasil seleksi"
+      />
 
       <div className="px-4 sm:px-[30px] pt-[22px] pb-[34px] flex flex-col gap-[18px]">
         {/* Step navigation */}

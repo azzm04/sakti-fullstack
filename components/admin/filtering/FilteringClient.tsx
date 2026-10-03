@@ -2,7 +2,13 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { AlertTriangle, ListFilter, Loader2, PlayCircle, RefreshCw } from "lucide-react";
+import {
+  AlertTriangle,
+  ListFilter,
+  Loader2,
+  PlayCircle,
+  RefreshCw,
+} from "lucide-react";
 import { FILTERING_JALUR_KEYS, JALUR_LABELS, type JalurKey } from "@/lib/jalur";
 import { RadioRow } from "@/components/admin/ui/RadioRow";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
@@ -41,9 +47,13 @@ export default function FilteringClient() {
   const [rows, setRows] = useState<RankedRow[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [running, setRunning] = useState(false);
-  const [runResult, setRunResult] = useState<{ totalLolos: number; totalTidakLolos: number } | null>(null);
+  const [runResult, setRunResult] = useState<{
+    totalLolos: number;
+    totalTidakLolos: number;
+  } | null>(null);
 
-  const tahunValid = /^\d{4}$/.test(tahun) && parseInt(tahun) >= 2020 && parseInt(tahun) <= 2099;
+  const tahunValid =
+    /^\d{4}$/.test(tahun) && parseInt(tahun) >= 2020 && parseInt(tahun) <= 2099;
   const kuotaValid = /^\d+$/.test(kuota) && parseInt(kuota) >= 0;
   const canRun = tahunValid && !!jalur && kuotaValid;
 
@@ -81,11 +91,18 @@ export default function FilteringClient() {
       const res = await fetch("/api/admin/filtering/run", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ tahun: Number(tahun), jalur, kuota: Number(kuota) }),
+        body: JSON.stringify({
+          tahun: Number(tahun),
+          jalur,
+          kuota: Number(kuota),
+        }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Gagal menjalankan filtering");
-      setRunResult({ totalLolos: json.totalLolos, totalTidakLolos: json.totalTidakLolos });
+      setRunResult({
+        totalLolos: json.totalLolos,
+        totalTidakLolos: json.totalTidakLolos,
+      });
       await handleTampilkan();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan");
@@ -96,7 +113,10 @@ export default function FilteringClient() {
 
   return (
     <div className="min-h-screen bg-admin-bg font-admin-body text-admin-text flex flex-col">
-      <PageHeader title="Filtering Kuota (UM & SBUB)" />
+      <PageHeader
+        title="Filtering Kuota (UM & SBUB)"
+        description="Urutkan kandidat yang diusulkan sesuai kuota jalur masuk"
+      />
 
       <div className="px-[30px] pt-[22px] pb-[34px] flex flex-col gap-[18px]">
         {/* Pilih Data */}
@@ -104,10 +124,13 @@ export default function FilteringClient() {
           <div className="flex items-center gap-2 mb-4">
             <ListFilter size={16} className="text-admin-accent" />
             <div>
-              <p className="text-[13px] font-bold text-admin-text">Pilih Data & Kuota</p>
+              <p className="text-[13px] font-bold text-admin-text">
+                Pilih Data & Kuota
+              </p>
               <p className="text-[11.5px] text-admin-text-3">
-                Kandidat yang direkomendasikan (&ldquo;Diusulkan&rdquo;) akan diurutkan: Golongan UKT terendah →
-                Yatim Piatu → Yatim → Piatu → pendapatan per kapita terendah.
+                Kandidat yang direkomendasikan (&ldquo;Diusulkan&rdquo;) akan
+                diurutkan: Golongan UKT terendah → Yatim Piatu → Yatim → Piatu →
+                pendapatan per kapita terendah.
               </p>
             </div>
           </div>
@@ -176,7 +199,11 @@ export default function FilteringClient() {
               disabled={!canRun || running}
               className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl bg-admin-danger-bar hover:opacity-90 text-white disabled:bg-admin-border disabled:text-admin-placeholder disabled:cursor-not-allowed transition-colors"
             >
-              {running ? <Loader2 size={14} className="animate-spin" /> : <PlayCircle size={14} />}
+              {running ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <PlayCircle size={14} />
+              )}
               Jalankan Filtering
             </button>
           </div>
@@ -191,7 +218,9 @@ export default function FilteringClient() {
           {runResult && (
             <div className="mt-3 flex items-center gap-2 flex-wrap text-xs">
               <Pill tone="accent">Lolos Kuota: {runResult.totalLolos}</Pill>
-              <Pill tone="danger">Tidak Lolos Kuota: {runResult.totalTidakLolos}</Pill>
+              <Pill tone="danger">
+                Tidak Lolos Kuota: {runResult.totalTidakLolos}
+              </Pill>
             </div>
           )}
         </section>
@@ -223,35 +252,66 @@ export default function FilteringClient() {
                     <th className="px-4 py-3 text-left">Kondisi Ortu</th>
                     <th className="px-4 py-3 text-left">Pendapatan/Kapita</th>
                     <th className="px-4 py-3 text-left">Status Saat Ini</th>
-                    <th className="px-4 py-3 text-left">Proyeksi (Kuota={kuota || "—"})</th>
+                    <th className="px-4 py-3 text-left">
+                      Proyeksi (Kuota={kuota || "—"})
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
                   {rows.map((r) => (
-                    <tr key={r.id} className="border-b border-admin-border-soft last:border-0 hover:bg-admin-surface-soft">
-                      <td className="px-4 py-3 font-bold text-admin-accent tabular-nums">{r.rank}</td>
-                      <td className="px-4 py-3 font-semibold text-admin-text">{r.nama_pendaftar ?? "—"}</td>
+                    <tr
+                      key={r.id}
+                      className="border-b border-admin-border-soft last:border-0 hover:bg-admin-surface-soft"
+                    >
+                      <td className="px-4 py-3 font-bold text-admin-accent tabular-nums">
+                        {r.rank}
+                      </td>
+                      <td className="px-4 py-3 font-semibold text-admin-text">
+                        {r.nama_pendaftar ?? "—"}
+                      </td>
                       <td className="px-4 py-3 font-admin-mono text-xs text-admin-text-3">
                         {r.no_pendaftaran_kipk ?? "—"}
                       </td>
-                      <td className="px-4 py-3 text-admin-text-2">{r.prodi_pendaftar ?? "—"}</td>
+                      <td className="px-4 py-3 text-admin-text-2">
+                        {r.prodi_pendaftar ?? "—"}
+                      </td>
                       <td className="px-4 py-3 text-admin-text-2">
                         {r.golongan_ukt ? `Golongan ${r.golongan_ukt}` : "—"}
                       </td>
-                      <td className="px-4 py-3 text-admin-text-2">{r.kondisi_orang_tua ?? "—"}</td>
-                      <td className="px-4 py-3 text-admin-text-2 tabular-nums">{fmt.format(r.pendapatan_per_kapita)}</td>
+                      <td className="px-4 py-3 text-admin-text-2">
+                        {r.kondisi_orang_tua ?? "—"}
+                      </td>
+                      <td className="px-4 py-3 text-admin-text-2 tabular-nums">
+                        {fmt.format(r.pendapatan_per_kapita)}
+                      </td>
                       <td className="px-4 py-3">
                         {r.status_final_saat_ini ? (
-                          <Pill tone={r.status_final_saat_ini === "Lolos Kuota" ? "accent" : "danger"}>
+                          <Pill
+                            tone={
+                              r.status_final_saat_ini === "Lolos Kuota"
+                                ? "accent"
+                                : "danger"
+                            }
+                          >
                             {r.status_final_saat_ini}
-                            {r.ranking_kuota_saat_ini ? ` #${r.ranking_kuota_saat_ini}` : ""}
+                            {r.ranking_kuota_saat_ini
+                              ? ` #${r.ranking_kuota_saat_ini}`
+                              : ""}
                           </Pill>
                         ) : (
-                          <span className="text-admin-text-5 text-xs">Belum difilter</span>
+                          <span className="text-admin-text-5 text-xs">
+                            Belum difilter
+                          </span>
                         )}
                       </td>
                       <td className="px-4 py-3">
-                        <Pill tone={r.statusFinalPreview === "Lolos Kuota" ? "accent" : "danger"}>
+                        <Pill
+                          tone={
+                            r.statusFinalPreview === "Lolos Kuota"
+                              ? "accent"
+                              : "danger"
+                          }
+                        >
                           {r.statusFinalPreview}
                         </Pill>
                       </td>

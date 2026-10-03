@@ -7,6 +7,7 @@ import type { Pewawancara } from "@/types/wawancara";
 import PewawancaraTable from "./PewawancaraTable";
 import PewawancaraFormModal from "./PewawancaraFormModal";
 import ConfirmModal from "../shared/ConfirmModal";
+import { notifyPewawancaraEmail } from "../shared/notifyPewawancaraEmail";
 
 export default function DaftarPewawancara() {
   const [data, setData] = useState<Pewawancara[]>([]);
@@ -83,6 +84,7 @@ export default function DaftarPewawancara() {
         return;
       }
       setShowModal(false);
+      if (!editing) notifyPewawancaraEmail(json, form.email);
       fetchData();
     } finally {
       setSaving(false);
@@ -179,7 +181,6 @@ export default function DaftarPewawancara() {
           data={data}
           loading={loading}
           onEdit={openEdit}
-          onDelete={setDeleteTarget}
           onToggleActive={handleToggleActive}
         />
       </div>
@@ -193,12 +194,21 @@ export default function DaftarPewawancara() {
         onChange={setForm}
         onClose={() => setShowModal(false)}
         onSave={handleSave}
+        roles={(editing?.users?.user_roles ?? []).map((r) => r.role)}
+        onDelete={() => {
+          setShowModal(false);
+          setDeleteTarget(editing);
+        }}
       />
 
       <ConfirmModal
         open={!!deleteTarget}
         variant="danger"
-        title="Hapus Pewawancara?"
+        title={
+          (deleteTarget?.users?.user_roles ?? []).some((r) => r.role === "MAHASISWA_KIPK")
+            ? "Cabut Role Pewawancara?"
+            : "Hapus Akun Pewawancara?"
+        }
         description={
           (deleteTarget?.users?.user_roles ?? []).some((r) => r.role === "MAHASISWA_KIPK")
             ? `Role Pewawancara untuk ${

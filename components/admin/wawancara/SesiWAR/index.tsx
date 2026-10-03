@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { CalendarDays, Plus, RefreshCw, CheckCircle2, AlertTriangle } from "lucide-react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { CalendarDays, Loader2, Plus, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 import SesiOverview from "@/components/admin/wawancara/SesiOverview";
 import type { Sesi, KuotaItem } from "@/types/wawancara";
-import LoadingState from "../shared/LoadingState";
 import ConfirmModal, { ConfirmVariant } from "../shared/ConfirmModal";
 import SesiStatusCard from "./SesiStatusCard";
 import KuotaProgress from "./KuotaProgress";
@@ -41,7 +40,9 @@ export default function SesiWAR() {
   });
   const [savingSesi, setSavingSesi] = useState(false);
   const [savingEdit, setSavingEdit] = useState(false);
-  const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  // Dinaikkan setiap ada perubahan sesi supaya "Ringkasan Sesi" ikut dimuat ulang.
+  const [overviewKey, setOverviewKey] = useState(0);
+  const requestIdRef = useRef(0);
   const [confirmModal, setConfirmModal] = useState<{
     open: boolean;
     title: string;
@@ -50,18 +51,29 @@ export default function SesiWAR() {
     onConfirm: () => void;
   }>({ open: false, title: "", description: "", variant: "warning", onConfirm: () => {} });
 
-  const fetchSesi = useCallback(async () => {
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/admin/sesi?tanggal=${tanggal}`);
-      const json = await res.json();
-      setSesi(json.sesi ?? null);
-      setKuotaList(json.slots ?? []);
-      setOffset(json.offset ?? 0);
-    } finally {
-      setLoading(false);
-    }
-  }, [tanggal]);
+  // `silent` = refresh di latar belakang (polling, tombol muat ulang, setelah
+  // aksi): data lama tetap tampil, tidak diganti spinner "Memuat...".
+  // Spinner penuh hanya untuk muat awal & ganti tanggal.
+  const fetchSesi = useCallback(
+    async (opts?: { silent?: boolean }) => {
+      const requestId = ++requestIdRef.current;
+      if (!opts?.silent) setLoading(true);
+      try {
+        const res = await fetch(`/api/admin/sesi?tanggal=${tanggal}`);
+        const json = await res.json();
+        // Abaikan respons untuk tanggal lama kalau user sudah pindah tanggal lagi.
+        if (requestId !== requestIdRef.current) return;
+        setSesi(json.sesi ?? null);
+        setKuotaList(json.slots ?? []);
+        setOffset(json.offset ?? 0);
+      } catch {
+        // Gagal saat refresh senyap: biarkan data terakhir, coba lagi di siklus berikutnya.
+      } finally {
+        if (!opts?.silent && requestId === requestIdRef.current) setLoading(false);
+      }
+    },
+    [tanggal],
+  );
 
   useEffect(() => {
     fetchSesi();
@@ -70,13 +82,14 @@ export default function SesiWAR() {
   // Auto-refresh setiap 5 detik saat WAR aktif
   useEffect(() => {
     if (!sesi?.war_aktif) return;
-    const t = setInterval(fetchSesi, 5000);
+    const t = setInterval(() => fetchSesi({ silent: true }), 5000);
     return () => clearInterval(t);
   }, [sesi?.war_aktif, fetchSesi]);
 
-  function showMessage(type: "ok" | "err", text: string, timeout = 3000) {
-    setMsg({ type, text });
-    if (timeout) setTimeout(() => setMsg(null), timeout);
+  /** Muat ulang sesi aktif (tanpa spinner) + kartu Ringkasan Sesi setelah ada perubahan. */
+  function refreshAfterChange() {
+    fetchSesi({ silent: true });
+    setOverviewKey((k) => k + 1);
   }
 
   async function fetchKandidatCount(jalur: string, tahunSeleksi: string) {
@@ -103,7 +116,6 @@ export default function SesiWAR() {
 
   async function handleBuatSesi() {
     setSavingSesi(true);
-    setMsg(null);
     try {
       const { tanggal_mulai, tanggal_selesai, jalur_masuk, tahun_seleksi, kuota_pewawancara } = formSesi;
 
@@ -123,17 +135,15 @@ export default function SesiWAR() {
         });
         const json = await res.json();
         if (!res.ok) {
-          setMsg({ type: "err", text: json.error });
+          toast.error(json.error);
           return;
         }
         setShowBuatSesi(false);
-        showMessage(
-          "ok",
-          `${json.created} sesi berhasil dibuat (${json.total_mahasiswa} mahasiswa / ${json.jumlah_hari} hari).`,
-          5000,
-        );
+        toast.success(`${json.created} sesi berhasil dibuat`, {
+          description: `${json.total_mahasiswa} mahasiswa dibagi ke ${json.jumlah_hari} hari.`,
+        });
         setTanggal(tanggal_mulai);
-        fetchSesi();
+        refreshAfterChange();
       } else {
         // Single day (fallback ke tanggal yang dipilih di date picker)
         const res = await fetch("/api/admin/sesi", {
@@ -149,11 +159,12 @@ export default function SesiWAR() {
         });
         const json = await res.json();
         if (!res.ok) {
-          setMsg({ type: "err", text: json.error });
+          toast.error(json.error);
           return;
         }
         setShowBuatSesi(false);
-        fetchSesi();
+        toast.success("Sesi berhasil dibuat");
+        refreshAfterChange();
       }
     } finally {
       setSavingSesi(false);
@@ -184,12 +195,12 @@ export default function SesiWAR() {
       });
       const json = await res.json();
       if (!res.ok) {
-        setMsg({ type: "err", text: json.error });
+        toast.error(json.error);
         return;
       }
       setShowEditKuota(false);
-      showMessage("ok", "Kuota berhasil diperbarui.");
-      fetchSesi();
+      toast.success("Kuota berhasil diperbarui");
+      refreshAfterChange();
     } finally {
       setSavingEdit(false);
     }
@@ -230,16 +241,18 @@ export default function SesiWAR() {
       });
       const json = await res.json();
       if (!res.ok) {
-        setMsg({ type: "err", text: json.error });
+        toast.error(json.error);
         return;
       }
       setSesi(json.data);
-      showMessage(
-        "ok",
-        newState
-          ? "Pemilihan urutan dibuka! Pewawancara bisa klaim kuota."
-          : "Pemilihan urutan ditutup.",
-      );
+      setOverviewKey((k) => k + 1);
+      if (newState) {
+        toast.success("Pemilihan urutan dibuka", {
+          description: "Pewawancara sekarang bisa mengklaim slot.",
+        });
+      } else {
+        toast.success("Pemilihan urutan ditutup");
+      }
     } finally {
       setToggling(false);
     }
@@ -248,7 +261,7 @@ export default function SesiWAR() {
   function handleDistribusi() {
     if (!sesi) return;
     if (kuotaList.length === 0) {
-      setMsg({ type: "err", text: "Belum ada pewawancara yang mengisi kuota" });
+      toast.error("Belum ada pewawancara yang mengisi kuota");
       return;
     }
     setConfirmModal({
@@ -274,14 +287,13 @@ export default function SesiWAR() {
       });
       const json = await res.json();
       if (!res.ok) {
-        setMsg({ type: "err", text: json.error });
+        toast.error(json.error);
         return;
       }
-      setMsg({
-        type: "ok",
-        text: `Berhasil! ${json.total_assigned} mahasiswa didistribusikan ke ${json.pewawancara_count} pewawancara.`,
+      toast.success("Distribusi berhasil", {
+        description: `${json.total_assigned} mahasiswa didistribusikan ke ${json.pewawancara_count} pewawancara.`,
       });
-      fetchSesi();
+      refreshAfterChange();
     } finally {
       setDistributing(false);
     }
@@ -290,7 +302,7 @@ export default function SesiWAR() {
   function handleDeleteSesi() {
     if (!sesi) return;
     if (sesi.distribusi_done) {
-      setMsg({ type: "err", text: "Sesi yang sudah didistribusikan tidak bisa dihapus." });
+      toast.error("Sesi yang sudah didistribusikan tidak bisa dihapus.");
       return;
     }
     setConfirmModal({
@@ -313,19 +325,34 @@ export default function SesiWAR() {
       const res = await fetch(`/api/admin/sesi?id=${sesi.id}`, { method: "DELETE" });
       const json = await res.json();
       if (!res.ok) {
-        setMsg({ type: "err", text: json.error ?? "Gagal menghapus sesi" });
+        toast.error(json.error ?? "Gagal menghapus sesi");
         return;
       }
-      showMessage("ok", "Sesi berhasil dihapus.");
-      fetchSesi();
+      toast.success("Sesi berhasil dihapus");
+      refreshAfterChange();
     } catch {
-      setMsg({ type: "err", text: "Gagal menghapus sesi" });
+      toast.error("Gagal menghapus sesi");
     }
   }
 
+  const tanggalLabel = new Date(tanggal).toLocaleDateString("id-ID", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
   return (
     <>
-      <SesiOverview onSelectTanggal={setTanggal} activeTanggal={tanggal} />
+      {/* Saat memuat sesi (awal / ganti tanggal) seluruh area kerja dibuat
+          inert + ditutup overlay, supaya admin tidak bisa beraksi di sesi
+          tanggal sebelumnya sebelum data tanggal tujuan terbuka. */}
+      <div inert={loading} aria-busy={loading}>
+      <SesiOverview
+        onSelectTanggal={setTanggal}
+        activeTanggal={tanggal}
+        refreshKey={overviewKey}
+      />
 
       <div className="flex items-center gap-3 mb-6">
         <div className="flex items-center gap-2 bg-white border border-admin-border rounded-xl px-3 py-2 shadow-sm">
@@ -339,7 +366,7 @@ export default function SesiWAR() {
           />
         </div>
         <button
-          onClick={fetchSesi}
+          onClick={() => fetchSesi({ silent: true })}
           className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-admin-border text-admin-text-5 hover:text-admin-accent hover:border-admin-accent transition-colors shadow-sm"
           title="Muat ulang"
         >
@@ -347,27 +374,8 @@ export default function SesiWAR() {
         </button>
       </div>
 
-      <AnimatePresence>
-        {msg && (
-          <motion.div
-            role={msg.type === "err" ? "alert" : "status"}
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0 }}
-            className={`mb-4 px-4 py-3 rounded-xl text-sm font-semibold flex items-center gap-2 ${
-              msg.type === "ok"
-                ? "bg-admin-accent/10 text-admin-accent-ink border border-admin-accent/25"
-                : "bg-admin-danger-bg text-admin-danger-text border border-admin-danger-border"
-            }`}
-          >
-            {msg.type === "ok" ? <CheckCircle2 size={15} /> : <AlertTriangle size={15} />}
-            {msg.text}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
       {loading ? (
-        <LoadingState />
+        <div className="min-h-60" />
       ) : !sesi ? (
         <div className="bg-white rounded-2xl border border-admin-border-soft shadow-sm p-10 text-center">
           <CalendarDays size={36} className="text-admin-border mx-auto mb-3" />
@@ -399,6 +407,23 @@ export default function SesiWAR() {
           />
           <KuotaProgress sesi={sesi} kuotaList={kuotaList} />
           <KuotaTable sesi={sesi} kuotaList={kuotaList} offset={offset} />
+        </div>
+      )}
+      </div>
+
+      {loading && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="fixed inset-0 z-[90] flex items-center justify-center bg-admin-bg/60 backdrop-blur-[2px]"
+        >
+          <div className="flex items-center gap-3 rounded-2xl border border-admin-border bg-white px-5 py-4 shadow-lg">
+            <Loader2 size={18} className="animate-spin text-admin-accent" />
+            <div>
+              <p className="text-sm font-semibold text-admin-text">Memuat sesi…</p>
+              <p className="text-xs text-admin-text-4">{tanggalLabel}</p>
+            </div>
+          </div>
         </div>
       )}
 

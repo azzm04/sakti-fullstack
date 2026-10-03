@@ -20,16 +20,16 @@ interface RawRow {
   jalur_masuk: string | null;
   nim_resmi: string | null;
   status_sk: string | null;
-  hasil_wawancara: { hasil_akhir: string | null; status_final: string | null }[] | { hasil_akhir: string | null; status_final: string | null } | null;
+  hasil_wawancara:
+    | { hasil_akhir: string | null; status_final: string | null }[]
+    | { hasil_akhir: string | null; status_final: string | null }
+    | null;
 }
 
-/**
- * Kandidat yang benar-benar "lolos akhir" (Diusulkan, dan untuk UM/SBUB juga
- * sudah Lolos Kuota) untuk satu tahun+jalur — inilah pool yang layak diproses
- * di tahap Penetapan SK. Dipakai bareng oleh GET (tabel bulk-editor) dan
- * endpoint cocokkan (matching Excel), supaya keduanya menilai kandidat yang sama.
- */
-export async function getDiusulkanPool(tahun: number, jalurKeys: JalurKey[]): Promise<PoolKandidat[]> {
+export async function getDiusulkanPool(
+  tahun: number,
+  jalurKeys: JalurKey[],
+): Promise<PoolKandidat[]> {
   const jalurValues = resolveJalurAliases(jalurKeys);
 
   const { data, error } = await supabaseAdmin
@@ -48,7 +48,9 @@ export async function getDiusulkanPool(tahun: number, jalurKeys: JalurKey[]): Pr
 
   return ((data ?? []) as unknown as RawRow[])
     .filter((row) => {
-      const hw = Array.isArray(row.hasil_wawancara) ? row.hasil_wawancara[0] : row.hasil_wawancara;
+      const hw = Array.isArray(row.hasil_wawancara)
+        ? row.hasil_wawancara[0]
+        : row.hasil_wawancara;
       return isLolosAkhir(row.jalur_masuk, hw?.hasil_akhir, hw?.status_final);
     })
     .map((row) => ({

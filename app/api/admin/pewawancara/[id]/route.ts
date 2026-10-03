@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase";
-// FIX: prisma tidak dipakai lagi — sso_whitelist sudah digantikan tabel users
 
 // PATCH — update pewawancara
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

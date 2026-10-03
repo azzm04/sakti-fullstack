@@ -416,6 +416,7 @@ export default function EvaluasiDetailClient({
     <div className="min-h-screen bg-admin-bg font-admin-body text-admin-text flex flex-col">
       <PageHeader
         title="Evaluasi Wawancara"
+        description="Detail hasil wawancara kandidat"
         right={
           <>
             <label className="flex items-center gap-[9px] bg-admin-bg border border-admin-border rounded-[11px] px-[13px] py-[9px] flex-1 sm:flex-none sm:w-70 text-admin-text-3 focus-within:border-admin-accent transition-colors">

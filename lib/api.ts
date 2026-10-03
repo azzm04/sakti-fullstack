@@ -38,51 +38,6 @@ export const telegramAPI = {
   },
 };
 
-// ── Auth API (Next.js routes) ─────────────────────────────────────────────────
-export const authAPI = {
-  // POST /api/auth/send-otp — { email, nama? }
-  sendOtp: async (email: string, nama?: string) => {
-    const res = await fetch("/api/auth/send-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, nama }),
-    });
-    return res.json();
-  },
-
-  // POST /api/auth/verify-otp — { email, otp }
-  verifyOtp: async (email: string, otp: string) => {
-    const res = await fetch("/api/auth/verify-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, otp }),
-    });
-    return res.json();
-  },
-
-  // POST /api/auth/admin/login — { username, password }
-  adminLogin: async (username: string, password: string) => {
-    const res = await fetch("/api/auth/admin/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ username, password }),
-    });
-    return res.json();
-  },
-
-  // POST /api/auth/logout
-  logout: async () => {
-    const res = await fetch("/api/auth/logout", { method: "POST" });
-    return res.json();
-  },
-
-  // GET /api/auth/me
-  me: async () => {
-    const res = await fetch("/api/auth/me");
-    return res.json();
-  },
-};
-
 // ── Kandidat API (Next.js routes) ─────────────────────────────────────────────
 export const kandidatAPI = {
   // GET /api/kandidat?page=&limit=&search=&batchId=

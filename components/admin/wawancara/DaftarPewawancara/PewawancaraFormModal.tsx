@@ -1,7 +1,8 @@
 "use client";
 
-import { Loader2 } from "lucide-react";
 import ModalShell from "../shared/ModalShell";
+import ModalFooter from "../shared/ModalFooter";
+import RoleSection from "../shared/RoleSection";
 
 interface PewawancaraForm {
   email: string;
@@ -17,6 +18,9 @@ interface PewawancaraFormModalProps {
   onChange: (form: PewawancaraForm) => void;
   onClose: () => void;
   onSave: () => void;
+  /** Role akun yang sedang diedit — ditampilkan di bagian "Role akun". */
+  roles?: string[];
+  onDelete?: () => void;
 }
 
 export default function PewawancaraFormModal({
@@ -28,29 +32,27 @@ export default function PewawancaraFormModal({
   onChange,
   onClose,
   onSave,
+  roles = [],
+  onDelete,
 }: PewawancaraFormModalProps) {
+  const multiRole = roles.includes("MAHASISWA_KIPK");
+
   return (
     <ModalShell
       open={open}
       title={editing ? "Edit Akun Pengguna" : "Tambah Akun Pengguna"}
       onClose={onClose}
+      maxWidth="md"
       footer={
-        <>
-          <button
-            onClick={onClose}
-            className="flex-1 py-2.5 text-sm font-semibold border border-admin-border rounded-xl hover:bg-admin-surface-soft transition-all"
-          >
-            Batal
-          </button>
-          <button
-            onClick={onSave}
-            disabled={saving}
-            className="flex-1 py-2.5 text-sm font-semibold bg-admin-accent text-white rounded-xl hover:bg-admin-accent/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
-          >
-            {saving && <Loader2 size={14} className="animate-spin" />}
-            {saving ? "Menyimpan..." : "Simpan"}
-          </button>
-        </>
+        <ModalFooter
+          saving={saving}
+          saveLabel={editing ? "Simpan" : "Simpan & Kirim Email"}
+          savingLabel={editing ? undefined : "Menyimpan & mengirim email..."}
+          onClose={onClose}
+          onSave={onSave}
+          onDelete={editing ? onDelete : undefined}
+          deleteLabel={multiRole ? "Cabut role" : "Hapus akun"}
+        />
       }
     >
       <div>
@@ -78,9 +80,11 @@ export default function PewawancaraFormModal({
           className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
         />
       </div>
+      {editing && <RoleSection roles={roles} current="PEWAWANCARA" />}
       {!editing && (
         <p className="text-[11px] text-admin-text-5 bg-admin-surface-soft rounded-xl px-3 py-2 border border-admin-border-soft">
-          Pengguna otomatis bisa login via OTP menggunakan email ini. Kalau email ini sudah
+          Email pemberitahuan penunjukan pewawancara akan dikirim ke alamat ini, dan pengguna
+          bisa langsung login via OTP. Kalau email ini sudah
           terdaftar (mis. sebagai Mahasiswa KIP-K), role Pewawancara akan ditambahkan ke akun
           itu — bukan membuat akun baru.
         </p>

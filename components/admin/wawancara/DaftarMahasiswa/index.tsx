@@ -8,6 +8,7 @@ import MahasiswaTable from "./MahasiswaTable";
 import MahasiswaFormModal from "./MahasiswaFormModal";
 import JadikanPewawancaraModal from "./JadikanPewawancaraModal";
 import ConfirmModal from "../shared/ConfirmModal";
+import { notifyPewawancaraEmail } from "../shared/notifyPewawancaraEmail";
 
 export default function DaftarMahasiswa() {
   const [data, setData] = useState<MahasiswaKipk[]>([]);
@@ -160,9 +161,7 @@ export default function DaftarMahasiswa() {
         return;
       }
       setPewawancaraTarget(null);
-      toast.success("Role Pewawancara ditambahkan", {
-        description: `${pewawancaraTarget.email_sso} sekarang juga bisa masuk sebagai pewawancara.`,
-      });
+      notifyPewawancaraEmail(json, pewawancaraTarget.email_sso);
       fetchData();
     } finally {
       setAssigningPewawancara(false);
@@ -231,9 +230,7 @@ export default function DaftarMahasiswa() {
           data={data}
           loading={loading}
           onEdit={openEdit}
-          onDelete={setDeleteTarget}
           onToggleActive={handleToggleActive}
-          onJadikanPewawancara={openJadikanPewawancara}
         />
       </div>
 
@@ -248,6 +245,16 @@ export default function DaftarMahasiswa() {
         onChange={setForm}
         onClose={() => setEditing(null)}
         onSave={handleSave}
+        roles={editing?.roles ?? []}
+        onDelete={() => {
+          setDeleteTarget(editing);
+          setEditing(null);
+        }}
+        onJadikanPewawancara={() => {
+          if (!editing) return;
+          openJadikanPewawancara(editing);
+          setEditing(null);
+        }}
       />
 
       <JadikanPewawancaraModal
@@ -264,7 +271,11 @@ export default function DaftarMahasiswa() {
       <ConfirmModal
         open={!!deleteTarget}
         variant="danger"
-        title="Hapus Akun Mahasiswa?"
+        title={
+          deleteTarget && deleteTarget.roles.length > 1
+            ? "Cabut Role Mahasiswa KIP-K?"
+            : "Hapus Akun Mahasiswa?"
+        }
         description={
           deleteTarget && deleteTarget.roles.length > 1
             ? `Profil KIP-K untuk ${
