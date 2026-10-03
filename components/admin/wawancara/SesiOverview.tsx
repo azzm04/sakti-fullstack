@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
-  Radio, Lock, CheckCircle2, CalendarDays, Users, ChevronRight, Loader2,
+  Radio, Lock, CheckCircle2, CalendarDays, Users, ChevronRight,
 } from 'lucide-react';
 
 interface SesiItem {
@@ -20,42 +20,32 @@ interface SesiItem {
 interface Props {
   onSelectTanggal: (tanggal: string) => void;
   activeTanggal: string;
+  /** Berubah setiap ada sesi dibuat/dihapus/diubah — memicu muat ulang daftar. */
+  refreshKey?: number;
 }
 
-export default function SesiOverview({ onSelectTanggal, activeTanggal }: Props) {
+export default function SesiOverview({ onSelectTanggal, activeTanggal, refreshKey = 0 }: Props) {
   const [sesiList, setSesiList] = useState<SesiItem[]>([]);
-  const [loading, setLoading] = useState(true);
 
+
+  // Muat saat pertama tampil, saat tanggal aktif berubah, dan setelah ada
+  // perubahan sesi (refreshKey) — supaya kartu tidak menampilkan sesi yang sudah dihapus.
   useEffect(() => {
-    fetchAllSesi();
-  }, []);
+    let cancelled = false;
+    fetch('/api/admin/sesi/list')
+      .then(async (res) => {
+        const json = await res.json();
+        if (!cancelled && res.ok) setSesiList(json.data ?? []);
+      })
+      .catch(() => {
+        // Ringkasan bersifat pelengkap — kalau gagal, biarkan daftar terakhir.
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeTanggal, refreshKey]);
 
-  async function fetchAllSesi() {
-    setLoading(true);
-    try {
-      const res = await fetch('/api/admin/sesi/list');
-      const json = await res.json();
-      if (res.ok) {
-        setSesiList(json.data ?? []);
-      }
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  // Refresh saat activeTanggal berubah (mungkin ada sesi baru dibuat)
-  useEffect(() => {
-    fetchAllSesi();
-  }, [activeTanggal]);
-
-  if (loading) {
-    return (
-      <div className="flex items-center gap-2 text-xs text-admin-text-5 py-3">
-        <Loader2 size={12} className="animate-spin" /> Memuat sesi...
-      </div>
-    );
-  }
-
+  // Indikator muat ditangani overlay di SesiWAR — di sini cukup tidak tampil dulu.
   if (sesiList.length === 0) return null;
 
   const activeCount = sesiList.filter(s => s.war_aktif).length;
