@@ -1,5 +1,6 @@
 "use client";
 
+import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { nanoid } from "nanoid";
@@ -407,21 +408,12 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
   });
 
   return (
-    <div className="min-h-screen bg-admin-bg p-6 md:p-10">
-      <div className="mb-8">
-        <nav className="flex items-center gap-1.5 mb-3 text-[11px] uppercase tracking-wider font-semibold">
-          <span className="text-admin-text-2">Dashboard</span>
-          <span className="text-admin-text-2">›</span>
-          <span className="text-admin-accent">Monitoring & Evaluasi</span>
-        </nav>
-        <h2 className="font-admin-heading text-3xl font-extrabold text-admin-accent tracking-tight">
-          Data Laporan Monev
-        </h2>
-        <p className="text-admin-text-2 text-sm mt-1">
-          Pantau kelengkapan dokumen evaluasi ekonomi mahasiswa KIP-Kuliah
-          secara real-time.
-        </p>
-      </div>
+    <div className="min-h-screen bg-admin-bg">
+      <PageHeader
+        title="Data Laporan Monev"
+        description="Pantau kelengkapan dokumen evaluasi ekonomi mahasiswa KIP-Kuliah secara real-time."
+      />
+      <div className="px-4 sm:px-[30px] pt-6 pb-[34px]">
 
       {/* JADWAL EVALUASI */}
       <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm mb-8 overflow-hidden">
@@ -1334,6 +1326,7 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
           </motion.div>
         )}
       </AnimatePresence>
+      </div>
     </div>
   );
 }
