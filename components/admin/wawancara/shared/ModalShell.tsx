@@ -13,12 +13,6 @@ interface ModalShellProps {
   footer: React.ReactNode;
 }
 
-/**
- * Wrapper modal generik (backdrop + card + header + tombol close).
- * Menggantikan markup backdrop/animasi yang sebelumnya diulang persis
- * sama di 3 tempat: modal tambah/edit pewawancara, modal buat sesi,
- * dan modal edit kuota.
- */
 export default function ModalShell({
   open,
   title,
@@ -42,8 +36,12 @@ export default function ModalShell({
           >
             <div className="flex items-center justify-between mb-5">
               <div>
-                <h3 className="font-admin-heading font-bold text-admin-text">{title}</h3>
-                {subtitle && <p className="text-xs text-admin-text-5 mt-0.5">{subtitle}</p>}
+                <h3 className="font-admin-heading font-bold text-admin-text">
+                  {title}
+                </h3>
+                {subtitle && (
+                  <p className="text-xs text-admin-text-5 mt-0.5">{subtitle}</p>
+                )}
               </div>
               <button
                 onClick={onClose}
