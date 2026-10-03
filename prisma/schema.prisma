@@ -1,6 +1,5 @@
 generator client {
   provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
@@ -32,6 +31,7 @@ model AdminUser {
   createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamp(6)
   pewawancara    Pewawancara[]
   sesi_wawancara SesiWawancara[]
+  aduan Aduan[]
 
   @@map("admin_users")
 }
@@ -133,21 +133,12 @@ model SlotSesi {
 }
 
 model ChatSession {
-  // Dibatasi menjadi VarChar(255) agar sinkron dengan sessionId di ChatMessage
   id        String        @id @default(cuid()) @db.VarChar(255)
-  
-  // Ditambahkan @db.Uuid. Tetap gunakan tanda '?' agar tidak error jika ada user tamu/anonim
   userId    String?       @db.Uuid
-  
-  // Dibatasi menjadi VarChar(255)
   judul     String        @default("Percakapan Baru") @db.VarChar(255)
-  
-  // Ditambahkan spesifikasi Timestamp
   createdAt DateTime      @default(now()) @db.Timestamp()
   updatedAt DateTime      @updatedAt @db.Timestamp()
-  
   messages  ChatMessage[]
-
   @@map("chat_session")
 }
 
@@ -172,24 +163,45 @@ model ChatMessage {
 }
 
 model Aduan {
-  id               String      @id @default(uuid())
-  admin_id         String?
-  user_id          String?
-  kode_laporan     String      @unique @db.VarChar(20)
-  jenis_aduan      JenisAduan
-  nama_terlapor    String      @db.VarChar(150)
-  uraian_kronologi String
-  url_bukti        String
-  status           StatusAduan @default(MENUNGGU)
-  created_at       DateTime    @default(now())
-  angkatan         String?     @db.VarChar(20)
-  fakultas_prodi   String?     @db.VarChar(150)
-  nim_terlapor     String?     @db.VarChar(50)
-  is_anonim        Boolean     @default(true)
-  nama_pelapor     String?     @db.VarChar(150)
-  whatsapp_pelapor String?     @db.VarChar(20)
+  id                String       @id @default(uuid()) @db.Uuid
+  admin_id          String?      @db.Uuid
+  kode_laporan      String       @unique @db.VarChar(20)
+  jenis_aduan       JenisAduan
+  nama_terlapor     String       @db.VarChar(150)
+  uraian_kronologi  String       @db.Text
+  status            StatusAduan  @default(MENUNGGU)
+  created_at        DateTime     @default(now()) @db.Timestamp(6)
+  angkatan          String?      @db.VarChar(20)
+  fakultas_prodi    String?      @db.VarChar(150)
+  nim_terlapor      String?      @db.VarChar(50)
+  is_anonim         Boolean      @default(true)
+  nama_pelapor      String?      @db.VarChar(150)
+  whatsapp_pelapor  String?      @db.VarChar(20)
+  email_pelapor     String?      @db.VarChar(150)
 
+  pernyataan_setuju Boolean      @default(false)
+  disetujui_pada    DateTime?    @db.Timestamp(6)
+
+  admin             AdminUser?   @relation(fields: [admin_id], references: [id], onDelete: SetNull)
+  bukti             BuktiAduan[]
+
+  @@index([admin_id])
   @@map("aduan")
+}
+
+model BuktiAduan {
+  id         String   @id @default(uuid()) @db.Uuid
+  aduan_id   String   @db.Uuid
+  path_file  String   @db.Text           // path di Supabase Storage
+  nama_file  String   @db.VarChar(255)   // nama asli, ditampilkan ke admin
+  mime_type  String   @db.VarChar(100)   // image/jpeg, image/png, image/webp, application/pdf
+  ukuran     Int                         // dalam byte
+  created_at DateTime @default(now()) @db.Timestamp(6)
+
+  aduan Aduan @relation(fields: [aduan_id], references: [id], onDelete: Cascade)
+
+  @@index([aduan_id])
+  @@map("bukti_aduan")
 }
 
 model BeritaInformasi {

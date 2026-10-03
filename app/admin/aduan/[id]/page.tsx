@@ -2,25 +2,45 @@ import { prisma } from "@/lib/db";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import UbahStatus from "./UbahStatus";
+import { supabaseAdmin } from "@/lib/supabase-admin";
+import { BUKTI_CONFIG } from "@/lib/aduan/bukti-config";
 
 export default async function DetailAduanAdmin({ params }: { params: Promise<{ id: string }> }) {
   // 1. Ambil ID dari URL (wajib di-await di Next.js terbaru)
   const { id } = await params;
 
-  // 2. Cari data aduan di database berdasarkan ID
-  const aduan = (await prisma.aduan.findUnique({
+  // 2. Cari data aduan beserta buktinya
+  const aduan = await prisma.aduan.findUnique({
     where: { id },
-  })) as any;
+    include: {
+      bukti: { orderBy: { created_at: "asc" } },
+      admin: { select: { nama: true } },
+    },
+  });
 
   // 3. Jika ID ngawur/tidak ada, tampilkan halaman 404 Not Found
   if (!aduan) {
     notFound();
   }
 
+  // 4. Tautan sementara (berlaku 1 jam) karena bucket bersifat privat
+  let urlByPath = new Map<string, string>();
+  const paths = aduan.bukti.map((b) => b.path_file);
+  if (paths.length > 0) {
+    const { data } = await supabaseAdmin.storage
+      .from(BUKTI_CONFIG.BUCKET)
+      .createSignedUrls(paths, 60 * 60);
+    urlByPath = new Map(
+      (data ?? []).flatMap((s) =>
+        s.path && s.signedUrl ? [[s.path, s.signedUrl] as [string, string]] : []
+      )
+    );
+  }
+
   return (
     <div className="min-h-screen bg-slate-100 p-4 sm:p-8 font-sans pb-20">
       <div className="max-w-4xl mx-auto space-y-6">
-        
+
         {/* Navigasi Kembali */}
         <Link href="/admin/aduan" className="inline-flex items-center text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors">
           &larr; Kembali ke Daftar Laporan
@@ -32,8 +52,11 @@ export default async function DetailAduanAdmin({ params }: { params: Promise<{ i
             <div>
               <p className="text-blue-200 text-xs font-bold uppercase tracking-wider mb-1">Kode Resi Laporan</p>
               <h1 className="text-2xl font-black">{aduan.kode_laporan}</h1>
+              <p className="mt-1 text-xs text-blue-200">
+                Ditangani oleh: {aduan.admin?.nama ?? "Belum ditangani"}
+              </p>
             </div>
-            
+
             {/* Memanggil Komponen Ubah Status */}
             <div className="flex flex-col items-start md:items-end gap-1">
               <span className="text-xs text-blue-200 font-medium">Ubah Status Laporan:</span>
@@ -42,8 +65,8 @@ export default async function DetailAduanAdmin({ params }: { params: Promise<{ i
           </div>
 
           <div className="p-8 space-y-10">
-            
-            {/* Bagian 1: Identitas Pelapor (DIUBAH LOGIKANYA) */}
+
+            {/* Bagian 1: Identitas Pelapor */}
             <section>
               <h2 className="text-lg font-bold text-slate-800 border-b border-slate-200 pb-2 mb-4">1. Identitas Pelapor</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border border-slate-200">
@@ -62,6 +85,18 @@ export default async function DetailAduanAdmin({ params }: { params: Promise<{ i
                         Hubungi
                       </span>
                     </a>
+                  </p>
+                </div>
+                <div className="md:col-span-2">
+                  <p className="text-xs text-slate-500 font-bold uppercase tracking-wide">Email</p>
+                  <p className="font-semibold text-slate-900 mt-1">
+                    {aduan.email_pelapor ? (
+                      <a href={`mailto:${aduan.email_pelapor}`} className="text-blue-600 hover:underline">
+                        {aduan.email_pelapor}
+                      </a>
+                    ) : (
+                      "-"
+                    )}
                   </p>
                 </div>
               </div>
@@ -95,25 +130,46 @@ export default async function DetailAduanAdmin({ params }: { params: Promise<{ i
             {/* Bagian 3: Kronologi & Bukti */}
             <section>
               <h2 className="text-lg font-bold text-slate-800 border-b border-slate-200 pb-2 mb-4">3. Detail Kronologi & Bukti</h2>
-              
+
               <div className="bg-white border border-slate-300 p-5 rounded-xl text-slate-700 leading-relaxed whitespace-pre-wrap text-sm shadow-inner mb-6">
                 {aduan.uraian_kronologi}
               </div>
 
               <div>
-                <p className="text-xs text-slate-500 font-bold uppercase tracking-wide mb-2">Tautan Bukti Pendukung</p>
-                {aduan.url_bukti ? (
-                  <a 
-                    href={aduan.url_bukti} 
-                    target="_blank" 
-                    rel="noopener noreferrer" 
-                    className="inline-flex items-center px-5 py-2.5 bg-[#001349] text-white text-sm font-bold rounded-lg hover:bg-blue-900 transition-colors shadow-md"
-                  >
-                    Buka File / Folder Bukti &rarr;
-                  </a>
+                <p className="text-xs text-slate-500 font-bold uppercase tracking-wide mb-2">
+                  Bukti Pendukung ({aduan.bukti.length} file)
+                </p>
+                {aduan.bukti.length > 0 ? (
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {aduan.bukti.map((b) => {
+                      const url = urlByPath.get(b.path_file);
+                      const isGambar = b.mime_type.startsWith("image/");
+                      return (
+                        <li key={b.id} className="flex items-center gap-3 rounded-xl border border-slate-200 bg-slate-50 p-3">
+                          {isGambar && url ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img src={url} alt={b.nama_file} className="h-16 w-16 rounded-lg border border-slate-200 object-cover" />
+                          ) : (
+                            <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-rose-100 text-xs font-black text-rose-600">
+                              PDF
+                            </div>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-semibold text-slate-800">{b.nama_file}</p>
+                            <p className="text-xs text-slate-500">{(b.ukuran / 1024 / 1024).toFixed(2)} MB</p>
+                            {url && (
+                              <a href={url} target="_blank" rel="noopener noreferrer" className="text-xs font-bold text-blue-600 hover:underline">
+                                Buka file &rarr;
+                              </a>
+                            )}
+                          </div>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 ) : (
-                  <p className="text-sm text-slate-500 italic bg-slate-50 p-3 rounded-lg border border-slate-200 inline-block">
-                    Pelapor tidak menyertakan tautan bukti pendukung.
+                  <p className="inline-block rounded-lg border border-slate-200 bg-slate-50 p-3 text-sm italic text-slate-500">
+                    Tidak ada bukti terlampir.
                   </p>
                 )}
               </div>

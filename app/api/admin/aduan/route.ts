@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/db"; // Sesuaikan dengan path file Prisma Anda
+import { prisma } from "@/lib/db";
+import { getSesiAdmin } from "@/lib/auth/sesi-admin";
 
 export async function GET() {
   try {
-    // Mengambil semua laporan dari yang terbaru ke terlama
+    const sesi = await getSesiAdmin();
+    if (!sesi) {
+      return NextResponse.json({ error: "Tidak diizinkan" }, { status: 401 });
+    }
+
     const aduanList = await prisma.aduan.findMany({
       orderBy: { created_at: "desc" },
     });
