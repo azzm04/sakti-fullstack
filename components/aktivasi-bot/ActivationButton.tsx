@@ -5,27 +5,76 @@ import { IconBolt, IconCheck, IconExternalLink } from "@tabler/icons-react"
 import { BackgroundGradient } from "@/components/ui/background-gradient"
 import { telegramAPI } from "@/lib/api"
 
-export default function ActivationButton() {
-  const [isActivating, setIsActivating] = useState(false)
-  const [isActivated, setIsActivated]   = useState(false)
-  const [error, setError]               = useState<string | null>(null)
+interface ActivationButtonProps {
+  onActivated?: () => void;
+  variant?: "default" | "inline";
+}
+
+export default function ActivationButton({ onActivated, variant = "inline" }: ActivationButtonProps) {
+  const [isActivating, setIsActivating] = useState(false);
+  const [isActivated, setIsActivated] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleActivation = async () => {
-    setIsActivating(true)
-    setError(null)
+    setIsActivating(true);
+    setError(null);
     try {
-      const data = await telegramAPI.activate()
+      const data = await telegramAPI.activate();
       if (data?.deepLink) {
-        setIsActivated(true)
-        window.open(data.deepLink, "_blank")
+        setIsActivated(true);
+        window.open(data.deepLink, "_blank");
+        onActivated?.();
       } else {
-        setError(data?.error ?? "Gagal mendapatkan link aktivasi.")
+        setError(data?.error ?? "Gagal mendapatkan link aktivasi.");
       }
     } catch {
-      setError("Gagal terhubung ke server. Silakan coba lagi.")
+      setError("Gagal terhubung ke server. Silakan coba lagi.");
     } finally {
-      setIsActivating(false)
+      setIsActivating(false);
     }
+  };
+
+  if (variant === "inline") {
+    return (
+      <div className="space-y-2">
+        {error && (
+          <p className="text-red-600 text-xs bg-red-50 border border-red-200 rounded-lg p-2">
+            {error}
+          </p>
+        )}
+
+        {isActivated ? (
+          <div className="flex items-start gap-2 bg-emerald-50 border border-emerald-200 p-2.5 rounded-lg text-xs text-emerald-800">
+            <IconCheck className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+            <div>
+              <p className="font-semibold">Link aktivasi dibuka di tab baru</p>
+              <p className="text-emerald-700 mt-0.5">
+                Buka Telegram Anda lalu tekan tombol <b>Start</b> pada bot untuk menyelesaikan koneksi.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <button
+            type="button"
+            onClick={handleActivation}
+            disabled={isActivating}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-[#000352] text-white text-sm font-medium rounded-lg hover:bg-[#1a1e68] transition-colors disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#000352] focus-visible:ring-offset-2"
+          >
+            {isActivating ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                <span>Menghubungkan...</span>
+              </>
+            ) : (
+              <>
+                <IconExternalLink className="w-4 h-4" />
+                <span>Aktivasi Bot Telegram</span>
+              </>
+            )}
+          </button>
+        )}
+      </div>
+    );
   }
 
   return (
@@ -78,5 +127,5 @@ export default function ActivationButton() {
         </p>
       </div>
     </BackgroundGradient>
-  )
+  );
 }

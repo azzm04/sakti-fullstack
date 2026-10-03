@@ -1,15 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
+import Image from "next/image";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import {
-  AlertCircle, CheckCircle2, FileText, Bell, Send,
-  CalendarClock, Clock, CheckCircle, Loader2
+  CheckCircle2,
+  Clock,
+  ArrowRight,
+  RotateCw,
+  ExternalLink,
+  Loader2,
 } from "lucide-react";
-import ActivationButton from "@/components/aktivasi-bot/ActivationButton";
+import { telegramAPI } from "@/lib/api";
 
-interface MonevSchedule {
+export interface MonevSchedule {
   id: string;
   tipe_monev: string;
   label: string;
@@ -19,291 +23,547 @@ interface MonevSchedule {
   created_at: string;
 }
 
-const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
-
-const isDeadlinePassed = (deadline: string) => new Date(deadline) < new Date();
-
-const getDaysLeft = (deadline: string) => {
-  const diff = new Date(deadline).getTime() - Date.now();
-  return Math.ceil(diff / (1000 * 60 * 60 * 24));
-};
-
-const TIMELINE = [
-  {
-    phase: "Fase Persiapan",
-    title: "H-30 sampai H-3",
-    desc: "Pengingat rutin setiap 3 hari agar Anda memiliki cukup waktu menyiapkan dokumen Monev.",
-    delay: 0.1,
-  },
-  {
-    phase: "Pengingat Akhir",
-    title: "H-2 dan H-1",
-    desc: "Pengingat mendesak dua kali sehari (pagi & sore) agar tidak melewatkan batas waktu pengisian.",
-    delay: 0.3,
-  },
-];
-
 interface RiwayatMonevClientProps {
   initialSchedules: MonevSchedule[];
   initialSubmittedIds: string[];
 }
 
-export default function RiwayatMonevClient({ initialSchedules, initialSubmittedIds }: RiwayatMonevClientProps) {
-  const schedules = initialSchedules;
+// ─── DATE HELPERS (Asia/Jakarta) ──────────────────────────────────────────
+function isValidDate(d: string | null | undefined): boolean {
+  if (!d) return false;
+  const time = new Date(d).getTime();
+  return !isNaN(time);
+}
 
-  // State status koneksi Telegram
+function formatDateID(iso: string | null | undefined): string {
+  if (!isValidDate(iso)) return "-";
+  return new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Asia/Jakarta",
+  }).format(new Date(iso!));
+}
+
+function formatDateTimeID(iso: string | null | undefined): string {
+  if (!isValidDate(iso)) return "-";
+  const d = new Date(iso!);
+  const dateStr = new Intl.DateTimeFormat("id-ID", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "Asia/Jakarta",
+  }).format(d);
+  const timeStr = new Intl.DateTimeFormat("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone: "Asia/Jakarta",
+  }).format(d).replace(":", ".");
+  return `${dateStr}, pukul ${timeStr} WIB`;
+}
+
+export default function RiwayatMonevClient({
+  initialSchedules,
+  initialSubmittedIds,
+}: RiwayatMonevClientProps) {
+  // Hindari state salinan props yang stale; gunakan useMemo untuk Set submitted
+  const schedules = initialSchedules;
+  const submittedSet = useMemo(
+    () => new Set(initialSubmittedIds),
+    [initialSubmittedIds]
+  );
+
+  // Waktu aktual (diperbarui otomatis setiap 30 detik untuk transisi deadline dinamis)
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // ─── STATE TELEGRAM ───────────────────────────────────────────────────────
   const [telegramStatus, setTelegramStatus] = useState<{
     connected: boolean;
     loading: boolean;
-  }>({ connected: false, loading: true });
+    error: boolean;
+  }>({ connected: false, loading: true, error: false });
+  const [isOpeningBot, setIsOpeningBot] = useState(false);
+  const [hasOpenedBot, setHasOpenedBot] = useState(false);
+  const [activationError, setActivationError] = useState<string | null>(null);
 
-  const [submittedIds] = useState<Set<string>>(new Set(initialSubmittedIds));
-
-  useEffect(() => {
-    fetch("/api/auth/telegram/status")
-      .then((r) => r.json())
-      .then((data) =>
-        setTelegramStatus({ connected: data.connected === true, loading: false })
-      )
-      .catch(() => setTelegramStatus({ connected: false, loading: false }));
+  const fetchTelegramStatus = useCallback(async () => {
+    setTelegramStatus((prev) => ({ ...prev, loading: true, error: false }));
+    try {
+      const res = await fetch("/api/auth/telegram/status");
+      if (!res.ok) throw new Error("Gagal mengambil status");
+      const data = await res.json();
+      setTelegramStatus({
+        connected: data.connected === true,
+        loading: false,
+        error: false,
+      });
+    } catch {
+      setTelegramStatus({ connected: false, loading: false, error: true });
+    }
   }, []);
 
-  const activeSchedules = schedules.filter((s) => s.is_active && !isDeadlinePassed(s.deadline));
-  const historySchedules = schedules.filter((s) => !s.is_active || isDeadlinePassed(s.deadline));
+  const handleOpenBot = async () => {
+    setIsOpeningBot(true);
+    setActivationError(null);
+    try {
+      const data = await telegramAPI.activate();
+      if (data?.deepLink) {
+        setHasOpenedBot(true);
+        window.open(data.deepLink, "_blank");
+      } else {
+        setActivationError(data?.error ?? "Gagal mendapatkan tautan bot Telegram.");
+      }
+    } catch {
+      setActivationError("Gagal terhubung ke server. Silakan coba lagi.");
+    } finally {
+      setIsOpeningBot(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTelegramStatus();
+
+    // Auto-refresh saat mahasiswa kembali ke tab ini setelah membuka Telegram bot
+    const handleFocus = () => fetchTelegramStatus();
+    window.addEventListener("focus", handleFocus);
+    return () => window.removeEventListener("focus", handleFocus);
+  }, [fetchTelegramStatus]);
+
+  // ─── ILUSTRASI HERO ───────────────────────────────────────────────────────
+  const HERO_IMAGE_SRC = "/illustrations/monev-group-animated.svg";
+  const [hasHeroImage, setHasHeroImage] = useState(false);
+
+  useEffect(() => {
+    const img = new window.Image();
+    img.src = HERO_IMAGE_SRC;
+    img.onload = () => setHasHeroImage(true);
+    img.onerror = () => setHasHeroImage(false);
+  }, []);
+
+  // ─── FILTER & PENGELOMPOKAN JADWAL ─────────────────────────────────────────
+  // Periode yang dapat diisi saat ini (aktif, sudah mulai / tidak ada start, deadline belum lewat)
+  const fillablePeriods = useMemo(() => {
+    return schedules
+      .filter((s) => {
+        const deadlinePassed =
+          isValidDate(s.deadline) && new Date(s.deadline).getTime() < now;
+        const started =
+          !s.waktu_mulai ||
+          (isValidDate(s.waktu_mulai) &&
+            new Date(s.waktu_mulai).getTime() <= now);
+        return s.is_active && started && !deadlinePassed;
+      })
+      .sort((a, b) => {
+        // Urutkan deterministik: tenggat terdekat terlebih dahulu
+        const timeA = isValidDate(a.deadline)
+          ? new Date(a.deadline).getTime()
+          : 0;
+        const timeB = isValidDate(b.deadline)
+          ? new Date(b.deadline).getTime()
+          : 0;
+        return timeA - timeB;
+      });
+  }, [schedules, now]);
+
+  // State pemilih periode jika terdapat beberapa periode aktif yang dapat diisi
+  const [selectedPeriodId, setSelectedPeriodId] = useState<string | null>(null);
+  const currentPeriod = useMemo(() => {
+    if (fillablePeriods.length === 0) return null;
+    return (
+      fillablePeriods.find((p) => p.id === selectedPeriodId) ??
+      fillablePeriods[0]
+    );
+  }, [fillablePeriods, selectedPeriodId]);
+
+  // Riwayat evaluasi (selain periode aktif yang sedang dikerjakan dan selain jadwal yang belum dibuka)
+  const historySchedules = useMemo(() => {
+    const fillableIds = new Set(fillablePeriods.map((p) => p.id));
+    return schedules
+      .filter((s) => {
+        // Jangan masukkan periode aktif saat ini
+        if (fillableIds.has(s.id)) return false;
+
+        const deadlinePassed =
+          isValidDate(s.deadline) && new Date(s.deadline).getTime() < now;
+        const started =
+          !s.waktu_mulai ||
+          (isValidDate(s.waktu_mulai) &&
+            new Date(s.waktu_mulai).getTime() <= now);
+        const isUpcoming = s.is_active && !started && !deadlinePassed;
+
+        // Jangan masukkan jadwal mendatang ke riwayat selesai
+        if (isUpcoming) return false;
+
+        return true;
+      })
+      .sort((a, b) => {
+        const timeA = isValidDate(a.deadline)
+          ? new Date(a.deadline).getTime()
+          : 0;
+        const timeB = isValidDate(b.deadline)
+          ? new Date(b.deadline).getTime()
+          : 0;
+        return timeB - timeA; // Riwayat: terbaru lebih dahulu
+      });
+  }, [schedules, fillablePeriods, now]);
+
+  // State tampilkan semua riwayat
+  const [showAllHistory, setShowAllHistory] = useState(false);
+
+  const displayedHistory = showAllHistory
+    ? historySchedules
+    : historySchedules.slice(0, 3);
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-10">
-      {/* SECTION 1: EVALUASI AKTIF */}
-      {activeSchedules.length > 0 && (
-        <section className="space-y-4">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <h2 className="text-base font-bold text-emerald-700 uppercase tracking-wider text-xs">
-              Evaluasi Sedang Berlangsung
-            </h2>
+    <div
+      className="relative max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6 sm:space-y-8"
+      style={{ fontFamily: "Roboto, sans-serif" }}
+    >
+      {/* ─── SECTION 1: HERO (DIPERTAHANKAN SESUAI PERMINTAAN USER) ────────── */}
+      {/* Dotted orbital arc */}
+      <div className="pointer-events-none absolute right-10 top-0 w-72 h-72 rounded-full border border-dashed border-blue-100/40 hidden md:block" />
+
+      {/* Top: Judul + Slot Gambar */}
+      <div className="relative z-10 flex flex-col md:flex-row md:items-start justify-between gap-4">
+        {/* Teks Judul & Deskripsi */}
+        <div className="max-w-xl md:pt-6">
+          <h1 className="text-3xl sm:text-4xl lg:text-[40px] font-extrabold text-[#0B1536] tracking-tight leading-[1.25]">
+            Monitoring dan Evaluasi<br />KIP Kuliah
+          </h1>
+          <p className="mt-4 text-base sm:text-lg text-slate-500 leading-relaxed max-w-md">
+            Perbarui laporan kondisi ekonomi Anda untuk mendukung proses evaluasi KIP Kuliah.
+          </p>
+        </div>
+
+        {/* Slot Gambar / Ilustrasi di sebelah kanan */}
+        <div className="relative shrink-0 flex items-start justify-center self-center md:self-auto w-full md:w-auto md:-mt-8">
+          <div className="relative w-72 h-56 sm:w-80 sm:h-64 md:w-96 md:h-72 lg:w-[400px] lg:h-[300px] flex items-center justify-center">
+            {hasHeroImage ? (
+              <Image
+                src={HERO_IMAGE_SRC}
+                alt="Ilustrasi Monitoring dan Evaluasi"
+                fill
+                className="object-contain object-top drop-shadow-md select-none pointer-events-none"
+                priority
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center pointer-events-none select-none" />
+            )}
           </div>
-          <div className="space-y-3">
-            {activeSchedules.map((s) => {
-              const daysLeft = getDaysLeft(s.deadline);
-              const alreadySubmitted = submittedIds.has(s.id);
-              return (
-                <motion.div
-                  key={s.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className={`border rounded-xl p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 ${
-                    alreadySubmitted ? "bg-emerald-50/50 border-emerald-200" : "bg-emerald-50 border-emerald-200"
-                  }`}
-                >
-                  <div className="flex items-start gap-3">
-                    <div className={`p-2 rounded-lg shrink-0 mt-0.5 ${
-                      alreadySubmitted ? "bg-emerald-100 text-emerald-600" : "bg-emerald-100 text-emerald-600"
-                    }`}>
-                      <CalendarClock size={18} />
-                    </div>
-                    <div>
-                      <p className="font-bold text-emerald-900 text-sm">{s.label}</p>
-                      <p className="text-xs text-emerald-700 mt-0.5">{s.tipe_monev}</p>
-                      <div className="flex items-center gap-3 mt-2 flex-wrap">
-                        {s.waktu_mulai && (
-                          <span className="text-xs text-slate-500">Mulai: {formatDate(s.waktu_mulai)}</span>
-                        )}
-                        <span className="text-xs font-semibold text-slate-700">Deadline: {formatDate(s.deadline)}</span>
-                        {alreadySubmitted ? (
-                          <span className="inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700">
-                            <CheckCircle size={11} /> Sudah Mengisi
-                          </span>
-                        ) : (
-                          <span className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full ${
-                            daysLeft <= 3 ? "bg-red-100 text-red-700" : daysLeft <= 7 ? "bg-amber-100 text-amber-700" : "bg-emerald-100 text-emerald-700"
-                          }`}>
-                            <Clock size={11} />
-                            {daysLeft > 0 ? `${daysLeft} hari lagi` : "Hari ini!"}
-                          </span>
-                        )}
-                      </div>
-                    </div>
+        </div>
+      </div>
+
+      {/* ─── SECTION 2: KARTU PERIODE BERJALAN ──────────────────────────────── */}
+      <section aria-labelledby="current-monev-heading">
+        <div className="rounded-lg border border-[#E2E8F0] bg-white p-4 sm:p-6">
+          {currentPeriod ? (
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6">
+              {/* Informasi Periode */}
+              <div className="space-y-2 min-w-0">
+                {fillablePeriods.length > 1 && (
+                  <div className="mb-2">
+                    <label
+                      htmlFor="period-select"
+                      className="block text-[13px] leading-[20px] text-[#475569] mb-1 font-medium"
+                    >
+                      Pilih Periode Aktif:
+                    </label>
+                    <select
+                      id="period-select"
+                      value={currentPeriod.id}
+                      onChange={(e) => setSelectedPeriodId(e.target.value)}
+                      className="text-[13px] text-[#0F172A] bg-white border border-[#E2E8F0] rounded-lg px-3 py-1.5 focus:outline-none focus:ring-1 focus:ring-[#000352]"
+                    >
+                      {fillablePeriods.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                  <Link
-                    href={`/mahasiswa/monev/${s.id}`}
-                    className={`inline-flex items-center gap-2 px-5 py-2.5 font-semibold rounded-xl text-sm transition-all shadow-sm hover:shadow active:scale-95 whitespace-nowrap shrink-0 ${
-                      alreadySubmitted
-                        ? "bg-emerald-600 text-white hover:bg-emerald-700"
-                        : "bg-emerald-600 text-white hover:bg-emerald-700"
-                    }`}
-                  >
-                    {alreadySubmitted ? (
-                      <><CheckCircle2 size={16} /> Lihat Evaluasi</>
-                    ) : (
-                      <><AlertCircle size={16} /> Isi Evaluasi</>
-                    )}
-                  </Link>
-                </motion.div>
-              );
-            })}
-          </div>
-        </section>
-      )}
+                )}
 
-      {/* SECTION 2: TABEL RIWAYAT MONEV */}
-      <section className="space-y-4">
-        <h1 className="text-2xl font-bold text-primary">Riwayat Evaluasi Beasiswa</h1>
+                <h2
+                  id="current-monev-heading"
+                  className="text-[18px] leading-[26px] font-semibold text-[#0F172A] break-words"
+                >
+                  {currentPeriod.label}
+                </h2>
 
-        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
-          {schedules.length === 0 ? (
-            <div className="py-16 text-center text-slate-400 text-sm">
-              Belum ada jadwal evaluasi yang tersedia.
+                <p className="text-[13px] leading-[20px] text-[#475569]">
+                  <span className="font-medium text-[#0F172A]">Batas pengisian:</span>{" "}
+                  {formatDateTimeID(currentPeriod.deadline)}
+                </p>
+
+                <p className="text-[14px] leading-[22px] text-[#475569]">
+                  {submittedSet.has(currentPeriod.id)
+                    ? "Laporan evaluasi Anda telah berhasil dikirim. Anda dapat melihat kembali rincian data laporan yang tersimpan."
+                    : "Lengkapi data ekonomi dan dokumen pendukung sebelum batas pengisian."}
+                </p>
+
+                <p className="text-[13px] leading-[20px] text-[#475569]">
+                  <span className="font-medium text-[#0F172A]">Status laporan:</span>{" "}
+                  {submittedSet.has(currentPeriod.id)
+                    ? "Laporan terkirim"
+                    : "Laporan belum dikirim"}
+                </p>
+              </div>
+
+              {/* Tombol Utama */}
+              <div className="shrink-0 flex items-center sm:justify-end">
+                <Link
+                  href={`/mahasiswa/monev/${currentPeriod.id}`}
+                  className="w-full sm:w-auto inline-flex h-11 min-h-[44px] items-center justify-center px-6 bg-[#000352] hover:bg-[#1a1e68] text-white font-medium rounded-lg text-[14px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#000352] focus-visible:ring-offset-2"
+                >
+                  {submittedSet.has(currentPeriod.id)
+                    ? "Lihat laporan"
+                    : "Isi Monev"}
+                </Link>
+              </div>
             </div>
           ) : (
-            <table className="w-full text-left text-sm">
-              <thead className="bg-primary/5 border-b border-slate-200 text-secondary">
-                <tr>
-                  <th className="p-4 font-bold w-16 text-center">No.</th>
-                  <th className="p-4 font-bold">Jenis</th>
-                  <th className="p-4 font-bold">Tanggal Evaluasi</th>
-                  <th className="p-4 font-bold">Notifikasi / Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {schedules.map((item, index) => {
-                  const passed = isDeadlinePassed(item.deadline);
-                  const isActive = item.is_active && !passed;
-                  return (
-                    <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="p-4 text-secondary text-center font-medium">{index + 1}</td>
-                      <td className="p-4">
-                        <div className="flex items-center gap-2 font-semibold text-primary">
-                          <FileText size={16} className="text-secondary shrink-0" />
-                          <div>
-                            <p>{item.tipe_monev}</p>
-                            <p className="text-xs text-slate-400 font-normal mt-0.5">{item.label}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="p-4 text-secondary">
-                        <div className="space-y-0.5">
-                          {item.waktu_mulai && (
-                            <p className="text-xs text-slate-400">Mulai: {formatDate(item.waktu_mulai)}</p>
-                          )}
-                          <p className="text-sm font-medium text-slate-700">Deadline: {formatDate(item.deadline)}</p>
-                        </div>
-                      </td>
-                      <td className="p-4">
-                        <div className="flex flex-col gap-3 items-start max-w-lg">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-bold ${
-                            submittedIds.has(item.id)
-                              ? "bg-emerald-100 text-emerald-700"
-                              : passed
-                                ? "bg-slate-100 text-slate-500"
-                                : isActive
-                                  ? "bg-amber-100 text-amber-700"
-                                  : "bg-slate-100 text-slate-500"
-                          }`}>
-                            {submittedIds.has(item.id) ? "Sudah Mengisi" : passed ? "Berakhir" : isActive ? "Belum Mengisi" : "Nonaktif"}
-                          </span>
-                          
-                          {passed ? (
-                            <button disabled className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-400 font-semibold rounded-lg text-sm cursor-not-allowed">
-                              <CheckCircle2 size={16} /> Periode Berakhir
-                            </button>
-                          ) : isActive && submittedIds.has(item.id) ? (
-                            <Link href={`/mahasiswa/monev/${item.id}`} className="inline-flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white font-semibold rounded-lg text-sm hover:bg-emerald-700 transition-all shadow-sm hover:shadow active:scale-95">
-                              <CheckCircle2 size={16} /> Lihat Evaluasi
-                            </Link>
-                          ) : isActive ? (
-                            <Link href={`/mahasiswa/monev/${item.id}`} className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white font-semibold rounded-lg text-sm hover:bg-primary/90 transition-all shadow-sm hover:shadow active:scale-95">
-                              <AlertCircle size={16} /> Isi Evaluasi
-                            </Link>
-                          ) : (
-                            <button disabled className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-400 font-semibold rounded-lg text-sm cursor-not-allowed">
-                              <Clock size={16} /> Belum Dibuka
-                            </button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+            <div className="text-center py-4">
+              <h2
+                id="current-monev-heading"
+                className="text-[18px] leading-[26px] font-semibold text-[#0F172A]"
+              >
+                Tidak ada periode Monev yang aktif saat ini.
+              </h2>
+              <p className="mt-2 text-[14px] leading-[22px] text-[#475569]">
+                Jadwal pengisian berikutnya akan diinformasikan oleh pengelola beasiswa.
+              </p>
+            </div>
           )}
         </div>
       </section>
 
-      <hr className="border-slate-200" />
+      {/* ─── SECTION 3: PENGINGAT TELEGRAM ────────────────────────────────── */}
+      <section aria-labelledby="telegram-heading">
+        <div className="rounded-lg border border-[#E2E8F0] bg-white p-4 sm:p-6">
+          <h2
+            id="telegram-heading"
+            className="text-[18px] leading-[26px] font-semibold text-[#0F172A]"
+          >
+            Pengingat Telegram
+          </h2>
 
-      {/* SECTION 3: INTEGRASI BOT TELEGRAM SAKTI */}
-      <section className="space-y-6">
-        <div>
-          <div className="flex items-center space-x-2 text-secondary mb-2">
-            <Bell size={16} className="text-primary" />
-            <span className="text-xs font-bold uppercase tracking-wider text-primary">Layanan Pengingat Otomatis</span>
-          </div>
-          <h2 className="text-2xl font-bold text-primary">Smart Bot SAKTI</h2>
-          <p className="text-secondary mt-1 max-w-2xl text-sm">
-            Hubungkan akun Telegram Anda untuk menerima pengingat otomatis jadwal pengisian Monev tanpa perlu membuka aplikasi terus-menerus.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Kolom Kiri: Flow & Jadwal */}
-          <div className="lg:col-span-2 bg-slate-50/50 rounded-xl border border-slate-200 p-6 shadow-sm">
-            <h3 className="font-bold text-primary mb-6 flex items-center gap-2">
-              <CalendarClock size={18} /> Jadwal Notifikasi & Flow
-            </h3>
-
-            <div className="relative pl-6 space-y-8">
-              <div className="absolute left-[1px] top-2 bottom-2 w-0.5 bg-gradient-to-b from-primary via-primary/30 to-transparent" />
-              {TIMELINE.map((step) => (
-                <motion.div
-                  key={step.phase}
-                  initial={{ opacity: 0, x: -20 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: step.delay }}
-                  className="relative"
-                >
-                  <div className="absolute -left-[30px] top-1.5 w-3.5 h-3.5 rounded-full bg-primary ring-4 ring-primary/10" />
-                  <span className="text-[11px] font-bold text-primary/70 tracking-widest uppercase">{step.phase}</span>
-                  <h4 className="text-base font-bold text-primary mt-0.5">{step.title}</h4>
-                  <p className="text-secondary mt-1 text-sm leading-relaxed max-w-md">{step.desc}</p>
-                </motion.div>
-              ))}
+          {telegramStatus.connected ? (
+            <div className="mt-2">
+              <p className="text-[14px] leading-[22px] text-[#475569]">
+                Akun Telegram sudah terhubung. Pengingat akan dikirim melalui bot SAKTI.
+              </p>
             </div>
-          </div>
+          ) : (
+            <div>
+              <p className="mt-2 text-[14px] leading-[22px] text-[#475569]">
+                Hubungkan akun Telegram untuk menerima pengingat batas pengisian Monev.
+              </p>
 
-          {/* Kolom Kanan: Card Aktivasi / Status */}
-          <div className="bg-primary rounded-xl p-6 shadow-lg relative overflow-hidden flex flex-col justify-center">
-            <div className="absolute top-0 right-0 -mt-4 -mr-4 w-32 h-32 bg-white/10 rounded-full blur-2xl pointer-events-none" />
-            <div className="absolute bottom-0 left-0 -mb-4 -ml-4 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none" />
-
-            <div className="relative z-10">
-              {/* Loading state */}
-              {telegramStatus.loading ? (
-                <div className="flex justify-center items-center h-24">
-                  <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                </div>
-              ) : telegramStatus.connected ? (
-                /* Sudah terhubung */
-                <div className="text-center space-y-3">
-                  <div className="mx-auto w-12 h-12 bg-white/10 rounded-full flex items-center justify-center mb-2">
-                    <CheckCircle size={24} className="text-emerald-300" />
-                  </div>
-                  <h3 className="text-lg font-bold text-white">Bot Sudah Terhubung</h3>
-                  <p className="text-white/80 text-sm leading-relaxed">
-                    Akun Telegram Anda sudah terhubung. Anda akan menerima pengingat otomatis Monev.
-                  </p>
-                  <span className="inline-flex items-center gap-1.5 px-3 py-1 bg-white/10 rounded-full text-emerald-300 text-xs font-bold">
-                    <CheckCircle size={12} /> ✅ Terhubung ke Telegram
+              {/* 3 Langkah Tanpa Kotak, Background, atau Garis Penghubung */}
+              <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <span className="block text-[14px] font-semibold text-[#000352] mb-1">
+                    01
                   </span>
+                  <p className="text-[14px] leading-[22px] font-semibold text-[#0F172A]">
+                    Buka bot SAKTI
+                  </p>
+                  <p className="text-[13px] leading-[20px] text-[#475569] mt-0.5">
+                    Buka Telegram melalui tombol di bawah.
+                  </p>
                 </div>
-              ) : (
-                /* Belum terhubung — tampilkan tombol aktivasi */
-                <ActivationButton />
+
+                <div>
+                  <span className="block text-[14px] font-semibold text-[#000352] mb-1">
+                    02
+                  </span>
+                  <p className="text-[14px] leading-[22px] font-semibold text-[#0F172A]">
+                    Tekan Start / Mulai
+                  </p>
+                  <p className="text-[13px] leading-[20px] text-[#475569] mt-0.5">
+                    Hubungkan akun melalui percakapan bot.
+                  </p>
+                </div>
+
+                <div>
+                  <span className="block text-[14px] font-semibold text-[#000352] mb-1">
+                    03
+                  </span>
+                  <p className="text-[14px] leading-[22px] font-semibold text-[#0F172A]">
+                    Periksa koneksi
+                  </p>
+                  <p className="text-[13px] leading-[20px] text-[#475569] mt-0.5">
+                    Kembali ke SAKTI untuk memastikan akun terhubung.
+                  </p>
+                </div>
+              </div>
+
+              {/* Aksi & Pemeriksaan Koneksi */}
+              <div className="mt-6 flex flex-wrap items-center gap-3">
+                {telegramStatus.error ? (
+                  <div className="flex items-center gap-3">
+                    <span className="text-[13px] leading-[20px] text-red-600">
+                      Status koneksi belum dapat diperiksa.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={fetchTelegramStatus}
+                      disabled={telegramStatus.loading}
+                      className="text-[13px] font-medium text-[#000352] hover:underline disabled:opacity-50"
+                    >
+                      Coba lagi
+                    </button>
+                  </div>
+                ) : hasOpenedBot ? (
+                  <div className="flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={fetchTelegramStatus}
+                      disabled={telegramStatus.loading}
+                      className="inline-flex h-11 min-h-[44px] items-center justify-center gap-2 rounded-lg bg-[#000352] px-4 text-[14px] font-medium text-white transition-colors hover:bg-[#1a1e68] disabled:opacity-60"
+                    >
+                      {telegramStatus.loading ? (
+                        <>
+                          <Loader2 size={15} className="animate-spin" />
+                          <span>Memeriksa koneksi...</span>
+                        </>
+                      ) : (
+                        <>
+                          <RotateCw size={15} />
+                          <span>Periksa koneksi</span>
+                        </>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={handleOpenBot}
+                      disabled={isOpeningBot || telegramStatus.loading}
+                      className="inline-flex h-11 min-h-[44px] items-center justify-center gap-2 rounded-lg border border-[#000352] bg-white px-4 text-[14px] font-medium text-[#000352] transition-colors hover:bg-[#EEF2FF] disabled:opacity-60"
+                    >
+                      <span>Buka Bot Telegram</span>
+                      <ExternalLink size={15} />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleOpenBot}
+                    disabled={isOpeningBot || telegramStatus.loading}
+                    className="inline-flex h-11 min-h-[44px] items-center justify-center gap-2 rounded-lg border border-[#000352] bg-white px-4 text-[14px] font-medium text-[#000352] transition-colors hover:bg-[#EEF2FF] disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#000352] focus-visible:ring-offset-2"
+                  >
+                    {isOpeningBot ? (
+                      <>
+                        <Loader2 size={15} className="animate-spin" />
+                        <span>Membuka Telegram...</span>
+                      </>
+                    ) : (
+                      <>
+                        <span>Buka Bot Telegram</span>
+                        <ExternalLink size={15} />
+                      </>
+                    )}
+                  </button>
+                )}
+
+                {telegramStatus.loading && !hasOpenedBot && (
+                  <span className="inline-flex items-center gap-2 text-[13px] leading-[20px] text-[#475569]">
+                    <Loader2 size={14} className="animate-spin text-[#475569]" />
+                    Memeriksa status...
+                  </span>
+                )}
+              </div>
+
+              {activationError && (
+                <p className="mt-3 text-[13px] leading-[20px] text-red-600">
+                  {activationError}
+                </p>
               )}
             </div>
-          </div>
+          )}
+        </div>
+      </section>
+
+      {/* ─── SECTION 4: RIWAYAT MONEV ──────────────────────────────────────── */}
+      <section aria-labelledby="history-heading">
+        <div className="mb-3 flex items-center justify-between">
+          <h2
+            id="history-heading"
+            className="text-[18px] leading-[26px] font-semibold text-[#0F172A]"
+          >
+            Riwayat Monev
+          </h2>
+          {historySchedules.length > 0 && (
+            <span className="text-[13px] leading-[20px] text-[#475569]">
+              Total: {historySchedules.length} periode
+            </span>
+          )}
+        </div>
+
+        <div className="rounded-lg border border-[#E2E8F0] bg-white overflow-hidden">
+          {historySchedules.length === 0 ? (
+            <div className="p-6 text-center text-[14px] leading-[22px] text-[#475569]">
+              Belum ada riwayat laporan Monev.
+            </div>
+          ) : (
+            <div className="divide-y divide-[#E2E8F0]">
+              {displayedHistory.map((item) => {
+                const isSubmitted = submittedSet.has(item.id);
+
+                return (
+                  <div
+                    key={item.id}
+                    className="py-4 px-4 sm:py-5 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-6"
+                  >
+                    {/* Informasi Periode */}
+                    <div className="space-y-1 min-w-0">
+                      <h3 className="text-[16px] leading-[24px] font-semibold text-[#0F172A] break-words">
+                        {item.label}
+                      </h3>
+                      <p className="text-[13px] leading-[20px] text-[#475569]">
+                        Batas pengisian: {formatDateID(item.deadline)}
+                      </p>
+                      <p className="text-[13px] leading-[20px] text-[#475569]">
+                        <span className="font-medium text-[#0F172A]">Status:</span>{" "}
+                        {isSubmitted ? "Laporan terkirim" : "Tidak mengisi"}
+                      </p>
+                    </div>
+
+                    {/* Tautan Lihat Laporan jika tersedia */}
+                    <div className="shrink-0 flex items-center sm:justify-end">
+                      {isSubmitted ? (
+                        <Link
+                          href={`/mahasiswa/monev/${item.id}`}
+                          className="inline-flex items-center text-[13px] font-medium text-[#000352] hover:underline"
+                        >
+                          Lihat laporan →
+                        </Link>
+                      ) : null}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {historySchedules.length > 3 && (
+            <div className="border-t border-[#E2E8F0] bg-slate-50/50 p-3 text-center">
+              <button
+                type="button"
+                onClick={() => setShowAllHistory((prev) => !prev)}
+                className="text-[13px] font-medium text-[#000352] hover:underline"
+              >
+                {showAllHistory
+                  ? "Tampilkan lebih sedikit"
+                  : `Lihat semua riwayat (${historySchedules.length})`}
+              </button>
+            </div>
+          )}
         </div>
       </section>
     </div>
