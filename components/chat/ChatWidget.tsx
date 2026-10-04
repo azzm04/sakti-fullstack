@@ -10,31 +10,30 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function ChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
-  const [imageBase64, setImageBase64] = useState<string | null>(null);
 
   const { messages, isLoading, input, handleInputChange, handleSubmit, stop } =
-    useChatbot(imageBase64);
+    useChatbot();
 
   const handleCopy = (text: string) => {
     navigator.clipboard.writeText(text);
   };
 
+  // Gambar dikirim langsung saat submit, bukan lewat state
   const handleSendMessage = (image?: string | null) => {
-    if (image) setImageBase64(image);
-    handleSubmit({
-      preventDefault: () => {},
-    } as React.FormEvent<HTMLFormElement>);
+    handleSubmit(
+      { preventDefault: () => { } } as React.FormEvent<HTMLFormElement>,
+      image,
+    );
   };
 
   return (
     <div className="fixed bottom-5 right-5 md:bottom-8 md:right-8 z-[60] group font-body">
       {/* TOOLTIP */}
       <div
-        className={`absolute bottom-full right-0 mb-4 w-72 bg-white rounded-2xl shadow-xl p-5 border border-slate-200 transition-all duration-300 origin-bottom-right ${
-          isOpen
+        className={`absolute bottom-full right-0 mb-4 w-72 bg-white rounded-2xl shadow-xl p-5 border border-slate-200 transition-all duration-300 origin-bottom-right ${isOpen
             ? "opacity-0 scale-95 invisible"
             : "opacity-0 scale-95 invisible group-hover:opacity-100 group-hover:scale-100 group-hover:visible"
-        }`}
+          }`}
       >
         <div className="flex items-center gap-3 mb-3">
           <div className="w-10 h-10 bg-blue-50 rounded-full flex items-center justify-center border border-blue-100">
@@ -64,11 +63,10 @@ export default function ChatWidget() {
       {/* MINI CHAT WINDOW */}
       <div
         data-lenis-prevent
-        className={`absolute bottom-20 right-0 w-[350px] sm:w-[380px] bg-slate-50 rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden transition-all duration-300 origin-bottom-right ${
-          isOpen
+        className={`absolute bottom-20 right-0 w-[350px] sm:w-[380px] bg-slate-50 rounded-2xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden transition-all duration-300 origin-bottom-right ${isOpen
             ? "opacity-100 scale-100 visible h-[550px]"
             : "opacity-0 scale-50 invisible h-0"
-        }`}
+          }`}
       >
         {/* Header Chat */}
         <div className="bg-primary p-4 text-white flex items-center justify-between shadow-sm z-10 shrink-0">

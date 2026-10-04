@@ -229,6 +229,7 @@ function MultimodalInput({
 
   const [input, setInput] = useState("");
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);
+  const [uploadError, setUploadError] = useState("");
 
   // TEXTAREA HEIGHT
   const adjustHeight = () => {
@@ -273,22 +274,27 @@ function MultimodalInput({
 
   const handleFileChange = useCallback(
     async (e: ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(e.target.files ?? []);
-      if (!files.length) return;
+      const file = e.target.files?.[0];
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (!file) return;
 
-      setUploadQueue((q) => [...q, ...files.map((f) => f.name)]);
-
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
+      if (!ACCEPTED_TYPES.includes(file.type) || file.size > 5 * 1024 * 1024) {
+        setUploadError("Hanya gambar PNG, JPG, atau WebP dengan ukuran maksimal 5 MB.");
+        setTimeout(() => setUploadError(""), 3000);
+        return;
       }
 
-      const valid = files.filter((f) => f.size <= 5 * 1024 * 1024);
-      const results = await Promise.all(valid.map(uploadFile));
+      setUploadError("");
+      setUploadQueue((q) => [...q, file.name]);
 
-      setAttachments((prev) => [
-        ...prev,
-        ...results.filter((r): r is Attachment => !!r),
-      ]);
+      const hasil = await uploadFile(file);
+      if (hasil) {
+        // Satu gambar per pesan: gambar baru menggantikan yang lama
+        setAttachments((prev) => {
+          prev.forEach((a) => a.url.startsWith("blob:") && URL.revokeObjectURL(a.url));
+          return [hasil];
+        });
+      }
     },
     [setAttachments],
   );
@@ -342,13 +348,16 @@ function MultimodalInput({
       <input
         ref={fileInputRef}
         type="file"
-        multiple
-        accept="image/*,.pdf"
+        accept=".png,.jpg,.jpeg,.webp"
         className="hidden"
         onChange={handleFileChange}
         disabled={isLoading}
         title="Input File"
       />
+
+      {uploadError && (
+        <div className="text-red-500 text-sm px-5 py-2">{uploadError}</div>
+      )}
 
       <div
         className={cn(
@@ -571,7 +580,7 @@ export default function ChatCanvas({
     if (!file) return;
 
     if (!ACCEPTED_TYPES.includes(file.type)) {
-      setDropError("Format tidak didukung. Gunakan PNG, JPG, SVG, atau WebP.");
+      setDropError("Format tidak didukung. Gunakan PNG, JPG, atau WebP.");
       setTimeout(() => setDropError(""), 3000);
       return;
     }
@@ -584,11 +593,13 @@ export default function ChatCanvas({
 
     const url = URL.createObjectURL(file);
 
-    setAttachments((prev) => [
-      ...prev,
-      { url, name: file.name, contentType: file.type, size: file.size },
-    ]);
+    setAttachments((prev) => {
+      prev.forEach((a) => a.url.startsWith("blob:") && URL.revokeObjectURL(a.url));
+      return [{ url, name: file.name, contentType: file.type, size: file.size }];
+    });
   }, []);
+
+
 
   // ==========================================================
   // SEND MESSAGE
@@ -652,6 +663,10 @@ export default function ChatCanvas({
             },
           }),
         });
+
+        if (!response.ok) {
+          throw new Error(`Permintaan ditolak (${response.status})`);
+        }
 
         // PARSE RESPONSE
         const rawText = await response.text();
@@ -1035,7 +1050,7 @@ export default function ChatCanvas({
                   Lepaskan gambar di sini
                 </p>
                 <p className="text-xs text-slate-500">
-                  PNG, JPG, SVG, WebP — maks. 5MB
+                  PNG, JPG, WebP — maks. 5MB
                 </p>
               </div>
             </motion.div>
