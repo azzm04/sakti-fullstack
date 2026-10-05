@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 
 interface MonevSchedule {
   id: string;
-  tipe_monev: string;
   label: string;
   waktu_mulai: string | null;
   deadline: string;
@@ -17,19 +16,18 @@ async function getSchedules(): Promise<MonevSchedule[]> {
   try {
     const { data, error } = await supabaseAdmin
       .from("periode_monev")
-      .select(`id, tipe_monev, label, waktu_mulai, deadline, "isActive", "createdAt"`)
-      .order('"createdAt"', { ascending: false });
+      .select(`id, label, waktu_mulai, deadline, is_active, created_at`)
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
 
     return (data ?? []).map((row) => ({
       id: row.id,
-      tipe_monev: row.tipe_monev,
       label: row.label,
       waktu_mulai: row.waktu_mulai,
       deadline: row.deadline,
-      is_active: row["isActive"],
-      created_at: row["createdAt"],
+      is_active: row.is_active,
+      created_at: row.created_at,
     }));
   } catch (err) {
     console.error("[Server] getSchedules error:", err);

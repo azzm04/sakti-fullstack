@@ -13,7 +13,6 @@ import ServiceGrid from "@/components/mahasiswa/ServiceGrid";
 
 interface MonevSchedule {
   id: string;
-  tipe_monev: string;
   label: string;
   waktu_mulai: string | null;
   deadline: string;

@@ -1,29 +1,50 @@
-import { NextRequest, NextResponse } from "next/server";
-import { randomUUID } from "crypto";
-import { supabaseAdmin } from "@/lib/supabase";
+import { NextResponse } from "next/server";
+import { NextRequest } from "next/server";
+import { prisma } from "@/lib/db";
+import { getSesiAdmin } from "@/lib/auth/sesi-admin";
 
-// GET  /api/admin/monev/schedule
+function generateLabel(
+  tahunAkademik: number,
+  semester: "Gasal" | "Genap"
+): string {
+  return `Monev KIP-K Undip Semester ${semester} ${tahunAkademik}/${tahunAkademik + 1}`;
+}
+
+// GET /api/admin/monev/schedule
 export async function GET() {
   try {
-    const { data, error } = await supabaseAdmin
-      .from("periode_monev")
-      .select(`id, tipe_monev, label, waktu_mulai, deadline, "isActive", "createdAt", updated_at`)
-      .order('"createdAt"', { ascending: false });
+    const rows = await prisma.periode_monev.findMany({
+      orderBy: { created_at: "desc" },
+      select: {
+        id:             true,
+        label:          true,
+        waktu_mulai:    true,
+        deadline:       true,
+        is_active:      true,
+        created_at:     true,
+        updated_at:     true,
+        tahun_akademik: true,
+        semester:       true,
+        // Jumlah laporan dipakai client untuk menentukan status operasional —
+        // periode yang sudah ada laporannya tidak boleh ubah waktu_mulai
+        _count: { select: { pengisian_monev: true } },
+      },
+    });
 
-    if (error) throw error;
-
-    const normalized = (data ?? []).map((row) => ({
-      id:          row.id,
-      tipe_monev:  row.tipe_monev,
-      label:       row.label,
-      waktu_mulai: row.waktu_mulai,
-      deadline:    row.deadline,
-      is_active:   row["isActive"],
-      created_at:  row["createdAt"],
-      updated_at:  row.updated_at,
+    const data = rows.map((r) => ({
+      id:             r.id,
+      label:          r.label,
+      waktu_mulai:    r.waktu_mulai?.toISOString() ?? null,
+      deadline:       r.deadline.toISOString(),
+      is_active:      r.is_active,
+      created_at:     r.created_at.toISOString(),
+      updated_at:     r.updated_at?.toISOString() ?? null,
+      tahun_akademik: r.tahun_akademik,
+      semester:       r.semester,
+      jumlah_laporan: r._count.pengisian_monev,
     }));
 
-    return NextResponse.json({ data: normalized });
+    return NextResponse.json({ data });
   } catch (err) {
     console.error("[GET /api/admin/monev/schedule]", err);
     return NextResponse.json(
@@ -37,56 +58,124 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { tipe_monev, label, waktu_mulai, deadline } = body as {
-      tipe_monev: string;
-      label: string;
+    const {
+      tahun_akademik,
+      semester,
+      waktu_mulai,
+      deadline,
+      catatan = null,
+    } = body as {
+      tahun_akademik: number;
+      semester: "Gasal" | "Genap";
       waktu_mulai?: string | null;
       deadline: string;
+      catatan?: string | null;
     };
 
-    if (!tipe_monev || !label || !deadline) {
+    // Pelaku perubahan diambil dari sesi, bukan dari body — body bisa dipalsukan.
+    // null = perubahan oleh sistem.
+    const sesi = await getSesiAdmin();
+    const admin_id = sesi?.id ?? null;
+
+    if (!tahun_akademik || !semester || !deadline) {
       return NextResponse.json(
-        { error: "tipe_monev, label, dan deadline wajib diisi" },
+        { error: "tahun_akademik, semester, dan deadline wajib diisi" },
         { status: 400 }
       );
     }
 
-    const now = new Date().toISOString();
-    const id = randomUUID();
+    if (!["Gasal", "Genap"].includes(semester)) {
+      return NextResponse.json(
+        { error: "semester harus 'Gasal' atau 'Genap'" },
+        { status: 400 }
+      );
+    }
 
-    const { data, error } = await supabaseAdmin
-      .from("periode_monev")
-      .insert({
-        id,
-        tipe_monev,
-        label,
-        waktu_mulai:  waktu_mulai ?? null,
-        deadline,
-        isActive:     true,
-        createdAt:    now,
-        updated_at:   now,
-      })
-      .select()
-      .single();
+    if (new Date(deadline) <= new Date()) {
+      return NextResponse.json(
+        { error: "Batas pengisian harus di masa depan" },
+        { status: 400 }
+      );
+    }
 
-    if (error) throw error;
+    if (waktu_mulai && new Date(waktu_mulai) >= new Date(deadline)) {
+      return NextResponse.json(
+        { error: "Batas pengisian harus setelah waktu mulai" },
+        { status: 400 }
+      );
+    }
 
-    const normalized = {
-      id:          data.id,
-      tipe_monev:  data.tipe_monev,
-      label:       data.label,
-      waktu_mulai: data.waktu_mulai,
-      deadline:    data.deadline,
-      is_active:   data["isActive"],
-      created_at:  data["createdAt"],
-      updated_at:  data.updated_at,
-    };
+    // Cek duplikasi
+    const existing = await prisma.periode_monev.findFirst({
+      where: { tahun_akademik, semester },
+      select: { id: true, label: true },
+    });
 
-    return NextResponse.json({ data: normalized }, { status: 201 });
+    if (existing) {
+      return NextResponse.json(
+        {
+          error:          "Periode sudah tersedia untuk kombinasi tahun akademik dan semester ini.",
+          existing_id:    existing.id,
+          existing_label: existing.label,
+        },
+        { status: 409 }
+      );
+    }
+
+    const label    = generateLabel(tahun_akademik, semester);
+    const deadlineDate = new Date(deadline);
+    const waktuMulaiDate = waktu_mulai ? new Date(waktu_mulai) : null;
+
+    // Satu transaksi: periode + riwayat JADWAL_BARU harus jadi atau gagal
+    // bersama, supaya tidak ada periode tanpa jejak audit.
+    const created = await prisma.$transaction(async (tx) => {
+      const periode = await tx.periode_monev.create({
+        data: {
+          label,
+          tahun_akademik,
+          semester,
+          waktu_mulai: waktuMulaiDate,
+          deadline:    deadlineDate,
+          is_active:   true,
+          created_at:  new Date(),
+        },
+      });
+
+      await tx.riwayat_jadwal_monev.create({
+        data: {
+          periode_monev_id: periode.id,
+          admin_id,
+          tipe_perubahan:   "JADWAL_BARU",
+          waktu_mulai_baru: waktuMulaiDate,
+          deadline_baru:    deadlineDate,
+          is_active_baru:   true,
+          catatan,
+        },
+      });
+
+      return periode;
+    });
+
+    return NextResponse.json(
+      {
+        data: {
+          id:             created.id,
+          label:          created.label,
+          waktu_mulai:    created.waktu_mulai?.toISOString() ?? null,
+          deadline:       created.deadline.toISOString(),
+          is_active:      created.is_active,
+          created_at:     created.created_at.toISOString(),
+          updated_at:     created.updated_at?.toISOString() ?? null,
+          tahun_akademik: created.tahun_akademik,
+          semester:       created.semester,
+        },
+      },
+      { status: 201 }
+    );
   } catch (err) {
     console.error("[POST /api/admin/monev/schedule]", err);
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Gagal membuat jadwal" },
+      { error: err instanceof Error ? err.message : "Gagal membuat periode" },
       { status: 500 }
     );
   }

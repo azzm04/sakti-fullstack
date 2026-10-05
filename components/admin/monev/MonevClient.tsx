@@ -18,8 +18,6 @@ import {
   CalendarPlus,
   CalendarClock,
   Trash2,
-  ToggleLeft,
-  ToggleRight,
   ChevronDown,
   ChevronUp,
   Plus,
@@ -53,14 +51,27 @@ import {
   CommandList,
 } from "@/components/ui/command";
 
+import ConfirmModal from "@/components/admin/wawancara/shared/ConfirmModal";
+import {
+  getOperationalStatus,
+  wibInputToUtcIso,
+  utcIsoToWibInput,
+  addOneMonthToWibInput,
+  addDaysToWibInput,
+  type OperationalStatus,
+} from "@/lib/monev-schedule";
+
 interface MonevSchedule {
   id: string;
-  tipe_monev: string;
   label: string;
   waktu_mulai: string | null;
   deadline: string;
   is_active: boolean;
   created_at: string;
+  updated_at?: string | null;
+  tahun_akademik?: number | null;
+  semester?: string | null;
+  jumlah_laporan?: number;
 }
 
 export interface AdminMonevData {
@@ -83,14 +94,9 @@ export interface AdminMonevData {
   total_pendapatan: number;
   rupiah_per_tanggungan: number;
   hasil_deteksi_yolo: number | null;
+  status_anomali?: boolean | null;
+  hasil_scan_ai?: unknown;
 }
-
-const TIPE_OPTIONS = [
-  "Evaluasi Ekonomi",
-  "Evaluasi Akademik",
-  "Evaluasi Sosial",
-  "Evaluasi Akhir",
-];
 
 const formatDate = (iso: string) =>
   new Date(iso).toLocaleDateString("id-ID", {
@@ -100,6 +106,70 @@ const formatDate = (iso: string) =>
   });
 
 const isDeadlinePassed = (deadline: string) => new Date(deadline) < new Date();
+
+/**
+ * Tahun awal dari tahun ajaran yang sedang berjalan.
+ * Tahun ajaran dimulai Agustus, jadi Okt 2026 ada di tahun ajaran 2026/2027
+ * sementara Mar 2027 masih 2026/2027.
+ */
+const getTahunAjaranBerjalan = (now: Date = new Date()): number =>
+  now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear() - 1;
+
+const statusOf = (s: MonevSchedule): OperationalStatus =>
+  getOperationalStatus({
+    is_active:      s.is_active,
+    waktu_mulai:    s.waktu_mulai,
+    deadline:       s.deadline,
+    jumlah_laporan: s.jumlah_laporan,
+  });
+
+/**
+ * Periode yang sudah berjalan / berakhir / punya laporan hanya boleh
+ * diperpanjang deadline-nya — waktu_mulai terkunci.
+ */
+const isDeadlineOnly = (status: OperationalStatus) =>
+  status === "BERLANGSUNG" ||
+  status === "BERAKHIR" ||
+  status === "NONAKTIF_BERJALAN";
+
+/**
+ * Badge status. Labelnya menjelaskan apa yang dialami mahasiswa, bukan nilai
+ * kolom di database — "Aktif" dulu menyesatkan karena periode dengan
+ * waktu_mulai di masa depan ikut berlabel aktif padahal formnya belum terbuka.
+ *
+ * Status NONAKTIF* hanya muncul jika is_active=false diubah dari luar aplikasi;
+ * admin tidak punya tombolnya lagi.
+ */
+const STATUS_BADGE: Record<
+  OperationalStatus,
+  { label: string; hint: string; className: string }
+> = {
+  BELUM_DIMULAI: {
+    label:     "Belum dibuka",
+    hint:      "Mahasiswa melihat jadwal ini sebagai akan datang, tapi belum bisa mengisi",
+    className: "bg-admin-warn-bg text-admin-warn-text border-admin-warn-border",
+  },
+  BERLANGSUNG: {
+    label:     "Sedang berjalan",
+    hint:      "Form terbuka, mahasiswa bisa mengisi",
+    className: "bg-admin-accent/20 text-admin-accent-ink border-admin-accent/25",
+  },
+  BERAKHIR: {
+    label:     "Berakhir",
+    hint:      "Deadline sudah lewat, pengisian tertutup",
+    className: "bg-admin-accent/5 text-admin-text-2 border-admin-border",
+  },
+  NONAKTIF: {
+    label:     "Tersembunyi",
+    hint:      "Tidak tampil di halaman mahasiswa (is_active=false)",
+    className: "bg-admin-warn-border text-admin-warn-text border-admin-warn-border",
+  },
+  NONAKTIF_BERJALAN: {
+    label:     "Tersembunyi",
+    hint:      "Tidak tampil di halaman mahasiswa walau jadwalnya sedang berjalan",
+    className: "bg-admin-warn-border text-admin-warn-text border-admin-warn-border",
+  },
+};
 
 const formatRp = (angka: number) =>
   new Intl.NumberFormat("id-ID", {
@@ -175,13 +245,149 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const [showScheduleForm, setShowScheduleForm] = useState(false);
   const [scheduleExpanded, setScheduleExpanded] = useState(true);
+  const tahunAjaranBerjalan = getTahunAjaranBerjalan();
+
+  function buildPeriodeOptions(years: number[]) {
+    return years.flatMap((y) => [
+      { label: `Gasal ${y}/${y + 1}`, tahun: y, semester: "Gasal" as const },
+      { label: `Genap ${y}/${y + 1}`, tahun: y, semester: "Genap" as const },
+    ]);
+  }
+
+  // Opsi default: tahun ajaran berjalan + berikutnya (4 opsi). Tahun ajaran
+  // yang sudah lewat tidak ditawarkan — untuk kebutuhan lain, admin bisa
+  // mengetik tahunnya langsung di kolom pencarian.
+  const defaultYears = [tahunAjaranBerjalan, tahunAjaranBerjalan + 1];
+
   const [savingSchedule, setSavingSchedule] = useState(false);
+  const [scheduleError, setScheduleError] = useState<string | null>(null);
+  const [duplicateId, setDuplicateId] = useState<string | null>(null);
+  const [periodeSearch, setPeriodeSearch] = useState("");
+  const [periodeOpen, setPeriodeOpen] = useState(false);
+  const [periodeSelected, setPeriodeSelected] = useState<{ label: string; tahun: number; semester: "Gasal" | "Genap" } | null>(null);
   const [scheduleForm, setScheduleForm] = useState({
-    tipe_monev: "Evaluasi Ekonomi",
-    label: "",
     waktu_mulai: "",
     deadline: "",
+    // true setelah admin mengetik sendiri di field deadline —
+    // auto-fill tidak boleh menimpa nilai yang sudah disentuh manual
+    deadlineTouched: false,
   });
+
+  // Opsi ditampilkan: default 6, atau hasil pencarian angka tahun 4-digit
+  const searchYear = /^\d{4}$/.test(periodeSearch.trim()) ? parseInt(periodeSearch.trim(), 10) : null;
+  const visibleOptions = searchYear
+    ? buildPeriodeOptions([searchYear])
+    : buildPeriodeOptions(defaultYears);
+
+  const handleSelectPeriode = (opt: { label: string; tahun: number; semester: "Gasal" | "Genap" }) => {
+    setPeriodeSelected(opt);
+    setPeriodeOpen(false);
+    setPeriodeSearch("");
+    setScheduleError(null);
+    setDuplicateId(null);
+  };
+
+  // Preview label otomatis
+  const previewLabel = periodeSelected
+    ? `Monev KIP-K Undip Semester ${periodeSelected.semester} ${periodeSelected.tahun}/${periodeSelected.tahun + 1}`
+    : "";
+
+  // ── State dialog aksi (Ubah jadwal / Perpanjang / Buka kembali) ──
+  const [actionDialog, setActionDialog] = useState<{
+    schedule: MonevSchedule;
+    status: OperationalStatus;
+    belumKirim: number | null;
+  } | null>(null);
+  const [actionForm, setActionForm] = useState({
+    waktu_mulai: "",
+    deadline: "",
+    extendMode: "+7" as "+7" | "custom",
+    customDeadline: "",
+    catatan: "",
+  });
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [savingAction, setSavingAction] = useState(false);
+  const openActionDialog = async (s: MonevSchedule) => {
+    const status = statusOf(s);
+
+    // Fetch jumlah belum kirim
+    let belumKirim: number | null = null;
+    try {
+      const res = await fetch(`/api/admin/monev/schedule/${s.id}/stats`);
+      if (res.ok) {
+        const json = await res.json();
+        belumKirim = json.belum_kirim;
+      }
+    } catch { /* skip */ }
+
+    // Pre-fill form berdasarkan status
+    if (!isDeadlineOnly(status)) {
+      setActionForm({
+        waktu_mulai:    utcIsoToWibInput(s.waktu_mulai),
+        deadline:       utcIsoToWibInput(s.deadline),
+        extendMode:     "+7",
+        customDeadline: "",
+        catatan:        "",
+      });
+    } else {
+      // BERLANGSUNG atau BERAKHIR — pre-fill default perpanjangan +7 hari.
+      // BERAKHIR dihitung dari sekarang, BERLANGSUNG dari deadline lama.
+      const base = status === "BERAKHIR"
+        ? utcIsoToWibInput(new Date())
+        : utcIsoToWibInput(s.deadline);
+      setActionForm({
+        waktu_mulai:    "",
+        deadline:       "",
+        extendMode:     "+7",
+        customDeadline: addDaysToWibInput(base, 7),
+        catatan:        "",
+      });
+    }
+    setActionError(null);
+    setActionDialog({ schedule: s, status, belumKirim });
+  };
+
+  const handleSaveAction = async () => {
+    if (!actionDialog) return;
+    const { schedule, status } = actionDialog;
+    setSavingAction(true);
+    setActionError(null);
+
+    try {
+      const body: Record<string, unknown> = {
+        updated_at: schedule.updated_at ?? undefined,
+        catatan:    actionForm.catatan || null,
+      };
+
+      if (!isDeadlineOnly(status)) {
+        body.waktu_mulai = actionForm.waktu_mulai
+          ? wibInputToUtcIso(actionForm.waktu_mulai)
+          : null;
+        body.deadline    = wibInputToUtcIso(actionForm.deadline);
+      } else {
+        // Perpanjang / Buka kembali — kedua mode radio menulis ke
+        // customDeadline, jadi sumber nilainya sama
+        body.deadline = wibInputToUtcIso(actionForm.customDeadline);
+      }
+
+      const res = await fetch(`/api/admin/monev/schedule/${schedule.id}`, {
+        method:  "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body:    JSON.stringify(body),
+      });
+      const json = await res.json();
+
+      if (!res.ok) {
+        setActionError(json.error ?? "Gagal menyimpan perubahan");
+        return;
+      }
+
+      setActionDialog(null);
+      fetchSchedules();
+    } finally {
+      setSavingAction(false);
+    }
+  };
 
   const fetchSchedules = useCallback(async () => {
     setScheduleLoading(true);
@@ -197,52 +403,72 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
   }, []);
 
   const handleCreateSchedule = async () => {
-    if (
-      !scheduleForm.tipe_monev ||
-      !scheduleForm.label ||
-      !scheduleForm.deadline
-    )
-      return;
+    if (!periodeSelected || !scheduleForm.deadline) return;
+
+    setScheduleError(null);
+    setDuplicateId(null);
     setSavingSchedule(true);
     try {
       const res = await fetch("/api/admin/monev/schedule", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          tipe_monev: scheduleForm.tipe_monev,
-          label: scheduleForm.label,
-          waktu_mulai: scheduleForm.waktu_mulai || null,
-          deadline: scheduleForm.deadline,
+          tahun_akademik: periodeSelected.tahun,
+          semester:       periodeSelected.semester,
+          waktu_mulai:    scheduleForm.waktu_mulai
+            ? wibInputToUtcIso(scheduleForm.waktu_mulai)
+            : null,
+          deadline:       wibInputToUtcIso(scheduleForm.deadline),
         }),
       });
+      const json = await res.json();
       if (res.ok) {
-        setScheduleForm({
-          tipe_monev: "Evaluasi Ekonomi",
-          label: "",
-          waktu_mulai: "",
-          deadline: "",
-        });
+        setPeriodeSelected(null);
+        setPeriodeSearch("");
+        setScheduleForm({ waktu_mulai: "", deadline: "", deadlineTouched: false });
         setShowScheduleForm(false);
         fetchSchedules();
+      } else if (res.status === 409) {
+        setScheduleError(json.error);
+        setDuplicateId(json.existing_id ?? null);
+      } else {
+        setScheduleError(json.error ?? "Gagal membuat periode");
       }
     } finally {
       setSavingSchedule(false);
     }
   };
 
-  const handleToggleSchedule = async (id: string, current: boolean) => {
-    await fetch(`/api/admin/monev/schedule/${id}`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ is_active: !current }),
-    });
-    fetchSchedules();
+  // ── Hapus periode (konfirmasi lewat modal, bukan confirm() bawaan) ──
+  const [deleteTarget, setDeleteTarget] = useState<MonevSchedule | null>(null);
+  const [deletingSchedule, setDeletingSchedule] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const askDeleteSchedule = (s: MonevSchedule) => {
+    setDeleteError(null);
+    setDeleteTarget(s);
   };
 
-  const handleDeleteSchedule = async (id: string) => {
-    if (!confirm("Hapus jadwal evaluasi ini?")) return;
-    await fetch(`/api/admin/monev/schedule/${id}`, { method: "DELETE" });
-    fetchSchedules();
+  const confirmDeleteSchedule = async () => {
+    if (!deleteTarget) return;
+    setDeletingSchedule(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch(`/api/admin/monev/schedule/${deleteTarget.id}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) {
+        const json = await res.json().catch(() => ({}));
+        // Modal tetap terbuka — pesan server (mis. periode sudah punya
+        // laporan) ditampilkan di tempat deskripsi
+        setDeleteError(json.error ?? "Gagal menghapus periode.");
+        return;
+      }
+      setDeleteTarget(null);
+      fetchSchedules();
+    } finally {
+      setDeletingSchedule(false);
+    }
   };
 
   const fetchData = useCallback(async () => {
@@ -474,68 +700,122 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                       className="bg-admin-accent/5 border border-admin-accent/20 rounded-xl p-5 mb-5"
                     >
                       <h4 className="font-admin-heading font-bold text-admin-accent mb-4 flex items-center gap-2">
-                        <CalendarPlus size={16} /> Buat Jadwal Evaluasi Baru
+                        <CalendarPlus size={16} /> Buat Periode Monev
                       </h4>
+
+                      {/* Error / duplikasi */}
+                      {scheduleError && (
+                        <div className="mb-4 flex items-start gap-3 rounded-lg border border-admin-danger-border bg-admin-danger-bg p-3 text-sm text-admin-danger-text">
+                          <AlertCircle size={15} className="shrink-0 mt-0.5" />
+                          <div className="flex-1">
+                            <p>{scheduleError}</p>
+                            {duplicateId && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSelectedScheduleId(duplicateId);
+                                  setShowScheduleForm(false);
+                                  setScheduleError(null);
+                                  setDuplicateId(null);
+                                }}
+                                className="mt-1.5 font-semibold underline underline-offset-2 hover:no-underline"
+                              >
+                                Buka Periode →
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Pratinjau label */}
+                      {previewLabel && (
+                        <div className="mb-4 rounded-lg bg-admin-accent/5 border border-admin-accent/20 px-4 py-2.5">
+                          <p className="text-[11px] font-semibold uppercase tracking-wider text-admin-text-2 mb-0.5">
+                            Nama Periode (Otomatis)
+                          </p>
+                          <p className="text-sm font-bold text-admin-accent">{previewLabel}</p>
+                        </div>
+                      )}
+
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
+                        <div className="md:col-span-2">
                           <label className="block text-xs font-semibold text-admin-text-2 mb-1.5">
-                            Tipe Monev <span className="text-admin-danger-bar">*</span>
+                            Periode Akademik <span className="text-admin-danger-bar">*</span>
                           </label>
-                          <select
-                            value={scheduleForm.tipe_monev}
-                            onChange={(e) =>
-                              setScheduleForm((f) => ({
-                                ...f,
-                                tipe_monev: e.target.value,
-                              }))
-                            }
-                            className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-lg focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/10 bg-admin-surface text-admin-accent"
-                            title="input tipe monev"
-                          >
-                            {TIPE_OPTIONS.map((t) => (
-                              <option key={t} value={t}>
-                                {t}
-                              </option>
-                            ))}
-                          </select>
+
+                          {/* Combobox dengan pencarian */}
+                          <Popover open={periodeOpen} onOpenChange={setPeriodeOpen}>
+                            <PopoverTrigger asChild>
+                              <button
+                                type="button"
+                                role="combobox"
+                                aria-expanded={periodeOpen}
+                                className="flex h-[44px] w-full max-w-[560px] items-center justify-between rounded-lg border border-admin-border bg-admin-surface px-3 py-2 text-[14px] text-admin-accent transition-colors hover:border-admin-accent/50 focus:outline-none focus:ring-2 focus:ring-admin-accent/20"
+                              >
+                                <span className={periodeSelected ? "text-admin-accent" : "text-admin-text-2"}>
+                                  {periodeSelected ? periodeSelected.label : "Pilih semester dan tahun akademik"}
+                                </span>
+                                <ChevronDown size={16} className="shrink-0 text-admin-text-2" />
+                              </button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-[320px] p-0" align="start" sideOffset={4}>
+                              <Command>
+                                <CommandInput
+                                  placeholder="Ketik tahun untuk mencari periode lain"
+                                  value={periodeSearch}
+                                  onValueChange={setPeriodeSearch}
+                                />
+                                <CommandList>
+                                  <CommandEmpty>
+                                    {periodeSearch.trim().length > 0 && !/^\d{4}$/.test(periodeSearch.trim())
+                                      ? "Ketik 4 digit tahun, misalnya 2032"
+                                      : "Tidak ada pilihan."}
+                                  </CommandEmpty>
+                                  <CommandGroup heading={searchYear ? `Hasil untuk ${searchYear}` : "Periode tersedia"}>
+                                    {visibleOptions.map((opt) => (
+                                      <CommandItem
+                                        key={opt.label}
+                                        value={opt.label}
+                                        onSelect={() => handleSelectPeriode(opt)}
+                                        className="cursor-pointer"
+                                      >
+                                        <span className={periodeSelected?.label === opt.label ? "font-semibold text-admin-accent" : ""}>
+                                          {opt.label}
+                                        </span>
+                                      </CommandItem>
+                                    ))}
+                                  </CommandGroup>
+                                </CommandList>
+                              </Command>
+                            </PopoverContent>
+                          </Popover>
                         </div>
+
                         <div>
                           <label className="block text-xs font-semibold text-admin-text-2 mb-1.5">
-                            Label <span className="text-admin-danger-bar">*</span>
-                          </label>
-                          <input
-                            type="text"
-                            value={scheduleForm.label}
-                            onChange={(e) =>
-                              setScheduleForm((f) => ({
-                                ...f,
-                                label: e.target.value,
-                              }))
-                            }
-                            placeholder="Contoh: Monev Semester Genap 2025/2026"
-                            className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-lg focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/10 text-admin-accent placeholder:text-admin-text-2/50"
-                          />
-                        </div>
-                        <div>
-                          <label className="block text-xs font-semibold text-admin-text-2 mb-1.5">
-                            Waktu Mulai
+                            Waktu Mulai (WIB)
                           </label>
                           <input
                             type="datetime-local"
                             value={scheduleForm.waktu_mulai}
-                            onChange={(e) =>
+                            onChange={(e) => {
+                              const val = e.target.value;
                               setScheduleForm((f) => ({
                                 ...f,
-                                waktu_mulai: e.target.value,
-                              }))
-                            }
+                                waktu_mulai: val,
+                                // Isi deadline +1 bulan selama admin belum
+                                // mengubahnya sendiri
+                                deadline: f.deadlineTouched
+                                  ? f.deadline
+                                  : addOneMonthToWibInput(val),
+                              }));
+                            }}
                             className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-lg focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/10 text-admin-accent"
-                            title="tanggal"
                           />
                         </div>
                         <div>
                           <label className="block text-xs font-semibold text-admin-text-2 mb-1.5">
-                            Deadline <span className="text-admin-danger-bar">*</span>
+                            Batas Pengisian (WIB) <span className="text-admin-danger-bar">*</span>
                           </label>
                           <input
                             type="datetime-local"
@@ -544,22 +824,17 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                               setScheduleForm((f) => ({
                                 ...f,
                                 deadline: e.target.value,
+                                deadlineTouched: true,
                               }))
                             }
                             className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-lg focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/10 text-admin-accent"
-                            title="tanggal"
                           />
                         </div>
                       </div>
                       <div className="flex gap-3 mt-4">
                         <button
                           onClick={handleCreateSchedule}
-                          disabled={
-                            savingSchedule ||
-                            !scheduleForm.tipe_monev ||
-                            !scheduleForm.label ||
-                            !scheduleForm.deadline
-                          }
+                          disabled={savingSchedule || !periodeSelected || !scheduleForm.deadline}
                           className="inline-flex items-center gap-2 px-5 py-2.5 bg-admin-accent text-white text-sm font-semibold rounded-xl hover:bg-admin-accent/90 disabled:opacity-50 transition-all"
                         >
                           {savingSchedule ? (
@@ -567,10 +842,14 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                           ) : (
                             <Plus size={15} />
                           )}{" "}
-                          Simpan Jadwal
+                          Simpan Periode
                         </button>
                         <button
-                          onClick={() => setShowScheduleForm(false)}
+                          onClick={() => {
+                            setShowScheduleForm(false);
+                            setScheduleError(null);
+                            setDuplicateId(null);
+                          }}
                           className="px-5 py-2.5 text-sm font-semibold text-admin-text-2 border border-admin-border rounded-xl hover:bg-admin-accent/5 transition-all"
                         >
                           Batal
@@ -597,85 +876,74 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                   <div className="space-y-3">
                     {schedules.map((s) => {
                       const passed = isDeadlinePassed(s.deadline);
+                      const opStatus = statusOf(s);
+                      const actionLabel =
+                        opStatus === "BERAKHIR" ? "Buka kembali"
+                        : isDeadlineOnly(opStatus) ? "Perpanjang pengisian"
+                        : "Ubah jadwal";
+                      const badge = STATUS_BADGE[opStatus];
+
                       return (
-                        <div
-                          key={s.id}
-                          onClick={() => setSelectedScheduleId(s.id)}
-                          className={`flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 rounded-xl border transition-all cursor-pointer ${selectedScheduleId === s.id
-                            ? "ring-2 ring-admin-accent bg-admin-accent/10 border-admin-accent"
-                            : s.is_active && !passed
-                              ? "bg-admin-accent/10/50 border-admin-accent/25 hover:bg-admin-accent/10"
-                              : passed
-                                ? "bg-admin-accent/5 border-admin-border opacity-70 hover:opacity-100"
-                                : "bg-admin-accent/5 border-admin-border hover:bg-admin-accent/10"
-                            }`}
-                        >
-                          <div className="flex items-start gap-3 flex-1 min-w-0">
-                            <div
-                              className={`mt-0.5 p-1.5 rounded-lg shrink-0 ${s.is_active && !passed ? "bg-admin-accent/20 text-admin-accent" : "bg-admin-accent/10 text-admin-text-2"}`}
-                            >
-                              <CalendarClock size={16} />
-                            </div>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <p className="font-bold text-admin-accent text-sm truncate">
-                                  {s.label}
-                                </p>
-                                <span
-                                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${passed ? "bg-admin-accent/5 text-admin-text-2 border-admin-border" : s.is_active ? "bg-admin-accent/20 text-admin-accent-ink border-admin-accent/25" : "bg-admin-warn-border text-admin-warn-text border-admin-warn-border"}`}
-                                >
-                                  {passed
-                                    ? "Berakhir"
-                                    : s.is_active
-                                      ? "Aktif"
-                                      : "Nonaktif"}
-                                </span>
-                                <span className="text-[10px] font-semibold text-admin-accent bg-admin-accent/10 px-2 py-0.5 rounded-full border border-admin-accent/20">
-                                  {s.tipe_monev}
-                                </span>
+                        <div key={s.id} className="space-y-0">
+                          <div
+                            onClick={() => setSelectedScheduleId(s.id)}
+                            className={`flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 rounded-xl border transition-all cursor-pointer ${selectedScheduleId === s.id
+                              ? "ring-2 ring-admin-accent bg-admin-accent/10 border-admin-accent"
+                              : s.is_active && !passed
+                                ? "bg-admin-accent/10/50 border-admin-accent/25 hover:bg-admin-accent/10"
+                                : passed
+                                  ? "bg-admin-accent/5 border-admin-border opacity-70 hover:opacity-100"
+                                  : "bg-admin-accent/5 border-admin-border hover:bg-admin-accent/10"
+                              }`}
+                          >
+                            <div className="flex items-start gap-3 flex-1 min-w-0">
+                              <div
+                                className={`mt-0.5 p-1.5 rounded-lg shrink-0 ${s.is_active && !passed ? "bg-admin-accent/20 text-admin-accent" : "bg-admin-accent/10 text-admin-text-2"}`}
+                              >
+                                <CalendarClock size={16} />
                               </div>
-                              <p className="text-xs text-admin-text-2 mt-1">
-                                {s.waktu_mulai
-                                  ? `Mulai: ${formatDate(s.waktu_mulai)} — `
-                                  : ""}
-                                Deadline:{" "}
-                                <span
-                                  className={`font-semibold ${passed ? "text-admin-danger-bar" : "text-admin-accent"}`}
-                                >
-                                  {formatDate(s.deadline)}
-                                </span>
-                              </p>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <p className="font-bold text-admin-accent text-sm truncate">
+                                    {s.label}
+                                  </p>
+                                  <span
+                                    title={badge.hint}
+                                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${badge.className}`}
+                                  >
+                                    {badge.label}
+                                  </span>
+                                </div>
+                                <p className="text-xs text-admin-text-2 mt-1">
+                                  {s.waktu_mulai ? `Mulai: ${formatDate(s.waktu_mulai)} — ` : ""}
+                                  Deadline:{" "}
+                                  <span className={`font-semibold ${passed ? "text-admin-danger-bar" : "text-admin-accent"}`}>
+                                    {formatDate(s.deadline)}
+                                  </span>
+                                </p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              {/* Tombol aksi kontekstual */}
+                              <button
+                                onClick={(e) => { e.stopPropagation(); openActionDialog(s); }}
+                                title={actionLabel}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-admin-border text-admin-accent bg-admin-surface hover:bg-admin-accent/5 hover:border-admin-accent/40 transition-all"
+                              >
+                                <CalendarPlus size={13} />
+                                {actionLabel}
+                              </button>
+                              {/* Hapus */}
+                              <button
+                                onClick={(e) => { e.stopPropagation(); askDeleteSchedule(s); }}
+                                title="Hapus jadwal"
+                                className="p-2 rounded-lg hover:bg-admin-danger-bg border border-transparent hover:border-admin-danger-border transition-all text-admin-text-2 hover:text-admin-danger-bar"
+                              >
+                                <Trash2 size={16} />
+                              </button>
                             </div>
                           </div>
-                          <div className="flex items-center gap-2 shrink-0">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleToggleSchedule(s.id, s.is_active);
-                              }}
-                              title={s.is_active ? "Nonaktifkan" : "Aktifkan"}
-                              className="p-2 rounded-lg hover:bg-admin-surface border border-transparent hover:border-admin-border transition-all text-admin-text-2 hover:text-admin-accent"
-                            >
-                              {s.is_active ? (
-                                <ToggleRight
-                                  size={20}
-                                  className="text-admin-accent"
-                                />
-                              ) : (
-                                <ToggleLeft size={20} />
-                              )}
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteSchedule(s.id);
-                              }}
-                              title="Hapus jadwal"
-                              className="p-2 rounded-lg hover:bg-admin-danger-bg border border-transparent hover:border-admin-danger-border transition-all text-admin-text-2 hover:text-admin-danger-bar"
-                            >
-                              <Trash2 size={16} />
-                            </button>
-                          </div>
+
                         </div>
                       );
                     })}
@@ -1326,6 +1594,203 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ── Dialog Aksi Jadwal (Ubah / Perpanjang / Buka kembali) ── */}
+      <AnimatePresence>
+        {actionDialog && (() => {
+          const d = actionDialog;
+          return (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setActionDialog(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              transition={{ duration: 0.15 }}
+              className="bg-admin-surface rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header */}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-admin-border">
+                <div>
+                  <p className="font-bold text-admin-accent text-sm">
+                    {d.status === "BERAKHIR" ? "Buka Kembali Periode"
+                      : isDeadlineOnly(d.status) ? "Perpanjang Batas Pengisian"
+                      : "Ubah Jadwal"}
+                  </p>
+                  <p className="text-xs text-admin-text-2 mt-0.5">{d.schedule.label}</p>
+                </div>
+                <button
+                  onClick={() => setActionDialog(null)}
+                  className="p-1.5 rounded-lg hover:bg-admin-accent/10 text-admin-text-2"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="px-5 py-5 space-y-4">
+                {/* Info jadwal lama */}
+                <div className="rounded-lg bg-admin-surface-soft border border-admin-border p-3 text-xs text-admin-text-2 space-y-1">
+                  {d.schedule.waktu_mulai && (
+                    <p>Waktu mulai: <span className="font-semibold text-admin-accent">{formatDate(d.schedule.waktu_mulai)}</span></p>
+                  )}
+                  <p>Batas saat ini: <span className="font-semibold text-admin-accent">{formatDate(d.schedule.deadline)}</span></p>
+                  {d.belumKirim !== null && (
+                    <p className="text-admin-warn-text font-medium">{d.belumKirim} mahasiswa belum mengirim laporan</p>
+                  )}
+                  {d.status === "BERAKHIR" && (
+                    <p className="text-amber-700">Periode ini sudah berakhir. Pembukaan kembali akan mengaktifkan periode.</p>
+                  )}
+                </div>
+
+                {/* Form berdasarkan status */}
+                {!isDeadlineOnly(d.status) ? (
+                  <>
+                    <div>
+                      <label className="block text-xs font-semibold text-admin-text-2 mb-1.5">Waktu Mulai (WIB)</label>
+                      <input
+                        type="datetime-local"
+                        value={actionForm.waktu_mulai}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          setActionForm((f) => ({
+                            ...f,
+                            waktu_mulai: val,
+                            // auto-fill deadline jika masih kosong
+                            deadline: f.deadline ? f.deadline : addOneMonthToWibInput(val),
+                          }));
+                        }}
+                        className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-lg focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/10 text-admin-accent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold text-admin-text-2 mb-1.5">Batas Pengisian (WIB) <span className="text-admin-danger-bar">*</span></label>
+                      <input
+                        type="datetime-local"
+                        value={actionForm.deadline}
+                        onChange={(e) => setActionForm((f) => ({ ...f, deadline: e.target.value }))}
+                        className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-lg focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/10 text-admin-accent"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <label className="block text-xs font-semibold text-admin-text-2 mb-2">Batas Pengisian Baru</label>
+                      <div className="space-y-2">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            checked={actionForm.extendMode === "+7"}
+                            onChange={() => {
+                              const base = d.status === "BERAKHIR"
+                                ? utcIsoToWibInput(new Date())
+                                : utcIsoToWibInput(d.schedule.deadline);
+                              setActionForm((f) => ({
+                                ...f,
+                                extendMode:     "+7",
+                                customDeadline: addDaysToWibInput(base, 7),
+                              }));
+                            }}
+                            className="accent-admin-accent"
+                          />
+                          <span className="text-sm text-admin-accent">
+                            +7 hari → {actionForm.extendMode === "+7" && actionForm.customDeadline
+                              ? formatDate(actionForm.customDeadline)
+                              : "—"}
+                          </span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            checked={actionForm.extendMode === "custom"}
+                            onChange={() => setActionForm((f) => ({ ...f, extendMode: "custom" }))}
+                            className="accent-admin-accent"
+                          />
+                          <span className="text-sm text-admin-text-2">Tanggal khusus</span>
+                        </label>
+                        {actionForm.extendMode === "custom" && (
+                          <input
+                            type="datetime-local"
+                            value={actionForm.customDeadline}
+                            onChange={(e) => setActionForm((f) => ({ ...f, customDeadline: e.target.value }))}
+                            className="w-full px-3 py-2 text-sm border border-admin-border rounded-lg focus:outline-none focus:border-admin-accent text-admin-accent mt-1"
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* Catatan opsional */}
+                <div>
+                  <label className="block text-xs font-semibold text-admin-text-2 mb-1.5">Catatan (opsional)</label>
+                  <input
+                    type="text"
+                    value={actionForm.catatan}
+                    onChange={(e) => setActionForm((f) => ({ ...f, catatan: e.target.value }))}
+                    placeholder="Alasan perubahan..."
+                    className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-lg focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/10 text-admin-accent placeholder:text-admin-text-2/50"
+                  />
+                </div>
+
+                {actionError && (
+                  <div className="flex items-start gap-2 rounded-lg border border-admin-danger-border bg-admin-danger-bg p-3 text-sm text-admin-danger-text">
+                    <AlertCircle size={14} className="shrink-0 mt-0.5" />
+                    <p>{actionError}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Footer */}
+              <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-admin-border">
+                <button
+                  onClick={() => setActionDialog(null)}
+                  className="px-4 py-2 text-sm font-medium text-admin-text-2 border border-admin-border rounded-xl hover:bg-admin-accent/5 transition-all"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleSaveAction}
+                  disabled={savingAction}
+                  className="inline-flex items-center gap-2 px-5 py-2 bg-admin-accent text-white text-sm font-semibold rounded-xl hover:bg-admin-accent/90 disabled:opacity-50 transition-all"
+                >
+                  {savingAction ? <Loader2 size={14} className="animate-spin" /> : null}
+                  {d.status === "BERAKHIR" ? "Buka & Aktifkan"
+                    : isDeadlineOnly(d.status) ? "Perpanjang"
+                    : "Simpan Perubahan"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+          );
+        })()}
+      </AnimatePresence>
+
+      {/* ── Konfirmasi hapus periode ── */}
+      <ConfirmModal
+        open={deleteTarget !== null}
+        variant="danger"
+        title="Hapus periode evaluasi?"
+        description={
+          deleteError ??
+          `"${deleteTarget?.label ?? ""}" akan dihapus permanen beserta jadwal dan catatan perubahannya. Tindakan ini tidak bisa dibatalkan.`
+        }
+        confirmLabel={deleteError ? "Coba lagi" : "Hapus periode"}
+        cancelLabel={deleteError ? "Tutup" : "Batal"}
+        loading={deletingSchedule}
+        onConfirm={confirmDeleteSchedule}
+        onCancel={() => {
+          setDeleteTarget(null);
+          setDeleteError(null);
+        }}
+      />
+
       </div>
     </div>
   );

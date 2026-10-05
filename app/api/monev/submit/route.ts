@@ -69,7 +69,7 @@ export async function POST(req: NextRequest) {
     // Cek periode monev aktif & belum lewat deadline
     const { data: periode, error: periodeErr } = await supabaseAdmin
       .from("periode_monev")
-      .select('id, "isActive", deadline')
+      .select('id, is_active, deadline, waktu_mulai')
       .eq("id", periodeId)
       .single();
 
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    if (!periode.isActive) {
+    if (!periode.is_active) {
       return NextResponse.json(
         { error: "Periode monev ini sudah tidak aktif" },
         { status: 400 }
@@ -91,6 +91,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         { error: "Deadline periode ini sudah lewat" },
         { status: 400 }
+      );
+    }
+
+    // Validasi waktu_mulai — form belum dibuka
+    if (periode.waktu_mulai && new Date(periode.waktu_mulai) > new Date()) {
+      return NextResponse.json(
+        { error: "Periode pengisian belum dibuka" },
+        { status: 400 }
+      );
+    }
+
+    // Validasi kepesertaan — harus terdaftar sebagai penerima_kipk
+    const { data: penerima } = await supabaseAdmin
+      .from("penerima_kipk")
+      .select("id")
+      .eq("user_id", userId)
+      .maybeSingle();
+
+    if (!penerima) {
+      return NextResponse.json(
+        { error: "Anda tidak terdaftar sebagai penerima KIP-K" },
+        { status: 403 }
       );
     }
 

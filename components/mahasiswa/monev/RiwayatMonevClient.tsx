@@ -15,7 +15,6 @@ import { telegramAPI } from "@/lib/api";
 
 export interface MonevSchedule {
   id: string;
-  tipe_monev: string;
   label: string;
   waktu_mulai: string | null;
   deadline: string;
@@ -180,26 +179,25 @@ export default function RiwayatMonevClient({
     );
   }, [fillablePeriods, selectedPeriodId]);
 
-  // Riwayat evaluasi (selain periode aktif yang sedang dikerjakan dan selain jadwal yang belum dibuka)
+  // Riwayat evaluasi: periode yang sudah selesai bagi mahasiswa ini.
+  //
+  // Syaratnya positif (sudah dikirim ATAU deadline lewat), bukan "semua yang
+  // bukan periode aktif dan bukan jadwal mendatang". Rumus lama mensyaratkan
+  // is_active untuk mengenali jadwal mendatang, sehingga periode yang
+  // disembunyikan admin dan belum dimulai lolos ke sini dan tampil seolah
+  // periode yang sudah berakhir.
   const historySchedules = useMemo(() => {
     const fillableIds = new Set(fillablePeriods.map((p) => p.id));
     return schedules
       .filter((s) => {
-        // Jangan masukkan periode aktif saat ini
+        // Periode yang sedang bisa diisi punya bagiannya sendiri di atas
         if (fillableIds.has(s.id)) return false;
 
-        const deadlinePassed =
-          isValidDate(s.deadline) && new Date(s.deadline).getTime() < now;
-        const started =
-          !s.waktu_mulai ||
-          (isValidDate(s.waktu_mulai) &&
-            new Date(s.waktu_mulai).getTime() <= now);
-        const isUpcoming = s.is_active && !started && !deadlinePassed;
+        // Sudah dikirim — selesai bagi mahasiswa ini, apa pun status jadwalnya
+        if (submittedSet.has(s.id)) return true;
 
-        // Jangan masukkan jadwal mendatang ke riwayat selesai
-        if (isUpcoming) return false;
-
-        return true;
+        // Belum dikirim: hanya masuk riwayat kalau kesempatannya sudah habis
+        return isValidDate(s.deadline) && new Date(s.deadline).getTime() < now;
       })
       .sort((a, b) => {
         const timeA = isValidDate(a.deadline)
@@ -210,7 +208,7 @@ export default function RiwayatMonevClient({
           : 0;
         return timeB - timeA; // Riwayat: terbaru lebih dahulu
       });
-  }, [schedules, fillablePeriods, now]);
+  }, [schedules, fillablePeriods, submittedSet, now]);
 
   // State tampilkan semua riwayat
   const [showAllHistory, setShowAllHistory] = useState(false);

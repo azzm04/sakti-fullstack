@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/db"
+import { daysLeftWIB } from "@/lib/monev-schedule"
 
 const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
@@ -70,15 +71,11 @@ export async function POST(req: NextRequest) {
 
   const now = new Date()
 
-  // Awal hari ini (untuk cek duplikasi log)
-  const todayStart = new Date(now)
-  todayStart.setHours(0, 0, 0, 0)
-
   try {
     // 2. Ambil semua jadwal Monev yang aktif dan belum melewati deadline
     const activeSchedules = await prisma.periode_monev.findMany({
       where: {
-        isActive: true,
+        is_active: true,
         deadline: { gt: now },
       },
     })
@@ -96,10 +93,9 @@ export async function POST(req: NextRequest) {
     const results = []
 
     for (const schedule of activeSchedules) {
-      // 3. Hitung sisa hari hingga deadline
-      const daysLeft = Math.ceil(
-        (schedule.deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
-      )
+      // 3. Hitung sisa hari hingga deadline (berbasis tengah malam WIB,
+      //    bukan selisih ms mentah — lihat daysLeftWIB)
+      const daysLeft = daysLeftWIB(schedule.deadline, now)
 
       // 4. Skip jika bukan hari trigger
       if (!TRIGGER_DAYS.includes(daysLeft)) {
@@ -113,12 +109,15 @@ export async function POST(req: NextRequest) {
         continue
       }
 
-      // 5. Cek apakah sudah pernah kirim hari ini untuk kombinasi ini
+      // 5. Cek apakah H-n ini sudah pernah dikirim untuk deadline versi ini.
+      //    Kuncinya deadline_snapshot, bukan "sudah kirim hari ini": kalau
+      //    deadline diperpanjang, H-7 muncul lagi di tanggal berbeda dan
+      //    cek berbasis tanggal akan meloloskan pengiriman kedua.
       const existingLog = await prisma.log_notifikasi.findFirst({
         where: {
           periode_monev_id: schedule.id,
           triggerDay: daysLeft,
-          sentAt: { gte: todayStart },
+          deadline_snapshot: schedule.deadline,
         },
       })
 
@@ -128,7 +127,7 @@ export async function POST(req: NextRequest) {
           label: schedule.label,
           triggerDay: daysLeft,
           skipped: true,
-          reason: "Sudah terkirim hari ini",
+          reason: `H-${daysLeft} sudah terkirim untuk deadline ini`,
         })
         continue
       }
@@ -174,6 +173,7 @@ export async function POST(req: NextRequest) {
           totalSent,
           totalFailed,
           sentAt: now,
+          deadline_snapshot: schedule.deadline,
         },
       })
 

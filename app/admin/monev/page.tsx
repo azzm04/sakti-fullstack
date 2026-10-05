@@ -1,33 +1,51 @@
-import { supabaseAdmin } from "@/lib/supabase";
+import { prisma } from "@/lib/db";
 import MonevClient from "@/components/admin/monev/MonevClient";
 
 export interface MonevSchedule {
   id: string;
-  tipe_monev: string;
   label: string;
   waktu_mulai: string | null;
   deadline: string;
   is_active: boolean;
   created_at: string;
+  updated_at: string | null;
+  tahun_akademik: number | null;
+  semester: string | null;
+  jumlah_laporan: number;
 }
 
 async function getInitialSchedules(): Promise<MonevSchedule[]> {
   try {
-    const { data, error } = await supabaseAdmin
-      .from("periode_monev")
-      .select(`id, tipe_monev, label, waktu_mulai, deadline, "isActive", "createdAt", updated_at`)
-      .order('"createdAt"', { ascending: false });
+    // Bentuknya harus sama dengan GET /api/admin/monev/schedule — client
+    // memakai initialSchedules sampai refetch pertama, jadi updated_at
+    // (optimistic lock) dan jumlah_laporan (penentu status) wajib ada.
+    const rows = await prisma.periode_monev.findMany({
+      orderBy: { created_at: "desc" },
+      select: {
+        id:             true,
+        label:          true,
+        waktu_mulai:    true,
+        deadline:       true,
+        is_active:      true,
+        created_at:     true,
+        updated_at:     true,
+        tahun_akademik: true,
+        semester:       true,
+        _count: { select: { pengisian_monev: true } },
+      },
+    });
 
-    if (error) throw error;
-
-    return (data ?? []).map((row) => ({
-      id: row.id,
-      tipe_monev: row.tipe_monev,
-      label: row.label,
-      waktu_mulai: row.waktu_mulai,
-      deadline: row.deadline,
-      is_active: row["isActive"],
-      created_at: row["createdAt"],
+    return rows.map((r) => ({
+      id:             r.id,
+      label:          r.label,
+      waktu_mulai:    r.waktu_mulai?.toISOString() ?? null,
+      deadline:       r.deadline.toISOString(),
+      is_active:      r.is_active,
+      created_at:     r.created_at.toISOString(),
+      updated_at:     r.updated_at?.toISOString() ?? null,
+      tahun_akademik: r.tahun_akademik,
+      semester:       r.semester,
+      jumlah_laporan: r._count.pengisian_monev,
     }));
   } catch (err) {
     console.error("[Server] getInitialSchedules error:", err);

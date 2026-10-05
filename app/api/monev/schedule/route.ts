@@ -6,19 +6,18 @@ export async function GET() {
   try {
     const { data, error } = await supabaseAdmin
       .from("periode_monev")
-      .select(`id, tipe_monev, label, waktu_mulai, deadline, "isActive", "createdAt"`)
-      .order('"createdAt"', { ascending: false });
+      .select(`id, label, waktu_mulai, deadline, is_active, created_at`)
+      .order('created_at', { ascending: false });
 
     if (error) throw error;
 
     const normalized = (data ?? []).map((row) => ({
       id:          row.id,
-      tipe_monev:  row.tipe_monev,
       label:       row.label,
       waktu_mulai: row.waktu_mulai,
       deadline:    row.deadline,
-      is_active:   row["isActive"],
-      created_at:  row["createdAt"],
+      is_active:   row.is_active,
+      created_at:  row.created_at,
     }));
 
     return NextResponse.json({ data: normalized });

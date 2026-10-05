@@ -1,5 +1,5 @@
 generator client {
-  provider        = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -23,15 +23,17 @@ model User {
 
   @@map("users")
 }
+
 model AdminUser {
-  id             String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  username       String          @unique(map: "admin_users_adminid_key") @db.VarChar(100)
-  password       String          @db.VarChar(255)
-  nama           String          @db.VarChar(150)
-  createdAt      DateTime        @default(now()) @map("created_at") @db.Timestamp(6)
-  pewawancara    Pewawancara[]
-  sesi_wawancara SesiWawancara[]
-  aduan Aduan[]
+  id                   String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  username             String                 @unique(map: "admin_users_adminid_key") @db.VarChar(100)
+  password             String                 @db.VarChar(255)
+  nama                 String                 @db.VarChar(150)
+  createdAt            DateTime               @default(now()) @map("created_at") @db.Timestamp(6)
+  aduan                Aduan[]
+  pewawancara          Pewawancara[]
+  riwayat_jadwal_monev riwayat_jadwal_monev[]
+  sesi_wawancara       SesiWawancara[]
 
   @@map("admin_users")
 }
@@ -134,29 +136,22 @@ model SlotSesi {
 
 model ChatSession {
   id        String        @id @default(cuid()) @db.VarChar(255)
-  userId    String?       @db.Uuid
   judul     String        @default("Percakapan Baru") @db.VarChar(255)
-  createdAt DateTime      @default(now()) @db.Timestamp()
-  updatedAt DateTime      @updatedAt @db.Timestamp()
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  userId    String?       @db.Uuid
   messages  ChatMessage[]
+
   @@map("chat_session")
 }
 
-enum RoleType {
-  USER
-  MODEL
-  SYSTEM
-}
-
 model ChatMessage {
-  id        String      @id @default(uuid()) @db.Uuid
   sessionId String      @db.VarChar(255)
+  content   String
+  imageUrl  String?
+  createdAt DateTime    @default(now())
+  id        String      @id @default(uuid()) @db.Uuid
   role      RoleType
-  content   String      @db.Text
-  imageUrl  String?     @db.Text
-  createdAt DateTime    @default(now()) @db.Timestamp()
-  
-  // Pastikan model ChatSession juga memiliki id bertipe @db.VarChar(255)
   session   ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@map("chat_message")
@@ -168,7 +163,7 @@ model Aduan {
   kode_laporan      String       @unique @db.VarChar(20)
   jenis_aduan       JenisAduan
   nama_terlapor     String       @db.VarChar(150)
-  uraian_kronologi  String       @db.Text
+  uraian_kronologi  String
   status            StatusAduan  @default(MENUNGGU)
   created_at        DateTime     @default(now()) @db.Timestamp(6)
   angkatan          String?      @db.VarChar(20)
@@ -178,11 +173,9 @@ model Aduan {
   nama_pelapor      String?      @db.VarChar(150)
   whatsapp_pelapor  String?      @db.VarChar(20)
   email_pelapor     String?      @db.VarChar(150)
-
   pernyataan_setuju Boolean      @default(false)
   disetujui_pada    DateTime?    @db.Timestamp(6)
-
-  admin             AdminUser?   @relation(fields: [admin_id], references: [id], onDelete: SetNull)
+  admin             AdminUser?   @relation(fields: [admin_id], references: [id])
   bukti             BuktiAduan[]
 
   @@index([admin_id])
@@ -192,13 +185,12 @@ model Aduan {
 model BuktiAduan {
   id         String   @id @default(uuid()) @db.Uuid
   aduan_id   String   @db.Uuid
-  path_file  String   @db.Text           // path di Supabase Storage
-  nama_file  String   @db.VarChar(255)   // nama asli, ditampilkan ke admin
-  mime_type  String   @db.VarChar(100)   // image/jpeg, image/png, image/webp, application/pdf
-  ukuran     Int                         // dalam byte
+  path_file  String
+  nama_file  String   @db.VarChar(255)
+  mime_type  String   @db.VarChar(100)
+  ukuran     Int
   created_at DateTime @default(now()) @db.Timestamp(6)
-
-  aduan Aduan @relation(fields: [aduan_id], references: [id], onDelete: Cascade)
+  aduan      Aduan    @relation(fields: [aduan_id], references: [id], onDelete: Cascade)
 
   @@index([aduan_id])
   @@map("bukti_aduan")
@@ -552,7 +544,12 @@ model log_notifikasi {
   totalSent        Int           @default(0)
   totalFailed      Int           @default(0)
   sentAt           DateTime      @default(now())
+  /// Deadline yang berlaku saat log dibuat. Dipakai agar reminder H-n
+  /// tidak terkirim dua kali ketika deadline diperpanjang.
+  deadline_snapshot DateTime?    @db.Timestamptz(6)
   periode_monev    periode_monev @relation(fields: [periode_monev_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@unique([periode_monev_id, triggerDay, deadline_snapshot], map: "uq_log_notifikasi_periode_trigger_deadline")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -581,35 +578,40 @@ model pengisian_monev {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model pengunduran_diri {
-  id             String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id        String                @db.Uuid
-  semester       Int                   @db.SmallInt
-  alasan         String
-  storage_path   String
-  status         StatusPengunduranDiri @default(MENUNGGU_VERIFIKASI)
-  catatan_admin  String?
-  diproses_at    DateTime?             @db.Timestamptz(6)
-  diputuskan_at  DateTime?             @db.Timestamptz(6)
-  created_at     DateTime              @default(now()) @db.Timestamptz(6)
-  updated_at     DateTime              @default(now()) @db.Timestamptz(6)
-  user           User                  @relation(fields: [user_id], references: [id], onDelete: Restrict)
+  id            String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id       String                @db.Uuid
+  semester      Int                   @db.SmallInt
+  alasan        String
+  storage_path  String
+  status        StatusPengunduranDiri @default(MENUNGGU_VERIFIKASI)
+  catatan_admin String?
+  diproses_at   DateTime?             @db.Timestamptz(6)
+  diputuskan_at DateTime?             @db.Timestamptz(6)
+  created_at    DateTime              @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime              @default(now()) @db.Timestamptz(6)
+  user          User                  @relation(fields: [user_id], references: [id], onUpdate: NoAction)
 
+  @@index([user_id], map: "idx_pengunduran_diri_user_id")
   @@map("pengunduran_diri")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model periode_monev {
-  id              String            @id(map: "monev_schedules_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  label           String
-  deadline        DateTime
-  isActive        Boolean           @default(true)
-  createdAt       DateTime          @default(now())
-  tipe_monev      tipe_monev        @default(Evaluasi_Ekonomi)
-  waktu_mulai     DateTime?         @db.Timestamptz(6)
-  updated_at      DateTime?         @default(now()) @db.Timestamptz(6)
-  log_notifikasi  log_notifikasi[]
-  pengisian_monev pengisian_monev[]
+  id                   String                 @id(map: "monev_schedules_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  label                String
+  deadline             DateTime
+  is_active            Boolean                @default(true)
+  created_at           DateTime               @db.Timestamptz(6)
+  waktu_mulai          DateTime?              @db.Timestamptz(6)
+  updated_at           DateTime?              @default(now()) @db.Timestamptz(6)
+  tahun_akademik       Int                    @default(2026)
+  semester             String                 @default("Gasal")
+  log_notifikasi       log_notifikasi[]
+  pengisian_monev      pengisian_monev[]
+  riwayat_jadwal_monev riwayat_jadwal_monev[]
+
+  @@unique([tahun_akademik, semester], map: "uq_periode_monev_tahun_semester")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -645,7 +647,35 @@ model UserRole {
   @@index([userId])
   @@map("user_roles")
 }
-  
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model riwayat_jadwal_monev {
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  periode_monev_id String        @db.Uuid
+  admin_id         String?       @db.Uuid
+  tipe_perubahan   String
+  waktu_mulai_lama DateTime?     @db.Timestamptz(6)
+  waktu_mulai_baru DateTime?     @db.Timestamptz(6)
+  deadline_lama    DateTime?     @db.Timestamptz(6)
+  deadline_baru    DateTime?     @db.Timestamptz(6)
+  is_active_lama   Boolean?
+  is_active_baru   Boolean?
+  catatan          String?
+  created_at       DateTime      @default(now()) @db.Timestamptz(6)
+  admin_users      AdminUser?    @relation(fields: [admin_id], references: [id], onUpdate: NoAction)
+  periode_monev    periode_monev @relation(fields: [periode_monev_id], references: [id], onUpdate: NoAction)
+
+  @@index([admin_id, created_at(sort: Desc)], map: "idx_riwayat_jadwal_admin")
+  @@index([periode_monev_id, created_at(sort: Desc)], map: "idx_riwayat_jadwal_periode")
+}
+
+enum RoleType {
+  USER
+  MODEL
+  SYSTEM
+}
+
 enum JenisBerita {
   PENGUMUMAN
   INFORMASI
@@ -682,13 +712,6 @@ enum status_akun_enum {
   PENDING
 }
 
-enum tipe_monev {
-  Evaluasi_Ekonomi  @map("Evaluasi Ekonomi")
-  Evaluasi_Akademik @map("Evaluasi Akademik")
-  Evaluasi_Sosial   @map("Evaluasi Sosial")
-  Evaluasi_Akhir    @map("Evaluasi Akhir")
-}
-
 enum jenjang_pendidikan {
   S1
   D4
@@ -701,7 +724,6 @@ enum JenisPrestasi {
   KEPANITIAAN
   PENGABDIAN_MASYARAKAT
 }
-
 
 enum StatusVerifikasi {
   TERCATAT
