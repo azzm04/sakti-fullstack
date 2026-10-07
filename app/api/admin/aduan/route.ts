@@ -9,8 +9,20 @@ export async function GET() {
       return NextResponse.json({ error: "Tidak diizinkan" }, { status: 401 });
     }
 
+    // Hanya kolom yang dibutuhkan daftar: identitas pelapor sengaja tidak ikut
     const aduanList = await prisma.aduan.findMany({
       orderBy: { created_at: "desc" },
+      select: {
+        id: true,
+        kode_laporan: true,
+        jenis_aduan: true,
+        nama_terlapor: true,
+        nim_terlapor: true,
+        fakultas_prodi: true,
+        angkatan: true,
+        status: true,
+        created_at: true,
+      },
     });
 
     return NextResponse.json({ data: aduanList }, { status: 200 });
