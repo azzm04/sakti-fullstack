@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { Loader2, CheckCircle2, AlertCircle, UploadCloud, X, Download, FileText, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -30,7 +31,7 @@ const formatRupiah = (angka: number) =>
   }).format(angka);
 
 
-// --- ARCADE.SOFTWARE STYLE REUSABLE COMPONENTS ---
+// Shared form controls.
 const AnimatedExpand = ({ show, children }: { show: boolean, children: React.ReactNode }) => (
   <AnimatePresence initial={false}>
     {show && (
@@ -73,12 +74,12 @@ const RupiahInput = ({ value, onChange, placeholder = "0", id, required = false 
 
   return (
     <div className="relative">
-      <span className="absolute left-[20px] top-[14px] text-[#6B7280] font-medium font-roboto text-[14px]">Rp</span>
+      <span className="absolute left-[20px] top-[14px] text-[#64748B] font-medium font-roboto text-[14px]">Rp</span>
       <input
         id={id}
         type="text"
         required={required}
-        className="w-full pl-[50px] pr-4 py-[14px] bg-white border border-[#E0E0E0] rounded-full font-roboto text-[14px] text-[#1A1A1A] placeholder-[#6B7280] focus:ring-1 focus:ring-[#003C71] focus:border-[#003C71] outline-none transition-all"
+        className="w-full pl-[50px] pr-4 py-[14px] bg-white border border-[#E2E8F0] rounded-lg font-roboto text-[14px] text-[#0F172A] placeholder-[#94A3B8] focus:ring-2 focus:ring-[#000352] focus:border-[#000352] outline-none transition-colors"
         placeholder={placeholder}
         value={displayValue}
         onChange={handleChange}
@@ -99,10 +100,10 @@ const FileUploadBox = ({ title, subTitle, buttonText = "Unggah bukti pendapatan 
 
   return (
     <div>
-      <label className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#1A1A1A] mb-1.5 md:mb-2">
+      <label className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#0F172A] mb-1.5 md:mb-2">
         {title} {required && <span className="text-red-500">*</span>}
       </label>
-      {subTitle && <div className="font-roboto text-[11px] md:text-[12px] text-[#6B7280] mb-3 md:mb-4 leading-relaxed">{subTitle}</div>}
+      {subTitle && <div className="font-roboto text-[11px] md:text-[12px] text-[#64748B] mb-3 md:mb-4 leading-relaxed">{subTitle}</div>}
 
       <AnimatePresence mode="wait">
         {file ? (
@@ -125,7 +126,7 @@ const FileUploadBox = ({ title, subTitle, buttonText = "Unggah bukti pendapatan 
               type="button"
               onClick={onRemove}
               className="flex items-center justify-center w-7 h-7 text-[#94A3B8] hover:text-[#EF4444] hover:bg-red-50 rounded-md transition-colors shrink-0 ml-2"
-              title="Hapus File"
+              title="Hapus File" aria-label={`Hapus ${file.name}`}
             >
               <X size={16} strokeWidth={1.5} />
             </button>
@@ -138,16 +139,16 @@ const FileUploadBox = ({ title, subTitle, buttonText = "Unggah bukti pendapatan 
             exit={{ opacity: 0 }}
             transition={{ duration: 0.2 }}
             htmlFor={id}
-            className="flex flex-col items-center justify-center w-full py-8 px-4 bg-white border border-dashed border-[#CBD5E1] rounded-[12px] cursor-pointer hover:border-[#003C71] hover:bg-[#F8FAFC] transition-colors group"
+            className="flex flex-col items-center justify-center w-full py-8 px-4 bg-white border border-dashed border-[#CBD5E1] rounded-lg cursor-pointer hover:border-[#000352] hover:bg-[#F8FAFC] focus-within:ring-2 focus-within:ring-[#000352] focus-within:ring-offset-2 transition-colors group"
           >
-            <div className="mb-3 text-[#94A3B8] group-hover:text-[#003C71] transition-colors">
+            <div className="mb-3 text-[#94A3B8] group-hover:text-[#000352] transition-colors">
               <UploadCloud className="w-7 h-7" strokeWidth={1.5} />
             </div>
             <p className="mb-1 font-roboto text-[14px] font-medium text-[#1E293B]">
               {buttonText}
             </p>
             <p className="font-roboto text-[12px] text-[#64748B]">JPG, PNG atau PDF • Maks. 1 MB</p>
-            <input ref={inputRef} id={id} type="file" className="hidden" accept={accept} onChange={onFileChange} />
+            <input ref={inputRef} id={id} type="file" className="sr-only" aria-label={typeof title === "string" ? title : "Unggah dokumen"} accept={accept} onChange={onFileChange} />
           </motion.label>
         )}
       </AnimatePresence>
@@ -336,7 +337,7 @@ export default function FormEvaluasiMonev() {
   // ═══════════════════════════════════════════════════
   if (isCheckingSubmission) {
     return (
-      <div className={`min-h-screen bg-[#F7F9FC] py-12 px-4 flex items-center justify-center`} style={{ fontFamily: '"Segoe UI", system-ui, sans-serif' }}>
+      <div className={`min-h-screen bg-[#F7F9FC] py-12 px-4 flex items-center justify-center`} style={{ fontFamily: "Roboto, sans-serif" }}>
         <div className="flex items-center gap-3 text-slate-500 bg-white px-6 py-4 rounded-xl shadow-sm border border-slate-200">
           <Loader2 className="animate-spin" size={20} />
           <span className="text-sm font-medium">Memuat data evaluasi...</span>
@@ -469,7 +470,7 @@ export default function FormEvaluasiMonev() {
   // ═══════════════════════════════════════════════════
   if (success) {
     return (
-      <div className={`min-h-screen bg-[#F7F9FC] py-12 px-4 flex items-center justify-center`} style={{ fontFamily: '"Segoe UI", system-ui, sans-serif' }}>
+      <div className={`min-h-screen bg-[#F7F9FC] py-12 px-4 flex items-center justify-center`} style={{ fontFamily: "Roboto, sans-serif" }}>
         <div className="bg-white px-10 py-12 rounded-xl shadow-sm border border-[#E5EAF0] text-center space-y-4">
           <div className="mx-auto w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center">
             <CheckCircle2 className="text-emerald-600" size={32} />
@@ -485,59 +486,37 @@ export default function FormEvaluasiMonev() {
   // RENDER: Form isian (belum submit)
   // ═══════════════════════════════════════════════════
   return (
-    <div className={`-m-4 sm:-m-6 md:-m-8 min-h-screen bg-[#F7F9FC] relative overflow-hidden`} style={{ fontFamily: '"Segoe UI", system-ui, sans-serif' }}>
+    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8" style={{ fontFamily: "Roboto, sans-serif" }}>
+      <div className="space-y-6">
+        <Link
+          href="/mahasiswa/monev"
+          className="inline-flex min-h-11 items-center gap-2 rounded text-[13px] font-medium text-[#475569] transition-colors hover:text-[#000352] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#000352] focus-visible:ring-offset-2"
+        >
+          <ArrowLeft size={16} aria-hidden="true" />
+          Kembali ke Monev
+        </Link>
 
-      {/* Modern Minimalist Background */}
-
-      {/* Subtle UNDIP Blue Glow */}
-      <div className="absolute top-0 left-0 w-full h-[400px] overflow-hidden pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[-5%] w-[40%] h-[300px] rounded-full bg-[#00529B]/[0.03] blur-[100px]" />
-        <div className="absolute top-[-10%] right-[-5%] w-[30%] h-[250px] rounded-full bg-[#00529B]/[0.04] blur-[120px]" />
-      </div>
-
-      <div className="absolute top-0 left-0 w-full h-[300px] bg-gradient-to-b from-white/40 to-transparent z-0 pointer-events-none"></div>
-
-      <div className="max-w-4xl mx-auto relative z-10 pt-10 md:pt-12 pb-16 px-4 sm:px-6 space-y-8">
-
-        {/* Navigation */}
-        <div className="flex mb-4 md:mb-6">
-          <Link href="/mahasiswa/monev" className="inline-flex w-fit items-center gap-1.5 px-3 py-1.5 text-slate-600 bg-white border border-slate-200 hover:text-slate-900 hover:bg-slate-50 rounded-lg font-medium text-[13px] transition-colors">
-            <span className="mr-0.5">←</span> Kembali
-          </Link>
-        </div>
-
-        {/* Header Hero Card */}
-        <div className="bg-[#00529B] rounded-[24px] shadow-[0_8px_30px_rgba(0,82,155,0.12)] p-8 md:p-10 mb-8 relative overflow-hidden flex flex-col md:flex-row md:items-center justify-between gap-6">
-          {/* Formal Ambient Navy Mesh */}
-          <div className="absolute inset-0 bg-gradient-to-br from-[#003C71] via-[#00529B] to-[#001D4A] opacity-90 pointer-events-none"></div>
-
-          {/* Very Subtle Ambient Sheen (Clean & Formal) */}
-          <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-white/5 rounded-full blur-[100px] -translate-y-1/3 translate-x-1/4 pointer-events-none"></div>
-
-          <div className="relative z-10 md:pr-48">
-            <h1 className="text-[32px] md:text-[36px] font-bold text-white leading-tight mb-2 font-roboto tracking-tight">
-              Evaluasi Ekonomi
+        <header className="flex items-start justify-between gap-4 sm:gap-8">
+          <div className="min-w-0 max-w-2xl">
+            <h1 className="text-3xl font-bold leading-tight tracking-tight text-[#0B1536] sm:text-4xl">
+              Pengisian Monev
             </h1>
-            <p className="font-roboto text-[15px] md:text-[16px] text-blue-50 max-w-xl leading-relaxed">
-              Lengkapi data di bawah ini dengan sebenar-benarnya untuk keperluan evaluasi Beasiswa KIP-Kuliah 2026.
+            <p className="mt-3 text-[14px] leading-6 text-[#64748B] sm:text-base">
+              Lengkapi data ekonomi dan dokumen pendukung untuk evaluasi KIP Kuliah.
             </p>
           </div>
+        </header>
 
-          <div className="absolute right-8 top-1/2 -translate-y-1/2 opacity-90 hidden md:block">
-            <img src="/Logo UNDIP.png" alt="Logo UNDIP" className="w-40 h-40 object-contain drop-shadow-lg" />
-          </div>
-        </div>
-
-        <div className="bg-white rounded-[20px] shadow-[0_4px_24px_rgba(0,0,0,0.04)] p-10 md:p-12">
+        <div className="rounded-lg border border-[#E2E8F0] bg-white p-5 md:p-9">
 
           {/* Error Banner */}
           {error && (
-            <div className="bg-red-50 border border-red-200 p-4 rounded-xl flex items-start gap-3">
+            <div role="alert" className="mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
               <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={18} />
               <div className="flex-1">
                 <p className="text-sm font-semibold text-red-800">{error}</p>
               </div>
-              <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600 shrink-0">
+              <button type="button" aria-label="Tutup pesan kesalahan" onClick={() => setError(null)} className="text-red-400 hover:text-red-600 shrink-0">
                 <X size={16} />
               </button>
             </div>
@@ -545,21 +524,21 @@ export default function FormEvaluasiMonev() {
 
           <form className="space-y-8" onSubmit={handleSubmit}>
             {/* SECTION 1: Pekerjaan dan Pendapatan Orang Tua */}
-            <section>
+            <section className="border-b border-[#E2E8F0] pb-8">
               <div className="mb-4 md:mb-5">
-                <h2 className="font-roboto font-semibold text-[15px] md:text-[16px] text-[#1A1A1A]">Data Pekerjaan Ayah</h2>
+                <h2 className="font-roboto font-semibold text-[18px] leading-7 text-[#000352]">Data ayah</h2>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
                 {/* Kiri: Pekerjaan Ayah */}
                 <div className="flex flex-col">
                   <div>
-                    <label className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#1A1A1A] mb-1.5 md:mb-2">
+                    <label htmlFor="pekerjaan-ayah" className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#0F172A] mb-1.5 md:mb-2">
                       Pekerjaan Ayah <span className="text-red-500">*</span>
                     </label>
-                    <select
+                    <select id="pekerjaan-ayah"
                       value={pekerjaanAyah}
                       onChange={(e) => setPekerjaanAyah(e.target.value)}
-                      className="w-full pl-[20px] pr-10 py-[14px] appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23667085%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:16px_16px] bg-[position:right_20px_center] bg-no-repeat bg-white border border-[#E0E0E0] rounded-full font-roboto text-[14px] text-[#1A1A1A] focus:ring-1 focus:ring-[#003C71] focus:border-[#003C71] outline-none transition-all"
+                      className="w-full pl-[20px] pr-10 py-[14px] appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23667085%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:16px_16px] bg-[position:right_20px_center] bg-no-repeat bg-white border border-[#E2E8F0] rounded-lg font-roboto text-[14px] text-[#0F172A] focus:ring-2 focus:ring-[#000352] focus:border-[#000352] outline-none transition-colors"
                       required
                     >
                       <option value="">Pilih Pekerjaan...</option>
@@ -586,7 +565,7 @@ export default function FormEvaluasiMonev() {
                 {/* Kanan: Pendapatan Ayah */}
                 <div className="flex flex-col">
                   <div>
-                    <label className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#1A1A1A] mb-1.5 md:mb-2">
+                    <label htmlFor="pendapatan-ayah" className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#0F172A] mb-1.5 md:mb-2">
                       Pendapatan Ayah (per bulan) <span className="text-red-500">*</span>
                     </label>
                     <RupiahInput
@@ -613,21 +592,21 @@ export default function FormEvaluasiMonev() {
             </section>
 
             {/* SECTION 2: Pekerjaan dan Pendapatan Ibu */}
-            <section>
+            <section className="border-b border-[#E2E8F0] pb-8">
               <div className="mb-4 md:mb-5">
-                <h2 className="font-roboto font-semibold text-[15px] md:text-[16px] text-[#1A1A1A]">Data Pekerjaan Ibu</h2>
+                <h2 className="font-roboto font-semibold text-[18px] leading-7 text-[#000352]">Data ibu</h2>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-start">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
                 {/* Kiri: Pekerjaan Ibu */}
                 <div className="flex flex-col">
                   <div>
-                    <label className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#1A1A1A] mb-1.5 md:mb-2">
+                    <label htmlFor="pekerjaan-ibu" className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#0F172A] mb-1.5 md:mb-2">
                       Pekerjaan Ibu <span className="text-red-500">*</span>
                     </label>
-                    <select
+                    <select id="pekerjaan-ibu"
                       value={pekerjaanIbu}
                       onChange={(e) => setPekerjaanIbu(e.target.value)}
-                      className="w-full pl-[20px] pr-10 py-[14px] appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23667085%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:16px_16px] bg-[position:right_20px_center] bg-no-repeat bg-white border border-[#E0E0E0] rounded-full font-roboto text-[14px] text-[#1A1A1A] focus:ring-1 focus:ring-[#003C71] focus:border-[#003C71] outline-none transition-all"
+                      className="w-full pl-[20px] pr-10 py-[14px] appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23667085%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:16px_16px] bg-[position:right_20px_center] bg-no-repeat bg-white border border-[#E2E8F0] rounded-lg font-roboto text-[14px] text-[#0F172A] focus:ring-2 focus:ring-[#000352] focus:border-[#000352] outline-none transition-colors"
                       required
                     >
                       <option value="">Pilih Pekerjaan...</option>
@@ -654,7 +633,7 @@ export default function FormEvaluasiMonev() {
                 {/* Kanan: Pendapatan Ibu */}
                 <div className="flex flex-col">
                   <div>
-                    <label className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#1A1A1A] mb-1.5 md:mb-2">
+                    <label htmlFor="pendapatan-ibu" className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#0F172A] mb-1.5 md:mb-2">
                       Pendapatan Ibu (per bulan) <span className="text-red-500">*</span>
                     </label>
                     <RupiahInput
@@ -681,15 +660,15 @@ export default function FormEvaluasiMonev() {
             </section>
 
             {/* SECTION 3: Pendapatan Lain & Tanggungan */}
-            <section>
+            <section className="border-b border-[#E2E8F0] pb-8">
               <div className="mb-4 md:mb-5">
-                <h2 className="font-roboto font-semibold text-[15px] md:text-[16px] text-[#1A1A1A]">Data Lainnya</h2>
+                <h2 className="font-roboto font-semibold text-[18px] leading-7 text-[#000352]">Penghasilan lain dan tanggungan</h2>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                 {/* Kiri: Pendapatan Lain */}
                 <div className="flex flex-col h-full">
                   <div>
-                    <label className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#1A1A1A] mb-1.5 md:mb-2">
+                    <label htmlFor="pendapatan-lain" className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#0F172A] mb-1.5 md:mb-2">
                       Pendapatan Lain-lain (per bulan)
                     </label>
                     <RupiahInput
@@ -698,7 +677,7 @@ export default function FormEvaluasiMonev() {
                       id="pendapatan-lain"
                       placeholder="Opsional (0 jika tidak ada)"
                     />
-                    <p className="font-roboto text-[11px] md:text-[12px] text-[#6B7280] mt-1 md:mt-1.5 leading-relaxed">
+                    <p className="font-roboto text-[11px] md:text-[12px] text-[#64748B] mt-1 md:mt-1.5 leading-relaxed">
                       Jika tidak ada, isi 0 dan unggah surat pernyataan.
                     </p>
                   </div>
@@ -709,7 +688,7 @@ export default function FormEvaluasiMonev() {
                       subTitle={
                         <div className="min-h-[60px] md:min-h-[64px] flex flex-col justify-start">
                           <span>Unggah bukti atau surat pernyataan.</span>
-                          <a href="/format-surat-pernyataan-pendapatan.docx" download className="inline-flex items-center gap-1 font-roboto text-[12px] text-[#003C71] font-medium hover:underline mt-1.5 w-fit">
+                          <a href="/format-surat-pernyataan-pendapatan.docx" download className="inline-flex items-center gap-1 font-roboto text-[12px] text-[#000352] font-medium hover:underline mt-1.5 w-fit">
                             <Download size={14} />
                             Unduh format surat pernyataan
                           </a>
@@ -727,18 +706,19 @@ export default function FormEvaluasiMonev() {
                 {/* Kanan: Tanggungan */}
                 <div className="flex flex-col h-full">
                   <div>
-                    <label className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#1A1A1A] mb-1.5 md:mb-2">
+                    <label htmlFor="jumlah-tanggungan" className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#0F172A] mb-1.5 md:mb-2">
                       Jumlah Tanggungan <span className="text-red-500">*</span>
                     </label>
                     <input
+                      id="jumlah-tanggungan"
                       type="number"
                       min="1"
-                      className="w-full px-[20px] py-[14px] bg-white border border-[#E0E0E0] rounded-full font-roboto text-[14px] text-[#1A1A1A] focus:ring-1 focus:ring-[#003C71] focus:border-[#003C71] outline-none transition-all"
+                      className="w-full px-[20px] py-[14px] bg-white border border-[#E2E8F0] rounded-lg font-roboto text-[14px] text-[#0F172A] focus:ring-2 focus:ring-[#000352] focus:border-[#000352] outline-none transition-colors"
                       value={tanggungan}
                       onChange={(e) => setTanggungan(Number(e.target.value) || 1)}
                       required
                     />
-                    <p className="font-roboto text-[11px] md:text-[12px] text-[#6B7280] mt-1 md:mt-1.5 leading-relaxed">
+                    <p className="font-roboto text-[11px] md:text-[12px] text-[#64748B] mt-1 md:mt-1.5 leading-relaxed">
                       Termasuk diri sendiri.
                     </p>
                   </div>
@@ -765,36 +745,34 @@ export default function FormEvaluasiMonev() {
             </section>
 
             {/* SECTION 4: Ringkasan Ekonomi */}
-            <section className="mt-8 relative overflow-hidden bg-gradient-to-b from-[#F8FAFC] to-[#F1F5F9] border border-[#E2E8F0] p-6 rounded-[12px] shadow-[inset_0_1px_0_rgba(255,255,255,1),0_2px_8px_-2px_rgba(0,0,0,0.05)]">
-              {/* Gloss Reflection Overlay */}
-              <div className="absolute top-0 left-0 right-0 h-[50%] bg-gradient-to-b from-white/80 to-transparent pointer-events-none"></div>
-
-              <div className="relative z-10 flex flex-col md:flex-row justify-between gap-6">
+            <section aria-labelledby="form-summary-heading" className="rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-5 sm:p-6">
+              <h2 id="form-summary-heading" className="mb-5 text-[16px] font-semibold text-[#000352]">Ringkasan penghasilan</h2>
+              <div className="flex flex-col md:flex-row justify-between gap-6">
                 <div className="flex-1 min-w-0">
-                  <p className="font-roboto text-[11px] font-medium text-[#1A1A1A] uppercase tracking-wider mb-2 truncate">TOTAL PENDAPATAN</p>
-                  <div className="flex items-baseline gap-1.5 mb-1.5">
-                    <p className="font-roboto text-[24px] font-medium text-[#1A1A1A] leading-tight truncate" title={totalPendapatan > 0 ? formatRupiah(totalPendapatan) : "Belum Dihitung"}>
+                  <p className="font-roboto text-[13px] font-medium text-[#475569] mb-2">Total penghasilan</p>
+                  <div className="flex flex-wrap items-baseline gap-x-1.5 mb-1.5">
+                    <p className="font-roboto text-[22px] font-semibold text-[#000352] leading-8 break-words tabular-nums" title={totalPendapatan > 0 ? formatRupiah(totalPendapatan) : "Belum Dihitung"}>
                       {totalPendapatan > 0 ? formatRupiah(totalPendapatan) : "—"}
                     </p>
-                    {totalPendapatan > 0 && <span className="font-roboto text-[14px] font-medium text-[#6B7280]">/ bulan</span>}
+                    {totalPendapatan > 0 && <span className="font-roboto text-[14px] font-medium text-[#64748B]">/ bulan</span>}
                   </div>
-                  <p className="font-roboto text-[12px] text-[#6B7280]">
+                  <p className="font-roboto text-[12px] text-[#64748B]">
                     Pendapatan Ayah + Ibu + Pendapatan Lainnya
                   </p>
                 </div>
 
                 {/* Divider */}
-                <div className="w-full h-px md:w-px md:h-16 bg-[#E0E0E0] shrink-0 self-center my-2 md:my-0"></div>
+                <div className="w-full h-px md:w-px md:h-16 bg-[#E2E8F0] shrink-0 self-center my-2 md:my-0"></div>
 
                 <div className="flex-1 min-w-0">
-                  <p className="font-roboto text-[11px] font-medium text-[#1A1A1A] uppercase tracking-wider mb-2 truncate">PENDAPATAN PER TANGGUNGAN</p>
-                  <div className="flex items-baseline gap-1.5 mb-1.5">
-                    <p className="font-roboto text-[24px] font-medium text-[#1A1A1A] leading-tight truncate" title={rupiahPerTanggungan > 0 ? formatRupiah(rupiahPerTanggungan) : "Belum Dihitung"}>
+                  <p className="font-roboto text-[13px] font-medium text-[#475569] mb-2">Penghasilan per tanggungan</p>
+                  <div className="flex flex-wrap items-baseline gap-x-1.5 mb-1.5">
+                    <p className="font-roboto text-[22px] font-semibold text-[#000352] leading-8 break-words tabular-nums" title={rupiahPerTanggungan > 0 ? formatRupiah(rupiahPerTanggungan) : "Belum Dihitung"}>
                       {rupiahPerTanggungan > 0 ? formatRupiah(rupiahPerTanggungan) : "—"}
                     </p>
-                    {rupiahPerTanggungan > 0 && <span className="font-roboto text-[14px] font-medium text-[#6B7280]">/ orang / bulan</span>}
+                    {rupiahPerTanggungan > 0 && <span className="font-roboto text-[14px] font-medium text-[#64748B]">/ orang / bulan</span>}
                   </div>
-                  <p className="font-roboto text-[12px] text-[#6B7280]">
+                  <p className="font-roboto text-[12px] text-[#64748B]">
                     Total Pendapatan &divide; Jumlah Tanggungan
                   </p>
                 </div>
@@ -806,7 +784,7 @@ export default function FormEvaluasiMonev() {
               <input
                 type="checkbox"
                 id="pernyataan"
-                className="mt-1 w-4 h-4 shrink-0 rounded border-[#E0E0E0] text-[#003C71] focus:ring-[#003C71] cursor-pointer"
+                className="mt-1 w-4 h-4 shrink-0 rounded border-[#E2E8F0] text-[#000352] focus:ring-[#000352] cursor-pointer"
                 checked={isPernyataanChecked}
                 onChange={(e) => setIsPernyataanChecked(e.target.checked)}
               />
@@ -820,16 +798,16 @@ export default function FormEvaluasiMonev() {
               <button
                 type="submit"
                 disabled={isSubmitting || !isPernyataanChecked}
-                className="w-full md:w-auto px-[32px] py-[14px] bg-[#003C71] text-white font-roboto font-medium text-[14px] rounded-full hover:bg-[#002D54] transition-colors disabled:opacity-60 disabled:pointer-events-none inline-flex items-center justify-center gap-2"
+                className="w-full md:w-auto px-[32px] py-[14px] bg-[#000352] text-white font-roboto font-medium text-[14px] rounded-lg hover:bg-[#1a1e68] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#000352] focus-visible:ring-offset-2 disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
               >
                 {isSubmitting ? (
                   <>
                     <Loader2 className="animate-spin" size={18} />
-                    Mengirim Evaluasi...
+                    Mengirim laporan...
                   </>
                 ) : (
                   <>
-                    Kirim Evaluasi
+                    Kirim laporan Monev
                   </>
                 )}
               </button>
