@@ -15,17 +15,17 @@ interface Pengajuan {
 
 const STATUS_LABEL: Record<string, string> = {
   MENUNGGU_VERIFIKASI: "Menunggu Verifikasi",
-  DIPROSES:            "Sedang Diproses",
-  DITERIMA:            "Diterima",
-  DITOLAK:             "Ditolak",
+  DIPROSES: "Sedang Diproses",
+  DITERIMA: "Diterima",
+  DITOLAK: "Ditolak",
 };
 
 function StatusBadge({ status }: { status: string }) {
   const cls: Record<string, string> = {
     MENUNGGU_VERIFIKASI: "bg-amber-50 text-amber-700 border-amber-200",
-    DIPROSES:            "bg-blue-50 text-blue-700 border-blue-200",
-    DITERIMA:            "bg-emerald-50 text-emerald-700 border-emerald-200",
-    DITOLAK:             "bg-red-50 text-red-700 border-red-200",
+    DIPROSES: "bg-blue-50 text-blue-700 border-blue-200",
+    DITERIMA: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    DITOLAK: "bg-red-50 text-red-700 border-red-200",
   };
   return (
     <span className={`inline-block px-2.5 py-0.5 font-roboto text-[11px] font-semibold rounded-[4px] border ${cls[status] ?? "bg-slate-100 text-slate-500 border-slate-200"}`}>
@@ -42,11 +42,11 @@ function formatBytes(bytes: number) {
   if (!bytes) return "0 Bytes";
   const k = 1024;
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${["Bytes","KB","MB"][i]}`;
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(1))} ${["Bytes", "KB", "MB"][i]}`;
 }
 
-const labelCls  = "block font-roboto font-medium text-[13px] md:text-[14px] text-[#1A1A1A] mb-1.5 md:mb-2";
-const inputCls  = "w-full px-4 py-[10px] bg-white border border-[#E0E0E0] rounded-[6px] font-roboto text-[14px] text-[#1A1A1A] placeholder-[#6B7280] focus:ring-1 focus:ring-[#003C71] focus:border-[#003C71] outline-none transition-all";
+const labelCls = "block font-roboto font-medium text-[13px] md:text-[14px] text-[#1A1A1A] mb-1.5 md:mb-2";
+const inputCls = "w-full px-4 py-[10px] bg-white border border-[#E0E0E0] rounded-[6px] font-roboto text-[14px] text-[#1A1A1A] placeholder-[#6B7280] focus:ring-1 focus:ring-[#003C71] focus:border-[#003C71] outline-none transition-all";
 const selectCls =
   "w-full pl-4 pr-9 py-[10px] appearance-none " +
   "bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23667085%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] " +
@@ -55,11 +55,11 @@ const selectCls =
   "focus:ring-1 focus:ring-[#003C71] focus:border-[#003C71] outline-none transition-all cursor-pointer";
 
 function FormPengajuan({ onSuccess }: { onSuccess: () => void }) {
-  const [loading, setLoading]   = useState(false);
-  const [error, setError]       = useState<string | null>(null);
-  const [file, setFile]         = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [file, setFile] = useState<File | null>(null);
   const [semester, setSemester] = useState("");
-  const [alasan, setAlasan]     = useState("");
+  const [alasan, setAlasan] = useState("");
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0] ?? null;
@@ -122,7 +122,7 @@ function FormPengajuan({ onSuccess }: { onSuccess: () => void }) {
         <textarea
           required
           rows={4}
-          placeholder="Jelaskan alasan Anda mengundurkan diri dari program KIP-Kuliah..."
+          placeholder="Jelaskan alasan Anda mengundurkan diri dari program KIP Kuliah..."
           value={alasan}
           onChange={(e) => setAlasan(e.target.value)}
           className={`${inputCls} resize-none`}
@@ -186,7 +186,7 @@ function DetailPengajuan({ pengajuan }: { pengajuan: Pengajuan }) {
   const handleDownload = async () => {
     setDownloading(true);
     try {
-      const res  = await fetch("/api/mahasiswa/pengunduran-diri/surat");
+      const res = await fetch("/api/mahasiswa/pengunduran-diri/surat");
       const json = await res.json();
       if (json.url) window.open(json.url, "_blank");
     } catch {
@@ -254,7 +254,7 @@ function DetailPengajuan({ pengajuan }: { pengajuan: Pengajuan }) {
 
 export default function PengunduranDiriClient() {
   const [pengajuan, setPengajuan] = useState<Pengajuan | null>(null);
-  const [loading, setLoading]     = useState(true);
+  const [loading, setLoading] = useState(true);
   const [submitted, setSubmitted] = useState(false);
 
   const fetchPengajuan = async () => {
@@ -279,7 +279,7 @@ export default function PengunduranDiriClient() {
     fetchPengajuan();
   };
 
-  const isActive   = pengajuan && pengajuan.status !== "DITOLAK";
+  const isActive = pengajuan && pengajuan.status !== "DITOLAK";
   const isRejected = pengajuan?.status === "DITOLAK";
 
   return (
@@ -291,7 +291,7 @@ export default function PengunduranDiriClient() {
             Pengunduran Diri KIP-K
           </h1>
           <p className="font-roboto text-[14px] md:text-[15px] text-[#64748B] mt-2 leading-relaxed">
-            Formulir pengunduran diri dari program Beasiswa KIP-Kuliah Universitas Diponegoro.
+            Formulir pengunduran diri dari program Beasiswa KIP Kuliah Universitas Diponegoro.
           </p>
         </div>
 

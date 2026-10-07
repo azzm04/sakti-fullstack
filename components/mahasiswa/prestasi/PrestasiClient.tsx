@@ -19,19 +19,19 @@ interface PrestasiItem {
 
 const TINGKAT_LABEL: Record<string, string> = {
   INTERNASIONAL: "Internasional",
-  NASIONAL:      "Nasional",
-  PROVINSI:      "Provinsi",
-  KAB_KOTA:      "Kab/Kota",
-  UNIVERSITAS:   "Universitas",
-  FAKULTAS:      "Fakultas",
+  NASIONAL: "Nasional",
+  PROVINSI: "Provinsi",
+  KAB_KOTA: "Kab/Kota",
+  UNIVERSITAS: "Universitas",
+  FAKULTAS: "Fakultas",
   PROGRAM_STUDI: "Program Studi",
 };
 
 const JENIS_LABEL: Record<string, string> = {
-  AKADEMIK:              "Akademik",
-  NON_AKADEMIK:          "Non-Akademik",
-  ORGANISASI:            "Organisasi",
-  KEPANITIAAN:           "Kepanitiaan",
+  AKADEMIK: "Akademik",
+  NON_AKADEMIK: "Non-Akademik",
+  ORGANISASI: "Organisasi",
+  KEPANITIAAN: "Kepanitiaan",
   PENGABDIAN_MASYARAKAT: "Pengabdian Masyarakat",
 };
 
@@ -79,13 +79,13 @@ function FormTambahPrestasi({
   const [error, setError] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
   const [form, setForm] = useState({
-    jenis_prestasi:   "AKADEMIK",
-    tingkat:          "NASIONAL",
-    nama_kegiatan:    "",
+    jenis_prestasi: "AKADEMIK",
+    tingkat: "NASIONAL",
+    nama_kegiatan: "",
     prestasi_dicapai: "",
-    penyelenggara:    "",
-    tanggal_mulai:    "",
-    tanggal_selesai:  "",
+    penyelenggara: "",
+    tanggal_mulai: "",
+    tanggal_selesai: "",
   });
 
   const set = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
@@ -313,9 +313,9 @@ export default function PrestasiClient() {
   useEffect(() => { fetchPrestasi(); }, [userId]);
 
   const stats = useMemo(() => ({
-    total:         prestasiList.length,
-    akademik:      prestasiList.filter((p) => p.jenis_prestasi === "AKADEMIK").length,
-    nonAkademik:   prestasiList.filter((p) => p.jenis_prestasi === "NON_AKADEMIK").length,
+    total: prestasiList.length,
+    akademik: prestasiList.filter((p) => p.jenis_prestasi === "AKADEMIK").length,
+    nonAkademik: prestasiList.filter((p) => p.jenis_prestasi === "NON_AKADEMIK").length,
     terverifikasi: prestasiList.filter((p) => p.status_verifikasi === "TERVERIFIKASI").length,
   }), [prestasiList]);
 
@@ -330,7 +330,7 @@ export default function PrestasiClient() {
             Pendataan Prestasi
           </h1>
           <p className="font-roboto text-[14px] md:text-[15px] text-[#64748B] mt-2 leading-relaxed">
-            Laporkan pencapaian akademik maupun non-akademik Anda selama menjadi penerima KIP-Kuliah.
+            Laporkan pencapaian akademik maupun non-akademik Anda selama menjadi penerima KIP Kuliah.
           </p>
         </div>
 

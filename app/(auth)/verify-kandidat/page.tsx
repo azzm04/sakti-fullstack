@@ -159,7 +159,7 @@ export default function VerifyKandidatPage() {
     <AuthLayout
       branding={
         <AuthBranding
-          title="Verifikasi Data Mahasiswa KIP-Kuliah"
+          title="Verifikasi Data Mahasiswa KIP Kuliah"
           subtitle="Universitas Diponegoro"
           description="Platform SAKTI Universitas Diponegoro memfasilitasi tata kelola beasiswa KIP-Kuliah secara terpadu. Bagi mahasiswa baru yang telah dinyatakan LOLOS seleksi, silakan lakukan verifikasi data pendaftaran dan tautkan Email SSO (@students.undip.ac.id) Anda untuk mengaktifkan akun SAKTI."
         />

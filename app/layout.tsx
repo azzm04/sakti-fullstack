@@ -20,7 +20,7 @@ const libreCaslonDisplay = Libre_Caslon_Display({
 
 export const metadata: Metadata = {
   title: "SAKTI - Platform KIP-K Terpadu",
-  description: "Sistem Informasi Akademik dan KIP-Kuliah Terpadu",
+  description: "Sistem Informasi Akademik dan KIP Kuliah Terpadu",
 };
 
 export default function RootLayout({

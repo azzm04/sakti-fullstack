@@ -4,7 +4,7 @@ import Link from "next/link";
 import { motion } from "framer-motion";
 import Image from "next/image";
 // Mengganti icon ExternalLink dengan FileText dan Search agar lebih relevan dengan halaman internal
-import { FileText, Search } from "lucide-react"; 
+import { FileText, Search } from "lucide-react";
 
 export default function PengaduanSection() {
   return (
@@ -21,7 +21,7 @@ export default function PengaduanSection() {
       >
         <div className="bg-gradient-to-r from-[#005B96] to-primary rounded-3xl p-8 md:p-14 text-white shadow-xl flex flex-col md:flex-row items-center justify-between gap-10 md:gap-12 relative overflow-hidden">
           <div className="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
-          
+
           <div className="relative z-10 w-full md:w-1/2 flex flex-col items-center md:items-start text-center md:text-left">
             <motion.span
               initial={{ opacity: 0, y: -10 }}
@@ -40,7 +40,7 @@ export default function PengaduanSection() {
               transition={{ duration: 0.5, delay: 0.1 }}
               className="text-3xl sm:text-4xl md:text-5xl font-headline text-white leading-tight mb-4 sm:mb-6"
             >
-              Layanan Pengaduan KIP-K
+              Layanan Pengaduan KIP Kuliah
             </motion.h2>
 
             <motion.p

@@ -31,7 +31,7 @@ export function useChatbot(
         id: "1",
         role: "assistant",
         content:
-          "Halo! Saya SAKABOT, asisten virtual SAKTI. Ada yang bisa saya bantu terkait KIP-Kuliah hari ini?",
+          "Halo! Saya SAKABOT, asisten virtual SAKTI. Ada yang bisa saya bantu terkait KIP Kuliah hari ini?",
       },
     ],
     // Menangkap ID Sesi dari header respons backend

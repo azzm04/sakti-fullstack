@@ -13,10 +13,10 @@ export default function LayananAduanPage() {
         <div className="bg-[#001349] pt-16 pb-32 px-4 sm:px-6 lg:px-8 text-center relative overflow-hidden">
           <div className="relative z-10 max-w-3xl mx-auto mt-8">
             <h1 className="text-3xl md:text-4xl font-extrabold text-white tracking-tight mb-4">
-              Layanan Pengaduan KIP-Kuliah
+              Layanan Pengaduan KIP Kuliah
             </h1>
             <p className="text-blue-100 text-sm md:text-base leading-relaxed max-w-2xl mx-auto">
-              Platform resmi pelaporan evaluasi dan pengaduan indikasi ketidaktepatan sasaran 
+              Platform resmi pelaporan evaluasi dan pengaduan indikasi ketidaktepatan sasaran
               atau penyalahgunaan beasiswa KIP-Kuliah di lingkungan kampus.
             </p>
           </div>
