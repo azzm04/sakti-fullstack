@@ -89,10 +89,10 @@ export default function HeroSection() {
             </span>
           ))}
         </h1>
-        
+
         <p className="text-base sm:text-lg md:text-xl text-white max-w-2xl mb-10 font-light hover:text-white">
-          Platform pendukung tata kelola beasiswa KIP-Kuliah — dilengkapi
-          Asisten Virtual AI, sistem pelaporan evaluasi, dan kanal pengaduan
+          Platform pendukung tata kelola beasiswa KIP Kuliah yang dilengkapi
+          Layanan Informasi Berbasis RAG, sistem monitoring evaluasi, dan Layanan Pengaduan
           resmi.
         </p>
 
