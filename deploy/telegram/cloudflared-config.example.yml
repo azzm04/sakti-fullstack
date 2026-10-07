@@ -1,0 +1,22 @@
+# Cloudflare Named Tunnel untuk SAKTI — PRD v2.3 N1 (opsi B: alternatif, hanya jika port tidak bisa dibuka)
+# Salin ke ~/.cloudflared/config.yml milik user yang menjalankan cloudflared,
+# lalu ganti <id-tunnel>, <user> dan sakti.<domain>.
+#
+#   cloudflared tunnel login
+#   cloudflared tunnel create sakti
+#   cloudflared tunnel route dns sakti sakti.<domain>
+#   sudo cloudflared service install
+
+tunnel: sakti
+credentials-file: /home/<user>/.cloudflared/<id-tunnel>.json
+
+ingress:
+  # Endpoint cron hanya boleh dipanggil dari dalam VPS (127.0.0.1)
+  - hostname: sakti.<domain>
+    path: ^/api/cron/
+    service: http_status:404
+
+  - hostname: sakti.<domain>
+    service: http://127.0.0.1:3000
+
+  - service: http_status:404

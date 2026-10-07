@@ -28,6 +28,15 @@ export async function PUT(
       },
     });
 
+    // Retensi data (UU PDP): mahasiswa yang pengunduran dirinya diterima
+    // tidak lagi menerima pengingat Monev, jadi ID Telegram-nya dihapus.
+    if (status === "DITERIMA") {
+      await prisma.penerimaKipk.updateMany({
+        where: { userId: updated.user_id },
+        data: { telegramId: null },
+      });
+    }
+
     return NextResponse.json({ data: updated });
   } catch (err: any) {
     console.error("PUT pengunduran-diri status error:", err);

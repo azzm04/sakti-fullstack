@@ -1,6 +1,17 @@
 import { cookies } from "next/headers";
 import { jwtVerify, SignJWT } from "jose";
 import { redirect } from "next/navigation";
+import type { NextRequest } from "next/server";
+
+/** Fail closed: tanpa JWT_SECRET tidak ada token yang dianggap valid. */
+function getJwtSecret(): Uint8Array | null {
+  const raw = process.env.JWT_SECRET;
+  if (!raw) {
+    console.error("[auth] JWT_SECRET belum di-set");
+    return null;
+  }
+  return new TextEncoder().encode(raw);
+}
 
 export interface AuthUser {
   id: string;
@@ -39,8 +50,9 @@ export async function getCurrentUser(): Promise<AuthUser | null> {
       return null;
     }
 
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET || "");
-    const { payload } = await jwtVerify(token, secret);
+    const secret = getJwtSecret();
+    if (!secret) return null;
+    const { payload } = await jwtVerify(token, secret, { algorithms: ["HS256"] });
 
     // Admin token pakai `sub` sebagai id (lihat route admin login)
     // User token pakai `id` secara langsung
@@ -96,4 +108,34 @@ export async function requireRole(
   }
 
   return user;
+}
+
+export interface ApiUser {
+  id: string;
+  role: AuthUser["role"];
+}
+
+/**
+ * Autentikasi untuk API route (PRD v2.1 K9). Mengembalikan user jika cookie
+ * sesi valid dan (bila diminta) role-nya cocok; null jika tidak.
+ * Membedakan 401/403 diserahkan ke pemanggil lewat `reason`.
+ */
+export async function getApiUser(
+  req: NextRequest,
+  requiredRole?: AuthUser["role"],
+): Promise<{ user: ApiUser; reason?: never } | { user?: never; reason: 401 | 403 }> {
+  const token = req.cookies.get("sakti_token")?.value;
+  const secret = getJwtSecret();
+  if (!token || !secret) return { reason: 401 };
+
+  try {
+    const { payload } = await jwtVerify(token, secret, { algorithms: ["HS256"] });
+    const id = (payload.sub ?? payload.id) as string | undefined;
+    const role = payload.role as AuthUser["role"] | undefined;
+    if (!id || !role) return { reason: 401 };
+    if (requiredRole && role !== requiredRole) return { reason: 403 };
+    return { user: { id, role } };
+  } catch {
+    return { reason: 401 };
+  }
 }

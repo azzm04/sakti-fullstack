@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { Loader2, CheckCircle2, AlertCircle, UploadCloud, X, Download, FileText } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, UploadCloud, X, Download, FileText, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 
@@ -349,64 +349,118 @@ export default function FormEvaluasiMonev() {
   // RENDER: Sudah pernah submit → tampilkan ringkasan
   // ═══════════════════════════════════════════════════
   if (alreadySubmitted && submittedData) {
+    const readAmount = (value: unknown): number | null => {
+      if (value === null || value === undefined || value === "") return null;
+      const amount = Number(value);
+      return Number.isFinite(amount) ? amount : null;
+    };
+    const fatherIncome = readAmount(submittedData.penghasilan_ayah);
+    const motherIncome = readAmount(submittedData.penghasilan_ibu);
+    const otherIncome = readAmount(submittedData.penghasilan_lain);
+    const reportedTotal = fatherIncome !== null && motherIncome !== null && otherIncome !== null
+      ? fatherIncome + motherIncome + otherIncome
+      : null;
+    const dependents = readAmount(submittedData.jumlah_tanggungan);
+    const reportDate = typeof submittedData.waktu_lapor === "string"
+      ? new Date(submittedData.waktu_lapor)
+      : null;
+    const validReportDate = reportDate && !Number.isNaN(reportDate.getTime()) ? reportDate : null;
+    const formattedReportDate = validReportDate
+      ? new Intl.DateTimeFormat("id-ID", {
+          day: "2-digit", month: "long", year: "numeric", timeZone: "Asia/Jakarta",
+        }).format(validReportDate)
+      : null;
+    const formattedReportTime = validReportDate
+      ? new Intl.DateTimeFormat("id-ID", {
+          hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "Asia/Jakarta",
+        }).format(validReportDate).replace(":", ".")
+      : null;
+
     return (
-      <div className={`min-h-screen bg-[#F7F9FC] py-8 px-4 sm:px-6`} style={{ fontFamily: '"Segoe UI", system-ui, sans-serif' }}>
-        <div className="max-w-4xl mx-auto space-y-6">
-          <Link href="/mahasiswa/monev" className="inline-flex items-center gap-1 text-slate-500 hover:text-slate-800 font-medium text-[13px] transition-colors">
-            <span>←</span> Kembali ke Daftar Evaluasi
-          </Link>
+      <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8" style={{ fontFamily: "Roboto, sans-serif" }}>
+        <Link
+          href="/mahasiswa/monev"
+          className="inline-flex min-h-11 items-center gap-2 rounded text-[13px] font-medium text-[#475569] transition-colors hover:text-[#000352] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#000352] focus-visible:ring-offset-2"
+        >
+          <ArrowLeft size={16} aria-hidden="true" />
+          Kembali ke Monev
+        </Link>
 
-          <div className="bg-white border border-[#E5EAF0] shadow-sm p-8 md:p-12 rounded-xl">
-            <div className="bg-emerald-50 border border-emerald-200 p-6 rounded-xl space-y-4">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-emerald-100 rounded-full">
-                  <CheckCircle2 className="text-emerald-600" size={24} />
-                </div>
-                <div>
-                  <h1 className="text-xl font-bold text-emerald-800">Evaluasi Sudah Terkirim</h1>
-                  <p className="text-sm text-emerald-600 mt-0.5">
-                    Anda sudah mengirim evaluasi untuk periode ini pada{" "}
-                    {submittedData.waktu_lapor
-                      ? new Date(submittedData.waktu_lapor as string).toLocaleDateString("id-ID", {
-                        day: "2-digit",
-                        month: "long",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })
-                      : "-"}
-                  </p>
-                </div>
-              </div>
+        <header>
+          <h1 className="text-3xl font-bold leading-tight tracking-tight text-[#0B1536] sm:text-4xl">Laporan Monev</h1>
+          <p className="mt-3 text-[14px] leading-6 text-[#64748B] sm:text-base">
+            Ringkasan data ekonomi yang Anda kirim untuk evaluasi KIP Kuliah.
+          </p>
+        </header>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                <div className="bg-white p-4 rounded-lg border border-emerald-100">
-                  <p className="text-xs text-slate-500 font-semibold uppercase mb-1">Pekerjaan Ayah</p>
-                  <p className="font-bold text-slate-800">{(submittedData.pekerjaan_ayah as string) || "-"}</p>
-                  <p className="text-sm text-slate-600 mt-1">
-                    Penghasilan: {formatRupiah(Number(submittedData.penghasilan_ayah ?? 0))}
-                  </p>
-                </div>
-                <div className="bg-white p-4 rounded-lg border border-emerald-100">
-                  <p className="text-xs text-slate-500 font-semibold uppercase mb-1">Pekerjaan Ibu</p>
-                  <p className="font-bold text-slate-800">{(submittedData.pekerjaan_ibu as string) || "-"}</p>
-                  <p className="text-sm text-slate-600 mt-1">
-                    Penghasilan: {formatRupiah(Number(submittedData.penghasilan_ibu ?? 0))}
-                  </p>
-                </div>
-                <div className="bg-white p-4 rounded-lg border border-emerald-100">
-                  <p className="text-xs text-slate-500 font-semibold uppercase mb-1">Penghasilan Lain</p>
-                  <p className="font-bold text-slate-800">
-                    {formatRupiah(Number(submittedData.penghasilan_lain ?? 0))}
-                  </p>
-                </div>
-                <div className="bg-white p-4 rounded-lg border border-emerald-100">
-                  <p className="text-xs text-slate-500 font-semibold uppercase mb-1">Jumlah Tanggungan</p>
-                  <p className="font-bold text-slate-800">{String(submittedData.jumlah_tanggungan ?? "-")}</p>
-                </div>
-              </div>
+        <div className="overflow-hidden rounded-lg border border-[#E2E8F0] bg-white">
+          <section aria-label="Status pengiriman laporan" className="flex flex-col gap-5 px-5 py-6 md:flex-row md:items-center md:justify-between md:px-9">
+            <div>
+              <p className="flex items-center gap-2 text-[14px] font-semibold text-[#0F172A]">
+                <CheckCircle2 size={18} className="shrink-0 text-[#15803D]" aria-hidden="true" />
+                Laporan terkirim
+              </p>
+              <p className="mt-1.5 text-[13px] leading-5 text-[#64748B]">Anda tidak perlu mengisi ulang periode ini.</p>
             </div>
-          </div>
+            <div className="md:text-right">
+              <p className="text-[12px] leading-5 text-[#64748B]">Waktu pengiriman</p>
+              {validReportDate ? (
+                <time dateTime={validReportDate.toISOString()} className="mt-1 block text-[13px] leading-5 text-[#334155]">
+                  {formattedReportDate}, {formattedReportTime} WIB
+                </time>
+              ) : (
+                <p className="mt-1 text-[13px] text-[#64748B]">Tidak tersedia</p>
+              )}
+            </div>
+          </section>
+
+          <section aria-labelledby="income-summary-heading" className="border-t border-[#E2E8F0] px-5 py-6 md:px-9 md:py-8">
+            <h2 id="income-summary-heading" className="text-[18px] font-semibold leading-7 text-[#000352]">Data penghasilan</h2>
+            <p className="mt-1 text-[13px] leading-5 text-[#64748B]">Seluruh penghasilan di bawah adalah per bulan.</p>
+
+            <div className="mt-6 grid gap-6 sm:grid-cols-2 sm:gap-8">
+              {[
+                { label: "Ayah", job: submittedData.pekerjaan_ayah, income: fatherIncome },
+                { label: "Ibu", job: submittedData.pekerjaan_ibu, income: motherIncome },
+              ].map(({ label, job, income }) => (
+                <section key={label} aria-label={`Data ${label.toLowerCase()}`} className="min-w-0">
+                  <h3 className="mb-3 text-[14px] font-semibold text-[#0F172A]">{label}</h3>
+                  <dl className="space-y-3">
+                    <div>
+                      <dt className="text-[12px] leading-5 text-[#64748B]">Pekerjaan</dt>
+                      <dd className="mt-0.5 break-words text-[14px] leading-6 text-[#334155]">{typeof job === "string" && job.trim() ? job : "Tidak tersedia"}</dd>
+                    </div>
+                    <div>
+                      <dt className="text-[12px] leading-5 text-[#64748B]">Penghasilan per bulan</dt>
+                      <dd className="mt-0.5 break-words text-[15px] font-medium leading-6 tabular-nums text-[#0F172A]">{income === null ? "Tidak tersedia" : formatRupiah(income)}</dd>
+                    </div>
+                  </dl>
+                </section>
+              ))}
+            </div>
+
+            <dl className="mt-6 border-t border-[#EEF2F6] pt-5">
+              <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+                <dt className="text-[13px] leading-6 text-[#475569]">Penghasilan lain per bulan</dt>
+                <dd className="text-[14px] font-medium leading-6 tabular-nums text-[#0F172A]">{otherIncome === null ? "Tidak tersedia" : formatRupiah(otherIncome)}</dd>
+              </div>
+            </dl>
+          </section>
+
+          <dl className="grid gap-6 border-t border-[#E2E8F0] bg-[#F8FAFC] px-5 py-6 sm:grid-cols-2 sm:gap-8 md:px-9">
+            <div className="min-w-0">
+              <dt className="text-[13px] leading-5 text-[#475569]">Total penghasilan per bulan</dt>
+              <dd className="mt-2 break-words text-[22px] font-semibold leading-8 tabular-nums text-[#000352]">{reportedTotal === null ? "Tidak tersedia" : formatRupiah(reportedTotal)}</dd>
+              <dd className="mt-1 text-[12px] leading-5 text-[#64748B]">Penghasilan ayah, ibu, dan lainnya.</dd>
+            </div>
+            <div className="min-w-0">
+              <dt className="text-[13px] leading-5 text-[#475569]">Jumlah tanggungan</dt>
+              <dd className="mt-2 text-[22px] font-semibold leading-8 tabular-nums text-[#000352]">
+                {dependents === null ? "Tidak tersedia" : <>{dependents}<span className="ml-1.5 text-[14px] font-normal text-[#475569]">orang</span></>}
+              </dd>
+              <dd className="mt-1 text-[12px] leading-5 text-[#64748B]">Termasuk diri Anda.</dd>
+            </div>
+          </dl>
         </div>
       </div>
     );

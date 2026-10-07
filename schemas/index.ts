@@ -25,15 +25,19 @@ export type Conversation = z.infer<typeof ConversationSchema>;
    Telegram
 ========================= */
 export const TelegramStatusSchema = z.object({
-  is_activated: z.boolean(),
-  chat_id: z.string().optional(),
-  username: z.string().optional(),
-  last_notification: z.string().optional(),
+  connected: z.boolean(),
+  telegramName: z.string().nullable().optional(),
+  telegramUsername: z.string().nullable().optional(),
 });
 export type TelegramStatus = z.infer<typeof TelegramStatusSchema>;
 
 export const TelegramActivationSchema = z.object({
-  user_id: z.string().min(1, "User ID wajib diisi"),
+  /** Tautan t.me — hanya berfungsi jika aplikasi Telegram terpasang. */
+  deepLink: z.string().url(),
+  /** Tautan web.telegram.org yang tetap membawa payload aktivasi. */
+  webLink: z.string().url(),
+  botUsername: z.string(),
+  expiresAt: z.string(),
 });
 export type TelegramActivation = z.infer<typeof TelegramActivationSchema>;
 

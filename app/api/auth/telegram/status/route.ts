@@ -1,48 +1,41 @@
 import { NextRequest, NextResponse } from "next/server"
-import { jwtVerify } from "jose"
 import { prisma } from "@/lib/db"
+import { getApiUser } from "@/lib/auth-server"
+import { NO_STORE_HEADERS } from "@/lib/security"
+import { getChatCached, maskUsername, shortDisplayName } from "@/lib/telegram"
 
 export async function GET(req: NextRequest) {
-  // 1. Autentikasi — ambil JWT dari cookie
-  const token = req.cookies.get("sakti_token")?.value
-  if (!token) {
-    return NextResponse.json({ error: "Tidak terautentikasi" }, { status: 401 })
-  }
-
-  let userId: string
-  try {
-    const secret = new TextEncoder().encode(process.env.JWT_SECRET)
-    const { payload } = await jwtVerify(token, secret)
-    userId = payload.sub as string
-  } catch {
-    return NextResponse.json({ error: "Token tidak valid" }, { status: 401 })
+  const auth = await getApiUser(req, "MAHASISWA_KIPK")
+  if (!auth.user) {
+    return NextResponse.json(
+      { error: auth.reason === 401 ? "Tidak terautentikasi" : "Fitur ini hanya untuk mahasiswa KIPK" },
+      { status: auth.reason },
+    )
   }
 
   try {
     const penerima = await prisma.penerimaKipk.findUnique({
-      where: { userId },
+      where: { userId: auth.user.id },
       select: { telegramId: true },
     })
 
-    // User belum punya baris di penerima_kipk
-    if (!penerima) {
-      return NextResponse.json({ connected: false })
+    if (!penerima?.telegramId) {
+      return NextResponse.json({ connected: false }, { headers: NO_STORE_HEADERS })
     }
 
-    if (penerima.telegramId) {
-      return NextResponse.json({
-        connected: true,
-        // BigInt tidak bisa di-serialize JSON langsung, convert ke string
-        telegramId: penerima.telegramId.toString(),
-      })
-    }
-
-    return NextResponse.json({ connected: false })
-  } catch (err) {
-    console.error("[GET /api/auth/telegram/status]", err)
+    // ID numerik tidak dikirim ke browser (PRD v2.1 F3.1). Nama/username
+    // ditampilkan supaya mahasiswa bisa memastikan akun yang terhubung.
+    const chat = await getChatCached(penerima.telegramId)
     return NextResponse.json(
-      { error: "Gagal mengambil status Telegram" },
-      { status: 500 }
+      {
+        connected: true,
+        telegramName: shortDisplayName(chat),
+        telegramUsername: maskUsername(chat?.username),
+      },
+      { headers: NO_STORE_HEADERS },
     )
+  } catch (err) {
+    console.error("[GET /api/auth/telegram/status]", err instanceof Error ? err.message : err)
+    return NextResponse.json({ error: "Gagal mengambil status Telegram" }, { status: 500 })
   }
 }

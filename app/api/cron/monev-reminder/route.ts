@@ -1,46 +1,40 @@
 import { NextRequest, NextResponse } from "next/server"
+import { Prisma } from "@prisma/client"
 import { prisma } from "@/lib/db"
-import { daysLeftWIB } from "@/lib/monev-schedule"
-
-const TELEGRAM_API = `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}`
-const APP_URL = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
+import { daysLeftWIB, getOperationalStatus } from "@/lib/monev-schedule"
+import { safeEqual } from "@/lib/security"
+import {
+  escapeHtml,
+  getAppUrl,
+  getCronSecret,
+  getTelegramEnv,
+  isUnreachableChat,
+  sendMessage,
+  sleep,
+} from "@/lib/telegram"
 
 // Hari-hari trigger pengingat (hari tersisa sebelum deadline)
 const TRIGGER_DAYS = [30, 7, 3, 2, 1]
 
-// Helper: kirim pesan ke satu user via Telegram Bot API
-async function sendMessage(chatId: string, text: string): Promise<boolean> {
-  try {
-    const res = await fetch(`${TELEGRAM_API}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text,
-        parse_mode: "HTML",
-        disable_web_page_preview: false,
-      }),
-    })
-    return res.ok
-  } catch {
-    return false
-  }
-}
+// Jeda antar pesan: ~25 pesan/detik, di bawah batas Telegram (~30/detik)
+const SEND_DELAY_MS = 40
 
-// Helper: build pesan sesuai urgency
+// Helper: build pesan sesuai urgency. Semua nilai dinamis di-escape.
 function buildMessage(label: string, deadline: Date, daysLeft: number): string {
   const formattedDate = deadline.toLocaleDateString("id-ID", {
     day: "2-digit",
     month: "long",
     year: "numeric",
+    timeZone: "Asia/Jakarta",
   })
-  const monevUrl = `${APP_URL}/mahasiswa/monev`
+  const safeLabel = escapeHtml(label)
+  const monevUrl = escapeHtml(`${getAppUrl()}/mahasiswa/monev`)
 
   // H-3, H-2, H-1 — pesan urgensi
   if (daysLeft <= 3) {
     return (
       `⚠️ <b>SEGERA ISI MONEV!</b>\n\n` +
-      `Halo! Waktu pengisian <b>${label}</b> hampir habis!\n\n` +
+      `Halo! Waktu pengisian <b>${safeLabel}</b> hampir habis!\n\n` +
       `📅 Deadline: <b>${formattedDate}</b>\n` +
       `🚨 Sisa waktu: <b>HANYA ${daysLeft} hari lagi!</b>\n\n` +
       `Segera isi sekarang sebelum terlambat:\n` +
@@ -52,7 +46,7 @@ function buildMessage(label: string, deadline: Date, daysLeft: number): string {
   // H-30, H-7 — pesan pengingat normal
   return (
     `🔔 <b>Pengingat Monev KIPK</b>\n\n` +
-    `Halo! Jangan lupa mengisi <b>${label}</b>.\n\n` +
+    `Halo! Jangan lupa mengisi <b>${safeLabel}</b>.\n\n` +
     `📅 Deadline: <b>${formattedDate}</b>\n` +
     `⏳ Sisa waktu: <b>${daysLeft} hari lagi</b>\n\n` +
     `Isi melalui aplikasi SAKTI:\n` +
@@ -60,44 +54,49 @@ function buildMessage(label: string, deadline: Date, daysLeft: number): string {
   )
 }
 
-export async function POST(req: NextRequest) {
-  // 1. Validasi CRON_SECRET dari Authorization header
-  const authHeader = req.headers.get("Authorization")
-  const cronSecret = process.env.CRON_SECRET
+function isUniqueViolation(err: unknown): boolean {
+  return err instanceof Prisma.PrismaClientKnownRequestError && err.code === "P2002"
+}
 
-  if (!cronSecret || authHeader !== `Bearer ${cronSecret}`) {
+export async function POST(req: NextRequest) {
+  // 1. Validasi CRON_SECRET (constant-time, fail closed)
+  const cronSecret = getCronSecret()
+  if (!cronSecret) {
+    return NextResponse.json({ error: "Service unavailable" }, { status: 503 })
+  }
+  if (!safeEqual(req.headers.get("authorization"), `Bearer ${cronSecret}`)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  }
+
+  if (!getTelegramEnv()) {
+    return NextResponse.json({ error: "Service unavailable" }, { status: 503 })
+  }
+
+  const appUrl = getAppUrl()
+  if (!appUrl.startsWith("https://") || /localhost|127\.0\.0\.1/.test(appUrl)) {
+    console.warn(`[cron] NEXT_PUBLIC_APP_URL (${appUrl}) bukan URL publik https — link di pesan tidak akan bisa dibuka`)
   }
 
   const now = new Date()
 
   try {
-    // 2. Ambil semua jadwal Monev yang aktif dan belum melewati deadline
-    const activeSchedules = await prisma.periode_monev.findMany({
-      where: {
-        is_active: true,
-        deadline: { gt: now },
-      },
+    // 2. Bersihkan token aktivasi kedaluwarsa (retensi data, PRD v2.1 F4.8)
+    const { count: expiredTokensDeleted } = await prisma.tokenAktivasiTelegram.deleteMany({
+      where: { expiresAt: { lt: now } },
     })
 
-    if (activeSchedules.length === 0) {
-      return NextResponse.json({
-        success: true,
-        message: "Tidak ada jadwal Monev aktif",
-        processedAt: now.toISOString(),
-        processed: 0,
-        results: [],
-      })
-    }
+    // 3. Ambil periode yang sedang berlangsung (form sudah dibuka, deadline belum lewat)
+    const candidates = await prisma.periode_monev.findMany({
+      where: { is_active: true, deadline: { gt: now } },
+    })
+    const activeSchedules = candidates.filter((p) => getOperationalStatus(p, now) === "BERLANGSUNG")
 
     const results = []
 
     for (const schedule of activeSchedules) {
-      // 3. Hitung sisa hari hingga deadline (berbasis tengah malam WIB,
-      //    bukan selisih ms mentah — lihat daysLeftWIB)
+      // 4. Hitung sisa hari hingga deadline (berbasis tengah malam WIB)
       const daysLeft = daysLeftWIB(schedule.deadline, now)
 
-      // 4. Skip jika bukan hari trigger
       if (!TRIGGER_DAYS.includes(daysLeft)) {
         results.push({
           scheduleId: schedule.id,
@@ -109,19 +108,23 @@ export async function POST(req: NextRequest) {
         continue
       }
 
-      // 5. Cek apakah H-n ini sudah pernah dikirim untuk deadline versi ini.
-      //    Kuncinya deadline_snapshot, bukan "sudah kirim hari ini": kalau
-      //    deadline diperpanjang, H-7 muncul lagi di tanggal berbeda dan
-      //    cek berbasis tanggal akan meloloskan pengiriman kedua.
-      const existingLog = await prisma.log_notifikasi.findFirst({
-        where: {
-          periode_monev_id: schedule.id,
-          triggerDay: daysLeft,
-          deadline_snapshot: schedule.deadline,
-        },
-      })
-
-      if (existingLog) {
+      // 5. Klaim slot H-n untuk deadline versi ini. Constraint unik
+      //    (periode, triggerDay, deadline_snapshot) menjamin hanya satu
+      //    pemanggilan cron yang mengirim, walau dipanggil bersamaan.
+      let logId: string
+      try {
+        const log = await prisma.log_notifikasi.create({
+          data: {
+            periode_monev_id: schedule.id,
+            triggerDay: daysLeft,
+            sentAt: now,
+            deadline_snapshot: schedule.deadline,
+          },
+          select: { id: true },
+        })
+        logId = log.id
+      } catch (err) {
+        if (!isUniqueViolation(err)) throw err
         results.push({
           scheduleId: schedule.id,
           label: schedule.label,
@@ -132,50 +135,72 @@ export async function POST(req: NextRequest) {
         continue
       }
 
-      // 6. Ambil user_id yang sudah submit untuk jadwal ini
-      const submissions = await prisma.pengisian_monev.findMany({
-        where: { periode_monev_id: schedule.id },
-        select: { user_id: true },
-      })
-      const submittedUserIds = new Set(submissions.map((s) => s.user_id))
-
-      // 7. Ambil semua penerima KIPK yang punya telegram_id
-      //    dan belum submit untuk jadwal ini
-      const allPenerima = await prisma.penerimaKipk.findMany({
-        where: {
-          telegramId: { not: null },
-          userId: { not: null },
-        },
-        select: { telegramId: true, nama: true, userId: true },
-      })
-
-      const targets = allPenerima.filter(
-        (p) => p.userId && !submittedUserIds.has(p.userId)
-      )
-
-      // 8. Kirim notifikasi ke setiap penerima
       let totalSent = 0
       let totalFailed = 0
-      const message = buildMessage(schedule.label, schedule.deadline, daysLeft)
+      let totalDisconnected = 0
+      let targets: { id: string; telegramId: bigint | null; userId: string | null }[] = []
+      let allFailed = false
 
-      for (const target of targets) {
-        if (!target.telegramId) continue
-        const ok = await sendMessage(target.telegramId.toString(), message)
-        if (ok) totalSent++
-        else totalFailed++
+      try {
+        // 6. Target: penerima dengan telegram_id yang belum submit periode ini
+        const submissions = await prisma.pengisian_monev.findMany({
+          where: { periode_monev_id: schedule.id },
+          select: { user_id: true },
+        })
+        const submittedUserIds = new Set(submissions.map((s) => s.user_id))
+
+        const allPenerima = await prisma.penerimaKipk.findMany({
+          where: { telegramId: { not: null }, userId: { not: null } },
+          select: { id: true, telegramId: true, userId: true },
+        })
+        targets = allPenerima.filter((p) => p.userId && !submittedUserIds.has(p.userId))
+
+        // 7. Kirim
+        const message = buildMessage(schedule.label, schedule.deadline, daysLeft)
+
+        for (const target of targets) {
+          if (!target.telegramId) continue
+          const res = await sendMessage(target.telegramId, message)
+          if (res.ok) {
+            totalSent++
+          } else {
+            totalFailed++
+            // Bot diblokir / chat hilang → hapus telegram_id (PRD v2.1 F4.4)
+            if (isUnreachableChat(res)) {
+              await prisma.penerimaKipk.updateMany({
+                where: { id: target.id, telegramId: target.telegramId },
+                data: { telegramId: null },
+              })
+              totalDisconnected++
+            }
+          }
+          await sleep(SEND_DELAY_MS)
+        }
+
+        // 8. Gagal total → lepas slot supaya pemanggilan berikutnya mencoba lagi
+        allFailed = targets.length > 0 && totalSent === 0
+        if (allFailed) {
+          await prisma.log_notifikasi.delete({ where: { id: logId } })
+        } else {
+          await prisma.log_notifikasi.update({
+            where: { id: logId },
+            data: { totalSent, totalFailed },
+          })
+        }
+      } catch (err) {
+        // Error di tengah jalan: kalau belum ada yang terkirim, lepas slot
+        // agar pemanggilan berikutnya bisa mencoba lagi.
+        // Kalau sebagian sudah terkirim, slot dipertahankan (hindari pesan
+        // ganda) dan hitungan disimpan apa adanya.
+        if (totalSent === 0) {
+          await prisma.log_notifikasi.delete({ where: { id: logId } }).catch(() => {})
+        } else {
+          await prisma.log_notifikasi
+            .update({ where: { id: logId }, data: { totalSent, totalFailed } })
+            .catch(() => {})
+        }
+        throw err
       }
-
-      // 9. Simpan log pengiriman
-      await prisma.log_notifikasi.create({
-        data: {
-          periode_monev_id: schedule.id,
-          triggerDay: daysLeft,
-          totalSent,
-          totalFailed,
-          sentAt: now,
-          deadline_snapshot: schedule.deadline,
-        },
-      })
 
       results.push({
         scheduleId: schedule.id,
@@ -184,6 +209,8 @@ export async function POST(req: NextRequest) {
         totalTargets: targets.length,
         totalSent,
         totalFailed,
+        totalDisconnected,
+        willRetry: allFailed,
         skipped: false,
       })
     }
@@ -194,15 +221,12 @@ export async function POST(req: NextRequest) {
       success: true,
       processedAt: now.toISOString(),
       processed: processedCount,
+      expiredTokensDeleted,
       results,
     })
   } catch (err) {
-    console.error("[POST /api/cron/monev-reminder]", err)
-    return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Internal server error" },
-      { status: 500 }
-    )
+    // Detail error hanya di log server (PRD v2.1 F4.5)
+    console.error("[POST /api/cron/monev-reminder]", err instanceof Error ? err.message : err)
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 })
   }
 }
-
-

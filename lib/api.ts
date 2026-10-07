@@ -22,7 +22,7 @@ export const chatAPI = {
 
 // ── Telegram API (Next.js routes) ────────────────────────────────────────────
 export const telegramAPI = {
-  // POST /api/auth/telegram/activate — generate token & deep link
+  // POST /api/auth/telegram/activate — buat kode aktivasi & deep link
   activate: async () => {
     const res = await fetch("/api/auth/telegram/activate", {
       method: "POST",
@@ -33,7 +33,16 @@ export const telegramAPI = {
 
   // GET /api/auth/telegram/status — cek status koneksi Telegram mahasiswa
   getStatus: async () => {
-    const res = await fetch("/api/auth/telegram/status");
+    const res = await fetch("/api/auth/telegram/status", { cache: "no-store" });
+    return res.json();
+  },
+
+  // POST /api/auth/telegram/disconnect — putuskan koneksi Telegram
+  disconnect: async () => {
+    const res = await fetch("/api/auth/telegram/disconnect", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
     return res.json();
   },
 };
