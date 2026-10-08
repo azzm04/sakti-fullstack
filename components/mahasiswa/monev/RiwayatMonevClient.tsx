@@ -3,7 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { RotateCw, Loader2, Globe, QrCode as QrCodeIcon, Send } from "lucide-react";
+import { RotateCw, Loader2, Globe, QrCode as QrCodeIcon, Send, BellOff } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import QRCode from "react-qr-code";
 import { telegramAPI } from "@/lib/api";
@@ -31,55 +31,55 @@ interface RiwayatMonevClientProps {
   initialSubmittedIds: string[];
 }
 
-/** Ilustrasi jadwal; tinggi batang bersifat dekoratif, bukan jumlah notifikasi. */
+/** Jadwal pengingat berurutan; penanda tidak menunjukkan status pengiriman. */
 function TelegramReminderCard() {
   const reducedMotion = useReducedMotion();
   const animateEntrance = reducedMotion === false;
-  const reminders = [
-    { day: 30, height: 72 },
-    { day: 7, height: 94 },
-    { day: 3, height: 116 },
-    { day: 2, height: 138 },
-    { day: 1, height: 160 },
-  ];
 
   return (
-    <aside
+    <motion.aside
       aria-labelledby="reminder-schedule-heading"
-      className="min-w-0 self-start rounded-xl border border-[#E2E8F0] bg-white p-5 sm:p-6"
+      initial={animateEntrance ? { opacity: 0, y: 6 } : false}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: animateEntrance ? 0.35 : 0, ease: "easeOut" }}
+      className="min-w-0 self-start @[44rem]:self-center rounded-2xl border border-[#DCE5F1] bg-[#EEF3FB] p-5 shadow-[0_3px_12px_rgba(15,23,42,0.03)] sm:p-6"
     >
-      <h3 id="reminder-schedule-heading" className="text-[15px] font-semibold leading-6 text-[#0F172A]">
-        Kapan Anda diingatkan?
-      </h3>
-      <p className="mt-1 text-[12px] leading-5 text-[#64748B]">
-        Anda diingatkan sebelum batas pengisian:
-      </p>
-    
-      <ol aria-label="Pengingat dijadwalkan 30, 7, 3, 2, dan 1 hari sebelum batas pengisian" className="mt-6 grid grid-cols-5 gap-2 sm:gap-3">
-        {reminders.map(({ day, height }, index) => (
-          <li key={day} className="min-w-0">
-            <div aria-hidden="true" className="flex h-40 items-end">
-              <motion.div
-                initial={animateEntrance ? { scaleY: 0.85, opacity: 0 } : false}
-                whileInView={{ scaleY: 1, opacity: 1 }}
-                viewport={{ once: true, amount: 0.2 }}
-                transition={{ duration: 0.45, delay: animateEntrance ? index * 0.06 : 0, ease: 'easeOut' }}
-                style={{ height }}
-                className="flex w-full origin-bottom flex-col overflow-hidden rounded-[4px]"
-              >
-                <div className="h-[100%] shrink-0 border-b-2 border-white bg-[#DCE2EA]" />
-              </motion.div>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 id="reminder-schedule-heading" className="text-[16px] font-medium leading-6 tracking-tight text-[#000352]">
+            Kapan Anda diingatkan?
+          </h3>
+          <p className="mt-1.5 text-[12px] leading-5 text-[#52627A]">
+            Pengingat dikirim saat waktu pengisian monev tersisa:
+          </p>
+        </div>
+      </div>
+
+      <ol
+        aria-label="Jadwal pengingat sebelum batas pengisian"
+        className="relative mt-6 grid grid-cols-5 gap-2 before:absolute before:inset-x-[10%] before:bottom-[3px] before:h-px before:bg-[#BCCBE2]"
+      >
+        {[30, 7, 3, 2, 1].map((day) => (
+          <li key={day} className="relative flex min-w-0 flex-col items-center">
+            <div className="flex w-full flex-col items-center rounded-lg border border-[#DCE5F1] bg-white px-1 py-3.5">
+              <span className="text-[24px] font-semibold leading-8 tracking-tight tabular-nums text-[#000352]">{day}</span>
+              <span className="text-[11px] leading-5 text-[#64748B]">hari</span>
+              <span className="sr-only">sebelum batas pengisian</span>
             </div>
-            <p className="mt-2.5 text-center text-[11px] font-medium leading-5 tabular-nums text-[#64748B]">
-              {day} hari<span className="sr-only"> sebelum batas pengisian</span>
-            </p>
+            <span aria-hidden="true" className="mt-3 h-1.5 w-1.5 rounded-full bg-[#5C729A] ring-4 ring-[#EEF3FB]" />
           </li>
         ))}
       </ol>
-      <p className="mt-5 border-t border-[#EEF2F6] pt-4 text-[12px] leading-5 text-[#64748B]">
-        Pengingat periode ini berhenti setelah laporan monev dikirim.
-      </p>
-    </aside>
+
+      <div className="mt-5 flex pt-4">
+
+        <p className="text-[12px] leading-5 text-[#52627A]">
+          <span className="font-medium text-[#243B60]">Sudah mengirim laporan?</span>{' '}
+          Pengingat periode ini berhenti.
+        </p>
+      </div>
+    </motion.aside>
   );
 }
 
