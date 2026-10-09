@@ -5,7 +5,7 @@ import Link from "next/link";
 import ChatSidebar from "@/components/chat/ChatSidebar";
 import ChatCanvas from "@/components/chat/ChatCanvas";
 import SidebarMahasiswa from "@/components/layout/SidebarMahasiswa";
-import { Menu, LayoutDashboard, Loader2 } from "lucide-react";
+import { History, Plus, LayoutDashboard, Loader2 } from "lucide-react";
 import { useCurrentUser } from "@/hook/useCurrentUser";
 import { UserProvider } from "@/components/providers/UserProvider";
 
@@ -29,6 +29,7 @@ function ChatbotPage() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [newChatKey, setNewChatKey] = useState(0);
 
   // ==========================================
   // LOADING
@@ -36,7 +37,7 @@ function ChatbotPage() {
   if (loading) {
     return (
       <div className="flex h-dvh w-full items-center justify-center bg-[#f7f9fb]">
-        <div className="flex flex-col items-center gap-3 text-indigo-600">
+        <div className="flex flex-col items-center gap-3 text-[#000352]">
           <Loader2 className="w-10 h-10 animate-spin" />
 
           <p className="text-sm font-semibold text-slate-600">
@@ -65,7 +66,7 @@ function ChatbotPage() {
 
           <Link
             href="/login"
-            className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700 transition-colors"
+            className="px-6 py-2.5 bg-[#000352] text-white rounded-lg text-sm font-medium hover:bg-[#151965] transition-colors"
           >
             Kembali ke Halaman Login
           </Link>
@@ -79,10 +80,13 @@ function ChatbotPage() {
   // ==========================================
   const handleNewChat = () => {
     setCurrentSessionId(null);
+    setNewChatKey((key) => key + 1);
+    setIsSidebarOpen(false);
   };
 
   const handleSelectSession = (sessionId: string) => {
     setCurrentSessionId(sessionId);
+    setIsSidebarOpen(false);
   };
 
   const handleMessageSent = (newSessionId: string) => {
@@ -96,29 +100,16 @@ function ChatbotPage() {
   // ==========================================
   // MAIN LAYOUT
   //
-  // [ SidebarMahasiswa ][ Riwayat Chat ][ Area Chat ]
+  // Sidebar utama dan area chat; riwayat dibuka sebagai dialog.
   // ==========================================
   return (
-    <div className="flex h-dvh w-full overflow-hidden bg-[#f7f9fb] font-body relative">
+    <div className="flex h-dvh w-full overflow-hidden bg-[#F8FAFC] font-[Roboto,sans-serif] text-[#334155] relative">
       {/* ==========================================
           SIDEBAR UTAMA MAHASISWA (desktop)
           Sama dengan sidebar di halaman dashboard
       ========================================== */}
       <SidebarMahasiswa />
 
-      {/* ==========================================
-          MOBILE SIDEBAR OVERLAY (riwayat chat)
-      ========================================== */}
-      {isSidebarOpen && (
-        <div
-          className="md:hidden fixed inset-0 bg-slate-900/50 z-40 backdrop-blur-sm"
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
-
-      {/* ==========================================
-          SIDEBAR RIWAYAT CHAT
-      ========================================== */}
       <ChatSidebar
         userId={user.id}
         isOpen={isSidebarOpen}
@@ -139,32 +130,32 @@ function ChatbotPage() {
         {/* ==========================================
             HEADER
         ========================================== */}
-        <header className="h-20 shrink-0 flex justify-between items-center px-4 md:px-8 bg-[#f7f9fb]/80 backdrop-blur-md z-10 border-b border-slate-200/40">
-          {/* LEFT */}
-          <div className="flex items-center gap-3 md:gap-0">
-            {/* MOBILE MENU (riwayat chat) */}
+        <header className="h-20 shrink-0 flex justify-between items-center gap-3 px-3 sm:px-4 md:px-8 bg-white z-10 border-b border-[#E2E8F0]">
+          <h1 className="min-w-0 text-lg sm:text-xl font-bold tracking-tight text-[#0B1536]">SAKABOT</h1>
+          <div className="flex shrink-0 items-center gap-2">
+            <Link href="/mahasiswa/dashboard" aria-label="Kembali ke dashboard" title="Kembali ke dashboard" className="md:hidden flex size-11 items-center justify-center rounded-lg border border-[#E2E8F0] text-[#000352] hover:bg-slate-50">
+              <LayoutDashboard size={18} />
+            </Link>
             <button
+              id="chat-history-trigger"
+              type="button"
               onClick={() => setIsSidebarOpen(true)}
-              className="md:hidden p-2 text-slate-500 hover:bg-slate-200 rounded-lg transition-colors"
-              title="Buka Riwayat Chat"
+              aria-label="Buka riwayat percakapan"
+              aria-haspopup="dialog"
+              aria-expanded={isSidebarOpen}
+              aria-controls={isSidebarOpen ? "chat-history" : undefined}
+              title="Riwayat percakapan"
+              className="flex min-h-11 items-center justify-center gap-2 rounded-lg border border-[#E2E8F0] px-3 text-sm font-medium text-[#334155] hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#000352]/25"
             >
-              <Menu className="w-6 h-6" />
+              <History size={18} />
+              <span className="hidden sm:inline">Riwayat</span>
             </button>
-
-            <h2 className="font-headline font-extrabold text-lg md:text-xl text-primary tracking-tight leading-none mt-0.5">
-              SAKABOT AI
-            </h2>
+            <button type="button" onClick={handleNewChat} aria-label="Percakapan baru" title="Percakapan baru" className="flex min-h-11 items-center justify-center gap-2 rounded-lg bg-[#000352] px-3 sm:px-4 text-sm font-medium text-white hover:bg-[#151965] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#000352]/25 focus-visible:ring-offset-2">
+              <Plus size={18} />
+              <span className="hidden sm:inline">Percakapan baru</span>
+            </button>
           </div>
 
-          {/* RIGHT — hanya tampil di mobile, karena
-              SidebarMahasiswa tersembunyi di layar kecil */}
-          <Link
-            href="/mahasiswa/dashboard"
-            className="md:hidden flex items-center gap-2 px-3 py-2 rounded-full bg-slate-200/70 text-slate-700 text-xs font-semibold hover:bg-slate-300/70 transition-colors active:scale-95"
-          >
-            <LayoutDashboard className="w-4 h-4" />
-            <span>Dashboard</span>
-          </Link>
         </header>
 
         {/* ==========================================
@@ -172,6 +163,7 @@ function ChatbotPage() {
             Scroll hanya terjadi di dalam ChatCanvas.
         ========================================== */}
         <ChatCanvas
+          key={newChatKey}
           userId={user.id}
           currentSessionId={currentSessionId}
           onMessageSent={handleMessageSent}

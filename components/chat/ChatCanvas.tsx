@@ -11,6 +11,8 @@ import React, {
   memo,
 } from "react";
 
+import Image from "next/image";
+
 import { AnimatePresence, motion } from "framer-motion";
 
 import {
@@ -133,9 +135,9 @@ const SuggestedActions = memo(
           >
             <button
               onClick={() => onSelect(s.action)}
-              className="w-full text-left border border-slate-200 rounded-2xl px-4 py-3 text-sm bg-white/50 backdrop-blur-sm hover:bg-white hover:shadow-sm hover:border-primary transition-all flex flex-col gap-1 group"
+              className="w-full text-left border border-[#E2E8F0] rounded-lg px-4 py-3 text-sm bg-white hover:bg-[#F8FAFC] hover:border-[#94A3B8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#000352]/25 transition-colors flex flex-col gap-1 group"
             >
-              <span className="font-semibold text-slate-700 group-hover:text-primary transition-colors">
+              <span className="font-medium text-[#0B1536] group-hover:text-[#000352] transition-colors">
                 {s.title}
               </span>
               <span className="text-slate-500 text-xs">{s.label}</span>
@@ -164,7 +166,7 @@ const PreviewAttachment = memo(
     onRemove?: () => void;
   }) => (
     <div className="relative group flex flex-col gap-1.5 shrink-0">
-      <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-100 rounded-2xl overflow-hidden border border-slate-200 flex items-center justify-center relative shadow-sm">
+      <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 flex items-center justify-center relative shadow-sm">
         {att.contentType.startsWith("image/") && att.url ? (
           <img src={att.url} alt={att.name} className="size-full object-cover" />
         ) : (
@@ -175,7 +177,7 @@ const PreviewAttachment = memo(
 
         {uploading && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-[2px]">
-            <Loader2 className="w-5 h-5 animate-spin text-primary/60" />
+            <Loader2 className="w-5 h-5 animate-spin text-[#000352]" />
           </div>
         )}
       </div>
@@ -187,7 +189,7 @@ const PreviewAttachment = memo(
       {onRemove && (
         <button
           onClick={onRemove}
-          className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-slate-800 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-rose-500 hover:scale-110 transition-all z-10 shadow-md"
+          className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-slate-800 text-white flex items-center justify-center opacity-100 hover:bg-rose-500 transition-all z-10 shadow-md"
           title="Hapus Lampiran"
         >
           <X size={12} strokeWidth={3} />
@@ -204,7 +206,8 @@ PreviewAttachment.displayName = "PreviewAttachment";
 // ============================================================
 
 interface InputProps {
-  messages: ChatMessage[];
+  input: string;
+  setInput: Dispatch<SetStateAction<string>>;
   attachments: Attachment[];
   setAttachments: Dispatch<SetStateAction<Attachment[]>>;
   onSend: (params: { input: string; attachments: Attachment[] }) => void;
@@ -217,7 +220,8 @@ interface InputProps {
 // ============================================================
 
 function MultimodalInput({
-  messages,
+  input,
+  setInput,
   attachments,
   setAttachments,
   onSend,
@@ -227,7 +231,6 @@ function MultimodalInput({
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [input, setInput] = useState("");
   const [uploadQueue, setUploadQueue] = useState<string[]>([]);
   const [uploadError, setUploadError] = useState("");
 
@@ -321,30 +324,15 @@ function MultimodalInput({
     setAttachments([]);
     resetHeight();
     textareaRef.current?.focus();
-  }, [input, attachments, onSend, setAttachments, resetHeight]);
+  }, [input, attachments, onSend, setAttachments, setInput, resetHeight]);
 
   // STATES
-  const showSuggested =
-    messages.length === 1 && !attachments.length && !uploadQueue.length;
-
   const canSend = !isLoading && !uploadQueue.length;
 
-  const sendDisabled = !canSend && !input.trim() && !attachments.length;
+  const sendDisabled = !canSend || (!input.trim() && !attachments.length);
 
   return (
     <div className="w-full flex flex-col gap-2">
-      {showSuggested && (
-        <SuggestedActions
-          onSelect={(a) => {
-            setInput(a);
-            requestAnimationFrame(() => {
-              adjustHeight();
-              textareaRef.current?.focus();
-            });
-          }}
-        />
-      )}
-
       <input
         ref={fileInputRef}
         type="file"
@@ -361,8 +349,8 @@ function MultimodalInput({
 
       <div
         className={cn(
-          "relative flex flex-col w-full bg-white border border-slate-200 shadow-sm rounded-3xl overflow-hidden transition-all duration-200",
-          "focus-within:ring-4 focus-within:ring-primary/10 focus-within:border-primary focus-within:shadow-md",
+          "relative flex flex-col w-full bg-white border border-[#CBD5E1] rounded-xl overflow-hidden transition-colors duration-200",
+          "focus-within:ring-2 focus-within:ring-[#000352]/10 focus-within:border-[#000352]",
         )}
       >
         {(attachments.length > 0 || uploadQueue.length > 0) && (
@@ -386,6 +374,7 @@ function MultimodalInput({
         )}
 
         <textarea
+          id="sakabot-message-input"
           ref={textareaRef}
           value={input}
           onChange={(e) => setInput(e.target.value)}
@@ -399,7 +388,8 @@ function MultimodalInput({
               if (!sendDisabled) submitForm();
             }
           }}
-          placeholder="Tanyakan sesuatu ke SAKABOT..."
+          aria-label="Pesan untuk SAKABOT"
+          placeholder="Tulis pertanyaan tentang KIP Kuliah..."
           rows={1}
           autoFocus
           disabled={isLoading}
@@ -414,7 +404,7 @@ function MultimodalInput({
             }}
             disabled={isLoading}
             title="Lampirkan Gambar"
-            className="p-2 rounded-full text-slate-400 hover:bg-slate-100 hover:text-primary transition-colors disabled:opacity-40"
+            className="p-2.5 rounded-lg text-slate-500 hover:bg-slate-100 hover:text-[#000352] transition-colors disabled:opacity-40"
           >
             <Paperclip size={18} strokeWidth={2.5} className="-rotate-45" />
           </button>
@@ -425,7 +415,7 @@ function MultimodalInput({
                 e.preventDefault();
                 onStop();
               }}
-              className="p-2.5 bg-slate-900 text-white rounded-full hover:bg-slate-800 transition-all shadow-sm flex items-center justify-center"
+              className="p-3 bg-[#000352] text-white rounded-lg hover:bg-[#151965] transition-colors flex items-center justify-center"
               title="Hentikan Pengiriman"
             >
               <Square size={16} fill="currentColor" />
@@ -438,7 +428,7 @@ function MultimodalInput({
               }}
               disabled={sendDisabled}
               title="Kirim Pesan"
-              className="p-2.5 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 disabled:bg-slate-100 disabled:text-slate-300 transition-all shadow-sm flex items-center justify-center disabled:shadow-none"
+              className="p-3 bg-[#000352] text-white rounded-lg hover:bg-[#151965] disabled:bg-slate-100 disabled:text-slate-400 transition-colors flex items-center justify-center disabled:shadow-none"
             >
               <ArrowUp size={18} strokeWidth={3} />
             </button>
@@ -477,6 +467,8 @@ export default function ChatCanvas({
   onMessageSent,
 }: ChatCanvasProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE]);
+  const [input, setInput] = useState("");
+  const isNewConversation = !currentSessionId && messages.length === 1 && messages[0].id === INITIAL_MESSAGE.id;
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -953,7 +945,7 @@ export default function ChatCanvas({
        * min-h-0         = mengizinkan child flex mengecil
        * overflow-hidden = mencegah BODY ikut scrolling
        */
-      className="flex-1 min-h-0 flex flex-col w-full bg-[#f9fafb] overflow-hidden relative"
+      className="flex-1 min-h-0 flex flex-col w-full bg-[#F8FAFC] overflow-hidden relative"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}
@@ -963,35 +955,51 @@ export default function ChatCanvas({
       <div
         ref={chatScrollRef}
         data-lenis-prevent
-        className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-6"
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 sm:px-6 lg:px-8 py-4"
         onMouseDown={handleChatMouseDown}
         onAuxClick={handleChatAuxClick}
       >
-        <div className="max-w-3xl mx-auto">
-          <ChatMessages
-            messages={messages}
-            isLoading={isLoading}
-            onCopy={handleCopy}
-          />
+        <div className={cn("max-w-3xl mx-auto", isNewConversation && "flex min-h-full flex-col justify-center py-4 sm:py-8")}>
+          {isNewConversation ? (
+            <section aria-labelledby="sakabot-welcome-title" className="mx-auto w-full max-w-xl">
+              <div className="mb-6 flex flex-col items-center text-center">
+                <Image
+                  src="/illustrations/sakabot-header-animated.svg"
+                  alt=""
+                  width={96}
+                  height={116}
+                  className="mb-4 h-24 w-20 object-contain sm:h-[116px] sm:w-24"
+                />
+                <h2 id="sakabot-welcome-title" className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0B1536]">Ada yang bisa saya bantu?</h2>
+                <p className="mt-3 max-w-md text-sm sm:text-base leading-relaxed text-[#64748B]">Tanyakan informasi KIP Kuliah atau pilih topik berikut untuk memulai.</p>
+              </div>
+              <SuggestedActions onSelect={(question) => {
+                setInput(question);
+                document.getElementById("sakabot-message-input")?.focus();
+              }} />
+            </section>
+          ) : (
+            <ChatMessages
+              messages={messages}
+              isLoading={isLoading}
+              onCopy={handleCopy}
+            />
+          )}
         </div>
       </div>
 
       {/* AREA INPUT — TETAP DI BAWAH */}
-      <div className="w-full bg-[#f9fafb] border-t border-slate-200/60 pt-4 pb-4 px-4 shrink-0 z-10">
+      <div className="w-full bg-[#F8FAFC] border-t border-[#E2E8F0] pt-4 pb-4 px-4 sm:px-6 lg:px-8 shrink-0 z-10">
         <div className="max-w-3xl mx-auto">
           <MultimodalInput
-            messages={messages}
+            input={input}
+            setInput={setInput}
             attachments={attachments}
             setAttachments={setAttachments}
             onSend={handleSend}
             onStop={() => setIsLoading(false)}
             isLoading={isLoading}
           />
-
-          <p className="text-center mt-3 text-[10px] text-slate-400 font-medium">
-            SAKABOT dapat memberikan informasi yang tidak akurat. Mohon
-            verifikasi melalui panduan resmi Puslapdik.
-          </p>
         </div>
       </div>
 
@@ -1008,14 +1016,14 @@ export default function ChatCanvas({
             <ChevronUp
               size={12}
               strokeWidth={3}
-              className={scrollDir === "up" ? "text-indigo-600" : "text-slate-400"}
+              className={scrollDir === "up" ? "text-[#000352]" : "text-slate-400"}
             />
             <span className="w-1 h-1 rounded-full bg-slate-400" />
             <ChevronDown
               size={12}
               strokeWidth={3}
               className={
-                scrollDir === "down" ? "text-indigo-600" : "text-slate-400"
+                scrollDir === "down" ? "text-[#000352]" : "text-slate-400"
               }
             />
           </div>
@@ -1039,10 +1047,10 @@ export default function ChatCanvas({
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 10 }}
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              className="relative z-10 flex flex-col items-center gap-4 px-10 py-8 bg-white rounded-3xl shadow-2xl border border-indigo-100 max-w-sm w-full"
+              className="relative z-10 flex flex-col items-center gap-4 px-10 py-8 bg-white rounded-xl shadow-lg border border-[#E2E8F0] max-w-sm w-full"
             >
-              <div className="w-16 h-16 rounded-2xl bg-primary/50 flex items-center justify-center border-2 border-dashed border-indigo-300">
-                <ImagePlus className="w-8 h-8 text-primary/60" />
+              <div className="w-16 h-16 rounded-lg bg-[#EEF3FB] flex items-center justify-center border-2 border-dashed border-[#94A3B8]">
+                <ImagePlus className="w-8 h-8 text-[#000352]" />
               </div>
 
               <div className="text-center">

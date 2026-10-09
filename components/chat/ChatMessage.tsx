@@ -1,16 +1,29 @@
 "use client";
 
 import { memo, useCallback, useEffect, useRef, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Copy, CheckCircle2 } from "lucide-react";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { Copy, CheckCircle2, Bot } from "lucide-react";
 import { twMerge } from "tailwind-merge";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import type { ChatMessage } from "@/schemas";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const cn = (...args: (string | undefined | null | false)[]) =>
   twMerge(args.filter(Boolean).join(" "));
+
+const EMPTY_MESSAGES: ChatMessage[] = [];
+
+function MessageAvatar() {
+  return (
+    <span
+      role="img"
+      aria-label="SAKABOT"
+      className="mt-1 flex size-8 shrink-0 items-center justify-center rounded-lg bg-[#EEF3FB] text-[#000352]"
+    >
+      <Bot size={18} strokeWidth={1.75} aria-hidden="true" />
+    </span>
+  );
+}
 
 interface ChatMessagesProps {
   messages: ChatMessage[];
@@ -22,6 +35,7 @@ const MessageItem = memo(
   ({ msg, onCopy }: { msg: ChatMessage; onCopy: (t: string) => void }) => {
     const isUser = msg.role === "user";
     const [copied, setCopied] = useState(false);
+    const reduceMotion = useReducedMotion();
 
     const handleCopy = () => {
       onCopy(msg.content);
@@ -31,8 +45,9 @@ const MessageItem = memo(
 
     return (
       <motion.div
-        initial={{ opacity: 0, y: 10 }}
+        initial={{ opacity: 0, y: reduceMotion ? 0 : 6 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: reduceMotion ? 0 : 0.25, ease: "easeOut" }}
         className={cn(
           "flex w-full gap-3",
           isUser ? "justify-end" : "justify-start",
@@ -40,20 +55,12 @@ const MessageItem = memo(
       >
         {/* ── Avatar Assistant ── */}
         {!isUser && (
-          <Avatar className="size-8 shrink-0 mt-1 shadow-sm">
-            <AvatarImage
-              alt="SAKABOT"
-              src="https://api.dicebear.com/9.x/glass/svg?seed=alice"
-            />
-            <AvatarFallback className="bg-indigo-100 text-indigo-700 text-xs font-bold">
-              SA
-            </AvatarFallback>
-          </Avatar>
+          <MessageAvatar />
         )}
 
         <div
           className={cn(
-            "flex flex-col max-w-[85%] md:max-w-[75%]",
+            "flex flex-col min-w-0 max-w-[calc(100%-44px)] md:max-w-[85%]",
             isUser ? "items-end" : "items-start",
           )}
         >
@@ -80,17 +87,17 @@ const MessageItem = memo(
           {/* Bubble Chat */}
           <div
             className={cn(
-              "relative group px-4 py-2.5 shadow-sm", // Sedikit diperkecil paddingnya agar mirip demo
+              "relative group px-4 py-3", // Sedikit diperkecil paddingnya agar mirip demo
               isUser
-                ? "bg-slate-900 text-white rounded-2xl rounded-tr-sm"
-                : "bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-tl-sm",
+                ? "bg-[#000352] text-white rounded-xl rounded-tr-sm"
+                : "bg-white border border-[#E2E8F0] text-[#334155] rounded-xl rounded-tl-sm pb-10",
             )}
           >
             {/* Action Bar (Copy) */}
             {!isUser && (
               <button
                 onClick={handleCopy}
-                className="absolute -right-10 top-1/2 -translate-y-1/2 p-1.5 text-slate-400 hover:text-slate-700 hover:bg-white rounded-lg opacity-0 group-hover:opacity-100 transition-all shadow-sm border border-transparent hover:border-slate-200"
+                className="absolute right-2 bottom-1.5 p-1.5 text-slate-500 hover:text-[#000352] hover:bg-slate-50 rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#000352]/25 transition-colors"
                 title="Salin pesan"
               >
                 {copied ? (
@@ -115,29 +122,8 @@ const MessageItem = memo(
             </div>
           </div>
 
-          {/* Timestamp */}
-          <span className="text-[10px] font-medium text-slate-400 mt-1 px-1">
-            {msg.createdAt && !isNaN(new Date(msg.createdAt).getTime())
-              ? new Date(msg.createdAt).toLocaleTimeString("id-ID", {
-                  hour: "2-digit",
-                  minute: "2-digit",
-                })
-              : "--:--"}
-          </span>
         </div>
 
-        {/* ── Avatar User ── */}
-        {isUser && (
-          <Avatar className="size-8 shrink-0 mt-1 border border-slate-200 shadow-sm">
-            <AvatarImage
-              alt="User"
-              src="https://api.dicebear.com/9.x/glass/svg?seed=you"
-            />
-            <AvatarFallback className="bg-slate-200 text-slate-600 text-xs font-bold">
-              U
-            </AvatarFallback>
-          </Avatar>
-        )}
       </motion.div>
     );
   },
@@ -145,22 +131,23 @@ const MessageItem = memo(
 MessageItem.displayName = "MessageItem";
 
 export default function ChatMessages({
-  messages = [],
+  messages = EMPTY_MESSAGES,
   isLoading = false,
   onCopy,
 }: ChatMessagesProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const safeMessages = Array.isArray(messages) ? messages : [];
+  const safeMessages = Array.isArray(messages) ? messages : EMPTY_MESSAGES;
+  const reduceMotion = useReducedMotion();
 
   // Auto-scroll ke bawah
   useEffect(() => {
     if (containerRef.current) {
       containerRef.current.scrollTo({
         top: containerRef.current.scrollHeight,
-        behavior: "smooth",
+        behavior: reduceMotion ? "instant" : "smooth",
       });
     }
-  }, [safeMessages, isLoading]);
+  }, [safeMessages, isLoading, reduceMotion]);
 
   // Prevent scroll from leaking to parent/body on mobile
   const handleTouchStart = useCallback(
@@ -207,37 +194,34 @@ export default function ChatMessages({
         {isLoading && (
           <motion.div
             key="loading"
-            initial={{ opacity: 0, y: 10 }}
+            initial={{ opacity: 0, y: reduceMotion ? 0 : 6 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: reduceMotion ? 0 : 0.2, ease: "easeOut" }}
             className="flex w-full gap-3 justify-start"
           >
-            <Avatar className="size-8 shrink-0 mt-1 border border-slate-200 shadow-sm">
-              <AvatarImage
-                alt="SAKABOT"
-                src="https://api.dicebear.com/9.x/glass/svg?seed=alice"
-              />
-              <AvatarFallback className="bg-indigo-100 text-indigo-700 text-xs font-bold">
-                SA
-              </AvatarFallback>
-            </Avatar>
+            <MessageAvatar />
 
-            <div className="bg-white border border-slate-200 px-4 py-3 rounded-2xl rounded-tl-sm shadow-sm flex items-center gap-1.5 h-[38px] mt-1">
-              <motion.div
-                animate={{ y: [0, -4, 0] }}
-                transition={{ repeat: Infinity, duration: 0.6, delay: 0 }}
-                className="w-1.5 h-1.5 rounded-full bg-slate-400"
-              />
-              <motion.div
-                animate={{ y: [0, -4, 0] }}
-                transition={{ repeat: Infinity, duration: 0.6, delay: 0.2 }}
-                className="w-1.5 h-1.5 rounded-full bg-slate-400"
-              />
-              <motion.div
-                animate={{ y: [0, -4, 0] }}
-                transition={{ repeat: Infinity, duration: 0.6, delay: 0.4 }}
-                className="w-1.5 h-1.5 rounded-full bg-slate-400"
-              />
+            <div
+              role="status"
+              className="mt-1 flex min-h-11 items-center gap-3 rounded-xl rounded-tl-sm border border-[#E2E8F0] bg-white px-4 py-3"
+            >
+              <span className="text-sm text-[#64748B]">Sedang menyiapkan jawaban</span>
+              <span className="flex items-center gap-1" aria-hidden="true">
+                {[0, 1, 2].map((index) => (
+                  <motion.span
+                    key={index}
+                    className="size-1.5 rounded-full bg-[#000352]/60"
+                    animate={reduceMotion ? { opacity: 0.6 } : { y: [0, -3, 0], opacity: [0.4, 1, 0.4] }}
+                    transition={reduceMotion ? { duration: 0 } : {
+                      duration: 1.2,
+                      repeat: Infinity,
+                      delay: index * 0.16,
+                      ease: "easeInOut",
+                    }}
+                  />
+                ))}
+              </span>
             </div>
           </motion.div>
         )}

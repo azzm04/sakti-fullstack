@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { MessageSquare, Plus, Pencil, Trash2, Check, X } from "lucide-react";
 import { twMerge } from "tailwind-merge";
+import * as Dialog from "@radix-ui/react-dialog";
 import ConfirmDeleteModal from "./ConfirmDeleteModal";
 
 interface ChatSidebarProps {
@@ -118,19 +119,31 @@ export default function ChatSidebar({
   };
 
   return (
-    <aside
-      className={twMerge(
-        "w-64 bg-white border-r border-slate-200 h-full flex flex-col transition-all z-50 fixed md:relative",
-        isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
-      )}
-    >
-      <div className="p-4 border-b border-slate-100 flex-shrink-0">
+    <Dialog.Root open={isOpen} onOpenChange={(open) => { if (!open) onClose(); }}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-[70] bg-slate-900/25 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:fade-in-0 data-[state=closed]:fade-out-0 motion-reduce:animate-none" />
+        <Dialog.Content
+          id="chat-history"
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            document.getElementById("chat-history-trigger")?.focus();
+          }}
+          className="fixed inset-y-0 right-0 z-[80] flex w-[380px] max-w-[calc(100vw-24px)] flex-col border-l border-[#E2E8F0] bg-white font-[Roboto,sans-serif] shadow-xl outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=open]:slide-in-from-right data-[state=closed]:slide-out-to-right duration-200 motion-reduce:animate-none"
+        >
+      <div className="h-20 shrink-0 border-b border-[#E2E8F0] px-6 flex items-center justify-between">
+          <div>
+            <Dialog.Title className="text-base font-semibold text-[#0B1536]">Riwayat percakapan</Dialog.Title>
+            <Dialog.Description className="mt-1 text-sm text-[#64748B]">Lanjutkan percakapan sebelumnya.</Dialog.Description>
+          </div>
+          <button type="button" onClick={onClose} aria-label="Tutup riwayat percakapan" className="p-2 rounded-lg text-slate-500 hover:bg-slate-100"><X size={18} /></button>
+      </div>
+      <div className="shrink-0 px-4 pt-4 pb-2">
         <button
           onClick={() => {
             onNewChat?.();
-            if (window.innerWidth < 768) onClose();
+            onClose();
           }}
-          className="w-full flex items-center justify-center gap-2 bg-slate-900 text-white py-3 rounded-xl hover:bg-slate-800 transition-all font-semibold text-sm shadow-md"
+          className="w-full flex items-center justify-center gap-2 bg-[#000352] text-white min-h-11 py-2.5 rounded-lg hover:bg-[#151965] transition-colors font-medium text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#000352]/25 focus-visible:ring-offset-2"
         >
           <Plus size={18} />
           Percakapan Baru
@@ -138,12 +151,12 @@ export default function ChatSidebar({
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-2">
-        <h3 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2 px-2">
+        <h3 className="text-xs font-medium text-[#64748B] mb-2 px-2">
           Riwayat Terakhir
         </h3>
 
         {history.length === 0 ? (
-          <p className="text-xs text-slate-400 italic px-2">Belum ada riwayat percakapan.</p>
+          <p className="text-sm leading-relaxed text-[#64748B] px-2">Belum ada riwayat percakapan.</p>
         ) : (
           history.map((session) => {
             const isEditing = editingSessionId === session.id;
@@ -155,13 +168,13 @@ export default function ChatSidebar({
                 onClick={() => {
                   if (!isEditing) {
                     onSelectSession?.(session.id);
-                    if (window.innerWidth < 768) onClose();
+                    onClose();
                   }
                 }}
                 className={twMerge(
-                  "group relative flex items-center justify-between w-full px-3 py-2.5 rounded-xl transition-all text-sm cursor-pointer",
+                  "group relative flex items-center justify-between w-full px-3 py-2.5 rounded-lg transition-colors text-sm",
                   currentSessionId === session.id
-                    ? "bg-indigo-50/50 text-indigo-700 font-semibold border border-indigo-100 shadow-sm"
+                    ? "bg-[#EEF3FB] text-[#000352] font-medium border border-[#DCE4F0]"
                     : "text-slate-600 hover:bg-slate-50 hover:text-slate-900 border border-transparent"
                 )}
               >
@@ -170,7 +183,7 @@ export default function ChatSidebar({
                     size={16}
                     className={
                       currentSessionId === session.id
-                        ? "text-indigo-600 flex-shrink-0"
+                        ? "text-[#000352] flex-shrink-0"
                         : "text-slate-400 flex-shrink-0"
                     }
                   />
@@ -186,15 +199,15 @@ export default function ChatSidebar({
                         if (e.key === "Escape") setEditingSessionId(null);
                       }}
                       autoFocus
-                      className="w-full bg-white border border-indigo-300 rounded px-1.5 py-0.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      className="w-full bg-white border border-[#94A3B8] rounded px-1.5 py-0.5 text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-[#000352]"
                     />
                   ) : (
-                    <span className="truncate w-full">{currentTitle}</span>
+                    <button type="button" title={currentTitle} aria-current={currentSessionId === session.id ? "true" : undefined} className="line-clamp-2 w-full text-left py-1 focus-visible:outline-none focus-visible:underline">{currentTitle}</button>
                   )}
                 </div>
 
                 {/* Tombol Aksi (Edit & Hapus) */}
-                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                <div className="flex items-center gap-1 opacity-100 md:opacity-0 md:group-hover:opacity-100 md:group-focus-within:opacity-100 transition-opacity flex-shrink-0">
                   {isEditing ? (
                     <>
                       <button
@@ -254,6 +267,8 @@ export default function ChatSidebar({
         onCancel={() => setSessionToDelete(null)}
         onConfirm={confirmDeleteSession}
       />
-    </aside>
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
   );
 }
