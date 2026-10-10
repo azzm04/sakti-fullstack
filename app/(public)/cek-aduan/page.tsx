@@ -16,7 +16,7 @@ export default function CekAduanPage() {
               Lacak Status Pengaduan
             </h1>
             <p className="text-blue-100 text-sm md:text-base leading-relaxed max-w-2xl mx-auto">
-              Masukkan kode resi yang Anda dapatkan saat mengirimkan formulir untuk melihat perkembangan status laporan Anda secara real-time.
+              Masukkan kode aduan yang Anda dapatkan saat mengirimkan formulir untuk melihat perkembangan status laporan Anda secara real-time.
             </p>
           </div>
         </div>
