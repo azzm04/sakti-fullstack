@@ -60,6 +60,7 @@ export function useChatbot(
         data: {
           imageBase64: gambar ?? imageBase64 ?? null,
           sessionId,
+          simpan: false,
         },
       },
     });

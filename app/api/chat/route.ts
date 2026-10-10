@@ -33,7 +33,7 @@ export async function POST(request: Request) {
     // 1. IDENTITAS DARI TOKEN, BUKAN DARI KLIEN
     // ==========================================
     const user = await getCurrentUser();
-    const userId = user?.id ?? null;
+    const userId =  user?.role === "MAHASISWA_KIPK" && data?.simpan !== false ? user.id : null;
     const sessionDariKlien: string | null =
       typeof data?.sessionId === "string" ? data.sessionId : null;
 
