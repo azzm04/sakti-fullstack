@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
@@ -9,10 +10,10 @@ import { requireAdminRole } from "@/lib/auth-server";
 import UbahStatus from "./UbahStatus";
 
 const STATUS: Record<string, { label: string; dot: string }> = {
-  MENUNGGU: { label: "Menunggu", dot: "bg-amber-400" },
-  DIPROSES: { label: "Diproses", dot: "bg-sky-400" },
-  SELESAI: { label: "Selesai", dot: "bg-emerald-400" },
-  DITOLAK: { label: "Ditolak", dot: "bg-rose-400" },
+  MENUNGGU: { label: "Menunggu", dot: "bg-amber-500" },
+  DIPROSES: { label: "Diproses", dot: "bg-sky-500" },
+  SELESAI: { label: "Selesai", dot: "bg-emerald-500" },
+  DITOLAK: { label: "Ditolak", dot: "bg-rose-500" },
 };
 
 const KATEGORI: Record<string, { label: string; desc: string; warna: string }> = {
@@ -51,8 +52,8 @@ const ukuran = (b: number) =>
 
 function Bagian({ judul, children }: { judul: string; children: ReactNode }) {
   return (
-    <section className="rounded-xl border border-slate-200 bg-white p-6">
-      <h2 className="mb-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
+    <section className="rounded-2xl border border-[#E2E8F0] bg-white p-6">
+      <h2 className="mb-4 text-[12px] font-medium uppercase tracking-wider text-[#64748B]">
         {judul}
       </h2>
       {children}
@@ -63,8 +64,10 @@ function Bagian({ judul, children }: { judul: string; children: ReactNode }) {
 function Baris({ label, children }: { label: string; children: ReactNode }) {
   return (
     <div className="py-3 first:pt-0 last:pb-0">
-      <dt className="text-xs text-slate-500">{label}</dt>
-      <dd className="mt-0.5 break-words text-sm font-medium text-slate-900">{children}</dd>
+      <dt className="text-[12px] text-[#64748B]">{label}</dt>
+      <dd className="mt-0.5 break-words text-[14px] font-medium text-[#000352]">
+        {children}
+      </dd>
     </div>
   );
 }
@@ -107,51 +110,91 @@ export default async function DetailAduanAdmin({
   const kategori = KATEGORI[aduan.jenis_aduan] ?? KATEGORI.KETIDAKTEPATAN;
 
   return (
-    <div className="min-h-screen bg-slate-50 px-4 py-6 pb-20 sm:px-8 sm:py-10">
-      <div className="mx-auto max-w-5xl space-y-6">
+    <div
+      className="min-h-full bg-[#F8FAFC] text-[#000352]"
+      style={{ fontFamily: "Roboto, sans-serif" }}
+    >
+      <div className="mx-auto max-w-6xl px-4 pb-16 pt-8 sm:px-6 sm:pt-10 lg:px-8">
         <Link
           href="/admin/aduan"
-          className="inline-flex items-center gap-2 text-sm font-medium text-slate-500 transition-colors hover:text-slate-900"
+          className="inline-flex items-center gap-2 text-[14px] font-medium text-[#64748B] transition-colors hover:text-[#000352]"
         >
           <ArrowLeft className="h-4 w-4" />
           Kembali ke daftar laporan
         </Link>
 
-        {/* Header: datar, satu warna */}
-        <header className="rounded-xl bg-[#001349] px-6 py-6 text-white sm:px-8">
-          <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-3">
-                <p className="text-xs font-medium uppercase tracking-wider text-blue-200">
-                  Kode resi
+        {/* ===== Header: mengikuti kartu sapaan di dasbor mahasiswa ===== */}
+        <section className="mt-5">
+          <article className="rounded-2xl border border-[#E2E8F0] bg-white">
+            {/* Area judul */}
+            <div className="relative isolate flex min-h-[160px] items-center overflow-hidden rounded-t-2xl px-5 py-8 sm:min-h-[200px] sm:px-8">
+              <div className="relative z-10 min-w-0 lg:max-w-[68%]">
+                <p className="text-[12px] font-medium uppercase tracking-wider text-[#64748B]">
+                  Kode resi laporan
                 </p>
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-2.5 py-1 text-xs font-medium">
-                  <span className={`h-1.5 w-1.5 rounded-full ${status.dot}`} />
-                  {status.label}
-                </span>
+                <h1 className="mt-1 break-all text-[24px] font-semibold leading-[32px] text-[#000352] lg:text-[32px] lg:leading-[40px]">
+                  {aduan.kode_laporan}
+                </h1>
+                <p className="mt-3 text-[16px] leading-6 text-[#64748B]">
+                  Dilaporkan pada {tgl(aduan.created_at)}.
+                </p>
               </div>
-              <h1 className="mt-1.5 break-all text-2xl font-bold tracking-tight sm:text-3xl">
-                {aduan.kode_laporan}
-              </h1>
-              <p className="mt-3 text-sm text-blue-100">
-                {tgl(aduan.created_at)} · Ditangani oleh {aduan.admin?.nama ?? "belum ada"}
-              </p>
+
+              {/* Siluet logo SAKTI, sama dengan dasbor mahasiswa */}
+              <div
+                aria-hidden="true"
+                className="pointer-events-none absolute inset-y-0 right-0 hidden w-[38%] max-w-[440px] overflow-hidden sm:block"
+                style={{
+                  maskImage:
+                    "linear-gradient(to right, transparent 0%, black 24%, black 100%)",
+                  WebkitMaskImage:
+                    "linear-gradient(to right, transparent 0%, black 24%, black 100%)",
+                }}
+              >
+                <Image
+                  src="/background/card%20background%20sakti.png"
+                  alt=""
+                  fill
+                  unoptimized
+                  className="origin-top-right scale-[1.15] object-cover object-right-top"
+                />
+              </div>
             </div>
 
-            <div>
-              <p className="mb-1.5 text-xs text-blue-200">Ubah status laporan</p>
-              <UbahStatus id={aduan.id} currentStatus={aduan.status} />
-            </div>
-          </div>
-        </header>
+            {/* Strip bawah: status, penangan, dan kontrol ubah status.
+                Tidak memakai overflow-hidden agar notifikasi dari UbahStatus tidak terpotong */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-3 rounded-b-2xl bg-[#EEF2FF] px-5 py-4 sm:px-8">
+              <span className="inline-flex items-center gap-2 text-[14px] font-medium text-[#000352]">
+                <span className={`h-2 w-2 rounded-full ${status.dot}`} />
+                {status.label}
+              </span>
 
-        <div className="grid gap-6 lg:grid-cols-3">
+              <span
+                aria-hidden="true"
+                className="hidden h-5 w-px bg-[#000352]/20 sm:block"
+              />
+
+              <span className="text-[14px] leading-6 text-[#64748B]">
+                Ditangani oleh {aduan.admin?.nama ?? "belum ada"}
+              </span>
+
+              <div className="w-full sm:ml-auto sm:w-auto">
+                <UbahStatus id={aduan.id} currentStatus={aduan.status} />
+              </div>
+            </div>
+          </article>
+        </section>
+
+        {/* ===== Isi ===== */}
+        <div className="mt-6 grid gap-6 lg:grid-cols-3">
           {/* Kolom kiri */}
           <div className="space-y-6 lg:col-span-2">
             <Bagian judul="Kronologi laporan">
-              <p className={`text-sm font-semibold ${kategori.warna}`}>{kategori.label}</p>
-              <p className="mb-4 mt-0.5 text-xs text-slate-500">{kategori.desc}</p>
-              <p className="whitespace-pre-wrap text-[15px] leading-7 text-slate-700">
+              <p className={`text-[14px] font-semibold ${kategori.warna}`}>
+                {kategori.label}
+              </p>
+              <p className="mb-4 mt-0.5 text-[12px] text-[#64748B]">{kategori.desc}</p>
+              <p className="whitespace-pre-wrap text-[15px] leading-7 text-[#334155]">
                 {aduan.uraian_kronologi}
               </p>
             </Bagian>
@@ -165,7 +208,7 @@ export default async function DetailAduanAdmin({
 
                     const isi = (
                       <>
-                        <div className="aspect-square overflow-hidden rounded-lg border border-slate-200 bg-slate-100">
+                        <div className="aspect-square overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#F8FAFC]">
                           {isGambar && url ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
@@ -174,7 +217,7 @@ export default async function DetailAduanAdmin({
                               className="h-full w-full object-cover"
                             />
                           ) : (
-                            <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-slate-400">
+                            <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-[#94A3B8]">
                               <FileText className="h-8 w-8" />
                               <span className="text-[11px] font-semibold">
                                 {isGambar ? "Gambar" : "PDF"}
@@ -182,10 +225,10 @@ export default async function DetailAduanAdmin({
                             </div>
                           )}
                         </div>
-                        <p className="mt-2 truncate text-xs font-medium text-slate-800">
+                        <p className="mt-2 truncate text-[12px] font-medium text-[#000352]">
                           {b.nama_file}
                         </p>
-                        <p className="text-[11px] text-slate-500">
+                        <p className="text-[11px] text-[#64748B]">
                           {url ? ukuran(b.ukuran) : "Tautan tidak tersedia"}
                         </p>
                       </>
@@ -210,7 +253,9 @@ export default async function DetailAduanAdmin({
                   })}
                 </ul>
               ) : (
-                <p className="text-sm italic text-slate-500">Tidak ada bukti terlampir.</p>
+                <p className="text-[14px] italic text-[#64748B]">
+                  Tidak ada bukti terlampir.
+                </p>
               )}
             </Bagian>
           </div>
@@ -218,10 +263,12 @@ export default async function DetailAduanAdmin({
           {/* Kolom kanan */}
           <div className="space-y-6">
             <Bagian judul="Pelapor">
-              <dl className="divide-y divide-slate-100">
+              <dl className="divide-y divide-[#F0F4F8]">
                 <Baris label="Nama">
                   {aduan.is_anonim ? (
-                    <span className="italic text-slate-500">Dirahasiakan dari terlapor</span>
+                    <span className="italic text-[#64748B]">
+                      Dirahasiakan dari terlapor
+                    </span>
                   ) : (
                     aduan.nama_pelapor
                   )}
@@ -232,7 +279,7 @@ export default async function DetailAduanAdmin({
                       href={waLink(aduan.whatsapp_pelapor)}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 text-blue-700 hover:underline"
+                      className="inline-flex items-center gap-1.5 text-[#00529B] hover:underline"
                     >
                       {aduan.whatsapp_pelapor}
                       <ExternalLink className="h-3 w-3" />
@@ -245,7 +292,7 @@ export default async function DetailAduanAdmin({
                   {aduan.email_pelapor ? (
                     <a
                       href={`mailto:${aduan.email_pelapor}`}
-                      className="text-blue-700 hover:underline"
+                      className="text-[#00529B] hover:underline"
                     >
                       {aduan.email_pelapor}
                     </a>
@@ -259,17 +306,19 @@ export default async function DetailAduanAdmin({
                     : "Belum tercatat"}
                 </Baris>
               </dl>
-              <p className="mt-4 text-[11px] text-slate-400">
+              <p className="mt-4 text-[11px] text-[#94A3B8]">
                 Kontak pelapor hanya terlihat oleh admin.
               </p>
             </Bagian>
 
             <Bagian judul="Terlapor">
-              <dl className="divide-y divide-slate-100">
+              <dl className="divide-y divide-[#F0F4F8]">
                 <Baris label="Nama">{aduan.nama_terlapor}</Baris>
                 <Baris label="NIM">{aduan.nim_terlapor || "-"}</Baris>
                 <Baris label="Angkatan">{aduan.angkatan || "-"}</Baris>
-                <Baris label="Fakultas / Program studi">{aduan.fakultas_prodi || "-"}</Baris>
+                <Baris label="Fakultas / Program studi">
+                  {aduan.fakultas_prodi || "-"}
+                </Baris>
               </dl>
             </Bagian>
           </div>
