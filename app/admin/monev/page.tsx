@@ -53,8 +53,9 @@ async function getInitialSchedules(): Promise<MonevSchedule[]> {
   }
 }
 
-export default async function AdminMonevPage() {
+export default async function AdminMonevPage({ searchParams }: { searchParams: Promise<{ tab?: string; periode?: string }> }) {
+  const params = await searchParams;
   const initialSchedules = await getInitialSchedules();
 
-  return <MonevClient initialSchedules={initialSchedules} />;
+  return <MonevClient key={`${params.tab ?? "jadwal"}-${params.periode ?? ""}`} initialSchedules={initialSchedules} initialTab={params.tab === "hasil" ? "hasil" : "jadwal"} initialPeriodId={params.periode} />;
 }

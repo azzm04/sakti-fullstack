@@ -1,5 +1,6 @@
 "use client";
 
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -10,20 +11,12 @@ import {
   Clock,
   Loader2,
   FileImage,
-  ExternalLink,
-  Users,
   ScanSearch,
   AlertCircle,
-  FileQuestion,
-  CalendarPlus,
-  CalendarClock,
   Trash2,
   ChevronDown,
-  ChevronUp,
   Plus,
   X,
-  ShieldAlert,
-  TriangleAlert,
   ListFilter,
 } from "lucide-react";
 import Filters, {
@@ -99,13 +92,15 @@ export interface AdminMonevData {
 }
 
 const formatDate = (iso: string) =>
-  new Date(iso).toLocaleDateString("id-ID", {
+  new Date(iso).toLocaleString("id-ID", {
+    timeZone: "Asia/Jakarta",
+    hour: "2-digit",
+    minute: "2-digit",
     day: "2-digit",
     month: "long",
     year: "numeric",
   });
 
-const isDeadlinePassed = (deadline: string) => new Date(deadline) < new Date();
 
 /**
  * Tahun awal dari tahun ajaran yang sedang berjalan.
@@ -211,9 +206,15 @@ function getMonevStatus(m: AdminMonevData): MonevValidationStatus {
 
 interface MonevClientProps {
   initialSchedules: MonevSchedule[];
+  initialTab?: "jadwal" | "hasil";
+  initialPeriodId?: string;
 }
 
-export default function MonevClient({ initialSchedules }: MonevClientProps) {
+export default function MonevClient({ initialSchedules, initialTab = "jadwal", initialPeriodId }: MonevClientProps) {
+  const [activeTab, setActiveTab] = useState<"jadwal" | "hasil">(initialTab);
+  const [detailId, setDetailId] = useState<string | null>(null);
+  const [submissionStatus, setSubmissionStatus] = useState("semua");
+  const [dataError, setDataError] = useState<string | null>(null);
   const [data, setData] = useState<AdminMonevData[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -226,7 +227,6 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
     melebihi: 0,
     tidakSesuai: 0,
   });
-  const [isScanningAll, setIsScanningAll] = useState(false);
   const [scanningId, setScanningId] = useState<string | null>(null);
   const [previewImage, setPreviewImage] = useState<{
     url: string;
@@ -240,11 +240,10 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
   // Jadwal Evaluasi State - diinisialisasi dari server
   const [schedules, setSchedules] = useState<MonevSchedule[]>(initialSchedules);
   const [selectedScheduleId, setSelectedScheduleId] = useState<string>(
-    initialSchedules.length > 0 ? initialSchedules[0].id : ""
+    initialPeriodId && initialSchedules.some((period) => period.id === initialPeriodId) ? initialPeriodId : initialSchedules[0]?.id ?? ""
   );
   const [scheduleLoading, setScheduleLoading] = useState(false);
   const [showScheduleForm, setShowScheduleForm] = useState(false);
-  const [scheduleExpanded, setScheduleExpanded] = useState(true);
   const tahunAjaranBerjalan = getTahunAjaranBerjalan();
 
   function buildPeriodeOptions(years: number[]) {
@@ -394,7 +393,9 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
     try {
       const res = await fetch("/api/admin/monev/schedule");
       const json = await res.json();
-      setSchedules(json.data ?? []);
+      const nextSchedules: MonevSchedule[] = json.data ?? [];
+      setSchedules(nextSchedules);
+      setSelectedScheduleId((current) => nextSchedules.some((schedule) => schedule.id === current) ? current : nextSchedules[0]?.id ?? "");
     } catch {
       setSchedules([]);
     } finally {
@@ -478,6 +479,7 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
       return;
     }
     setLoading(true);
+    setDataError(null);
     try {
       const params = new URLSearchParams({
         schedule_id: selectedScheduleId,
@@ -497,18 +499,21 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
         setStats(json.stats ?? { total: 0, sudah: 0, belum: 0, melebihi: 0, tidakSesuai: 0 });
       } else {
         setData([]);
+        setDataError("Laporan belum dapat dimuat. Silakan coba lagi.");
       }
     } catch {
       setData([]);
+      setDataError("Laporan belum dapat dimuat. Periksa koneksi dan coba lagi.");
     } finally {
       setLoading(false);
     }
   }, [search, page, selectedScheduleId]);
 
   useEffect(() => {
+    if (activeTab !== "hasil") return;
     const timer = setTimeout(() => fetchData(), search ? 500 : 0);
     return () => clearTimeout(timer);
-  }, [fetchData, search]);
+  }, [fetchData, search, activeTab]);
 
   useEffect(() => {
     setPage(1);
@@ -555,7 +560,7 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
       } else {
         alert("Gagal memproses AI untuk data ini.");
       }
-    } catch (e) {
+    } catch {
       alert("Terjadi kesalahan koneksi.");
     } finally {
       setScanningId(null);
@@ -603,7 +608,7 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
         } else {
           failCount++;
         }
-      } catch (err) {
+      } catch {
         failCount++;
       }
 
@@ -633,76 +638,88 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
     return true;
   });
 
+  const selectedSchedule = schedules.find((schedule) => schedule.id === selectedScheduleId);
+  const detail = data.find((row) => row.id === detailId);
+  const visibleRows = filteredData.filter((row) => submissionStatus === "semua" || row.status_pengisian === submissionStatus);
+  const resultLabel = (row: AdminMonevData) => {
+    if (row.status_pengisian === "Belum") return "—";
+    if (scanningId === row.id) return "Sedang diperiksa";
+    if (row.hasil_deteksi_yolo === 0) return "Dokumen belum terbaca";
+    const status = getMonevStatus(row);
+    if (status === "melebihi_batas") return "Pendapatan perlu ditinjau";
+    if (status === "data_tidak_sesuai") return "Data perlu ditinjau";
+    return status === "sesuai" ? "Tidak ada indikasi perbedaan" : "Belum diperiksa";
+  };
+  const showResults = (id: string) => {
+    if (id !== selectedScheduleId) setLoading(true);
+    setSelectedScheduleId(id);
+    setPage(1);
+    setSubmissionStatus("semua");
+    setFilters([]);
+    setDetailId(null);
+    setActiveTab("hasil");
+  };
+  const tabs = [
+    { id: "jadwal", label: "Jadwal pengisian" },
+    { id: "hasil", label: "Hasil Monev" },
+  ] as const;
+
   return (
-    <div className="min-h-screen bg-admin-bg">
-      <PageHeader
-        title="Data Laporan Monev"
-        description="Pantau kelengkapan dokumen evaluasi ekonomi mahasiswa KIP-Kuliah secara real-time."
-      />
-      <div className="px-4 sm:px-[30px] pt-6 pb-[34px]">
+    <div className="min-h-screen bg-[#F8FAFC] text-[#334155]" style={{ fontFamily: "Roboto, sans-serif" }}>
+      <PageHeader title="Monitoring dan Evaluasi" description="Kelola periode pengisian dan tinjau laporan mahasiswa." />
+      <div className="px-4 sm:px-[30px] pt-6 pb-8">
+        <div role="tablist" aria-label="Menu Monev" className="mb-6 flex gap-6 overflow-x-auto border-b border-[#E2E8F0]">
+          {tabs.map((tab, index) => (
+            <button key={tab.id} id={`tab-${tab.id}`} role="tab" aria-selected={activeTab === tab.id} aria-controls={`panel-${tab.id}`} tabIndex={activeTab === tab.id ? 0 : -1}
+              onClick={() => setActiveTab(tab.id)}
+              onKeyDown={(event) => {
+                let next = index;
+                if (event.key === "ArrowRight") next = (index + 1) % tabs.length;
+                else if (event.key === "ArrowLeft") next = (index + tabs.length - 1) % tabs.length;
+                else if (event.key === "Home") next = 0;
+                else if (event.key === "End") next = tabs.length - 1;
+                else return;
+                event.preventDefault();
+                setActiveTab(tabs[next].id);
+                document.getElementById(`tab-${tabs[next].id}`)?.focus();
+              }}
+              className={`shrink-0 border-b-2 px-1 pb-3 text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-[#000352]/30 ${activeTab === tab.id ? "border-[#000352] text-[#000352]" : "border-transparent text-[#64748B] hover:text-[#000352]"}`}>
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-      {/* JADWAL EVALUASI */}
-      <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm mb-8 overflow-hidden">
-        <button
-          onClick={() => setScheduleExpanded((v) => !v)}
-          className="w-full flex items-center justify-between px-6 py-4 hover:bg-admin-accent/5 transition-colors"
-        >
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-admin-accent/10 text-admin-accent rounded-lg">
-              <CalendarClock size={18} />
+        <section id="panel-jadwal" role="tabpanel" aria-labelledby="tab-jadwal" hidden={activeTab !== "jadwal"}>
+          <div className="overflow-hidden rounded-lg border border-[#E2E8F0] bg-white">
+            <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#E2E8F0] px-5 py-5 sm:px-6">
+              <div><h2 className="text-lg font-semibold text-[#0B1536]">Periode pengisian</h2><p className="mt-1 text-sm text-[#64748B]">Atur waktu mulai dan batas pengisian Monev.</p></div>
+              <button onClick={() => setShowScheduleForm(true)} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-[#000352] px-4 text-sm font-medium text-white hover:bg-[#151965]"><Plus size={16} /> Buat periode</button>
             </div>
-            <div className="text-left">
-              <h3 className="font-admin-heading font-bold text-admin-accent text-base">
-                Jadwal Evaluasi
-              </h3>
-              <p className="text-xs text-admin-text-2 mt-0.5">
-                Kelola periode evaluasi yang aktif untuk mahasiswa KIP-Kuliah
-              </p>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[850px] text-left text-sm">
+                <thead className="border-b border-[#E2E8F0] bg-[#F8FAFC] text-[#64748B]"><tr>{["Periode", "Mulai (WIB)", "Batas pengisian (WIB)", "Status", "Aksi"].map((label) => <th key={label} scope="col" className="px-5 py-3 font-medium">{label}</th>)}</tr></thead>
+                <tbody className="divide-y divide-[#E2E8F0]">
+                  {scheduleLoading ? <tr><td colSpan={5} className="p-10 text-center text-[#64748B]">Memuat periode...</td></tr> : schedules.length === 0 ? <tr><td colSpan={5} className="p-10 text-center text-[#64748B]">Belum ada periode. Buat periode untuk membuka pengisian Monev.</td></tr> : schedules.map((schedule) => {
+                    const status = statusOf(schedule);
+                    const action = status === "BERAKHIR" ? "Buka kembali" : isDeadlineOnly(status) ? "Perpanjang" : "Ubah jadwal";
+                    return <tr key={schedule.id} className="hover:bg-slate-50/60">
+                      <td className="px-5 py-5"><p className="font-medium text-[#0B1536]">{schedule.label}</p><p className="mt-1 text-xs text-[#64748B]">{schedule.jumlah_laporan ?? 0} laporan masuk</p></td>
+                      <td className="px-5 py-5 text-[#475569]">{schedule.waktu_mulai ? formatDate(schedule.waktu_mulai) : "Tidak ditentukan"}</td>
+                      <td className="px-5 py-5 text-[#475569]">{formatDate(schedule.deadline)}</td>
+                      <td className="px-5 py-5"><span title={STATUS_BADGE[status].hint} className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs ${status === "BERLANGSUNG" ? "text-emerald-700" : "text-[#64748B]"}`}><Clock size={14} />{STATUS_BADGE[status].label}</span></td>
+                      <td className="px-5 py-5"><div className="flex items-center gap-3 whitespace-nowrap"><button onClick={() => showResults(schedule.id)} className="font-medium text-[#000352] hover:underline">Lihat hasil</button><button onClick={() => openActionDialog(schedule)} className="rounded-lg border border-[#E2E8F0] px-3 py-2 text-xs hover:bg-slate-50">{action}</button><button onClick={() => askDeleteSchedule(schedule)} aria-label={`Hapus periode ${schedule.label}`} className="rounded-lg p-2 text-slate-400 hover:bg-red-50 hover:text-red-700"><Trash2 size={16} /></button></div></td>
+                    </tr>;
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs font-semibold text-admin-text-2 bg-admin-accent/5 px-2.5 py-1 rounded-full">
-              {schedules.length} jadwal
-            </span>
-            {scheduleExpanded ? (
-              <ChevronUp size={18} className="text-admin-text-2" />
-            ) : (
-              <ChevronDown size={18} className="text-admin-text-2" />
-            )}
-          </div>
-        </button>
+        </section>
 
-        <AnimatePresence initial={false}>
-          {scheduleExpanded && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: "auto", opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="overflow-hidden"
-            >
-              <div className="px-6 pb-6 border-t border-admin-border">
-                <div className="flex justify-end mt-4 mb-4">
-                  <button
-                    onClick={() => setShowScheduleForm((v) => !v)}
-                    className="inline-flex items-center gap-2 px-4 py-2 bg-admin-accent text-white text-sm font-semibold rounded-xl hover:bg-admin-accent/90 transition-all shadow-sm"
-                  >
-                    <Plus size={16} /> Tambah Jadwal
-                  </button>
-                </div>
-
-                <AnimatePresence>
-                  {showScheduleForm && (
-                    <motion.div
-                      initial={{ opacity: 0, y: -8 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -8 }}
-                      className="bg-admin-accent/5 border border-admin-accent/20 rounded-xl p-5 mb-5"
-                    >
-                      <h4 className="font-admin-heading font-bold text-admin-accent mb-4 flex items-center gap-2">
-                        <CalendarPlus size={16} /> Buat Periode Monev
-                      </h4>
-
+        <Dialog open={showScheduleForm} onOpenChange={(open) => { if (!savingSchedule) setShowScheduleForm(open); }}>
+          <DialogContent className="max-h-[90dvh] max-w-2xl overflow-y-auto rounded-lg bg-white">
+            <DialogTitle>Buat periode Monev</DialogTitle>
+            <DialogDescription>Tentukan periode akademik dan waktu pengisian. Semua waktu menggunakan WIB.</DialogDescription>
                       {/* Error / duplikasi */}
                       {scheduleError && (
                         <div className="mb-4 flex items-start gap-3 rounded-lg border border-admin-danger-border bg-admin-danger-bg p-3 text-sm text-admin-danger-text">
@@ -733,7 +750,7 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                           <p className="text-[11px] font-semibold uppercase tracking-wider text-admin-text-2 mb-0.5">
                             Nama Periode (Otomatis)
                           </p>
-                          <p className="text-sm font-bold text-admin-accent">{previewLabel}</p>
+                          <p className="text-sm font-medium text-admin-accent">{previewLabel}</p>
                         </div>
                       )}
 
@@ -750,6 +767,8 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                                 type="button"
                                 role="combobox"
                                 aria-expanded={periodeOpen}
+                                aria-controls="monev-period-options"
+                                aria-label="Periode akademik"
                                 className="flex h-[44px] w-full max-w-[560px] items-center justify-between rounded-lg border border-admin-border bg-admin-surface px-3 py-2 text-[14px] text-admin-accent transition-colors hover:border-admin-accent/50 focus:outline-none focus:ring-2 focus:ring-admin-accent/20"
                               >
                                 <span className={periodeSelected ? "text-admin-accent" : "text-admin-text-2"}>
@@ -765,7 +784,7 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                                   value={periodeSearch}
                                   onValueChange={setPeriodeSearch}
                                 />
-                                <CommandList>
+                                <CommandList id="monev-period-options">
                                   <CommandEmpty>
                                     {periodeSearch.trim().length > 0 && !/^\d{4}$/.test(periodeSearch.trim())
                                       ? "Ketik 4 digit tahun, misalnya 2032"
@@ -835,7 +854,7 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                         <button
                           onClick={handleCreateSchedule}
                           disabled={savingSchedule || !periodeSelected || !scheduleForm.deadline}
-                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-admin-accent text-white text-sm font-semibold rounded-xl hover:bg-admin-accent/90 disabled:opacity-50 transition-all"
+                          className="inline-flex items-center gap-2 px-5 py-2.5 bg-admin-accent text-white text-sm font-semibold rounded-lg hover:bg-admin-accent/90 disabled:opacity-50 transition-all"
                         >
                           {savingSchedule ? (
                             <Loader2 size={15} className="animate-spin" />
@@ -850,142 +869,26 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                             setScheduleError(null);
                             setDuplicateId(null);
                           }}
-                          className="px-5 py-2.5 text-sm font-semibold text-admin-text-2 border border-admin-border rounded-xl hover:bg-admin-accent/5 transition-all"
+                          className="px-5 py-2.5 text-sm font-semibold text-admin-text-2 border border-admin-border rounded-lg hover:bg-admin-accent/5 transition-all"
                         >
                           Batal
                         </button>
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
 
-                {scheduleLoading ? (
-                  <div className="flex items-center justify-center py-8 text-admin-text-2">
-                    <Loader2
-                      size={20}
-                      className="animate-spin mr-2 text-admin-accent"
-                    />{" "}
-                    Memuat jadwal...
-                  </div>
-                ) : schedules.length === 0 ? (
-                  <div className="text-center py-8 text-admin-text-2 text-sm">
-                    Belum ada jadwal evaluasi. Klik &quot;Tambah Jadwal&quot;
-                    untuk membuat.
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {schedules.map((s) => {
-                      const passed = isDeadlinePassed(s.deadline);
-                      const opStatus = statusOf(s);
-                      const actionLabel =
-                        opStatus === "BERAKHIR" ? "Buka kembali"
-                        : isDeadlineOnly(opStatus) ? "Perpanjang pengisian"
-                        : "Ubah jadwal";
-                      const badge = STATUS_BADGE[opStatus];
+          </DialogContent>
+        </Dialog>
 
-                      return (
-                        <div key={s.id} className="space-y-0">
-                          <div
-                            onClick={() => setSelectedScheduleId(s.id)}
-                            className={`flex flex-col md:flex-row md:items-center justify-between gap-3 p-4 rounded-xl border transition-all cursor-pointer ${selectedScheduleId === s.id
-                              ? "ring-2 ring-admin-accent bg-admin-accent/10 border-admin-accent"
-                              : s.is_active && !passed
-                                ? "bg-admin-accent/10/50 border-admin-accent/25 hover:bg-admin-accent/10"
-                                : passed
-                                  ? "bg-admin-accent/5 border-admin-border opacity-70 hover:opacity-100"
-                                  : "bg-admin-accent/5 border-admin-border hover:bg-admin-accent/10"
-                              }`}
-                          >
-                            <div className="flex items-start gap-3 flex-1 min-w-0">
-                              <div
-                                className={`mt-0.5 p-1.5 rounded-lg shrink-0 ${s.is_active && !passed ? "bg-admin-accent/20 text-admin-accent" : "bg-admin-accent/10 text-admin-text-2"}`}
-                              >
-                                <CalendarClock size={16} />
-                              </div>
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <p className="font-bold text-admin-accent text-sm truncate">
-                                    {s.label}
-                                  </p>
-                                  <span
-                                    title={badge.hint}
-                                    className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${badge.className}`}
-                                  >
-                                    {badge.label}
-                                  </span>
-                                </div>
-                                <p className="text-xs text-admin-text-2 mt-1">
-                                  {s.waktu_mulai ? `Mulai: ${formatDate(s.waktu_mulai)} — ` : ""}
-                                  Deadline:{" "}
-                                  <span className={`font-semibold ${passed ? "text-admin-danger-bar" : "text-admin-accent"}`}>
-                                    {formatDate(s.deadline)}
-                                  </span>
-                                </p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              {/* Tombol aksi kontekstual */}
-                              <button
-                                onClick={(e) => { e.stopPropagation(); openActionDialog(s); }}
-                                title={actionLabel}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border border-admin-border text-admin-accent bg-admin-surface hover:bg-admin-accent/5 hover:border-admin-accent/40 transition-all"
-                              >
-                                <CalendarPlus size={13} />
-                                {actionLabel}
-                              </button>
-                              {/* Hapus */}
-                              <button
-                                onClick={(e) => { e.stopPropagation(); askDeleteSchedule(s); }}
-                                title="Hapus jadwal"
-                                className="p-2 rounded-lg hover:bg-admin-danger-bg border border-transparent hover:border-admin-danger-border transition-all text-admin-text-2 hover:text-admin-danger-bar"
-                              >
-                                <Trash2 size={16} />
-                              </button>
-                            </div>
-                          </div>
-
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-admin-surface rounded-2xl border border-admin-border p-5 shadow-sm relative overflow-hidden"
-        >
-          <div className="absolute top-0 right-0 w-24 h-24 bg-admin-accent/5 rounded-bl-full -z-10" />
-          <p className="text-xs font-bold text-admin-text-2 uppercase tracking-widest mb-1">
-            Total Mahasiswa
-          </p>
-          <p className="text-3xl font-extrabold text-admin-accent">
-            {stats.total.toLocaleString("id-ID")}
-          </p>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.1 }}
-          className="bg-admin-surface rounded-2xl border border-admin-warn-border p-5 shadow-sm relative overflow-hidden"
-        >
-          <div className="absolute top-0 right-0 w-24 h-24 bg-admin-warn-bg-2 rounded-bl-full -z-10" />
-          <p className="text-xs font-bold text-admin-warn-text uppercase tracking-widest mb-1">
-            Belum Mengisi
-          </p>
-          <p className="text-3xl font-extrabold text-admin-warn-text">
-            {stats.belum.toLocaleString("id-ID")}
-          </p>
-        </motion.div>
-      </div>
-
+        <section id="panel-hasil" role="tabpanel" aria-labelledby="tab-hasil" hidden={activeTab !== "hasil"}>
+          <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+            <div className="w-full sm:max-w-md"><label htmlFor="monev-result-period" className="mb-2 block text-sm font-medium text-[#0B1536]">Periode Monev</label><select id="monev-result-period" value={selectedScheduleId} onChange={(event) => showResults(event.target.value)} className="min-h-11 w-full rounded-lg border border-[#CBD5E1] bg-white px-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#000352]/20">{schedules.length === 0 && <option value="">Belum ada periode</option>}{schedules.map((schedule) => <option key={schedule.id} value={schedule.id}>{schedule.label}</option>)}</select></div>
+            {selectedSchedule && <p className="text-sm text-[#64748B]">Batas pengisian: {formatDate(selectedSchedule.deadline)} WIB · {STATUS_BADGE[statusOf(selectedSchedule)].label}</p>}
+          </div>
+          {!selectedSchedule ? <div className="rounded-lg border border-[#E2E8F0] bg-white p-10 text-center text-sm text-[#64748B]">Buat periode pengisian terlebih dahulu untuk melihat hasil Monev.</div> : <>
+          <div className="mb-6 grid grid-cols-1 divide-y divide-[#E2E8F0] overflow-hidden rounded-lg border border-[#E2E8F0] bg-white sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+            {[{ label: "Total mahasiswa", value: stats.total }, { label: "Sudah mengirim", value: stats.sudah }, { label: "Belum mengirim", value: stats.belum }].map((item) => <div key={item.label} className="px-6 py-5"><p className="text-sm text-[#64748B]">{item.label}</p><p className="mt-2 text-2xl font-semibold tabular-nums text-[#0B1536]">{loading || dataError ? "—" : item.value.toLocaleString("id-ID")}</p></div>)}
+          </div>
+          {search && <p className="mb-3 text-xs text-[#64748B]">Jumlah mahasiswa mengikuti pencarian nama atau NIM.</p>}
+      {!detail && <>
       {/* Toolbar */}
       <div className="flex flex-col gap-3 mb-5 relative z-10">
         <div className="flex flex-col sm:flex-row justify-between gap-3">
@@ -997,12 +900,13 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
             <input
               type="text"
               value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              onChange={(e) => { setSearch(e.target.value); setPage(1); }}
               placeholder="Cari NIM atau Nama..."
-              className="w-full pl-10 pr-4 py-2.5 text-sm border border-admin-border rounded-xl bg-admin-surface text-admin-accent focus:outline-none focus:border-admin-accent focus:ring-4 focus:ring-admin-accent/10 transition-all shadow-sm placeholder:text-admin-text-2/50"
+              className="w-full pl-10 pr-4 py-2.5 text-sm border border-admin-border rounded-lg bg-admin-surface text-admin-accent focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/10 transition-all shadow-sm placeholder:text-admin-text-2/50"
             />
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <select aria-label="Status pengisian pada halaman ini" value={submissionStatus} onChange={(event) => setSubmissionStatus(event.target.value)} className="h-10 rounded-lg border border-admin-border bg-white px-3 text-sm"><option value="semua">Semua pengisian</option><option value="Sudah">Sudah mengirim</option><option value="Belum">Belum mengirim</option></select>
             {/* Filter chips */}
             <Filters filters={filters} setFilters={setFilters} />
 
@@ -1120,8 +1024,8 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
 
             <button
               onClick={handleMassScan}
-              disabled={isScanningMass}
-              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-admin-accent text-white text-sm font-bold rounded-xl hover:bg-admin-accent/90 transition-all shadow-md active:scale-95 disabled:opacity-70 disabled:cursor-not-allowed whitespace-nowrap"
+              disabled={isScanningMass || loading || !data.some((m) => m.status_pengisian === "Sudah" && m.hasil_deteksi_yolo === null)}
+              className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-admin-accent text-white text-sm font-medium rounded-lg hover:bg-admin-accent/90 transition-all  disabled:opacity-70 disabled:cursor-not-allowed whitespace-nowrap"
             >
               {isScanningMass ? (
                 <>
@@ -1129,7 +1033,7 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                 </>
               ) : (
                 <>
-                  <ScanSearch size={16} /> Pindai AI Massal
+                  <ScanSearch size={16} /> Pindai AI halaman ini
                 </>
               )}
             </button>
@@ -1137,315 +1041,22 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
         </div>
       </div>
 
-      {/* Table */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm overflow-hidden flex flex-col"
-      >
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left min-w-[1100px]">
-            <thead className="bg-admin-accent/5 border-b border-admin-border text-admin-text-2">
-              <tr>
-                <th className="px-5 py-4 font-bold uppercase tracking-wider text-[11px] w-12 text-center">
-                  No
-                </th>
-                <th className="px-5 py-4 font-bold uppercase tracking-wider text-[11px]">
-                  Identitas Mahasiswa
-                </th>
-                <th className="px-5 py-4 font-bold uppercase tracking-wider text-[11px] bg-admin-accent/10/50">
-                  Data Ayah
-                </th>
-                <th className="px-5 py-4 font-bold uppercase tracking-wider text-[11px] bg-admin-danger-bg/50">
-                  Data Ibu
-                </th>
-                <th className="px-5 py-4 font-bold uppercase tracking-wider text-[11px] bg-admin-warn-bg-2/50">
-                  Lainnya & KK
-                </th>
-                <th className="px-5 py-4 font-bold uppercase tracking-wider text-[11px]">
-                  Kalkulasi Sistem
-                </th>
-                <th className="px-5 py-4 font-bold uppercase tracking-wider text-[11px] text-center">
-                  Validasi
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-admin-border">
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="py-24 text-center">
-                    <div className="inline-flex items-center gap-3 text-admin-text-2">
-                      <Loader2
-                        size={20}
-                        className="animate-spin text-admin-accent"
-                      />
-                      <span className="text-sm font-medium">
-                        Memuat data monev...
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-              ) : filteredData.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="py-16 text-center text-admin-text-2 text-sm"
-                  >
-                    Tidak ada data yang ditemukan.
-                  </td>
-                </tr>
-              ) : (
-                filteredData.map((m, idx) => (
-                  <tr
-                    key={m.id}
-                    className="hover:bg-admin-accent/5 transition-colors group"
-                  >
-                    <td className="px-5 py-4 text-xs font-mono text-admin-text-2 text-center">
-                      {(page - 1) * 50 + idx + 1}
-                    </td>
-                    <td className="px-5 py-4">
-                      <p className="font-bold text-admin-accent text-sm mb-0.5">
-                        {m.nama}
-                      </p>
-                      <div className="flex items-center gap-2 text-xs">
-                        <span className="font-mono text-admin-accent bg-admin-accent/5 px-1.5 rounded">
-                          {m.nim}
-                        </span>
-                        <span className="text-admin-text-2 truncate max-w-[150px]">
-                          {m.prodi}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 bg-admin-accent/10/20">
-                      <p className="font-semibold text-admin-text-2 text-xs mb-1">
-                        {m.pekerjaan_ayah}
-                      </p>
-                      <p className="text-sm font-bold text-admin-accent mb-2">
-                        {formatRp(m.penghasilan_ayah)}
-                      </p>
-                      <div className="flex items-center gap-1.5">
-                        {m.url_bukti_ayah.kerja && (
-                          <button
-                            onClick={() =>
-                              handlePreviewFile(m.url_bukti_ayah.kerja!, `${m.nama} - Bukti Kerja Ayah`)
-                            }
-                            className="inline-flex items-center gap-1 text-[10px] bg-admin-accent/20 text-admin-accent-ink px-2 py-1 rounded hover:bg-admin-accent/25 transition-colors"
-                          >
-                            <FileImage size={12} /> Kerja
-                          </button>
-                        )}
-                        {m.url_bukti_ayah.gaji && (
-                          <button
-                            onClick={() =>
-                              handlePreviewFile(m.url_bukti_ayah.gaji!, `${m.nama} - Bukti Gaji Ayah`)
-                            }
-                            className="inline-flex items-center gap-1 text-[10px] bg-admin-accent/20 text-admin-accent-ink px-2 py-1 rounded hover:bg-admin-accent/25 transition-colors"
-                          >
-                            <FileImage size={12} /> Gaji
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 bg-admin-danger-bg/20">
-                      <p className="font-semibold text-admin-text-2 text-xs mb-1">
-                        {m.pekerjaan_ibu}
-                      </p>
-                      <p className="text-sm font-bold text-admin-accent mb-2">
-                        {formatRp(m.penghasilan_ibu)}
-                      </p>
-                      <div className="flex items-center gap-1.5">
-                        {m.url_bukti_ibu.kerja && (
-                          <button
-                            onClick={() =>
-                              handlePreviewFile(m.url_bukti_ibu.kerja!, `${m.nama} - Bukti Kerja Ibu`)
-                            }
-                            className="inline-flex items-center gap-1 text-[10px] bg-admin-danger-border text-admin-danger-text px-2 py-1 rounded hover:bg-admin-danger-border transition-colors"
-                          >
-                            <FileImage size={12} /> Kerja
-                          </button>
-                        )}
-                        {m.url_bukti_ibu.gaji && (
-                          <button
-                            onClick={() =>
-                              handlePreviewFile(m.url_bukti_ibu.gaji!, `${m.nama} - Bukti Gaji Ibu`)
-                            }
-                            className="inline-flex items-center gap-1 text-[10px] bg-admin-accent/20 text-admin-accent-ink px-2 py-1 rounded hover:bg-admin-accent/25 transition-colors"
-                          >
-                            <FileImage size={12} /> Gaji
-                          </button>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 bg-admin-warn-bg-2/20 min-w-[200px]">
-                      <div className="flex justify-between items-center mb-1">
-                        <span className="text-xs text-admin-text-2">
-                          Pend. Lain:
-                        </span>
-                        <span className="font-bold text-admin-accent text-xs">
-                          {formatRp(m.penghasilan_lain)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-xs text-admin-text-2">
-                          Tanggungan:
-                        </span>
-                        <span className="font-bold text-admin-accent text-xs flex items-center gap-1">
-                          <Users size={12} /> {m.jumlah_tanggungan}
-                        </span>
-                      </div>
-                      <div className="flex flex-col gap-1.5 mt-2 pt-2 border-t border-admin-warn-border/50">
-                        {m.url_bukti_lain && (
-                          <button
-                            onClick={() =>
-                              handlePreviewFile(m.url_bukti_lain!, `${m.nama} - Bukti Pendapatan Lain`)
-                            }
-                            className="inline-flex w-full justify-center items-center gap-1 text-[10px] font-bold bg-admin-surface text-admin-text-2 px-2 py-1.5 rounded hover:bg-admin-accent/5 hover:text-admin-accent transition-colors border border-admin-border"
-                            title="Lihat Bukti Pendapatan Lain"
-                          >
-                            <FileImage size={12} /> Penghasilan Lain
-                          </button>
-                        )}
-                        {m.url_scan_kk && (
-                          <button
-                            onClick={() =>
-                              handlePreviewFile(m.url_scan_kk!, `${m.nama} - Kartu Keluarga`)
-                            }
-                            className="inline-flex w-full justify-center items-center gap-1 text-[10px] font-bold bg-admin-warn-border text-admin-warn-text px-2 py-1.5 rounded hover:bg-admin-warn-border transition-colors border border-admin-warn-border"
-                            title="Lihat Kartu Keluarga"
-                          >
-                            <ExternalLink size={12} /> Kartu Keluarga
-                          </button>
-                        )}
-                        {m.hasil_deteksi_yolo === null ? (
-                          <button
-                            onClick={() => handleScanSingle(m.id)}
-                            disabled={scanningId === m.id || isScanningAll}
-                            className="inline-flex w-full justify-center items-center gap-1.5 text-[10px] font-bold bg-admin-surface text-admin-text-2 px-2 py-1.5 rounded border border-admin-border hover:bg-admin-accent/5 hover:text-admin-accent transition-colors disabled:opacity-50"
-                          >
-                            {scanningId === m.id ? (
-                              <>
-                                <Loader2 size={12} className="animate-spin" />{" "}
-                                Memproses...
-                              </>
-                            ) : (
-                              <>
-                                <ScanSearch size={12} /> Pindai AI
-                              </>
-                            )}
-                          </button>
-                        ) : m.hasil_deteksi_yolo === 0 ? (
-                          <div className="inline-flex w-full justify-center items-center gap-1 text-[10px] font-bold bg-admin-accent/5 text-admin-text-2 px-2 py-1.5 rounded border border-admin-border">
-                            <FileQuestion size={12} className="shrink-0" />{" "}
-                            Gambar tak terdeteksi AI
-                          </div>
-                        ) : (
-                          <div
-                            className={`inline-flex w-full justify-center items-center gap-1 text-[10px] font-bold px-2 py-1.5 rounded border ${m.status_anomali ? "bg-admin-danger-bg text-admin-danger-text border-admin-danger-border" : "bg-admin-accent/10 text-admin-accent-ink border-admin-accent/25"}`}
-                          >
-                            {m.status_anomali ? (
-                              <>
-                                <AlertCircle size={12} className="shrink-0" />{" "}
-                                Data Tidak Sesuai
-                              </>
-                            ) : (
-                              <>
-                                <ScanSearch size={12} className="shrink-0" />{" "}
-                                Sesuai (Lolos AI)
-                              </>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 bg-admin-accent/5">
-                      <div className="space-y-1.5">
-                        <div>
-                          <p className="text-[10px] text-admin-text-2 font-semibold uppercase">
-                            Total Pendapatan
-                          </p>
-                          <p className="font-bold text-admin-accent text-sm">
-                            {formatRp(m.total_pendapatan)}
-                          </p>
-                        </div>
-                        <div className="border-t border-admin-border pt-1.5">
-                          <p className="text-[10px] text-admin-text-2 font-semibold uppercase">
-                            Rp / Tanggungan
-                          </p>
-                          <p
-                            className={`font-extrabold text-sm ${m.rupiah_per_tanggungan > BATAS_KIPK_PER_TANGGUNGAN ? "text-admin-danger-text" : "text-admin-accent"}`}
-                          >
-                            {formatRp(m.rupiah_per_tanggungan)}
-                          </p>
-                          {m.rupiah_per_tanggungan >
-                            BATAS_KIPK_PER_TANGGUNGAN && (
-                              <p className="text-[9px] text-admin-danger-bar font-semibold mt-0.5">
-                                Maks: {formatRp(BATAS_KIPK_PER_TANGGUNGAN)}
-                              </p>
-                            )}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 text-center">
-                      {(() => {
-                        const status = getMonevStatus(m);
-                        switch (status) {
-                          case "belum_mengisi":
-                            return (
-                              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-admin-warn-text bg-admin-warn-bg-2 px-3 py-1.5 rounded-full border border-admin-warn-border">
-                                <Clock size={14} /> Belum Mengisi
-                              </span>
-                            );
-                          case "menunggu_verifikasi":
-                            return (
-                              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-amber-700 bg-amber-100 px-3 py-1.5 rounded-full border border-amber-200">
-                                <Clock size={14} /> Menunggu Verifikasi
-                              </span>
-                            );
-                          case "dalam_verifikasi":
-                            return (
-                              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-700 bg-blue-100 px-3 py-1.5 rounded-full border border-blue-200">
-                                <Loader2 size={14} className="animate-spin" /> Dalam Verifikasi
-                              </span>
-                            );
-                          case "melebihi_batas":
-                            return (
-                              <div className="flex flex-col items-center gap-2">
-                                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-admin-danger-text bg-admin-danger-bg px-3 py-1.5 rounded-full border border-admin-danger-border">
-                                  <ShieldAlert size={14} /> Melebihi Batas
-                                </span>
-                                <button className="text-[10px] font-semibold text-admin-danger-text hover:text-admin-danger-text underline underline-offset-2 transition-colors">
-                                  Tindak Lanjut
-                                </button>
-                              </div>
-                            );
-                          case "data_tidak_sesuai":
-                            return (
-                              <div className="flex flex-col items-center gap-2">
-                                <span className="inline-flex items-center gap-1.5 text-xs font-bold text-admin-warn-text bg-admin-warn-bg-2 px-3 py-1.5 rounded-full border border-admin-warn-border">
-                                  <TriangleAlert size={14} /> Tidak Sesuai
-                                </span>
-                                <button className="text-[10px] font-semibold text-admin-warn-text hover:text-admin-warn-text underline underline-offset-2 transition-colors">
-                                  Tindak Lanjut
-                                </button>
-                              </div>
-                            );
-                          case "sesuai":
-                            return (
-                              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-admin-accent-ink bg-admin-accent/10 px-3 py-1.5 rounded-full border border-admin-accent/25">
-                                <CheckCircle2 size={14} /> Sesuai
-                              </span>
-                            );
-                        }
-                      })()}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
 
+          <p className="mb-3 text-xs text-[#64748B]">Filter pengisian, pemeriksaan, dan pemindaian AI berlaku pada data di halaman ini.</p>
+      </>}
+          {dataError ? <div role="alert" className="rounded-lg border border-red-200 bg-white p-6 text-sm text-red-700">{dataError}<button onClick={fetchData} className="ml-3 underline">Coba lagi</button></div> : detail ? (
+            <div className="rounded-lg border border-[#E2E8F0] bg-white">
+              <div className="border-b border-[#E2E8F0] p-6"><button onClick={() => setDetailId(null)} className="mb-4 text-sm text-[#000352] hover:underline">Kembali ke daftar laporan</button><h2 className="text-xl font-semibold text-[#0B1536]">{detail.nama}</h2><p className="mt-1 text-sm text-[#64748B]">{detail.nim} · {detail.prodi}</p><p className="mt-2 text-sm text-[#64748B]">{selectedSchedule.label}</p></div>
+              <div className="grid gap-6 p-6 md:grid-cols-2">
+                {[{ title: "Data ayah", job: detail.pekerjaan_ayah, income: detail.penghasilan_ayah, files: detail.url_bukti_ayah }, { title: "Data ibu", job: detail.pekerjaan_ibu, income: detail.penghasilan_ibu, files: detail.url_bukti_ibu }].map((parent) => <section key={parent.title}><h3 className="mb-3 font-semibold text-[#0B1536]">{parent.title}</h3><dl className="space-y-2 text-sm"><div className="flex justify-between gap-4"><dt className="text-[#64748B]">Pekerjaan</dt><dd>{parent.job}</dd></div><div className="flex justify-between gap-4"><dt className="text-[#64748B]">Penghasilan</dt><dd>{formatRp(parent.income)}</dd></div></dl><div className="mt-3 flex flex-wrap gap-3">{[{ path: parent.files.kerja, label: "Bukti pekerjaan" }, { path: parent.files.gaji, label: "Bukti penghasilan" }].map((file) => file.path ? <button key={file.label} onClick={() => handlePreviewFile(file.path!, `${detail.nama} - ${parent.title} - ${file.label}`)} className="inline-flex items-center gap-1.5 text-sm text-[#000352] hover:underline"><FileImage size={14} />{file.label}</button> : <span key={file.label} className="text-xs text-[#64748B]">{file.label} tidak tersedia</span>)}</div></section>)}
+                <section className="border-t border-[#E2E8F0] pt-5 md:col-span-2"><h3 className="mb-3 font-semibold text-[#0B1536]">Kondisi keluarga</h3><dl className="grid grid-cols-2 gap-5 text-sm sm:grid-cols-4">{[{ label: "Penghasilan lain", value: formatRp(detail.penghasilan_lain) }, { label: "Jumlah tanggungan", value: detail.jumlah_tanggungan }, { label: "Total pendapatan", value: formatRp(detail.total_pendapatan) }, { label: "Pendapatan per tanggungan", value: formatRp(detail.rupiah_per_tanggungan) }].map((item) => <div key={item.label}><dt className="text-[#64748B]">{item.label}</dt><dd className="mt-2 font-medium">{item.value}</dd></div>)}</dl><div className="mt-4 flex flex-wrap gap-4">{[{ path: detail.url_bukti_lain, label: "Bukti penghasilan lain" }, { path: detail.url_scan_kk, label: "Kartu keluarga" }].map((file) => file.path ? <button key={file.label} onClick={() => handlePreviewFile(file.path!, `${detail.nama} - ${file.label}`)} className="inline-flex items-center gap-1.5 text-sm text-[#000352] hover:underline"><FileImage size={14} />{file.label}</button> : <span key={file.label} className="text-xs text-[#64748B]">{file.label} tidak tersedia</span>)}</div></section>
+                <section className="border-t border-[#E2E8F0] pt-5 md:col-span-2"><h3 className="font-semibold text-[#0B1536]">Pemeriksaan laporan</h3><p className="mt-2 text-sm">{resultLabel(detail)}</p><p className="mt-2 text-xs text-[#64748B]">Hasil AI menjadi bahan peninjauan admin, bukan keputusan akhir.</p>{detail.hasil_deteksi_yolo !== null && <p className="mt-2 text-sm text-[#64748B]">Jumlah terdeteksi pada KK: {detail.hasil_deteksi_yolo}</p>}<button onClick={() => handleScanSingle(detail.id)} disabled={!!scanningId || isScanningMass || !detail.url_scan_kk} className="mt-4 inline-flex items-center gap-2 rounded-lg border border-[#E2E8F0] px-4 py-2 text-sm text-[#000352] disabled:opacity-50"><ScanSearch size={16} />{scanningId === detail.id ? "Memeriksa..." : "Pindai AI"}</button></section>
+              </div>
+            </div>
+          ) : <div className="overflow-hidden rounded-lg border border-[#E2E8F0] bg-white">
+            <div className="overflow-x-auto"><table className="w-full min-w-[750px] text-left text-sm"><thead className="border-b border-[#E2E8F0] bg-[#F8FAFC] text-[#64748B]"><tr>{["Mahasiswa", "Program studi", "Pengisian", "Pemeriksaan", "Aksi"].map((label) => <th scope="col" key={label} className="px-5 py-3 font-medium">{label}</th>)}</tr></thead><tbody className="divide-y divide-[#E2E8F0]">
+              {loading ? <tr><td colSpan={5} className="p-12 text-center text-[#64748B]">Memuat laporan...</td></tr> : visibleRows.length === 0 ? <tr><td colSpan={5} className="p-12 text-center text-[#64748B]">Tidak ada mahasiswa yang sesuai dengan pencarian atau filter.</td></tr> : visibleRows.map((row) => <tr key={row.id} className="hover:bg-slate-50/60"><td className="px-5 py-4"><p className="font-medium text-[#0B1536]">{row.nama}</p><p className="mt-1 text-xs text-[#64748B]">{row.nim}</p></td><td className="px-5 py-4">{row.prodi}</td><td className="px-5 py-4"><span className={`inline-flex items-center gap-1.5 whitespace-nowrap text-xs ${row.status_pengisian === "Sudah" ? "text-emerald-700" : "text-[#64748B]"}`}>{row.status_pengisian === "Sudah" ? <CheckCircle2 size={14} /> : <Clock size={14} />}{row.status_pengisian === "Sudah" ? "Sudah mengirim" : "Belum mengirim"}</span></td><td className="px-5 py-4 text-xs text-[#475569]">{resultLabel(row)}</td><td className="px-5 py-4">{row.status_pengisian === "Sudah" ? <button onClick={() => setDetailId(row.id)} className="whitespace-nowrap font-medium text-[#000352] hover:underline">Lihat detail</button> : <span className="text-[#94A3B8]">—</span>}</td></tr>)}
+            </tbody></table></div>
         {/* Pagination */}
         {!loading && totalPages > 1 && (
           <div className="px-5 py-4 border-t border-admin-border flex items-center justify-between bg-admin-accent/5">
@@ -1471,7 +1082,10 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
             </div>
           </div>
         )}
-      </motion.div>
+
+          </div>}
+          </>}
+        </section>
 
       {/* Image Preview Modal */}
       <AnimatePresence>
@@ -1485,7 +1099,7 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
               transition={{ duration: 0.2 }}
-              className="relative max-w-4xl max-h-[90vh] w-full mx-4 bg-white rounded-2xl shadow-2xl overflow-hidden"
+              className="relative max-w-4xl max-h-[90vh] w-full mx-4 bg-white rounded-lg shadow-2xl overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
@@ -1536,11 +1150,11 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-admin-surface rounded-2xl shadow-xl w-full max-w-md overflow-hidden flex flex-col"
+              className="bg-admin-surface rounded-lg shadow-xl w-full max-w-md overflow-hidden flex flex-col"
             >
               <div className="p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="p-2 bg-admin-accent/10 text-admin-accent rounded-xl">
+                  <div className="p-2 bg-admin-accent/10 text-admin-accent rounded-lg">
                     <ScanSearch size={24} />
                   </div>
                   <div>
@@ -1567,11 +1181,11 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
                   </div>
 
                   <div className="grid grid-cols-2 gap-3 mt-4">
-                    <div className="bg-admin-accent/5 rounded-xl p-3 border border-admin-accent/10">
+                    <div className="bg-admin-accent/5 rounded-lg p-3 border border-admin-accent/10">
                       <p className="text-[10px] uppercase font-bold text-admin-text-2">Berhasil Diproses</p>
                       <p className="text-xl font-black text-admin-accent">{massScanProgress.success}</p>
                     </div>
-                    <div className="bg-admin-warn-bg/20 rounded-xl p-3 border border-admin-warn-border">
+                    <div className="bg-admin-warn-bg/20 rounded-lg p-3 border border-admin-warn-border">
                       <p className="text-[10px] uppercase font-bold text-admin-warn-text">Gagal Diproses</p>
                       <p className="text-xl font-black text-admin-warn-text">{massScanProgress.fail}</p>
                     </div>
@@ -1581,7 +1195,7 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
               <div className="p-4 bg-admin-background border-t border-admin-border flex justify-end">
                 <Button
                   variant="outline"
-                  className="rounded-xl border-admin-border"
+                  className="rounded-lg border-admin-border"
                   onClick={() => {
                     setIsScanningMass(false);
                     setShowMassScanModal(false);
@@ -1612,7 +1226,7 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
               transition={{ duration: 0.15 }}
-              className="bg-admin-surface rounded-2xl shadow-xl w-full max-w-md overflow-hidden"
+              className="bg-admin-surface rounded-lg shadow-xl w-full max-w-md overflow-hidden"
               onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
@@ -1751,14 +1365,14 @@ export default function MonevClient({ initialSchedules }: MonevClientProps) {
               <div className="flex items-center justify-end gap-3 px-5 py-4 border-t border-admin-border">
                 <button
                   onClick={() => setActionDialog(null)}
-                  className="px-4 py-2 text-sm font-medium text-admin-text-2 border border-admin-border rounded-xl hover:bg-admin-accent/5 transition-all"
+                  className="px-4 py-2 text-sm font-medium text-admin-text-2 border border-admin-border rounded-lg hover:bg-admin-accent/5 transition-all"
                 >
                   Batal
                 </button>
                 <button
                   onClick={handleSaveAction}
                   disabled={savingAction}
-                  className="inline-flex items-center gap-2 px-5 py-2 bg-admin-accent text-white text-sm font-semibold rounded-xl hover:bg-admin-accent/90 disabled:opacity-50 transition-all"
+                  className="inline-flex items-center gap-2 px-5 py-2 bg-admin-accent text-white text-sm font-semibold rounded-lg hover:bg-admin-accent/90 disabled:opacity-50 transition-all"
                 >
                   {savingAction ? <Loader2 size={14} className="animate-spin" /> : null}
                   {d.status === "BERAKHIR" ? "Buka & Aktifkan"
