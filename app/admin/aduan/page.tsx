@@ -6,7 +6,7 @@ export default function AdminAduanPage() {
     <div className="min-h-screen bg-admin-bg">
       <PageHeader
         title="Dasbor Pengaduan"
-        description="Sistem Informasi Pengaduan KIP-K Terpadu"
+        description="Kelola pengajuan pengaduan penyalahgunaan KIP Kuliah."
       />
       <div className="px-4 sm:px-[30px] pt-6 pb-[34px]">
         <AduanDashboard />
