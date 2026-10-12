@@ -53,10 +53,10 @@ export default function FormCekAduan() {
   return (
     <div className="-mt-20 relative z-20 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden p-6 sm:p-10">
-        
+
         <form onSubmit={handleCari} className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
-            <label htmlFor="kode" className="sr-only">Kode Resi Laporan</label>
+            <label htmlFor="kode" className="sr-only">Kode Aduan Laporan</label>
             <input
               type="text"
               id="kode"
@@ -85,12 +85,12 @@ export default function FormCekAduan() {
         {hasil && (
           <div className="mt-8 border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
             <div className="bg-slate-100 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Detail Resi</span>
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Detail Aduan</span>
               <span className="text-xs text-slate-500">
                 Diajukan pada: {new Date(hasil.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
               </span>
             </div>
-            
+
             <div className="p-6">
               <div className="mb-6">
                 <h4 className="text-sm font-semibold text-slate-500 mb-1">Kode Laporan</h4>

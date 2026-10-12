@@ -158,7 +158,7 @@ export default function AduanDashboard() {
             />
             <input
               type="text"
-              placeholder="Cari kode resi, nama terlapor, atau NIM..."
+              placeholder="Cari kode aduan, nama terlapor, atau NIM..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full h-[36px] pl-9 pr-4 bg-white border border-[#E0E0E0] rounded-[6px] font-roboto text-[13px] text-[#1A1A1A] placeholder-[#6B7280] focus:ring-1 focus:ring-[#003C71] focus:border-[#003C71] outline-none transition-all"

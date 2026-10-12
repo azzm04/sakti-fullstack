@@ -250,11 +250,11 @@ export default function FormPengaduan() {
             Laporan Berhasil Dikirim
           </h2>
           <p className="mx-auto mt-2 max-w-md text-sm leading-relaxed text-slate-500">
-            Simpan kode resi di bawah ini. Anda memerlukannya untuk melacak perkembangan laporan.
+            Simpan kode aduan di bawah ini. Anda memerlukannya untuk melacak perkembangan laporan.
           </p>
 
           <div className="mt-8 rounded-2xl border border-dashed border-[#001349]/30 bg-[#001349]/[0.03] px-6 py-5">
-            <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Kode Resi</p>
+            <p className="text-xs font-bold uppercase tracking-widest text-slate-500">Kode Aduan</p>
             <p className="mt-1 text-2xl font-black tracking-wider text-[#001349] sm:text-3xl">
               {kodeBerhasil}
             </p>

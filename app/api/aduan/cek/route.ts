@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
     const kode = searchParams.get("kode");
 
     if (!kode) {
-      return NextResponse.json({ error: "Kode resi wajib diisi" }, { status: 400 });
+      return NextResponse.json({ error: "Kode aduan wajib diisi" }, { status: 400 });
     }
 
     // Mencari laporan di database
@@ -25,7 +25,7 @@ export async function GET(req: NextRequest) {
 
     if (!aduan) {
       return NextResponse.json(
-        { error: "Laporan tidak ditemukan. Pastikan penulisan kode resi sudah benar." },
+        { error: "Laporan tidak ditemukan. Pastikan penulisan kode aduan sudah benar." },
         { status: 404 }
       );
     }

@@ -130,7 +130,7 @@ export default async function DetailAduanAdmin({
             <div className="relative isolate flex min-h-[160px] items-center overflow-hidden rounded-t-2xl px-5 py-8 sm:min-h-[200px] sm:px-8">
               <div className="relative z-10 min-w-0 lg:max-w-[68%]">
                 <p className="text-[12px] font-medium uppercase tracking-wider text-[#64748B]">
-                  Kode resi laporan
+                  Kode aduan
                 </p>
                 <h1 className="mt-1 break-all text-[24px] font-semibold leading-[32px] text-[#000352] lg:text-[32px] lg:leading-[40px]">
                   {aduan.kode_laporan}
