@@ -97,11 +97,11 @@ export default function AnalisisHeroBanner({ ringkasan, konsistensi, jalur, tahu
             Decision Tree · {jalur} · {tahun}
           </p>
           <h2 className="font-admin-heading text-[22px] sm:text-[26px] font-bold mt-2 tracking-[-0.01em]">
-            Analisis Pola Keputusan Pewawancara
+            Analisis Hasil Seleksi {jalur} {tahun}
           </h2>
           <p className="text-[13px] text-white/55 mt-2.5 leading-relaxed">
             Model membaca {fmtId(ringkasan.total_pendaftar)} pendaftar untuk menemukan kriteria apa yang
-            sebenarnya dipakai pewawancara saat memutuskan. Pilih tahun dan jalur masuk untuk memulai.
+            sebenarnya dipakai pewawancara saat memutuskan.
           </p>
         </div>
 
