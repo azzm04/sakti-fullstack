@@ -225,7 +225,7 @@ export default function AduanDashboard() {
               <table className="w-full text-left">
                 <thead>
                   <tr className="border-b border-[#E5EAF0] bg-[#F8FAFC]">
-                    <th className="px-8 py-3 font-roboto font-semibold text-[11px] text-[#6B7280] uppercase tracking-wider whitespace-nowrap">Resi & Tanggal</th>
+                    <th className="px-8 py-3 font-roboto font-semibold text-[11px] text-[#6B7280] uppercase tracking-wider whitespace-nowrap">Kode Aduan & Tanggal</th>
                     <th className="px-5 py-3 font-roboto font-semibold text-[11px] text-[#6B7280] uppercase tracking-wider">Terlapor</th>
                     <th className="px-5 py-3 font-roboto font-semibold text-[11px] text-[#6B7280] uppercase tracking-wider whitespace-nowrap">Kategori</th>
                     <th className="px-5 py-3 font-roboto font-semibold text-[11px] text-[#6B7280] uppercase tracking-wider whitespace-nowrap">Status</th>
