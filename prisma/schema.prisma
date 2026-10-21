@@ -31,6 +31,7 @@ model AdminUser {
   nama                 String                 @db.VarChar(150)
   createdAt            DateTime               @default(now()) @map("created_at") @db.Timestamp(6)
   aduan                Aduan[]
+  pengisian_monev      pengisian_monev[]
   pewawancara          Pewawancara[]
   riwayat_jadwal_monev riwayat_jadwal_monev[]
   sesi_wawancara       SesiWawancara[]
@@ -538,25 +539,25 @@ model kandidat_riwayat {
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model log_notifikasi {
-  id               String        @id(map: "notification_logs_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  periode_monev_id String        @db.Uuid
-  triggerDay       Int
-  totalSent        Int           @default(0)
-  totalFailed      Int           @default(0)
-  sentAt           DateTime      @default(now())
+  id                String        @id(map: "notification_logs_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  periode_monev_id  String        @db.Uuid
+  triggerDay        Int
+  totalSent         Int           @default(0)
+  totalFailed       Int           @default(0)
+  sentAt            DateTime      @default(now())
   /// Deadline yang berlaku saat log dibuat. Dipakai agar reminder H-n
   /// tidak terkirim dua kali ketika deadline diperpanjang.
-  deadline_snapshot DateTime?    @db.Timestamptz(6)
-  periode_monev    periode_monev @relation(fields: [periode_monev_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  deadline_snapshot DateTime?     @db.Timestamptz(6)
+  periode_monev     periode_monev @relation(fields: [periode_monev_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@unique([periode_monev_id, triggerDay, deadline_snapshot], map: "uq_log_notifikasi_periode_trigger_deadline")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model pengisian_monev {
-  id                          String        @id(map: "monev_submissions_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id                     String        @db.Uuid
-  periode_monev_id            String        @db.Uuid
+  id                          String                     @id(map: "monev_submissions_pkey") @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                     String                     @db.Uuid
+  periode_monev_id            String                     @db.Uuid
   pekerjaan_ayah              String?
   path_bukti_pekerjaan_ayah   String?
   penghasilan_ayah            BigInt?
@@ -565,15 +566,24 @@ model pengisian_monev {
   path_bukti_pekerjaan_ibu    String?
   penghasilan_ibu             BigInt?
   path_bukti_penghasilan_ibu  String?
-  penghasilan_lain            BigInt?       @default(0)
+  penghasilan_lain            BigInt?                    @default(0)
   path_bukti_penghasilan_lain String?
   jumlah_tanggungan           Int?
   path_scan_kk                String
   hasil_deteksi_yolo          Int?
-  status_anomali              Boolean?      @default(false)
-  waktu_lapor                 DateTime?     @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
+  status_anomali              Boolean?                   @default(false)
+  waktu_lapor                 DateTime?                  @default(dbgenerated("(now() AT TIME ZONE 'utc'::text)")) @db.Timestamptz(6)
   hasil_scan_ai               Json?
-  periode_monev               periode_monev @relation(fields: [periode_monev_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  penghasilan_final           BigInt?
+  anggota_final               Int?
+  catatan_admin               String?
+  ditinjau_oleh               String?                    @db.Uuid
+  ditinjau_at                 DateTime?                  @db.Timestamptz(6)
+  alasan_penangguhan_monev    alasan_penangguhan_monev[]
+  admin_users                 AdminUser?                 @relation(fields: [ditinjau_oleh], references: [id], onUpdate: NoAction)
+  periode_monev               periode_monev              @relation(fields: [periode_monev_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([periode_monev_id, ditinjau_at], map: "idx_pengisian_monev_periode_ditinjau")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
@@ -607,6 +617,8 @@ model periode_monev {
   updated_at           DateTime?              @default(now()) @db.Timestamptz(6)
   tahun_akademik       Int                    @default(2026)
   semester             String                 @default("Gasal")
+  ditutup_at           DateTime?              @db.Timestamptz(6)
+  difinalisasi_at      DateTime?              @db.Timestamptz(6)
   log_notifikasi       log_notifikasi[]
   pengisian_monev      pengisian_monev[]
   riwayat_jadwal_monev riwayat_jadwal_monev[]
@@ -668,6 +680,17 @@ model riwayat_jadwal_monev {
 
   @@index([admin_id, created_at(sort: Desc)], map: "idx_riwayat_jadwal_admin")
   @@index([periode_monev_id, created_at(sort: Desc)], map: "idx_riwayat_jadwal_periode")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+/// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
+model alasan_penangguhan_monev {
+  pengisian_monev_id String              @db.Uuid
+  kode               alasan_manual_monev
+  catatan            String
+  pengisian_monev    pengisian_monev     @relation(fields: [pengisian_monev_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@id([pengisian_monev_id, kode])
 }
 
 enum RoleType {
@@ -745,4 +768,9 @@ enum StatusPengunduranDiri {
   DIPROSES
   DITERIMA
   DITOLAK
+}
+
+enum alasan_manual_monev {
+  E2
+  E4
 }
