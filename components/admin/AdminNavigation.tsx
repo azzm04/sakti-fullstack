@@ -3,13 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
-import {
-  useCallback,
-  useEffect,
-  useRef,
-  useState,
-  type FocusEvent as ReactFocusEvent,
-} from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import {
   AnimatePresence,
@@ -17,16 +11,22 @@ import {
   useReducedMotion,
   type Variants,
 } from "framer-motion";
-import { ChevronUp, LoaderCircle, LogOut, Menu, X } from "lucide-react";
+import {
+  ChevronUp,
+  LoaderCircle,
+  LogOut,
+  Menu,
+  PanelLeftClose,
+  PanelLeftOpen,
+  X,
+} from "lucide-react";
 import { ADMIN_NAV_ITEMS as navItems } from "@/lib/admin-nav";
 
 const EXPANDED_WIDTH = 264;
 const COLLAPSED_WIDTH = 72;
 
-/** Jeda sebelum melebar (ms) — mencegah buka saat kursor hanya lewat */
-const OPEN_DELAY = 80;
-/** Jeda sebelum menutup (ms) — mencegah kedip saat kursor keluar sebentar */
-const CLOSE_DELAY = 180;
+/** Status pin diingat lintas kunjungan, seperti sidebar ChatGPT/Notion. */
+const PIN_STORAGE_KEY = "sakti-admin-sidebar-pinned";
 
 const EASE: [number, number, number, number] = [0.4, 0, 0.2, 1];
 
@@ -103,6 +103,94 @@ function BrandLink({
   );
 }
 
+/**
+ * Header sidebar desktop — menggabungkan logo & tombol pin/unpin jadi satu
+ * slot (pola ChatGPT):
+ * - Ciut: slot menampilkan logo; saat di-hover/fokus, logo memudar dan
+ *   diganti ikon "buka sidebar" di tempat yang sama. Klik untuk membuka.
+ * - Terbuka: logo (tetap jadi link ke dashboard) + nama SAKTI di kiri,
+ *   ikon "ciutkan" (tanpa label) di pojok kanan, satu baris yang sama.
+ */
+function DesktopHeader({
+  pinned,
+  onToggle,
+}: {
+  pinned: boolean;
+  onToggle: () => void;
+}) {
+  if (!pinned) {
+    return (
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-label="Buka sidebar"
+        title="Buka sidebar"
+        className={[
+          "group relative flex h-12 w-12 shrink-0 items-center justify-center rounded-[4px]",
+          FOCUS_STYLE,
+        ].join(" ")}
+      >
+        <Image
+          src="/Logo Sakti.png"
+          alt=""
+          width={40}
+          height={40}
+          className="h-14 w-14 object-contain transition-opacity duration-150 group-hover:opacity-0 group-focus-visible:opacity-0"
+        />
+        <PanelLeftOpen
+          aria-hidden="true"
+          size={20}
+          strokeWidth={1.7}
+          className="absolute inset-0 m-auto text-[#EEF2FF]/80 opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus-visible:opacity-100"
+        />
+      </button>
+    );
+  }
+
+  return (
+    <div className="flex w-full items-center gap-2">
+      <Link
+        href="/admin"
+        aria-label="SAKTI — Dashboard admin"
+        className={[
+          "flex min-w-0 flex-1 items-center gap-3 rounded-[4px]",
+          FOCUS_STYLE,
+        ].join(" ")}
+      >
+        <Image
+          src="/Logo Sakti.png"
+          alt=""
+          width={40}
+          height={40}
+          className="h-14 w-14 shrink-0 object-contain"
+        />
+        <div className="min-w-0 whitespace-nowrap">
+          <span className="block text-[22px] font-bold leading-7 tracking-[-0.02em] text-white">
+            SAKTI
+          </span>
+          <span className="mt-0.5 block text-[12px] leading-5 text-[#EEF2FF]/70">
+            Dashboard admin
+          </span>
+        </div>
+      </Link>
+
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-label="Ciutkan sidebar"
+        title="Ciutkan sidebar"
+        className={[
+          "flex h-9 w-9 shrink-0 items-center justify-center rounded-[4px]",
+          "text-[#EEF2FF]/70 transition-colors hover:bg-[#818CF8]/10 hover:text-white",
+          FOCUS_STYLE,
+        ].join(" ")}
+      >
+        <PanelLeftClose aria-hidden="true" size={17} strokeWidth={1.7} />
+      </button>
+    </div>
+  );
+}
+
 function NavList({
   pathname,
   expanded,
@@ -120,9 +208,7 @@ function NavList({
     >
       <div className="mb-3 flex h-4 items-center px-3">
         {expanded ? (
-          <span className="whitespace-nowrap text-[10px] font-medium uppercase leading-4 tracking-[0.12em] text-[#EEF2FF]/60">
-            Alur kerja
-          </span>
+          <span className="whitespace-nowrap text-[10px] font-medium uppercase leading-4 tracking-[0.12em] text-[#EEF2FF]/60"></span>
         ) : (
           <span aria-hidden="true" className="mx-auto h-px w-5 bg-white/15" />
         )}
@@ -191,8 +277,10 @@ export default function AdminNavigation({
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
 
-  const [hovered, setHovered] = useState(false);
-  const [focusWithin, setFocusWithin] = useState(false);
+  // Default terbuka — lalu disinkronkan dari localStorage setelah mount
+  // (dibaca di effect, bukan di lazy initializer, supaya render pertama di
+  // client selalu sama dengan server dan tidak memicu hydration mismatch).
+  const [pinned, setPinned] = useState(true);
   const [profileOpen, setProfileOpen] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -205,10 +293,6 @@ export default function AdminNavigation({
   const profilePopupRef = useRef<HTMLDivElement>(null);
   const logoutButtonRef = useRef<HTMLButtonElement>(null);
   const logoutPendingRef = useRef(false);
-  const hoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  /** Melebar jika kursor di atas sidebar, fokus keyboard di dalamnya, atau popup akun terbuka. */
-  const expanded = hovered || focusWithin || profileOpen;
 
   const displayName = adminName.trim() || "Admin";
   const displayInitials = displayName
@@ -222,37 +306,29 @@ export default function AdminNavigation({
   const popupTransition = { duration: reduceMotion ? 0 : 0.14, ease: EASE };
 
   // ==========================================================
-  // HOVER EXPAND / COLLAPSE
+  // PIN / UNPIN — status diingat lewat localStorage
   // ==========================================================
 
-  const clearHoverTimer = () => {
-    if (hoverTimerRef.current) {
-      clearTimeout(hoverTimerRef.current);
-      hoverTimerRef.current = null;
-    }
-  };
-
-  const handleMouseEnter = () => {
-    clearHoverTimer();
-    hoverTimerRef.current = setTimeout(() => setHovered(true), OPEN_DELAY);
-  };
-
-  const handleMouseLeave = () => {
-    clearHoverTimer();
-    hoverTimerRef.current = setTimeout(() => setHovered(false), CLOSE_DELAY);
-  };
-
-  const handleFocus = () => setFocusWithin(true);
-
-  const handleBlur = (e: ReactFocusEvent<HTMLElement>) => {
-    if (!e.currentTarget.contains(e.relatedTarget as Node | null)) {
-      setFocusWithin(false);
-    }
-  };
-
   useEffect(() => {
-    return () => clearHoverTimer();
+    try {
+      const stored = window.localStorage.getItem(PIN_STORAGE_KEY);
+      if (stored !== null) setPinned(stored === "true");
+    } catch {
+      // localStorage tidak tersedia (mode privat dsb.) — tetap default terbuka.
+    }
   }, []);
+
+  function togglePinned() {
+    setPinned((current) => {
+      const next = !current;
+      try {
+        window.localStorage.setItem(PIN_STORAGE_KEY, String(next));
+      } catch {
+        // Diam-diam gagal — preferensi cukup berlaku untuk sesi ini saja.
+      }
+      return next;
+    });
+  }
 
   // ==========================================================
   // POPUP AKUN
@@ -266,7 +342,7 @@ export default function AdminNavigation({
     const margin = 12;
     const gap = 8;
     const width = Math.min(240, window.innerWidth - margin * 2);
-    const preferredLeft = expanded ? rect.left : rect.right + gap;
+    const preferredLeft = pinned ? rect.left : rect.right + gap;
 
     const left = Math.max(
       margin,
@@ -280,7 +356,7 @@ export default function AdminNavigation({
       width,
       maxHeight: Math.max(0, window.innerHeight - bottom - margin),
     });
-  }, [expanded]);
+  }, [pinned]);
 
   function toggleProfile() {
     if (!profileOpen) updatePopupPosition();
@@ -310,23 +386,17 @@ export default function AdminNavigation({
     }
   }
 
-  // Tutup popup, sidebar & drawer saat pindah halaman
+  // Tutup popup & drawer mobile saat pindah halaman (sidebar desktop tetap
+  // mengikuti preferensi pin — tidak dipaksa tertutup).
   useEffect(() => {
     setProfileOpen(false);
-    setHovered(false);
-    setFocusWithin(false);
     setMobileOpen(false);
   }, [pathname]);
 
   useEffect(() => {
     if (!profileOpen) return;
 
-    // Tunggu animasi lebar selesai agar posisi popup akurat
     updatePopupPosition();
-    const positionTimer = setTimeout(
-      updatePopupPosition,
-      reduceMotion ? 0 : 240,
-    );
     const focusFrame = window.requestAnimationFrame(() => {
       logoutButtonRef.current?.focus();
     });
@@ -370,7 +440,6 @@ export default function AdminNavigation({
     window.addEventListener("scroll", updatePopupPosition, true);
 
     return () => {
-      clearTimeout(positionTimer);
       window.cancelAnimationFrame(focusFrame);
       document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("focusin", handleFocusIn);
@@ -378,7 +447,7 @@ export default function AdminNavigation({
       window.removeEventListener("resize", handleResize);
       window.removeEventListener("scroll", updatePopupPosition, true);
     };
-  }, [profileOpen, updatePopupPosition, reduceMotion]);
+  }, [profileOpen, updatePopupPosition]);
 
   // ==========================================================
   // RENDER
@@ -387,91 +456,78 @@ export default function AdminNavigation({
   return (
     <>
       {/*
-       * Placeholder selebar sidebar tertutup (72px). Saat sidebar melebar
-       * ia MENIMPA konten, bukan mendorongnya.
+       * Sidebar desktop — elemen flow biasa (bukan overlay absolut): saat
+       * di-pin terbuka, lebarnya mendorong <main> di sebelahnya, bukan
+       * menimpanya. Status pin disimpan per klik tombol di DesktopHeader.
        */}
-      <div
-        className="sticky top-0 z-70 hidden h-dvh shrink-0 md:block"
-        style={{ width: COLLAPSED_WIDTH }}
+      <motion.aside
+        initial={false}
+        animate={{ width: pinned ? EXPANDED_WIDTH : COLLAPSED_WIDTH }}
+        transition={sidebarTransition}
+        aria-label="Sidebar admin"
+        className="sticky top-0 hidden h-dvh shrink-0 flex-col overflow-hidden border-r border-white/10 bg-[#000352] md:flex"
       >
-        <motion.aside
-          initial={false}
-          animate={{ width: expanded ? EXPANDED_WIDTH : COLLAPSED_WIDTH }}
-          transition={sidebarTransition}
-          aria-label="Sidebar admin"
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
+        <header
           className={[
-            "absolute inset-y-0 left-0 flex flex-col overflow-hidden",
-            "border-r border-white/10 bg-[#000352]",
-            "transition-shadow duration-200",
-            expanded ? "shadow-[8px_0_32px_rgba(0,3,82,0.25)]" : "shadow-none",
+            "flex h-24 shrink-0 items-center border-b border-white/10",
+            pinned ? "px-5" : "justify-center px-3",
           ].join(" ")}
         >
-          <header
+          <DesktopHeader pinned={pinned} onToggle={togglePinned} />
+        </header>
+
+        <NavList pathname={pathname} expanded={pinned} />
+
+        <footer className="shrink-0 border-t border-white/10 p-3">
+          <button
+            ref={profileButtonRef}
+            type="button"
+            onClick={toggleProfile}
+            aria-label={`Opsi akun ${displayName}`}
+            aria-expanded={profileOpen}
+            aria-controls={profileOpen ? "admin-profile-popup" : undefined}
+            title={!pinned ? displayName : undefined}
             className={[
-              "flex h-24 shrink-0 items-center border-b border-white/10",
-              expanded ? "px-5" : "justify-center px-3",
+              "flex min-h-14 w-full items-center rounded-[4px] text-left",
+              "transition-colors duration-150",
+              pinned ? "gap-3 px-2 py-2" : "justify-center py-2",
+              profileOpen ? "bg-[#818CF8]/15" : "hover:bg-[#818CF8]/10",
+              FOCUS_STYLE,
             ].join(" ")}
           >
-            <BrandLink expanded={expanded} />
-          </header>
-
-          <NavList pathname={pathname} expanded={expanded} />
-
-          <footer className="shrink-0 border-t border-white/10 p-3">
-            <button
-              ref={profileButtonRef}
-              type="button"
-              onClick={toggleProfile}
-              aria-label={`Opsi akun ${displayName}`}
-              aria-expanded={profileOpen}
-              aria-controls={profileOpen ? "admin-profile-popup" : undefined}
-              title={!expanded ? displayName : undefined}
-              className={[
-                "flex min-h-14 w-full items-center rounded-[4px] text-left",
-                "transition-colors duration-150",
-                expanded ? "gap-3 px-2 py-2" : "justify-center py-2",
-                profileOpen ? "bg-[#818CF8]/15" : "hover:bg-[#818CF8]/10",
-                FOCUS_STYLE,
-              ].join(" ")}
+            <span
+              aria-hidden="true"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[4px] border border-[#818CF8]/25 bg-[#EEF2FF]/10 text-[12px] font-semibold text-[#EEF2FF]"
             >
-              <span
-                aria-hidden="true"
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[4px] border border-[#818CF8]/25 bg-[#EEF2FF]/10 text-[12px] font-semibold text-[#EEF2FF]"
-              >
-                {displayInitials}
-              </span>
+              {displayInitials}
+            </span>
 
-              {expanded && (
-                <>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-semibold leading-5 text-white">
-                      {displayName}
-                    </p>
-                    <p className="mt-0.5 whitespace-nowrap text-[11px] leading-4 text-[#EEF2FF]/65">
-                      Administrator
-                    </p>
-                  </div>
+            {pinned && (
+              <>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-[13px] font-semibold leading-5 text-white">
+                    {displayName}
+                  </p>
+                  <p className="mt-0.5 whitespace-nowrap text-[11px] leading-4 text-[#EEF2FF]/65">
+                    Administrator
+                  </p>
+                </div>
 
-                  <ChevronUp
-                    aria-hidden="true"
-                    size={15}
-                    strokeWidth={1.7}
-                    className={[
-                      "shrink-0 text-[#EEF2FF]/60",
-                      "transition-transform duration-150 motion-reduce:transition-none",
-                      profileOpen ? "rotate-180" : "",
-                    ].join(" ")}
-                  />
-                </>
-              )}
-            </button>
-          </footer>
-        </motion.aside>
-      </div>
+                <ChevronUp
+                  aria-hidden="true"
+                  size={15}
+                  strokeWidth={1.7}
+                  className={[
+                    "shrink-0 text-[#EEF2FF]/60",
+                    "transition-transform duration-150 motion-reduce:transition-none",
+                    profileOpen ? "rotate-180" : "",
+                  ].join(" ")}
+                />
+              </>
+            )}
+          </button>
+        </footer>
+      </motion.aside>
 
       {/* Popup akun berada di luar area sidebar */}
       {typeof document !== "undefined" &&
@@ -550,9 +606,10 @@ export default function AdminNavigation({
         <Link
           href="/admin"
           aria-label="SAKTI — Dashboard admin"
-          className={["flex items-center gap-2 rounded-[4px]", FOCUS_STYLE].join(
-            " ",
-          )}
+          className={[
+            "flex items-center gap-2 rounded-[4px]",
+            FOCUS_STYLE,
+          ].join(" ")}
         >
           <Image
             src="/Logo Sakti.png"
@@ -660,7 +717,10 @@ export default function AdminNavigation({
                   </button>
                 </div>
                 {logoutError && (
-                  <p role="alert" className="px-2 pt-1 text-[12px] text-red-300">
+                  <p
+                    role="alert"
+                    className="px-2 pt-1 text-[12px] text-red-300"
+                  >
                     {logoutError}
                   </p>
                 )}
