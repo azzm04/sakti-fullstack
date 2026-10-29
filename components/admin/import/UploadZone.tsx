@@ -24,17 +24,11 @@ interface Props {
     stats: ValidationSummary,
     filename: string,
   ) => void;
-  onSave: () => void;
-  hasData: boolean;
-  saveStatus?: "idle" | "saving" | "saved" | "error";
   jalurMasuk?: string;
 }
 
 export default function UploadZone({
   onDataUploaded,
-  onSave,
-  hasData,
-  saveStatus = "idle",
   jalurMasuk = "",
 }: Props) {
   const [isProcessing, setIsProcessing] = useState(false);
@@ -369,7 +363,7 @@ export default function UploadZone({
       {/* Drop Zone */}
       <div
         {...getRootProps()}
-        className={`p-8 rounded-2xl border-[1.5px] border-dashed transition-[border-color,background-color,opacity] duration-200 cursor-pointer
+        className={`p-8 rounded-[8px] border-[1.5px] border-dashed transition-[border-color,background-color,opacity] duration-200 cursor-pointer
           ${isDragActive ? "border-admin-accent bg-admin-accent/5" : "border-admin-border hover:border-admin-accent/40 hover:bg-admin-surface-soft"}
           ${isProcessing ? "opacity-50 pointer-events-none" : ""}
         `}
@@ -448,7 +442,7 @@ export default function UploadZone({
       </div>
 
       {/* Info format kolom */}
-      <div className="mt-4 p-3 bg-admin-surface-soft border border-admin-border rounded-xl">
+      <div className="mt-4 p-3 bg-admin-surface-soft border border-admin-border rounded-[8px]">
         <p className="text-[11px] font-semibold text-admin-text-3 uppercase tracking-wider mb-1.5">
           Kolom wajib di file
         </p>
@@ -467,32 +461,6 @@ export default function UploadZone({
           <em>Data Verifikasi Validasi SNBT Eligible</em>.
         </p>
       </div>
-
-      {/* Tombol simpan */}
-      {hasData && saveStatus !== "saved" && (
-        <button
-          onClick={onSave}
-          disabled={saveStatus === "saving" || !jalurMasuk}
-          className={`mt-4 w-full py-2.5 rounded-xl text-sm font-semibold transition-all flex items-center justify-center gap-2
-            ${saveStatus === "saving"
-              ? "bg-admin-accent/60 text-white cursor-wait"
-              : !jalurMasuk
-              ? "bg-admin-border text-admin-placeholder cursor-not-allowed"
-              : "bg-admin-accent text-white hover:bg-admin-accent-hover"
-            }`}
-        >
-          {saveStatus === "saving" ? (
-            <>
-              <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-              Menyimpan...
-            </>
-          ) : !jalurMasuk ? (
-            "← Pilih jalur masuk dulu"
-          ) : (
-            <>Simpan — {jalurMasuk}</>
-          )}
-        </button>
-      )}
     </>
   );
 }

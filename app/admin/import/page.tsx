@@ -2,17 +2,12 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  EyeOff,
-  Eye,
-  LayoutTemplate,
-} from "lucide-react";
+import { EyeOff, Eye } from "lucide-react";
 
 import { type CandidateData, type ValidationSummary } from "@/schemas";
 import UploadZone from "@/components/admin/import/UploadZone";
 import DataPreviewTable from "@/components/admin/import/DataPreviewTable";
-import TahunSeleksiInput from "@/components/admin/import/TahunSeleksiInput";
-import JalurMasukPicker from "@/components/admin/import/JalurMasukPicker";
+import ImportSettingsCard from "@/components/admin/import/ImportSettingsCard";
 import ImportStatusBadge from "@/components/admin/import/ImportStatusBadge";
 import ImportSuccessBanner from "@/components/admin/import/ImportSuccessBanner";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
@@ -248,96 +243,68 @@ export default function ImportDataPage() {
           </section>
         )}
 
-        {/* Main layout */}
-        <div className="flex flex-col xl:flex-row gap-[14px] items-start">
-          {/* Left panel — step-by-step config */}
-          <AnimatePresence initial={false}>
-            {showUpload && (
-              <motion.div
-                key="upload-panel"
-                initial={{ opacity: 0, width: 0 }}
-                animate={{ opacity: 1, width: "auto" }}
-                exit={{ opacity: 0, width: 0, overflow: "hidden" }}
-                transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-                className="w-full xl:w-[400px] 2xl:w-[450px] shrink-0 space-y-4"
-              >
-                <TahunSeleksiInput
-                  value={tahunSeleksi}
-                  onChange={setTahunSeleksi}
-                  disabled={isSaved}
-                  currentYear={currentYear}
-                />
+        {/* Pengaturan import — Tahun Seleksi + Pilih Jalur Masuk digabung 1 card */}
+        <AnimatePresence initial={false}>
+          {showUpload && (
+            <motion.div
+              key="upload-panel"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0, overflow: "hidden" }}
+              transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+            >
+              <ImportSettingsCard
+                tahunSeleksi={tahunSeleksi}
+                onChangeTahun={setTahunSeleksi}
+                currentYear={currentYear}
+                jalurMasuk={jalurMasuk}
+                onChangeJalur={setJalurMasuk}
+                disabled={isSaved}
+                showJalurWarning={hasData && !jalurMasuk}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
 
-                <JalurMasukPicker
-                  value={jalurMasuk}
-                  onChange={setJalurMasuk}
-                  disabled={isSaved}
-                  showWarning={hasData && !jalurMasuk}
-                />
+        {/* Data Pendaftar — 1 card yang sama: dropzone unggah saat kosong,
+            tabel pratinjau begitu file sudah dibaca. Langsung di bawah card
+            pengaturan di atas, selebar halaman. */}
+        <motion.div layout className="w-full space-y-6">
+          {hasData ? (
+            <div className="space-y-6">
+              <DataPreviewTable
+                data={previewData}
+                fileName={fileName}
+                onSave={handleSave}
+                saveStatus={saveStatus}
+                hasData={hasData}
+                jalurMasuk={jalurMasuk}
+              />
 
-                <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-[0_1px_2px_rgba(20,40,70,0.05)] p-5">
-                  <p className="text-[10.5px] font-bold text-admin-text-3 uppercase tracking-wider mb-3 flex items-center gap-2">
-                    <span className="w-5 h-5 rounded-full bg-admin-accent text-white text-[10px] font-black flex items-center justify-center shrink-0">
-                      2
-                    </span>
-                    Unggah File
-                  </p>
-                  <UploadZone
-                    onDataUploaded={handleDataUploaded}
-                    onSave={handleSave}
-                    hasData={hasData}
-                    saveStatus={saveStatus}
-                    jalurMasuk={jalurMasuk}
-                  />
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Right panel — data preview */}
-          <motion.div layout className="flex-1 w-full space-y-6">
-            {hasData ? (
-              <div className="space-y-6">
-                <DataPreviewTable
-                  data={previewData}
-                  fileName={fileName}
-                  onSave={handleSave}
-                  saveStatus={saveStatus}
-                  hasData={hasData}
+              {isSaved && (
+                <ImportSuccessBanner
+                  total={validation.total}
                   jalurMasuk={jalurMasuk}
+                  tahunSeleksi={tahunSeleksi}
                 />
-
-                {isSaved && (
-                  <ImportSuccessBanner
-                    total={validation.total}
-                    jalurMasuk={jalurMasuk}
-                    tahunSeleksi={tahunSeleksi}
-                  />
-                )}
-              </div>
-            ) : (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="w-full min-h-[400px] bg-admin-surface rounded-2xl border-[1.5px] border-dashed border-admin-border flex flex-col items-center justify-center text-center p-12"
-              >
-                <div className="w-20 h-20 bg-admin-surface-soft-2 rounded-full flex items-center justify-center mb-5">
-                  <LayoutTemplate
-                    size={32}
-                    className="text-admin-text-5"
-                  />
-                </div>
-                <h3 className="font-admin-heading text-xl font-extrabold text-admin-text mb-2">
-                  Belum Ada Data
-                </h3>
-                <p className="text-sm text-admin-text-3 max-w-sm mx-auto">
-                  Isi tahun seleksi, pilih jalur masuk, lalu unggah file
-                  Excel/CSV data pendaftar KIP-K di panel kiri.
-                </p>
-              </motion.div>
-            )}
-          </motion.div>
-        </div>
+              )}
+            </div>
+          ) : (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="bg-admin-surface rounded-[8px] border border-admin-border shadow-[0_1px_2px_rgba(20,40,70,0.05)] p-5"
+            >
+              <p className="text-[10.5px] font-bold text-admin-text-3 uppercase tracking-wider mb-3">
+                Data Pendaftar
+              </p>
+              <UploadZone
+                onDataUploaded={handleDataUploaded}
+                jalurMasuk={jalurMasuk}
+              />
+            </motion.div>
+          )}
+        </motion.div>
       </div>
     </div>
   );
