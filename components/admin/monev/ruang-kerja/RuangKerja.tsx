@@ -7,7 +7,7 @@ import type { PeriodeRuangKerja } from "@/lib/monev/ruang-kerja";
 import KepalaPeriode from "./KepalaPeriode";
 import LangkahJadwal from "./LangkahJadwal";
 import LaporanEkonomi from "./LaporanEkonomi";
-import { halaman } from "./tampilan";
+import { halaman, wadahForm } from "./tampilan";
 
 export default function RuangKerja({ periode, periods, dashboard, laporan }: {
   periode: PeriodeRuangKerja; periods: { id: string; label: string }[]; dashboard: Dashboard; laporan: Baris[];
@@ -18,7 +18,7 @@ export default function RuangKerja({ periode, periods, dashboard, laporan }: {
   const final = periode.fase === "FINAL";
 
   return <div className={halaman}>
-    <div className={jadwal ? "mx-auto w-full max-w-6xl space-y-6" : "space-y-6"}>
+    <div className={jadwal ? wadahForm : "space-y-6"}>
       <KepalaPeriode periode={periode} periods={periods} contoh={contoh} />
       {jadwal ? <LangkahJadwal key={`${periode.id}-${periode.updated_at}`} periode={periode} contoh={contoh} /> : <>
         <LaporanEkonomi key={periode.id} rows={laporan} contoh={contoh} final={final} />

@@ -16,7 +16,7 @@ import {
 } from "@/lib/monev/ruang-kerja";
 import LangkahJadwal from "./ruang-kerja/LangkahJadwal";
 import AksiPeriode from "./AksiPeriode";
-import { halaman, kolom, panel, tombol, utama } from "./ruang-kerja/tampilan";
+import { halaman, kolom, panel, tombol, utama, judulHalaman, deskripsiHalaman, wadahForm, tautanNavigasi } from "./ruang-kerja/tampilan";
 
 type StatusRingkas =
   | "belum-dimulai"
@@ -119,12 +119,12 @@ export default function DaftarPeriode({
     setHal(1);
   };
 
-  if (buat) return <div className="min-h-screen bg-[#F8FAFC] font-body text-[#334155]">
-    <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-      <Link href={daftarUrl} className="inline-flex min-h-11 items-center gap-2 rounded text-[13px] font-medium text-[#475569] transition-colors hover:text-[#000352] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#000352] focus-visible:ring-offset-2"><ArrowLeft size={16} aria-hidden />Kembali ke periode evaluasi</Link>
-      <header className="max-w-2xl">
-        <h1 className="text-3xl font-bold leading-tight tracking-tight text-[#0B1536] sm:text-4xl">Buat periode evaluasi</h1>
-        <p className="mt-3 text-[14px] leading-6 text-[#64748B] sm:text-base">Tentukan semester yang dievaluasi dan jadwal pengisian Monev mahasiswa.</p>
+  if (buat) return <div className={halaman}>
+    <div className={wadahForm}>
+      <header>
+        <nav aria-label="Navigasi periode evaluasi" className="mb-4"><Link href={daftarUrl} className={tautanNavigasi}><ArrowLeft size={14} aria-hidden />Kembali ke periode evaluasi</Link></nav>
+        <h1 className={judulHalaman}>Buat periode evaluasi</h1>
+        <p className={deskripsiHalaman}>Tentukan semester yang dievaluasi dan jadwal pengisian Monev mahasiswa.</p>
       </header>
       <LangkahJadwal />
     </div>
@@ -134,10 +134,10 @@ export default function DaftarPeriode({
     <div className={halaman}>
       <header className="mb-6">
         <div>
-          <h1 className="text-[24px] font-semibold leading-8 text-[#000352] lg:text-[32px] lg:leading-10">
+          <h1 className={judulHalaman}>
             Periode evaluasi
           </h1>
-          <p className="mt-2 text-[13px] leading-6 text-[#64748B]">
+          <p className={deskripsiHalaman}>
             Atur jadwal pengisian dan buka laporan ekonomi setiap periode.
           </p>
         </div>

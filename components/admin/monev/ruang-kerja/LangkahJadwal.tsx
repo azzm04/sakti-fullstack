@@ -156,7 +156,7 @@ export default function LangkahJadwal({ periode: p, contoh = false }: { periode?
         <form onSubmit={submit} aria-label={p ? title : "Buat periode evaluasi"}>
           <fieldset disabled={busy} className="min-w-0">
             {!p && <section className="border-b border-[#E2E8F0] p-5 md:p-9" aria-labelledby="informasi-periode">
-              <h2 id="informasi-periode" className="text-[18px] font-semibold leading-7 text-[#000352]">Periode akademik</h2>
+              <h2 id="informasi-periode" className="text-[16px] font-semibold leading-6 text-[#000352]">Periode akademik</h2>
               <p className="mt-1 text-[13px] leading-6 text-[#64748B]">Pilih tahun akademik dan semester yang akan dievaluasi.</p>
               <div className="mt-5 grid gap-6 md:grid-cols-2 md:gap-8">
                 <div className="min-w-0"><label htmlFor="monev-tahun" className="text-[13px] font-medium text-[#334155]">Tahun awal akademik</label><input id="monev-tahun" type="text" inputMode="numeric" pattern="[0-9]{4}" maxLength={4} required value={tahun} onChange={(e) => setTahun(e.target.value)} aria-describedby="tahun-bantuan" placeholder="Contoh: 2026" className={input} /><p id="tahun-bantuan" className="mt-2 text-[12px] leading-5 text-[#64748B]">{/^\d{4}$/.test(tahun) && Number(tahun) >= 2000 && Number(tahun) <= 2200 ? `Tahun akademik ${tahun}/${Number(tahun) + 1}` : "Masukkan tahun awal, misalnya 2026 untuk 2026/2027."}</p></div>
@@ -164,7 +164,7 @@ export default function LangkahJadwal({ periode: p, contoh = false }: { periode?
               </div>
             </section>}
             <section className="p-5 md:p-9" aria-labelledby="atur-jadwal">
-              <h2 id="atur-jadwal" className="text-[18px] font-semibold leading-7 text-[#000352]">{p ? title : "Jadwal pengisian"}</h2>
+              <h2 id="atur-jadwal" className="text-[16px] font-semibold leading-6 text-[#000352]">{p ? title : "Jadwal pengisian"}</h2>
               <p className="mt-1 text-[13px] leading-6 text-[#64748B]">{deadlineOnly ? "Perpanjang batas pengisian dalam WIB." : "Isi tanggal mulai dan batas pengisian monev."}</p>
               <div className={`mt-5 grid gap-6 md:gap-8 ${!deadlineOnly ? "md:grid-cols-2" : ""}`}>
                 {!deadlineOnly && <div className="min-w-0"><label htmlFor="monev-mulai" className="text-[13px] font-medium text-[#334155]">Mulai pengisian</label><input id="monev-mulai" type="datetime-local" required value={mulai} onChange={(e) => { setMulai(e.target.value); if (!deadlineTouched) setDeadline(addOneMonthToWibInput(e.target.value)); }} className={input} /></div>}
