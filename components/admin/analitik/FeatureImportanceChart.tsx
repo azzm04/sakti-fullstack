@@ -22,7 +22,7 @@ export default function FeatureImportanceChart({ data }: Props) {
   const maxPct = Math.max(1, ...active.map((f) => f.pct))
 
   return (
-    <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm p-6 h-full flex flex-col">
+    <div className="bg-admin-surface rounded-[8px] border border-admin-border shadow-sm p-6 h-full flex flex-col">
       <div className="flex items-start justify-between gap-3 mb-1">
         <h3 className="font-admin-heading text-[15px] font-bold text-admin-text">Faktor Dominan Keputusan</h3>
         {inactive.length > 0 && (

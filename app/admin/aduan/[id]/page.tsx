@@ -52,7 +52,7 @@ const ukuran = (b: number) =>
 
 function Bagian({ judul, children }: { judul: string; children: ReactNode }) {
   return (
-    <section className="rounded-2xl border border-[#E2E8F0] bg-white p-6">
+    <section className="rounded-[8px] border border-[#E2E8F0] bg-white p-6">
       <h2 className="mb-4 text-[12px] font-medium uppercase tracking-wider text-[#64748B]">
         {judul}
       </h2>
@@ -125,7 +125,7 @@ export default async function DetailAduanAdmin({
 
         {/* ===== Header: mengikuti kartu sapaan di dasbor mahasiswa ===== */}
         <section className="mt-5">
-          <article className="rounded-2xl border border-[#E2E8F0] bg-white">
+          <article className="rounded-[8px] border border-[#E2E8F0] bg-white">
             {/* Area judul */}
             <div className="relative isolate flex min-h-[160px] items-center overflow-hidden rounded-t-2xl px-5 py-8 sm:min-h-[200px] sm:px-8">
               <div className="relative z-10 min-w-0 lg:max-w-[68%]">
@@ -208,7 +208,7 @@ export default async function DetailAduanAdmin({
 
                     const isi = (
                       <>
-                        <div className="aspect-square overflow-hidden rounded-xl border border-[#E2E8F0] bg-[#F8FAFC]">
+                        <div className="aspect-square overflow-hidden rounded-[8px] border border-[#E2E8F0] bg-[#F8FAFC]">
                           {isGambar && url ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img

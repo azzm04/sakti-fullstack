@@ -29,7 +29,7 @@ export default function RoleSection({ roles, current, addAction }: RoleSectionPr
   const multiRole = known.length > 1;
 
   return (
-    <div className="rounded-xl border border-admin-border-soft bg-admin-surface-soft p-3">
+    <div className="rounded-[8px] border border-admin-border-soft bg-admin-surface-soft p-3">
       <div className="mb-2 flex items-center justify-between">
         <p className="text-xs font-semibold text-admin-text-4">Role akun</p>
         {multiRole && (

@@ -20,7 +20,7 @@ export default function KonsistensiCard({ data, modelInfo }: Props) {
   const maxDepth = modelInfo?.best_params?.max_depth ?? modelInfo?.best_params?.["max_depth"]
 
   return (
-    <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm p-6 h-full flex flex-col">
+    <div className="bg-admin-surface rounded-[8px] border border-admin-border shadow-sm p-6 h-full flex flex-col">
       <h3 className="font-admin-heading text-[15px] font-bold text-admin-text">Konsistensi Keputusan</h3>
       <p className="text-xs text-admin-text-3 mt-1 mb-4">
         Dari {jumlahUji} kasus yang diuji terhadap pola umum

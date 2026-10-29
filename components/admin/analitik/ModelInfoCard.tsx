@@ -26,7 +26,7 @@ export default function ModelInfoCard({ data }: Props) {
   ]
 
   return (
-    <div className="bg-white rounded-2xl border border-admin-border shadow-sm overflow-hidden">
+    <div className="bg-white rounded-[8px] border border-admin-border shadow-sm overflow-hidden">
       {/* Header — klik untuk expand */}
       <button
         onClick={() => setExpanded((v) => !v)}

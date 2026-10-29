@@ -52,7 +52,7 @@ export default function SKTersimpanCard({ onDelete, deletingId }: Props) {
   }, [mutate]);
 
   return (
-    <div className="bg-white rounded-2xl border border-admin-border shadow-sm p-5">
+    <div className="bg-white rounded-[8px] border border-admin-border shadow-sm p-5">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <h3 className="font-admin-heading font-bold text-admin-text text-sm">SK Tersimpan</h3>
@@ -87,7 +87,7 @@ export default function SKTersimpanCard({ onDelete, deletingId }: Props) {
               key={sk.id}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
-              className="border border-admin-border rounded-xl p-3.5"
+              className="border border-admin-border rounded-[8px] p-3.5"
             >
               <div className="flex items-start gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-admin-danger-bg text-admin-danger-bar flex items-center justify-center shrink-0">

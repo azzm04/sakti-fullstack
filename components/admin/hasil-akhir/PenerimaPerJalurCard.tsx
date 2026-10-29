@@ -33,7 +33,7 @@ export default function PenerimaPerJalurCard({ summary, loading }: Props) {
   const max = Math.max(1, ...rows.map((r) => r.lolos));
 
   return (
-    <div className="bg-white rounded-2xl border border-admin-border shadow-sm p-5">
+    <div className="bg-white rounded-[8px] border border-admin-border shadow-sm p-5">
       <div className="flex items-center gap-2.5 mb-1">
         <Users size={15} className="text-admin-text-3" />
         <h3 className="font-admin-heading font-bold text-admin-text text-sm">

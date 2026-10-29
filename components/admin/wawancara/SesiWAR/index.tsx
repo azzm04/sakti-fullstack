@@ -377,7 +377,7 @@ export default function SesiWAR() {
       {loading ? (
         <div className="min-h-60" />
       ) : !sesi ? (
-        <div className="bg-white rounded-2xl border border-admin-border-soft shadow-sm p-10 text-center">
+        <div className="bg-white rounded-[8px] border border-admin-border-soft shadow-sm p-10 text-center">
           <CalendarDays size={36} className="text-admin-border mx-auto mb-3" />
           <p className="text-sm font-semibold text-admin-text-3 mb-1">
             Belum ada sesi untuk tanggal ini
@@ -417,7 +417,7 @@ export default function SesiWAR() {
           aria-live="polite"
           className="fixed inset-0 z-[90] flex items-center justify-center bg-admin-bg/60 backdrop-blur-[2px]"
         >
-          <div className="flex items-center gap-3 rounded-2xl border border-admin-border bg-white px-5 py-4 shadow-lg">
+          <div className="flex items-center gap-3 rounded-[8px] border border-admin-border bg-white px-5 py-4 shadow-lg">
             <Loader2 size={18} className="animate-spin text-admin-accent" />
             <div>
               <p className="text-sm font-semibold text-admin-text">Memuat sesi…</p>

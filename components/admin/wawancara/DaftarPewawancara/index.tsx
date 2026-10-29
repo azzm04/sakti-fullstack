@@ -151,7 +151,7 @@ export default function DaftarPewawancara() {
             color: "text-admin-text-5",
           },
         ].map(({ label, value, color }) => (
-          <div key={label} className="bg-white rounded-2xl border border-admin-border-soft shadow-sm p-5">
+          <div key={label} className="bg-white rounded-[8px] border border-admin-border-soft shadow-sm p-5">
             <p className="text-xs text-admin-text-5 mb-1">{label}</p>
             <p className={`text-2xl font-extrabold ${color}`}>{value}</p>
           </div>
@@ -176,7 +176,7 @@ export default function DaftarPewawancara() {
         </button>
       </div>
 
-      <div className="bg-white rounded-2xl border border-admin-border-soft shadow-sm overflow-hidden">
+      <div className="bg-white rounded-[8px] border border-admin-border-soft shadow-sm overflow-hidden">
         <PewawancaraTable
           data={data}
           loading={loading}

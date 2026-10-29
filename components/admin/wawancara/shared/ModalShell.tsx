@@ -30,7 +30,7 @@ export default function ModalShell({
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             exit={{ opacity: 0, scale: 0.95 }}
-            className={`bg-white rounded-2xl border border-admin-border-soft shadow-xl p-6 w-full mx-4 ${
+            className={`bg-white rounded-[8px] border border-admin-border-soft shadow-xl p-6 w-full mx-4 ${
               maxWidth === "md" ? "max-w-md" : "max-w-sm"
             }`}
           >

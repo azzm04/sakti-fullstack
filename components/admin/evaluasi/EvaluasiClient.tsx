@@ -374,7 +374,7 @@ export default function EvaluasiClient() {
 
       <div className="px-[30px] pt-[22px] pb-[34px] flex flex-col gap-[18px]">
 
-      <div className="overflow-hidden rounded-2xl border border-admin-border bg-white shadow-[0_1px_2px_rgba(20,40,70,0.05)]">
+      <div className="overflow-hidden rounded-[8px] border border-admin-border bg-white shadow-[0_1px_2px_rgba(20,40,70,0.05)]">
         <motion.button
           onClick={() => setFormCollapsed((value) => !value)}
           whileTap={{ scale: 0.995 }}
@@ -581,7 +581,7 @@ export default function EvaluasiClient() {
         <>
           <div className="grid grid-cols-1 xl:grid-cols-[2.6fr_1fr] gap-[14px] items-start">
           <div className="min-w-0 flex flex-col gap-4">
-          <div className="flex flex-col gap-3 rounded-2xl border border-admin-border bg-white p-4 shadow-sm sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-3 rounded-[8px] border border-admin-border bg-white p-4 shadow-sm sm:flex-row sm:items-center">
             <div className="relative flex-1">
               <Search
                 size={14}
@@ -801,7 +801,7 @@ export default function EvaluasiClient() {
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="overflow-hidden rounded-2xl border border-admin-border bg-white shadow-sm"
+            className="overflow-hidden rounded-[8px] border border-admin-border bg-white shadow-sm"
           >
             {loading ? (
               <div className="overflow-x-auto">
@@ -1016,7 +1016,7 @@ export default function EvaluasiClient() {
           </div>
 
           <div className="flex flex-col gap-[14px] min-w-0">
-            <article className="bg-white border border-admin-border rounded-2xl p-[18px_20px] shadow-sm">
+            <article className="bg-white border border-admin-border rounded-[8px] p-[18px_20px] shadow-sm">
               <h2 className="font-admin-heading text-[18px] font-semibold m-0">
                 Progres Finalisasi
               </h2>
@@ -1041,7 +1041,7 @@ export default function EvaluasiClient() {
                 />
               </div>
               <div className="grid grid-cols-3 gap-2.5">
-                <div className="bg-admin-bg rounded-xl p-[11px_12px]">
+                <div className="bg-admin-bg rounded-[8px] p-[11px_12px]">
                   <div className="font-admin-heading text-[20px] font-semibold leading-none tabular-nums">
                     {interviewerLoad.length}
                   </div>
@@ -1049,7 +1049,7 @@ export default function EvaluasiClient() {
                     Pewawancara
                   </div>
                 </div>
-                <div className="bg-admin-bg rounded-xl p-[11px_12px]">
+                <div className="bg-admin-bg rounded-[8px] p-[11px_12px]">
                   <div className="font-admin-heading text-[20px] font-semibold leading-none tabular-nums">
                     {(total - totalDiusulkan - totalTidakDiusulkan).toLocaleString("id-ID")}
                   </div>
@@ -1057,7 +1057,7 @@ export default function EvaluasiClient() {
                     Menunggu
                   </div>
                 </div>
-                <div className="bg-admin-bg rounded-xl p-[11px_12px]">
+                <div className="bg-admin-bg rounded-[8px] p-[11px_12px]">
                   <div className="font-admin-heading text-[20px] font-semibold leading-none tabular-nums">
                     {totalBelumDievaluasi.toLocaleString("id-ID")}
                   </div>
@@ -1068,7 +1068,7 @@ export default function EvaluasiClient() {
               </div>
             </article>
 
-            <article className="bg-white border border-admin-border rounded-2xl p-[18px_20px_20px] shadow-sm">
+            <article className="bg-white border border-admin-border rounded-[8px] p-[18px_20px_20px] shadow-sm">
               <h2 className="font-admin-heading text-[18px] font-semibold m-0">Sebaran Rekomendasi</h2>
               <p className="text-[12.5px] text-admin-text-3 mt-[3px] mb-[15px] m-0">
                 Pada jalur yang sedang dimuat
@@ -1099,7 +1099,7 @@ export default function EvaluasiClient() {
               </div>
             </article>
 
-            <article className="bg-white border border-admin-border rounded-2xl p-[18px_20px_20px] shadow-sm">
+            <article className="bg-white border border-admin-border rounded-[8px] p-[18px_20px_20px] shadow-sm">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h2 className="font-admin-heading text-[18px] font-semibold m-0">Daftar Pewawancara</h2>
@@ -1120,7 +1120,7 @@ export default function EvaluasiClient() {
                   {interviewerLoad.map(([name, count]) => (
                     <div
                       key={name}
-                      className="flex items-center gap-3 border border-admin-border-soft bg-admin-surface-soft rounded-xl px-[13px] py-[11px]"
+                      className="flex items-center gap-3 border border-admin-border-soft bg-admin-surface-soft rounded-[8px] px-[13px] py-[11px]"
                     >
                       <span className="w-[34px] h-[34px] rounded-[11px] bg-admin-accent/[0.13] text-admin-accent-ink flex items-center justify-center text-xs font-bold shrink-0">
                         <UserRound size={15} strokeWidth={1.7} />

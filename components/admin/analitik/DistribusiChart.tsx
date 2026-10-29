@@ -50,7 +50,7 @@ function CustomTooltip({ active, payload, label }: TooltipProps<number, string>)
       initial={{ opacity: 0, scale: 0.92, y: 4 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={springTransition}
-      className="rounded-xl border border-admin-border/60 bg-white px-3.5 py-2.5 shadow-lg"
+      className="rounded-[8px] border border-admin-border/60 bg-white px-3.5 py-2.5 shadow-lg"
     >
       <p className="mb-1.5 text-[11px] font-semibold text-admin-text">{label}</p>
       <div className="space-y-1">
@@ -80,7 +80,7 @@ export default function DistribusiChart({ data, title, subtitle }: Props) {
       variants={cardVariants}
       initial="hidden"
       animate="visible"
-      className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm p-6"
+      className="bg-admin-surface rounded-[8px] border border-admin-border shadow-sm p-6"
     >
       <div className="flex items-start justify-between gap-3 mb-5">
         <div>

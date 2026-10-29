@@ -139,7 +139,7 @@ export default function HasilAkhirClient() {
                 role="tab"
                 aria-selected={active}
                 onClick={() => setActiveTab(key)}
-                className={`flex items-start gap-3 p-4 rounded-2xl border text-left transition-all duration-200 ${
+                className={`flex items-start gap-3 p-4 rounded-[8px] border text-left transition-all duration-200 ${
                   active
                     ? "bg-white border-admin-accent shadow-sm"
                     : "bg-white border-admin-border hover:border-admin-text-6"

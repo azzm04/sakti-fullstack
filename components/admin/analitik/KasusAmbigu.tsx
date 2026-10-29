@@ -139,7 +139,7 @@ export default function KasusAmbigu({ data }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-xl border border-admin-border shadow-sm overflow-hidden">
+    <div className="bg-white rounded-[8px] border border-admin-border shadow-sm overflow-hidden">
       {/* Header Section */}
       <div className="flex items-start sm:items-center justify-between px-6 py-5 border-b border-admin-border-soft gap-4 flex-col sm:flex-row">
         <div>

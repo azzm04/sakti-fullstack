@@ -63,7 +63,7 @@ export default function MahasiswaFormModal({
       }
     >
       {isNewProfile && (
-        <p className="text-[11px] text-admin-text-5 bg-admin-surface-soft rounded-xl px-3 py-2 border border-admin-border-soft">
+        <p className="text-[11px] text-admin-text-5 bg-admin-surface-soft rounded-[8px] px-3 py-2 border border-admin-border-soft">
           Akun ini belum punya profil KIP-K (mis. dibuat lewat penambahan role, bukan alur
           verifikasi SK). Isi semua field untuk membuat profil baru.
         </p>
@@ -128,11 +128,11 @@ export default function MahasiswaFormModal({
           isPewawancara ? undefined : { label: "Jadikan Pewawancara", onClick: onJadikanPewawancara }
         }
       />
-      <p className="text-[11px] text-admin-text-5 bg-admin-surface-soft rounded-xl px-3 py-2 border border-admin-border-soft">
+      <p className="text-[11px] text-admin-text-5 bg-admin-surface-soft rounded-[8px] px-3 py-2 border border-admin-border-soft">
         Email tidak bisa diubah di sini — akun ini terverifikasi lewat SSO Undip.
       </p>
       {formError && (
-        <p role="alert" className="text-xs text-admin-danger-text bg-admin-danger-bg rounded-xl px-3 py-2">{formError}</p>
+        <p role="alert" className="text-xs text-admin-danger-text bg-admin-danger-bg rounded-[8px] px-3 py-2">{formError}</p>
       )}
     </ModalShell>
   );

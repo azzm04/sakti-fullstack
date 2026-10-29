@@ -429,7 +429,7 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
 
   return (
     <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative">
-      <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-[0_1px_2px_rgba(20,40,70,0.05)] overflow-hidden">
+      <div className="bg-admin-surface rounded-[8px] border border-admin-border shadow-[0_1px_2px_rgba(20,40,70,0.05)] overflow-hidden">
 
         {/* ── Header ── */}
         <div className="px-6 py-5 border-b border-admin-border-soft">
@@ -650,7 +650,7 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="mt-4 p-4 bg-admin-warn-bg-2 border border-admin-warn-border rounded-xl flex items-start gap-3"
+          className="mt-4 p-4 bg-admin-warn-bg-2 border border-admin-warn-border rounded-[8px] flex items-start gap-3"
         >
           <Lightbulb size={18} className="text-admin-warn-text mt-0.5 shrink-0" />
           <div>

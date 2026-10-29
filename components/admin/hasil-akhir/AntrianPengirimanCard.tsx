@@ -42,7 +42,7 @@ export default function AntrianPengirimanCard({ queueStats, summary, onProcessQu
 
   return (
     <div className="flex flex-col gap-3.5">
-      <div className="bg-white rounded-2xl border border-admin-border shadow-sm p-5">
+      <div className="bg-white rounded-[8px] border border-admin-border shadow-sm p-5">
         <div className="flex items-center justify-between mb-3">
           <h3 className="font-admin-heading font-bold text-admin-text text-sm">
             Antrian Pengiriman
@@ -71,7 +71,7 @@ export default function AntrianPengirimanCard({ queueStats, summary, onProcessQu
         </div>
 
         <div className="grid grid-cols-3 gap-2.5">
-          <div className="bg-admin-accent/8 rounded-xl p-2.5 text-center">
+          <div className="bg-admin-accent/8 rounded-[8px] p-2.5 text-center">
             <p className="text-base font-extrabold font-admin-heading text-admin-accent-ink tabular-nums">
               {summary?.totalDitetapkanSk ?? "—"}
             </p>
@@ -79,7 +79,7 @@ export default function AntrianPengirimanCard({ queueStats, summary, onProcessQu
               Ditetapkan SK
             </p>
           </div>
-          <div className="bg-admin-surface-soft rounded-xl p-2.5 text-center">
+          <div className="bg-admin-surface-soft rounded-[8px] p-2.5 text-center">
             <p className="text-base font-extrabold font-admin-heading text-admin-text tabular-nums">
               {summary?.totalBelumLolos ?? "—"}
             </p>
@@ -87,7 +87,7 @@ export default function AntrianPengirimanCard({ queueStats, summary, onProcessQu
               Belum Lolos
             </p>
           </div>
-          <div className="bg-admin-surface-soft rounded-xl p-2.5 text-center">
+          <div className="bg-admin-surface-soft rounded-[8px] p-2.5 text-center">
             <p className="text-base font-extrabold font-admin-heading text-admin-text tabular-nums">
               {skList.length}
             </p>
@@ -98,7 +98,7 @@ export default function AntrianPengirimanCard({ queueStats, summary, onProcessQu
         </div>
 
         {(summary?.totalBelumDiprosesSk ?? 0) > 0 && (
-          <div className="flex items-start gap-2 mt-3 px-3 py-2.5 bg-admin-warn-bg-2 border border-admin-warn-border rounded-xl">
+          <div className="flex items-start gap-2 mt-3 px-3 py-2.5 bg-admin-warn-bg-2 border border-admin-warn-border rounded-[8px]">
             <AlertTriangle size={13} className="text-admin-warn-text shrink-0 mt-0.5" />
             <p className="text-[11px] text-admin-warn-text leading-relaxed">
               <strong>{summary?.totalBelumDiprosesSk}</strong> kandidat &quot;Diusulkan&quot; belum
@@ -109,7 +109,7 @@ export default function AntrianPengirimanCard({ queueStats, summary, onProcessQu
         )}
       </div>
 
-      <div className="bg-white rounded-2xl border border-admin-border shadow-sm p-5">
+      <div className="bg-white rounded-[8px] border border-admin-border shadow-sm p-5">
         <div className="flex items-center gap-2 mb-4">
           <Clock size={14} className="text-admin-text-3" />
           <h3 className="font-admin-heading font-bold text-admin-text text-sm">

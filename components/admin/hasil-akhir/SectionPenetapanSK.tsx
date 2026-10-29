@@ -204,7 +204,7 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
 
   return (
     <div className="space-y-5">
-      <div className="bg-white rounded-2xl border border-admin-border shadow-sm overflow-hidden">
+      <div className="bg-white rounded-[8px] border border-admin-border shadow-sm overflow-hidden">
         <div className="px-6 py-5 border-b border-admin-border flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-admin-accent/10 text-admin-accent flex items-center justify-center">
             <ShieldCheck size={17} />
@@ -305,7 +305,7 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
                 initial={{ opacity: 0, y: -6 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="flex items-center gap-2 px-4 py-3 bg-admin-danger-bg border border-admin-danger-border rounded-xl text-sm font-semibold text-admin-danger-text"
+                className="flex items-center gap-2 px-4 py-3 bg-admin-danger-bg border border-admin-danger-border rounded-[8px] text-sm font-semibold text-admin-danger-text"
               >
                 <AlertCircle size={15} /> {error}
               </motion.div>
@@ -315,7 +315,7 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
                 initial={{ opacity: 0, y: -6 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="flex items-center gap-2 px-4 py-3 bg-admin-accent/10 border border-admin-accent/25 rounded-xl text-sm font-semibold text-admin-accent-ink"
+                className="flex items-center gap-2 px-4 py-3 bg-admin-accent/10 border border-admin-accent/25 rounded-[8px] text-sm font-semibold text-admin-accent-ink"
               >
                 <CheckCircle2 size={15} /> Berhasil menyimpan {saveResult.berhasil} baris
                 {saveResult.gagal > 0 ? `, ${saveResult.gagal} gagal.` : "."}
@@ -326,7 +326,7 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
       </div>
 
       {rows.length > 0 && (
-        <div className="bg-white rounded-2xl border border-admin-border shadow-sm overflow-hidden">
+        <div className="bg-white rounded-[8px] border border-admin-border shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
@@ -402,7 +402,7 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
       {(tidakDitemukan.length > 0 || barisTidakCocok.length > 0) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {tidakDitemukan.length > 0 && (
-            <div className="bg-admin-warn-bg-2 border border-admin-warn-border rounded-2xl p-4">
+            <div className="bg-admin-warn-bg-2 border border-admin-warn-border rounded-[8px] p-4">
               <p className="text-xs font-bold text-admin-warn-text mb-2">
                 Diusulkan tapi tidak ditemukan di Excel ({tidakDitemukan.length})
               </p>
@@ -414,7 +414,7 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
             </div>
           )}
           {barisTidakCocok.length > 0 && (
-            <div className="bg-admin-danger-bg border border-admin-danger-border rounded-2xl p-4">
+            <div className="bg-admin-danger-bg border border-admin-danger-border rounded-[8px] p-4">
               <p className="text-xs font-bold text-admin-danger-text mb-2">
                 Baris Excel tidak cocok dengan kandidat manapun ({barisTidakCocok.length})
               </p>

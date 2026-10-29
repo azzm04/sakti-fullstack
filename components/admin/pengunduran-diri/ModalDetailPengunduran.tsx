@@ -176,7 +176,7 @@ export default function ModalDetailPengunduran({ item, onClose, onSuccess }: Pro
           </div>
 
           {status === "DITERIMA" && (
-            <div className="flex items-center gap-3 px-4 py-3.5 bg-amber-50 border border-amber-200 rounded-[6px]">
+            <div className="flex items-center gap-3 px-4 py-3.5 bg-amber-50 border border-amber-200 rounded-[8px]">
               <p className="font-roboto text-[12px] text-amber-800 flex-1">
                 Setelah menyimpan status Diterima, Anda dapat menonaktifkan akun mahasiswa ini secara terpisah.
               </p>
@@ -192,7 +192,7 @@ export default function ModalDetailPengunduran({ item, onClose, onSuccess }: Pro
 
         <div className="px-8 py-5 border-t border-[#E5EAF0] rounded-b-[8px] bg-[#FAFBFD]">
           {error && (
-            <div className="bg-red-50 border border-red-200 p-3 rounded-[6px] flex items-start gap-2.5 mb-4">
+            <div className="bg-red-50 border border-red-200 p-3 rounded-[8px] flex items-start gap-2.5 mb-4">
               <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={16} />
               <p className="font-roboto text-[12px] font-medium text-red-800 flex-1">{error}</p>
               <button onClick={() => setError(null)} className="text-red-400 hover:text-red-600 shrink-0"><X size={14} /></button>

@@ -93,7 +93,7 @@ export default function SesiOverview({ onSelectTanggal, activeTanggal, refreshKe
               onClick={() => onSelectTanggal(sesi.tanggal)}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className={`relative flex-shrink-0 w-[160px] p-3 rounded-xl border transition-[background-color,border-color,box-shadow] duration-200 text-left ${
+              className={`relative flex-shrink-0 w-[160px] p-3 rounded-[8px] border transition-[background-color,border-color,box-shadow] duration-200 text-left ${
                 isActive
                   ? 'bg-admin-accent text-white border-admin-accent shadow-lg shadow-primary/20'
                   : sesi.war_aktif

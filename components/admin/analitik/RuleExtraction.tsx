@@ -267,7 +267,7 @@ function RuleCard({
   const iconColor = isDiusulkan ? "text-admin-accent" : "text-admin-danger-bar";
 
   return (
-    <div className="bg-admin-surface border border-admin-border rounded-2xl p-5">
+    <div className="bg-admin-surface border border-admin-border rounded-[8px] p-5">
       <div className="flex items-center justify-between mb-4">
         <p className={`flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider ${iconColor}`}>
           <Icon size={14} />
@@ -331,7 +331,7 @@ function RuleForkCard({
   index: number;
 }) {
   return (
-    <div className="bg-admin-surface border border-admin-border rounded-2xl p-5">
+    <div className="bg-admin-surface border border-admin-border rounded-[8px] p-5">
       <div className="flex items-center justify-between mb-4">
         <p className="flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-admin-text-4">
           <GitFork size={14} />
@@ -386,7 +386,7 @@ function ForkBranch({
 
   return (
     <div
-      className={`rounded-xl border p-3.5 ${
+      className={`rounded-[8px] border p-3.5 ${
         isDiusulkan
           ? "bg-admin-accent/[0.06] border-admin-accent/20"
           : "bg-admin-danger-bg/40 border-admin-danger-border"

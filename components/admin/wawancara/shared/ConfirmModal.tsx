@@ -80,7 +80,7 @@ export default function ConfirmModal({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
             transition={{ type: "spring", duration: 0.3, bounce: 0.2 }}
-            className="bg-white rounded-2xl shadow-2xl p-6 max-w-sm w-full mx-4 border border-admin-border-soft"
+            className="bg-white rounded-[8px] shadow-2xl p-6 max-w-sm w-full mx-4 border border-admin-border-soft"
           >
             <div className="flex justify-center mb-4">
               <div

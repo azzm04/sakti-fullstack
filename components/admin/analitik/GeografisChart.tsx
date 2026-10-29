@@ -94,7 +94,7 @@ export default function GeografisChart({ data }: Props) {
 
   if (sorted.length === 0) {
     return (
-      <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm p-6">
+      <div className="bg-admin-surface rounded-[8px] border border-admin-border shadow-sm p-6">
         <h3 className="font-admin-heading text-[15px] font-bold text-admin-text flex items-center gap-2 mb-1">
           <MapIcon size={16} className="text-admin-text-2" />
           Sebaran per Provinsi
@@ -107,7 +107,7 @@ export default function GeografisChart({ data }: Props) {
   return (
     <div className="grid grid-cols-1 xl:grid-cols-[1.7fr_1fr] gap-3.5 items-start">
       {/* Peta */}
-      <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm overflow-hidden">
+      <div className="bg-admin-surface rounded-[8px] border border-admin-border shadow-sm overflow-hidden">
         <div className="px-6 py-5 border-b border-admin-border">
           <h3 className="font-admin-heading text-[15px] font-bold text-admin-text">Sebaran per Provinsi</h3>
           <p className="text-xs text-admin-text-3 mt-1">
@@ -175,7 +175,7 @@ export default function GeografisChart({ data }: Props) {
       </div>
 
       {/* Ringkasan */}
-      <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm p-6">
+      <div className="bg-admin-surface rounded-[8px] border border-admin-border shadow-sm p-6">
         <div className="flex items-center justify-between gap-3 mb-4">
           <h3 className="font-admin-heading text-[15px] font-bold text-admin-text">Ringkasan per Provinsi</h3>
           <span className="text-[10.5px] font-medium text-admin-text-3 bg-admin-surface-soft border border-admin-border rounded-full px-2.5 py-1 shrink-0">

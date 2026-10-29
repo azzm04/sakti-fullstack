@@ -160,7 +160,7 @@ export default function AnalitikSelector() {
 
       <div className="px-4 sm:px-[30px] pt-[22px] pb-[34px] flex flex-col gap-[18px]">
         {/* Form Selector — collapsible */}
-        <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm overflow-hidden">
+        <div className="bg-admin-surface rounded-[8px] border border-admin-border shadow-sm overflow-hidden">
           <motion.button
             onClick={() => setFormCollapsed((v) => !v)}
             whileTap={{ scale: 0.995 }}
@@ -415,7 +415,7 @@ export default function AnalitikSelector() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
               transition={spring}
-              className="flex flex-col items-center justify-center py-16 text-center bg-admin-surface rounded-2xl border border-admin-border"
+              className="flex flex-col items-center justify-center py-16 text-center bg-admin-surface rounded-[8px] border border-admin-border"
             >
               <motion.div
                 initial={{ scale: 0.6, rotate: -8 }}

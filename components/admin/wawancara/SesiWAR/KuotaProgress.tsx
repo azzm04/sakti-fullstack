@@ -14,7 +14,7 @@ export default function KuotaProgress({ sesi, kuotaList }: KuotaProgressProps) {
   const persen = sesi.kuota_pewawancara > 0 ? (terisi / sesi.kuota_pewawancara) * 100 : 0;
 
   return (
-    <div className="rounded-2xl border border-admin-border-soft bg-white p-5 shadow-sm">
+    <div className="rounded-[8px] border border-admin-border-soft bg-white p-5 shadow-sm">
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h3 className="font-admin-heading text-sm font-bold text-admin-text">Slot Urutan Pewawancara</h3>
@@ -44,7 +44,7 @@ export default function KuotaProgress({ sesi, kuotaList }: KuotaProgressProps) {
           return (
             <li
               key={i}
-              className={`flex items-center gap-3 rounded-xl px-3 py-2.5 ${
+              className={`flex items-center gap-3 rounded-[8px] px-3 py-2.5 ${
                 kuotaItem
                   ? "border border-admin-border bg-white"
                   : "border border-dashed border-admin-border bg-admin-surface-soft"

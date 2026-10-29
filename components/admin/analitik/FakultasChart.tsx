@@ -84,7 +84,7 @@ function CustomTooltip({ active, payload, label }: TooltipProps<number, string>)
       initial={{ opacity: 0, scale: 0.92, y: 4 }}
       animate={{ opacity: 1, scale: 1, y: 0 }}
       transition={springTransition}
-      className="rounded-xl border border-admin-border/60 bg-admin-surface/95 px-3.5 py-2.5 shadow-lg backdrop-blur-sm"
+      className="rounded-[8px] border border-admin-border/60 bg-admin-surface/95 px-3.5 py-2.5 shadow-lg backdrop-blur-sm"
     >
       <p className="mb-1.5 text-[11px] font-semibold text-admin-text">{label}</p>
       <div className="space-y-1">
@@ -122,7 +122,7 @@ export default function FakultasChart({ data, totalDiusulkan }: FakultasChartPro
       variants={cardVariants}
       initial="hidden"
       animate="visible"
-      className="space-y-5 rounded-2xl border border-admin-border bg-admin-surface p-6 shadow-sm"
+      className="space-y-5 rounded-[8px] border border-admin-border bg-admin-surface p-6 shadow-sm"
     >
       {/* Header & Toggle */}
       <div className="flex flex-col gap-4 border-b border-admin-border pb-4 sm:flex-row sm:items-center sm:justify-between">

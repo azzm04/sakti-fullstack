@@ -12,7 +12,7 @@ export default function KuotaTable({ sesi, kuotaList, offset }: KuotaTableProps)
   if (kuotaList.length === 0) return null;
 
   return (
-    <div className="bg-white rounded-2xl border border-admin-border-soft shadow-sm overflow-hidden">
+    <div className="bg-white rounded-[8px] border border-admin-border-soft shadow-sm overflow-hidden">
       <div className="px-5 py-3 border-b border-admin-border-soft">
         <h3 className="font-admin-heading font-bold text-admin-text text-sm">Detail Kuota Terisi</h3>
       </div>

@@ -160,7 +160,7 @@ export default function SectionExportExcel({ tahun, onTahunChange, summary }: Pr
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-admin-border shadow-sm overflow-hidden">
+    <div className="bg-white rounded-[8px] border border-admin-border shadow-sm overflow-hidden">
       {/* Card Header */}
       <div className="px-6 py-5 border-b border-admin-border flex items-center gap-3">
         <div className="w-9 h-9 rounded-xl bg-admin-accent/10 text-admin-accent flex items-center justify-center">
@@ -179,7 +179,7 @@ export default function SectionExportExcel({ tahun, onTahunChange, summary }: Pr
       <div className="p-6 space-y-6">
         
         {/* Pilih Tahun Seleksi */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-admin-surface-soft/50 p-4 rounded-xl border border-admin-border">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-admin-surface-soft/50 p-4 rounded-[8px] border border-admin-border">
           <div>
             <label className="text-sm font-semibold text-admin-text block">Tahun Seleksi</label>
             <p className="text-xs text-admin-text-3 mt-0.5">Filter data penerima KIP-K berdasarkan tahun.</p>
@@ -249,7 +249,7 @@ export default function SectionExportExcel({ tahun, onTahunChange, summary }: Pr
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
-            className="flex items-center gap-2 px-4 py-2.5 bg-admin-accent/5 border border-admin-accent/15 rounded-xl text-sm text-admin-accent font-medium"
+            className="flex items-center gap-2 px-4 py-2.5 bg-admin-accent/5 border border-admin-accent/15 rounded-[8px] text-sm text-admin-accent font-medium"
           >
             <CheckCircle2 size={14} />
             {selected.size} jalur dipilih ·{" "}
@@ -266,7 +266,7 @@ export default function SectionExportExcel({ tahun, onTahunChange, summary }: Pr
               initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="flex items-center gap-2 px-4 py-3 bg-admin-accent/10 border border-admin-accent/25 rounded-xl text-sm font-semibold text-admin-accent-ink"
+              className="flex items-center gap-2 px-4 py-3 bg-admin-accent/10 border border-admin-accent/25 rounded-[8px] text-sm font-semibold text-admin-accent-ink"
             >
               <CheckCircle2 size={15} /> File Excel berhasil diunduh!
             </motion.div>
@@ -276,7 +276,7 @@ export default function SectionExportExcel({ tahun, onTahunChange, summary }: Pr
               initial={{ opacity: 0, y: -6 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              className="flex items-center gap-2 px-4 py-3 bg-admin-danger-bg border border-admin-danger-border rounded-xl text-sm font-semibold text-admin-danger-text"
+              className="flex items-center gap-2 px-4 py-3 bg-admin-danger-bg border border-admin-danger-border rounded-[8px] text-sm font-semibold text-admin-danger-text"
             >
               <AlertCircle size={15} /> {errorMsg}
             </motion.div>

@@ -14,7 +14,7 @@ export default function ImportSuccessBanner({ total, jalurMasuk, tahunSeleksi }:
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="flex items-start gap-4 p-5 bg-admin-accent/5 border border-admin-accent/20 rounded-2xl shadow-sm"
+      className="flex items-start gap-4 p-5 bg-admin-accent/5 border border-admin-accent/20 rounded-[8px] shadow-sm"
     >
       <div className="w-10 h-10 rounded-full bg-admin-surface flex items-center justify-center shrink-0 shadow-sm text-admin-accent">
         <Info size={20} />

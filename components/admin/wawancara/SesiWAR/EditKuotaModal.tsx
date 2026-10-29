@@ -62,7 +62,7 @@ export default function EditKuotaModal({
       }
     >
       {minKuotaPewawancara > 0 && (
-        <div className="px-3 py-2 bg-admin-warn-bg-2 border border-admin-warn-border rounded-xl">
+        <div className="px-3 py-2 bg-admin-warn-bg-2 border border-admin-warn-border rounded-[8px]">
           <p className="text-[11px] text-admin-warn-text font-medium flex items-center gap-1.5">
             <AlertTriangle size={12} />
             {minKuotaPewawancara} pewawancara sudah klaim kuota. Kuota pewawancara tidak boleh

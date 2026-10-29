@@ -55,7 +55,7 @@ function StatusBadge({ sesi }: { sesi: Sesi }) {
 
 function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div className="min-w-0 rounded-xl border border-admin-border-soft bg-admin-surface-soft px-3.5 py-2.5">
+    <div className="min-w-0 rounded-[8px] border border-admin-border-soft bg-admin-surface-soft px-3.5 py-2.5">
       <p className="truncate text-[11px] font-medium text-admin-text-4">{label}</p>
       <p className="mt-0.5 text-lg font-bold leading-6 text-admin-text">
         {value}
@@ -84,7 +84,7 @@ export default function SesiStatusCard({
   });
 
   return (
-    <div className="rounded-2xl border border-admin-border-soft bg-white shadow-sm">
+    <div className="rounded-[8px] border border-admin-border-soft bg-white shadow-sm">
       {/* HP: aksi turun ke baris sendiri. Tablet ke atas: aksi di kanan. */}
       <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
         <div className="flex min-w-0 items-start gap-3">

@@ -89,7 +89,7 @@ export default function AnalisisHeroBanner({ ringkasan, konsistensi, jalur, tahu
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ ease: "easeOut", duration: 0.4 }}
-      className="relative overflow-hidden rounded-2xl bg-admin-hero text-white p-6 sm:p-7 shadow-sm"
+      className="relative overflow-hidden rounded-[8px] bg-admin-hero text-white p-6 sm:p-7 shadow-sm"
     >
       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
         <div className="max-w-xl">
@@ -110,7 +110,7 @@ export default function AnalisisHeroBanner({ ringkasan, konsistensi, jalur, tahu
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
             Analisis Aktif
           </span>
-          <div className="flex items-center gap-3 bg-white/10 border border-white/15 rounded-2xl px-4 py-3">
+          <div className="flex items-center gap-3 bg-white/10 border border-white/15 rounded-[8px] px-4 py-3">
             <DonutRing pct={akurasi} />
             <div>
               <p className="text-[13px] font-bold text-white leading-tight whitespace-nowrap">Konsistensi Model</p>

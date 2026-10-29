@@ -17,7 +17,7 @@ export default function PenetapanSKStatusCard({ counts }: Props) {
     : [];
 
   return (
-    <div className="bg-white rounded-2xl border border-admin-border shadow-sm p-5">
+    <div className="bg-white rounded-[8px] border border-admin-border shadow-sm p-5">
       <div className="flex items-center gap-2.5 mb-1">
         <ShieldCheck size={15} className="text-admin-text-3" />
         <h3 className="font-admin-heading font-bold text-admin-text text-sm">Status Penetapan SK</h3>

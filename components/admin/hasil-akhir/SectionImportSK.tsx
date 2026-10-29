@@ -113,7 +113,7 @@ export default function SectionImportSK() {
   return (
     <div className="space-y-5">
       {/* ── Upload Card ── */}
-      <div className="bg-white rounded-2xl border border-admin-border shadow-sm overflow-hidden">
+      <div className="bg-white rounded-[8px] border border-admin-border shadow-sm overflow-hidden">
         <div className="px-6 py-5 border-b border-admin-border flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-admin-accent/10 text-admin-accent flex items-center justify-center">
             <Upload size={17} />
@@ -137,7 +137,7 @@ export default function SectionImportSK() {
             </label>
             <div
               onClick={() => fileInputRef.current?.click()}
-              className={`border-2 border-dashed rounded-xl px-5 py-6 cursor-pointer transition-all flex flex-col items-center justify-center gap-2 text-center ${
+              className={`border-2 border-dashed rounded-[8px] px-5 py-6 cursor-pointer transition-all flex flex-col items-center justify-center gap-2 text-center ${
                 file
                   ? "border-admin-accent/40 bg-admin-accent/3"
                   : "border-admin-border hover:border-admin-accent/40 hover:bg-admin-surface-soft/30"
@@ -255,7 +255,7 @@ export default function SectionImportSK() {
                 initial={{ opacity: 0, y: -6 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="flex items-center gap-2 px-4 py-3 bg-admin-accent/10 border border-admin-accent/25 rounded-xl text-sm font-semibold text-admin-accent-ink"
+                className="flex items-center gap-2 px-4 py-3 bg-admin-accent/10 border border-admin-accent/25 rounded-[8px] text-sm font-semibold text-admin-accent-ink"
               >
                 <CheckCircle2 size={15} /> Dokumen SK berhasil diupload!
               </motion.div>
@@ -265,7 +265,7 @@ export default function SectionImportSK() {
                 initial={{ opacity: 0, y: -6 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="flex items-center gap-2 px-4 py-3 bg-admin-danger-bg border border-admin-danger-border rounded-xl text-sm font-semibold text-admin-danger-text"
+                className="flex items-center gap-2 px-4 py-3 bg-admin-danger-bg border border-admin-danger-border rounded-[8px] text-sm font-semibold text-admin-danger-text"
               >
                 <AlertCircle size={15} /> {uploadError}
               </motion.div>

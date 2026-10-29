@@ -46,7 +46,7 @@ export default function KartuRingkasan({ ringkasan, konsistensi }: Props) {
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ ease: "easeOut", duration: 0.4 }}
-      className="grid grid-cols-1 sm:grid-cols-4 divide-y divide-admin-border-soft sm:divide-y-0 sm:divide-x rounded-2xl border border-admin-border bg-white shadow-sm overflow-hidden"
+      className="grid grid-cols-1 sm:grid-cols-4 divide-y divide-admin-border-soft sm:divide-y-0 sm:divide-x rounded-[8px] border border-admin-border bg-white shadow-sm overflow-hidden"
     >
       {kartu.map(({ label, value, sub, icon: Icon, iconColor }) => (
         <div key={label} className="p-6 flex flex-col gap-2">

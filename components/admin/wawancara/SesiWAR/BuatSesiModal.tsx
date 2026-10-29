@@ -173,7 +173,7 @@ export default function BuatSesiModal({
 
       {/* Preview distribusi */}
       {showPreview && (
-        <div className="px-3 py-2.5 bg-admin-accent/5 border border-admin-accent/10 rounded-xl">
+        <div className="px-3 py-2.5 bg-admin-accent/5 border border-admin-accent/10 rounded-[8px]">
           <p className="text-[11px] font-semibold text-admin-accent mb-1.5">
             Distribusi Otomatis ({jumlahHari} hari)
           </p>

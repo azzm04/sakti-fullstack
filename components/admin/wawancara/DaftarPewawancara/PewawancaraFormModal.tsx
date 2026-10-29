@@ -82,7 +82,7 @@ export default function PewawancaraFormModal({
       </div>
       {editing && <RoleSection roles={roles} current="PEWAWANCARA" />}
       {!editing && (
-        <p className="text-[11px] text-admin-text-5 bg-admin-surface-soft rounded-xl px-3 py-2 border border-admin-border-soft">
+        <p className="text-[11px] text-admin-text-5 bg-admin-surface-soft rounded-[8px] px-3 py-2 border border-admin-border-soft">
           Email pemberitahuan penunjukan pewawancara akan dikirim ke alamat ini, dan pengguna
           bisa langsung login via OTP. Kalau email ini sudah
           terdaftar (mis. sebagai Mahasiswa KIP-K), role Pewawancara akan ditambahkan ke akun
@@ -90,7 +90,7 @@ export default function PewawancaraFormModal({
         </p>
       )}
       {formError && (
-        <p role="alert" className="text-xs text-admin-danger-text bg-admin-danger-bg rounded-xl px-3 py-2">{formError}</p>
+        <p role="alert" className="text-xs text-admin-danger-text bg-admin-danger-bg rounded-[8px] px-3 py-2">{formError}</p>
       )}
     </ModalShell>
   );

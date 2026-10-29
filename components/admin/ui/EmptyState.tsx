@@ -22,7 +22,7 @@ export function EmptyState({
   return (
     <section
       className={cn(
-        "bg-admin-surface rounded-2xl min-h-[260px] flex flex-col items-center justify-center gap-3 py-9 px-5 text-center",
+        "bg-admin-surface rounded-[8px] min-h-[260px] flex flex-col items-center justify-center gap-3 py-9 px-5 text-center",
         dashed ? "border border-dashed border-admin-border" : "border border-admin-border",
         className
       )}

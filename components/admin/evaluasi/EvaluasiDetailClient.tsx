@@ -439,7 +439,7 @@ export default function EvaluasiDetailClient({
 
       <div className="px-[30px] pt-[22px] pb-[34px] flex flex-col gap-[16px]">
         {/* Profil kandidat */}
-        <section className="bg-white rounded-2xl border border-admin-border p-5 flex items-start gap-5 flex-wrap shadow-sm">
+        <section className="bg-white rounded-[8px] border border-admin-border p-5 flex items-start gap-5 flex-wrap shadow-sm">
           <div className="flex-1 min-w-[260px]">
             <button
               type="button"
@@ -514,7 +514,7 @@ export default function EvaluasiDetailClient({
           {detailChips.map((c) => (
             <article
               key={c.label}
-              className="bg-white border border-admin-border rounded-2xl p-[15px_17px]"
+              className="bg-white border border-admin-border rounded-[8px] p-[15px_17px]"
             >
               <div className="text-[12px] tracking-[0.14em] uppercase text-admin-text-4">
                 {c.label}
@@ -530,7 +530,7 @@ export default function EvaluasiDetailClient({
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className={`rounded-2xl border p-5 shadow-sm flex items-center justify-between gap-4 flex-wrap ${
+          className={`rounded-[8px] border p-5 shadow-sm flex items-center justify-between gap-4 flex-wrap ${
             kandidat.pewawancara_data || kandidat.pewawancara_id
               ? "bg-white border-admin-border"
               : "bg-admin-surface-soft border-dashed border-admin-border"
@@ -582,7 +582,7 @@ export default function EvaluasiDetailClient({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.08 }}
-            className="bg-admin-surface-soft rounded-2xl border border-admin-border p-5"
+            className="bg-admin-surface-soft rounded-[8px] border border-admin-border p-5"
           >
             <div className="flex items-center gap-2 mb-4">
               <Eye size={14} className="text-admin-text-3" />
@@ -681,7 +681,7 @@ export default function EvaluasiDetailClient({
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-admin-surface-soft rounded-2xl border border-admin-border p-5"
+              className="bg-admin-surface-soft rounded-[8px] border border-admin-border p-5"
             >
               <div className="flex items-center justify-between gap-2 mb-4">
                 <div className="flex items-center gap-2">
@@ -845,7 +845,7 @@ export default function EvaluasiDetailClient({
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.1 }}
-              className="bg-admin-surface-soft rounded-2xl border border-dashed border-admin-border p-10 text-center flex flex-col items-center justify-center"
+              className="bg-admin-surface-soft rounded-[8px] border border-dashed border-admin-border p-10 text-center flex flex-col items-center justify-center"
             >
               <ClipboardList size={32} className="text-admin-text-6 mb-3" />
               <p className="text-admin-text-4 font-medium">
@@ -862,7 +862,7 @@ export default function EvaluasiDetailClient({
             initial={{ opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.15 }}
-            className="bg-white rounded-2xl border border-admin-border shadow-sm p-6"
+            className="bg-white rounded-[8px] border border-admin-border shadow-sm p-6"
           >
             <div className="flex items-center gap-2 mb-5">
               <div className="w-9 h-9 rounded-xl bg-admin-accent/8 flex items-center justify-center">
@@ -917,7 +917,7 @@ export default function EvaluasiDetailClient({
 
               {/* Hasil Akhir — auto jika Layak/Tidak Layak, manual jika Dipertimbangkan */}
               <div
-                className={`rounded-xl p-4 border ${perluReview ? "border-admin-warn-border bg-admin-warn-bg-2" : "border-admin-border-soft bg-admin-surface-soft"}`}
+                className={`rounded-[8px] p-4 border ${perluReview ? "border-admin-warn-border bg-admin-warn-bg-2" : "border-admin-border-soft bg-admin-surface-soft"}`}
               >
                 <label className="block text-xs font-semibold text-admin-text-3 mb-1.5">
                   Hasil Akhir
@@ -1014,7 +1014,7 @@ export default function EvaluasiDetailClient({
               <motion.div
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="bg-white rounded-2xl border border-admin-border shadow-sm p-6"
+                className="bg-white rounded-[8px] border border-admin-border shadow-sm p-6"
               >
                 <div className="flex items-center gap-2 mb-1">
                   <h3 className="font-admin-heading font-bold text-admin-text text-sm">
@@ -1075,7 +1075,7 @@ export default function EvaluasiDetailClient({
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05 }}
-              className="bg-white rounded-2xl border border-admin-border shadow-sm p-6"
+              className="bg-white rounded-[8px] border border-admin-border shadow-sm p-6"
             >
               <div className="flex items-center gap-2 mb-5">
                 <div className="w-9 h-9 rounded-xl bg-admin-accent/8 flex items-center justify-center">
@@ -1092,7 +1092,7 @@ export default function EvaluasiDetailClient({
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
-                <div className="rounded-xl border border-admin-border-soft bg-admin-surface-soft p-3.5">
+                <div className="rounded-[8px] border border-admin-border-soft bg-admin-surface-soft p-3.5">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-admin-text-4 mb-1">
                     Per Kapita
                   </p>
@@ -1103,7 +1103,7 @@ export default function EvaluasiDetailClient({
                     {insight.perKapitaFormula}
                   </p>
                 </div>
-                <div className="rounded-xl border border-admin-border-soft bg-admin-surface-soft p-3.5">
+                <div className="rounded-[8px] border border-admin-border-soft bg-admin-surface-soft p-3.5">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-admin-text-4 mb-1">
                     Desil DTSEN
                   </p>
@@ -1116,7 +1116,7 @@ export default function EvaluasiDetailClient({
                     {insight.desilCaption}
                   </p>
                 </div>
-                <div className="rounded-xl border border-admin-border-soft bg-admin-surface-soft p-3.5">
+                <div className="rounded-[8px] border border-admin-border-soft bg-admin-surface-soft p-3.5">
                   <p className="text-[10px] font-bold uppercase tracking-wider text-admin-text-4 mb-1">
                     Jarak Pusat Kota
                   </p>
@@ -1141,7 +1141,7 @@ export default function EvaluasiDetailClient({
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="bg-white rounded-2xl border border-admin-border shadow-sm p-5"
+              className="bg-white rounded-[8px] border border-admin-border shadow-sm p-5"
             >
               <div className="flex items-center gap-2 mb-4">
                 <History size={14} className="text-admin-text-3" />
@@ -1167,7 +1167,7 @@ export default function EvaluasiDetailClient({
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-white rounded-2xl border border-admin-border shadow-xl p-6 max-w-sm w-full mx-4"
+            className="bg-white rounded-[8px] border border-admin-border shadow-xl p-6 max-w-sm w-full mx-4"
           >
             <div className="flex items-center gap-3 mb-3">
               <div className="w-10 h-10 rounded-xl bg-admin-danger-bg flex items-center justify-center">
@@ -1210,7 +1210,7 @@ export default function EvaluasiDetailClient({
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="bg-white rounded-2xl border border-admin-border shadow-xl w-full max-w-md"
+              className="bg-white rounded-[8px] border border-admin-border shadow-xl w-full max-w-md"
             >
               <div className="flex items-center justify-between p-5 border-b border-admin-border">
                 <div className="flex items-center gap-2.5">

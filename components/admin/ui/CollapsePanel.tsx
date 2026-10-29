@@ -27,7 +27,7 @@ export function CollapsePanel({
   className,
 }: CollapsePanelProps) {
   return (
-    <section className={cn("bg-admin-surface border border-admin-border rounded-2xl", className)}>
+    <section className={cn("bg-admin-surface border border-admin-border rounded-[8px]", className)}>
       <div className="flex items-center gap-[14px] px-5 py-[17px]">
         {icon && (
           <div className="w-[38px] h-[38px] rounded-xl bg-admin-accent/[0.13] text-admin-accent flex items-center justify-center shrink-0">

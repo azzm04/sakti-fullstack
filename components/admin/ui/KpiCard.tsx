@@ -28,7 +28,7 @@ export function KpiCard({
   return (
     <article
       className={cn(
-        "bg-admin-surface border border-admin-border rounded-2xl p-[17px_18px_15px] flex flex-col gap-[11px] shadow-[0_1px_2px_rgba(20,40,70,0.05)]",
+        "bg-admin-surface border border-admin-border rounded-[8px] p-[17px_18px_15px] flex flex-col gap-[11px] shadow-[0_1px_2px_rgba(20,40,70,0.05)]",
         className
       )}
     >

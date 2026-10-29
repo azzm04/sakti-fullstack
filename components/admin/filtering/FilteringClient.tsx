@@ -120,7 +120,7 @@ export default function FilteringClient() {
 
       <div className="px-[30px] pt-[22px] pb-[34px] flex flex-col gap-[18px]">
         {/* Pilih Data */}
-        <section className="bg-admin-surface rounded-2xl border border-admin-border shadow-[0_1px_2px_rgba(20,40,70,0.05)] p-5">
+        <section className="bg-admin-surface rounded-[8px] border border-admin-border shadow-[0_1px_2px_rgba(20,40,70,0.05)] p-5">
           <div className="flex items-center gap-2 mb-4">
             <ListFilter size={16} className="text-admin-accent" />
             <div>
@@ -238,7 +238,7 @@ export default function FilteringClient() {
           <motion.section
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-admin-surface rounded-2xl border border-admin-border shadow-[0_1px_2px_rgba(20,40,70,0.05)] overflow-hidden"
+            className="bg-admin-surface rounded-[8px] border border-admin-border shadow-[0_1px_2px_rgba(20,40,70,0.05)] overflow-hidden"
           >
             <div className="overflow-x-auto">
               <table className="w-full text-sm">

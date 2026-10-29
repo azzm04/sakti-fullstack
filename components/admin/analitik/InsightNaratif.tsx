@@ -105,7 +105,7 @@ export default function InsightNaratif({ data }: Props) {
         {insights.map(({ icon: Icon, colorIcon, title, body }, i) => (
           <div
             key={i}
-            className="bg-admin-surface border border-admin-border rounded-2xl p-5 flex flex-col gap-2.5"
+            className="bg-admin-surface border border-admin-border rounded-[8px] p-5 flex flex-col gap-2.5"
           >
             <div className="flex items-start justify-between gap-3">
               <div className="flex items-center gap-2.5">

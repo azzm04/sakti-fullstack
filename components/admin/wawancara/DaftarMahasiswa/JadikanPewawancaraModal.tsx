@@ -66,13 +66,13 @@ export default function JadikanPewawancaraModal({
           className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
         />
       </div>
-      <p className="text-[11px] text-admin-text-5 bg-admin-surface-soft rounded-xl px-3 py-2 border border-admin-border-soft">
+      <p className="text-[11px] text-admin-text-5 bg-admin-surface-soft rounded-[8px] px-3 py-2 border border-admin-border-soft">
         Akun ini akan tetap sebagai Mahasiswa KIP-K — role Pewawancara ditambahkan,
         bukan menggantikan. Akan muncul juga di tab Pewawancara, dan email pemberitahuan
         penunjukan pewawancara dikirim ke alamat ini.
       </p>
       {formError && (
-        <p role="alert" className="text-xs text-admin-danger-text bg-admin-danger-bg rounded-xl px-3 py-2">
+        <p role="alert" className="text-xs text-admin-danger-text bg-admin-danger-bg rounded-[8px] px-3 py-2">
           {formError}
         </p>
       )}

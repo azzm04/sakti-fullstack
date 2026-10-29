@@ -143,7 +143,7 @@ export default function SectionKirimEmail({ onEnqueued }: Props) {
   return (
     <div className="space-y-5">
       {/* ── Form Card ── */}
-      <div className="bg-white rounded-2xl border border-admin-border shadow-sm overflow-hidden">
+      <div className="bg-white rounded-[8px] border border-admin-border shadow-sm overflow-hidden">
         <div className="px-6 py-5 border-b border-admin-border flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-admin-danger-bg text-admin-danger-bar flex items-center justify-center">
             <Mail size={17} />
@@ -202,7 +202,7 @@ export default function SectionKirimEmail({ onEnqueued }: Props) {
               File SK yang akan dilampirkan
             </label>
             {skList.length === 0 ? (
-              <div className="flex items-center gap-2 px-4 py-3 bg-admin-warn-bg-2 border border-admin-warn-border rounded-xl text-sm text-admin-warn-text">
+              <div className="flex items-center gap-2 px-4 py-3 bg-admin-warn-bg-2 border border-admin-warn-border rounded-[8px] text-sm text-admin-warn-text">
                 <AlertCircle size={14} />
                 Belum ada SK diupload. Pergi ke tab{" "}
                 <strong>Import SK PDF</strong> untuk upload dulu.
@@ -281,7 +281,7 @@ export default function SectionKirimEmail({ onEnqueued }: Props) {
           </div>
 
           {/* Warning */}
-          <div className="flex items-start gap-3 px-4 py-3 bg-admin-warn-bg-2 border border-admin-warn-border rounded-xl text-sm text-admin-warn-text">
+          <div className="flex items-start gap-3 px-4 py-3 bg-admin-warn-bg-2 border border-admin-warn-border rounded-[8px] text-sm text-admin-warn-text">
             <AlertCircle size={15} className="shrink-0 mt-0.5" />
             <span>
               Sistem akan mengirim <strong>email dinamis</strong> ke{" "}
@@ -323,7 +323,7 @@ export default function SectionKirimEmail({ onEnqueued }: Props) {
                   transition={{ duration: 0.25, ease }}
                   className="overflow-hidden"
                 >
-                  <div className="mt-3 border border-admin-border rounded-xl overflow-hidden">
+                  <div className="mt-3 border border-admin-border rounded-[8px] overflow-hidden">
                     <div className="px-4 py-2.5 bg-admin-surface-soft flex items-center gap-2 border-b border-admin-border">
                       <Users size={12} className="text-admin-text-3" />
                       <span className="text-xs font-semibold text-admin-text-3">
@@ -414,7 +414,7 @@ export default function SectionKirimEmail({ onEnqueued }: Props) {
                 initial={{ opacity: 0, y: -6 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="flex items-start gap-3 px-4 py-3 bg-admin-accent/10 border border-admin-accent/25 rounded-xl"
+                className="flex items-start gap-3 px-4 py-3 bg-admin-accent/10 border border-admin-accent/25 rounded-[8px]"
               >
                 <CheckCircle2
                   size={15}
@@ -436,7 +436,7 @@ export default function SectionKirimEmail({ onEnqueued }: Props) {
                 initial={{ opacity: 0, y: -6 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0 }}
-                className="flex items-center gap-2 px-4 py-3 bg-admin-danger-bg border border-admin-danger-border rounded-xl text-sm font-semibold text-admin-danger-text"
+                className="flex items-center gap-2 px-4 py-3 bg-admin-danger-bg border border-admin-danger-border rounded-[8px] text-sm font-semibold text-admin-danger-text"
               >
                 <AlertCircle size={15} /> {errorMsg}
               </motion.div>

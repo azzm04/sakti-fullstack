@@ -162,7 +162,7 @@ export default function ModalDetailPrestasi({ item, onClose, onSuccess }: Props)
           </div>
 
           {isVerified && (
-            <div className="flex items-center gap-3 px-4 py-3.5 bg-emerald-50 border border-emerald-200 rounded-[6px]">
+            <div className="flex items-center gap-3 px-4 py-3.5 bg-emerald-50 border border-emerald-200 rounded-[8px]">
               <CheckCircle2 size={18} className="text-emerald-600 shrink-0" />
               <div>
                 <p className="font-roboto font-semibold text-[13px] text-emerald-800">Sudah Terverifikasi</p>
@@ -178,7 +178,7 @@ export default function ModalDetailPrestasi({ item, onClose, onSuccess }: Props)
 
         <div className="px-8 py-5 border-t border-[#E5EAF0] rounded-b-[8px] bg-[#FAFBFD]">
           {error && (
-            <div className="bg-red-50 border border-red-200 p-4 rounded-[6px] flex items-start gap-3 mb-4">
+            <div className="bg-red-50 border border-red-200 p-4 rounded-[8px] flex items-start gap-3 mb-4">
               <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={18} />
               <p className="font-roboto text-sm font-medium text-red-800 flex-1">{error}</p>
               <button type="button" onClick={() => setError(null)} className="text-red-400 hover:text-red-600 shrink-0">

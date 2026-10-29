@@ -97,7 +97,7 @@ export default function KasusOverrideAdmin({ data }: Props) {
   if (safeData.length === 0) return null;
 
   return (
-    <div className="bg-admin-surface rounded-2xl border border-admin-border shadow-sm overflow-hidden">
+    <div className="bg-admin-surface rounded-[8px] border border-admin-border shadow-sm overflow-hidden">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4 px-6 py-4 border-b border-admin-border">
         <div>
@@ -110,7 +110,7 @@ export default function KasusOverrideAdmin({ data }: Props) {
           </p>
         </div>
         <div className="flex items-center gap-2.5 shrink-0">
-          <div className="bg-admin-danger-bg border border-admin-danger-border rounded-xl px-3.5 py-2 text-right">
+          <div className="bg-admin-danger-bg border border-admin-danger-border rounded-[8px] px-3.5 py-2 text-right">
             <p className="text-[15px] font-bold text-admin-danger-text leading-none tabular-nums">
               {turun.length}{" "}
               <span className="text-[11px] font-semibold">
@@ -121,7 +121,7 @@ export default function KasusOverrideAdmin({ data }: Props) {
               Layak menurut pewawancara, ditolak admin
             </p>
           </div>
-          <div className="bg-admin-warn-bg border border-admin-warn-border rounded-xl px-3.5 py-2 text-right">
+          <div className="bg-admin-warn-bg border border-admin-warn-border rounded-[8px] px-3.5 py-2 text-right">
             <p className="text-[15px] font-bold text-admin-warn-text leading-none tabular-nums">
               {naik.length}{" "}
               <span className="text-[11px] font-semibold">

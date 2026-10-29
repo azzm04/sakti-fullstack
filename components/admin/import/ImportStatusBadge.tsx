@@ -32,7 +32,7 @@ export default function ImportStatusBadge({
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.9 }}
-          className="flex items-center gap-2.5 px-4 py-2 bg-admin-accent/10 border border-admin-accent/25 rounded-xl shadow-sm"
+          className="flex items-center gap-2.5 px-4 py-2 bg-admin-accent/10 border border-admin-accent/25 rounded-[8px] shadow-sm"
         >
           <CheckCircle2 size={18} className="text-admin-accent" />
           <div className="flex flex-col">
@@ -52,7 +52,7 @@ export default function ImportStatusBadge({
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="flex items-center gap-2.5 px-4 py-2 bg-admin-accent/8 border border-admin-accent/20 rounded-xl shadow-sm"
+          className="flex items-center gap-2.5 px-4 py-2 bg-admin-accent/8 border border-admin-accent/20 rounded-[8px] shadow-sm"
         >
           <FileSpreadsheet size={18} className="text-admin-accent" />
           <div className="flex flex-col">
@@ -74,7 +74,7 @@ export default function ImportStatusBadge({
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="flex items-start gap-2.5 px-4 py-2 bg-admin-danger-bg border border-admin-danger-border rounded-xl shadow-sm max-w-sm"
+          className="flex items-start gap-2.5 px-4 py-2 bg-admin-danger-bg border border-admin-danger-border rounded-[8px] shadow-sm max-w-sm"
         >
           <AlertTriangle size={18} className="text-admin-danger-text shrink-0 mt-0.5" />
           <div className="flex flex-col">
@@ -94,7 +94,7 @@ export default function ImportStatusBadge({
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
-          className="flex items-center gap-2.5 px-4 py-2 bg-admin-accent/8 border border-admin-accent/20 rounded-xl shadow-sm min-w-[160px]"
+          className="flex items-center gap-2.5 px-4 py-2 bg-admin-accent/8 border border-admin-accent/20 rounded-[8px] shadow-sm min-w-[160px]"
         >
           <div className="w-4 h-4 border-2 border-admin-accent border-t-transparent rounded-full animate-spin shrink-0" />
           <div className="flex flex-col flex-1">
