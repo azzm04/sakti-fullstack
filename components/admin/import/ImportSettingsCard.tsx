@@ -3,7 +3,7 @@
 import { Calendar, AlertTriangle } from "lucide-react";
 import { motion } from "framer-motion";
 import { JALUR_VALUE_OPTIONS as JALUR_OPTIONS } from "@/lib/jalur";
-import type { JalurMasuk } from "@/app/admin/import/page";
+import type { JalurMasuk } from "@/app/admin/manajemen-seleksi/import/page";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -59,11 +59,13 @@ export default function ImportSettingsCard({
               onChange={(e) => onChangeTahun(e.target.value)}
               disabled={disabled}
               className={cn(
-                "w-full pl-9 pr-4 py-3 text-sm font-bold rounded-xl bg-admin-surface-soft text-admin-text",
+                "w-full pl-9 pr-4 py-3 text-sm font-bold rounded-[8px] bg-admin-surface-soft text-admin-text",
                 "border focus:outline-none focus:ring-2 focus:ring-admin-accent/40 focus:border-admin-accent transition-all",
                 "disabled:opacity-50 disabled:cursor-not-allowed",
                 "[appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none",
-                showTahunError ? "border-admin-danger-text bg-admin-danger-bg/40" : "border-admin-border",
+                showTahunError
+                  ? "border-admin-danger-text bg-admin-danger-bg/40"
+                  : "border-admin-border",
               )}
             />
           </div>
@@ -93,7 +95,7 @@ export default function ImportSettingsCard({
                   onClick={() => onChangeJalur(opt.value)}
                   aria-pressed={selected}
                   className={cn(
-                    "flex items-center gap-2 px-3.5 py-2 rounded-xl border text-[12.5px] font-semibold transition-colors",
+                    "flex items-center gap-2 px-3.5 py-2 rounded-[8px] border text-[12.5px] font-semibold transition-colors",
                     "disabled:opacity-50 disabled:cursor-not-allowed",
                     selected
                       ? "border-admin-accent bg-admin-accent/[0.08] text-admin-accent-active"
@@ -103,7 +105,9 @@ export default function ImportSettingsCard({
                   <span
                     className={cn(
                       "w-[13px] h-[13px] rounded-full shrink-0 bg-white block",
-                      selected ? "border-[4px] border-admin-accent" : "border-[1.5px] border-admin-text-5",
+                      selected
+                        ? "border-[4px] border-admin-accent"
+                        : "border-[1.5px] border-admin-text-5",
                     )}
                   />
                   {opt.label}

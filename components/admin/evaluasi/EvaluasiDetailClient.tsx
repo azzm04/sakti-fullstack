@@ -382,7 +382,7 @@ export default function EvaluasiDetailClient({
     await fetch(`/api/admin/evaluasi/${id}`, { method: "DELETE" }).catch(
       () => {},
     );
-    router.push("/admin/evaluasi");
+    router.push("/admin/manajemen-seleksi/evaluasi");
   }
 
   const hasWawancaraData = !!(
@@ -457,7 +457,7 @@ export default function EvaluasiDetailClient({
                 ) {
                   router.back();
                 } else {
-                  router.push("/admin/evaluasi");
+                  router.push("/admin/manajemen-seleksi/evaluasi");
                 }
               }}
               className="inline-flex items-center gap-[7px] text-[12.5px] font-semibold text-admin-accent hover:text-admin-accent-ink transition-colors cursor-pointer"
@@ -553,7 +553,7 @@ export default function EvaluasiDetailClient({
           }`}
         >
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-admin-accent/8 flex items-center justify-center shrink-0">
+            <div className="w-9 h-9 rounded-[8px] bg-admin-accent/8 flex items-center justify-center shrink-0">
               <UserCheck size={16} className="text-admin-accent" />
             </div>
             <div>
@@ -890,7 +890,7 @@ export default function EvaluasiDetailClient({
             className="bg-white rounded-[8px] border border-admin-border shadow-sm p-6"
           >
             <div className="flex items-center gap-2 mb-5">
-              <div className="w-9 h-9 rounded-xl bg-admin-accent/8 flex items-center justify-center">
+              <div className="w-9 h-9 rounded-[8px] bg-admin-accent/8 flex items-center justify-center">
                 <ClipboardList size={16} className="text-admin-accent" />
               </div>
               <div>
@@ -922,7 +922,7 @@ export default function EvaluasiDetailClient({
                           hasil_akhir: autoHasilAkhir(opt.value) ?? "",
                         }))
                       }
-                      className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                      className={`px-4 py-2 rounded-[8px] text-xs font-semibold border transition-all ${
                         form.rekomendasi === opt.value
                           ? opt.active
                           : opt.inactive
@@ -967,7 +967,7 @@ export default function EvaluasiDetailClient({
                           onClick={() =>
                             setForm((f) => ({ ...f, hasil_akhir: opt.value }))
                           }
-                          className={`px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                          className={`px-4 py-2 rounded-[8px] text-xs font-semibold border transition-all ${
                             form.hasil_akhir === opt.value
                               ? opt.active
                               : opt.inactive
@@ -1013,7 +1013,7 @@ export default function EvaluasiDetailClient({
                   }
                   placeholder="Catatan tambahan untuk keputusan ini..."
                   rows={3}
-                  className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-1 focus:ring-admin-accent/20 bg-admin-surface-soft resize-none transition-all"
+                  className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-[8px] focus:outline-none focus:border-admin-accent focus:ring-1 focus:ring-admin-accent/20 bg-admin-surface-soft resize-none transition-all"
                 />
               </div>
 
@@ -1029,7 +1029,7 @@ export default function EvaluasiDetailClient({
                   }
                   placeholder="Alasan dari pewawancara..."
                   rows={4}
-                  className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-1 focus:ring-admin-accent/20 bg-admin-surface-soft resize-none transition-all"
+                  className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-[8px] focus:outline-none focus:border-admin-accent focus:ring-1 focus:ring-admin-accent/20 bg-admin-surface-soft resize-none transition-all"
                 />
               </div>
             </div>
@@ -1076,7 +1076,7 @@ export default function EvaluasiDetailClient({
                   value={nimResmi}
                   onChange={(e) => setNimResmi(e.target.value)}
                   placeholder="Contoh: 24010125130071"
-                  className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-1 focus:ring-admin-accent/20 bg-admin-surface-soft mb-3"
+                  className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-[8px] focus:outline-none focus:border-admin-accent focus:ring-1 focus:ring-admin-accent/20 bg-admin-surface-soft mb-3"
                 />
 
                 <div className="flex gap-2">
@@ -1084,7 +1084,7 @@ export default function EvaluasiDetailClient({
                     type="button"
                     onClick={() => handleSetStatusSk("Ditetapkan")}
                     disabled={skSaveStatus === "saving"}
-                    className="flex-1 px-4 py-2 rounded-xl text-xs font-semibold border bg-admin-accent text-white border-admin-accent hover:bg-admin-accent-hover transition-all disabled:opacity-60"
+                    className="flex-1 px-4 py-2 rounded-[8px] text-xs font-semibold border bg-admin-accent text-white border-admin-accent hover:bg-admin-accent-hover transition-all disabled:opacity-60"
                   >
                     Tetapkan Lolos SK
                   </button>
@@ -1092,7 +1092,7 @@ export default function EvaluasiDetailClient({
                     type="button"
                     onClick={() => handleSetStatusSk("Tidak Ditetapkan")}
                     disabled={skSaveStatus === "saving"}
-                    className="flex-1 px-4 py-2 rounded-xl text-xs font-semibold border bg-white text-admin-text-3 border-admin-border hover:border-admin-danger-bar transition-all disabled:opacity-60"
+                    className="flex-1 px-4 py-2 rounded-[8px] text-xs font-semibold border bg-white text-admin-text-3 border-admin-border hover:border-admin-danger-bar transition-all disabled:opacity-60"
                   >
                     Tidak Ditetapkan
                   </button>
@@ -1108,7 +1108,7 @@ export default function EvaluasiDetailClient({
               className="bg-white rounded-[8px] border border-admin-border shadow-sm p-6"
             >
               <div className="flex items-center gap-2 mb-5">
-                <div className="w-9 h-9 rounded-xl bg-admin-accent/8 flex items-center justify-center">
+                <div className="w-9 h-9 rounded-[8px] bg-admin-accent/8 flex items-center justify-center">
                   <ClipboardCheck size={16} className="text-admin-accent" />
                 </div>
                 <div>
@@ -1200,7 +1200,7 @@ export default function EvaluasiDetailClient({
             className="bg-white rounded-[8px] border border-admin-border shadow-xl p-6 max-w-sm w-full mx-4"
           >
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-admin-danger-bg flex items-center justify-center">
+              <div className="w-10 h-10 rounded-[8px] bg-admin-danger-bg flex items-center justify-center">
                 <Trash2 size={18} className="text-admin-danger-bar" />
               </div>
               <h3 className="font-admin-heading font-bold text-admin-text">
@@ -1217,13 +1217,13 @@ export default function EvaluasiDetailClient({
             <div className="flex gap-2">
               <button
                 onClick={() => setShowDelete(false)}
-                className="flex-1 py-2.5 text-sm font-semibold border border-admin-border rounded-xl hover:bg-admin-surface-soft transition-all"
+                className="flex-1 py-2.5 text-sm font-semibold border border-admin-border rounded-[8px] hover:bg-admin-surface-soft transition-all"
               >
                 Batal
               </button>
               <button
                 onClick={handleDelete}
-                className="flex-1 py-2.5 text-sm font-semibold bg-admin-danger-bar text-white rounded-xl hover:bg-admin-danger-text transition-all"
+                className="flex-1 py-2.5 text-sm font-semibold bg-admin-danger-bar text-white rounded-[8px] hover:bg-admin-danger-text transition-all"
               >
                 Hapus
               </button>
@@ -1244,7 +1244,7 @@ export default function EvaluasiDetailClient({
             >
               <div className="flex items-center justify-between p-5 border-b border-admin-border">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-9 h-9 rounded-xl bg-admin-accent/8 flex items-center justify-center">
+                  <div className="w-9 h-9 rounded-[8px] bg-admin-accent/8 flex items-center justify-center">
                     <UserPlus size={16} className="text-admin-accent" />
                   </div>
                   <h3 className="font-admin-heading font-bold text-admin-text text-sm">
@@ -1277,7 +1277,7 @@ export default function EvaluasiDetailClient({
                           key={pw.id}
                           onClick={() => handleTugaskan(pw.id)}
                           disabled={assigningId !== null || isCurrent}
-                          className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-xl border text-left transition-all disabled:cursor-default ${
+                          className={`w-full flex items-center justify-between gap-3 px-4 py-3 rounded-[8px] border text-left transition-all disabled:cursor-default ${
                             isCurrent
                               ? "border-admin-accent/30 bg-admin-accent/[0.06]"
                               : "border-admin-border hover:border-admin-accent hover:bg-admin-surface-soft"

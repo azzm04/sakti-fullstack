@@ -11,7 +11,6 @@ import {
 } from "lucide-react";
 import { FILTERING_JALUR_KEYS, JALUR_LABELS, type JalurKey } from "@/lib/jalur";
 import { RadioRow } from "@/components/admin/ui/RadioRow";
-import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { EmptyState } from "@/components/admin/ui/EmptyState";
 import { Pill } from "@/components/admin/ui/Pill";
 
@@ -112,13 +111,7 @@ export default function FilteringClient() {
   }
 
   return (
-    <div className="min-h-screen bg-admin-bg font-admin-body text-admin-text flex flex-col">
-      <PageHeader
-        title="Filtering Kuota (UM & SBUB)"
-        description="Urutkan kandidat yang diusulkan sesuai kuota jalur masuk"
-      />
-
-      <div className="px-[30px] pt-[22px] pb-[34px] flex flex-col gap-[18px]">
+    <div className="px-4 sm:px-[30px] pt-[22px] pb-[34px] flex flex-col gap-[18px]">
         {/* Pilih Data */}
         <section className="bg-admin-surface rounded-[8px] border border-admin-border shadow-[0_1px_2px_rgba(20,40,70,0.05)] p-5">
           <div className="flex items-center gap-2 mb-4">
@@ -320,7 +313,6 @@ export default function FilteringClient() {
             </div>
           </motion.section>
         )}
-      </div>
     </div>
   );
 }

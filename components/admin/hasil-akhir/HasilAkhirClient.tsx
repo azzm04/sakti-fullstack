@@ -3,17 +3,22 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion } from "motion/react";
 import { FileSpreadsheet, FileUp, ShieldCheck, Mail } from "lucide-react";
-import { PageHeader } from "@/components/admin/ui/PageHeader";
 import SectionExportExcel from "./SectionExportExcel";
 import SectionImportSK from "./SectionImportSK";
-import SectionPenetapanSK, { type PenetapanSKCounts } from "./SectionPenetapanSK";
+import SectionPenetapanSK, {
+  type PenetapanSKCounts,
+} from "./SectionPenetapanSK";
 import SectionKirimEmail from "./SectionKirimEmail";
 import PenerimaPerJalurCard from "./PenerimaPerJalurCard";
 import SKTersimpanCard from "./SKTersimpanCard";
 import PenetapanSKStatusCard from "./PenetapanSKStatusCard";
 import AntrianPengirimanCard from "./AntrianPengirimanCard";
 import { SK_ENDPOINT } from "./SKTersimpanCard";
-import { SUMMARY_ENDPOINT, summaryFetcher, type HasilAkhirSummary } from "./HasilAkhirSummary";
+import {
+  SUMMARY_ENDPOINT,
+  summaryFetcher,
+  type HasilAkhirSummary,
+} from "./HasilAkhirSummary";
 import { mutate as globalMutate } from "swr";
 import type { SKDokumen } from "./SectionImportSK";
 
@@ -50,7 +55,12 @@ const TABS = [
 
 type TabKey = (typeof TABS)[number]["key"];
 
-type QueueStats = { total: number; queued: number; sent: number; failed: number };
+type QueueStats = {
+  total: number;
+  queued: number;
+  sent: number;
+  failed: number;
+};
 
 const ease = [0.25, 0, 0, 1] as [number, number, number, number];
 
@@ -97,7 +107,9 @@ export default function HasilAkhirClient() {
   async function handleProcessQueue() {
     setProcessingQueue(true);
     try {
-      await fetch("/api/admin/hasil-akhir/email-queue/process", { method: "POST" });
+      await fetch("/api/admin/hasil-akhir/email-queue/process", {
+        method: "POST",
+      });
       setTimeout(fetchQueueStats, 2000);
     } finally {
       setProcessingQueue(false);
@@ -105,10 +117,17 @@ export default function HasilAkhirClient() {
   }
 
   async function handleDeleteSK(sk: SKDokumen) {
-    if (!confirm(`Hapus dokumen SK "${sk.nama_file}"? Tindakan tidak bisa dibatalkan.`)) return;
+    if (
+      !confirm(
+        `Hapus dokumen SK "${sk.nama_file}"? Tindakan tidak bisa dibatalkan.`,
+      )
+    )
+      return;
     setDeletingSkId(sk.id);
     try {
-      const res = await fetch(`${SK_ENDPOINT}?id=${sk.id}`, { method: "DELETE" });
+      const res = await fetch(`${SK_ENDPOINT}?id=${sk.id}`, {
+        method: "DELETE",
+      });
       if (!res.ok) throw new Error("Gagal menghapus SK");
     } finally {
       setDeletingSkId(null);
@@ -117,13 +136,7 @@ export default function HasilAkhirClient() {
   }
 
   return (
-    <div className="min-h-screen bg-admin-bg font-admin-body text-admin-text flex flex-col">
-      <PageHeader
-        title="Hasil Akhir Seleksi"
-        description="Tetapkan SK, ekspor data, dan kirim pengumuman hasil seleksi"
-      />
-
-      <div className="px-4 sm:px-[30px] pt-[22px] pb-[34px] flex flex-col gap-[18px]">
+    <div className="px-4 sm:px-[30px] pt-[22px] pb-[34px] flex flex-col gap-[18px]">
         {/* Step navigation */}
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -146,22 +159,28 @@ export default function HasilAkhirClient() {
                 }`}
               >
                 <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
-                    active ? "bg-admin-accent text-white" : "bg-admin-surface-soft text-admin-text-3"
+                  className={`w-9 h-9 rounded-[8px] flex items-center justify-center shrink-0 ${
+                    active
+                      ? "bg-admin-accent text-white"
+                      : "bg-admin-surface-soft text-admin-text-3"
                   }`}
                 >
                   <Icon size={17} />
                 </div>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <p className={`text-sm font-bold ${active ? "text-admin-accent" : "text-admin-text"}`}>
+                    <p
+                      className={`text-sm font-bold ${active ? "text-admin-accent" : "text-admin-text"}`}
+                    >
                       {label}
                     </p>
                     <span className="text-[10px] font-bold uppercase tracking-wide px-1.5 py-0.5 rounded bg-admin-surface-soft text-admin-text-4">
                       {step}
                     </span>
                   </div>
-                  <p className="text-[11px] text-admin-text-3 mt-0.5 leading-relaxed">{desc}</p>
+                  <p className="text-[11px] text-admin-text-3 mt-0.5 leading-relaxed">
+                    {desc}
+                  </p>
                 </div>
               </button>
             );
@@ -178,15 +197,25 @@ export default function HasilAkhirClient() {
         >
           {activeTab === "export" && (
             <>
-              <SectionExportExcel tahun={tahun} onTahunChange={setTahun} summary={summary} />
-              <PenerimaPerJalurCard summary={summary} loading={loadingSummary} />
+              <SectionExportExcel
+                tahun={tahun}
+                onTahunChange={setTahun}
+                summary={summary}
+              />
+              <PenerimaPerJalurCard
+                summary={summary}
+                loading={loadingSummary}
+              />
             </>
           )}
 
           {activeTab === "import_sk" && (
             <>
               <SectionImportSK />
-              <SKTersimpanCard onDelete={handleDeleteSK} deletingId={deletingSkId} />
+              <SKTersimpanCard
+                onDelete={handleDeleteSK}
+                deletingId={deletingSkId}
+              />
             </>
           )}
 
@@ -209,7 +238,6 @@ export default function HasilAkhirClient() {
             </>
           )}
         </motion.div>
-      </div>
     </div>
   );
 }

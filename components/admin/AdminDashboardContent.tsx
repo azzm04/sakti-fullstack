@@ -48,7 +48,7 @@ function SelectionDashboard({ data }: { data: SelectionGroup[] }) {
         <label className="grid gap-2 text-xs font-medium text-[#64748B]">Tahun seleksi<select value={year} onChange={(event) => setYear(event.target.value)} className={control}><option value="semua">Semua tahun</option>{years.map((item) => <option key={item} value={item}>{item}</option>)}{data.some((item) => item.year === null) && <option value="tanpa">Tanpa tahun seleksi</option>}</select></label>
         <label className="grid gap-2 text-xs font-medium text-[#64748B]">Jalur masuk<select value={route} onChange={(event) => setRoute(event.target.value)} className={control}><option value="semua">Semua jalur</option>{[...new Set(data.map((item) => item.route))].sort().map((item) => <option key={item}>{item}</option>)}</select></label>
       </div>
-      <Link href="/admin/evaluasi" className={link}>Buka evaluasi <ArrowUpRight size={16} /></Link>
+      <Link href="/admin/manajemen-seleksi/evaluasi" className={link}>Buka evaluasi <ArrowUpRight size={16} /></Link>
     </div>
     <Metrics items={[
       { label: "Total kandidat", value: total, note: "Sesuai tahun dan jalur terpilih" },
@@ -63,7 +63,7 @@ function SelectionDashboard({ data }: { data: SelectionGroup[] }) {
       </div>
       <div className="space-y-4">
         <section className={panel}><h2 className="text-base font-semibold text-[#0B1536]">Progres wawancara</h2><p className="mt-4 text-3xl font-semibold tabular-nums text-[#000352]">{total ? `${progress.toLocaleString("id-ID", { maximumFractionDigits: 1 })}%` : "-"}</p><p className="mt-2 text-sm text-[#64748B]">{number(completed)} dari {number(total)} kandidat memiliki hasil final.</p><progress aria-label="Progres finalisasi wawancara" value={completed} max={Math.max(total, 1)} className="mt-4 h-2 w-full overflow-hidden rounded [&::-webkit-progress-bar]:bg-slate-100 [&::-webkit-progress-value]:bg-[#000352] [&::-moz-progress-bar]:bg-[#000352]" /></section>
-        <section className={panel}><h2 className="text-base font-semibold text-[#0B1536]">Kelola seleksi</h2><div className="mt-4 grid gap-4"><Link className={link} href="/admin/import">Impor data kandidat <ArrowUpRight size={15} /></Link><Link className={link} href="/admin/wawancara/urutan">Kelola sesi wawancara <ArrowUpRight size={15} /></Link><Link className={link} href="/admin/hasil-akhir">Lihat hasil akhir <ArrowUpRight size={15} /></Link><Link className={link} href="/admin/analitik">Buka analitik seleksi <ArrowUpRight size={15} /></Link></div></section>
+        <section className={panel}><h2 className="text-base font-semibold text-[#0B1536]">Kelola seleksi</h2><div className="mt-4 grid gap-4"><Link className={link} href="/admin/manajemen-seleksi/import">Impor data kandidat <ArrowUpRight size={15} /></Link><Link className={link} href="/admin/manajemen-seleksi/urutan-pewawancara">Kelola sesi wawancara <ArrowUpRight size={15} /></Link><Link className={link} href="/admin/manajemen-seleksi/hasil-akhir">Lihat hasil akhir <ArrowUpRight size={15} /></Link><Link className={link} href="/admin/manajemen-seleksi/analitik">Buka analitik seleksi <ArrowUpRight size={15} /></Link></div></section>
       </div>
     </div>
     <section className="overflow-hidden rounded-lg border border-[#E2E8F0] bg-white">

@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion"
 import { CheckCircle2, FileSpreadsheet, AlertTriangle } from "lucide-react"
-import type { SaveStatus } from "@/app/admin/import/page"
+import type { SaveStatus } from "@/app/admin/manajemen-seleksi/import/page"
 import type { ValidationSummary } from "@/schemas"
 
 interface Props {

@@ -8,6 +8,7 @@ export default function UrutanPewawancaraPage() {
     <WawancaraPageShell
       title="Urutan Pewawancara"
       description="Kelola sesi dan Pemilihan Urutan Pewawancara"
+      hideHeader
     >
       <SesiWAR />
     </WawancaraPageShell>

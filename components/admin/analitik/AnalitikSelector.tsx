@@ -18,7 +18,6 @@ import {
 import type { DashboardAnalitikData } from "@/types/analitik";
 import { JALUR_VALUE_OPTIONS as JALUR_OPTIONS } from "@/lib/jalur";
 
-import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { EmptyState } from "@/components/admin/ui/EmptyState";
 import AnalisisHeroBanner from "@/components/admin/analitik/AnalisisHeroBanner";
 import FeatureImportanceChart from "@/components/admin/analitik/FeatureImportanceChart";
@@ -96,7 +95,10 @@ export default function AnalitikSelector() {
   // dari `jalur`/`tahun` (nilai form yang sedang dipilih user), supaya
   // mengubah pilihan di form tidak langsung mengubah label di hero banner
   // sebelum "Analisis Ulang" benar-benar ditekan.
-  const [activeSelection, setActiveSelection] = useState<{ jalur: string; tahun: string } | null>(null);
+  const [activeSelection, setActiveSelection] = useState<{
+    jalur: string;
+    tahun: string;
+  } | null>(null);
 
   const tahunValid =
     /^\d{4}$/.test(tahun) && parseInt(tahun) >= 2020 && parseInt(tahun) <= 2099;
@@ -152,13 +154,7 @@ export default function AnalitikSelector() {
   }
 
   return (
-    <div className="min-h-screen bg-admin-bg font-admin-body text-admin-text flex flex-col">
-      <PageHeader
-        title="Dashboard Analitik"
-        description="Analisis hasil seleksi dan model decision tree"
-      />
-
-      <div className="px-4 sm:px-[30px] pt-[22px] pb-[34px] flex flex-col gap-[18px]">
+    <div className="px-4 sm:px-[30px] pt-[22px] pb-[34px] flex flex-col gap-[18px]">
         {/* Form Selector — collapsible */}
         <div className="bg-admin-surface rounded-[8px] border border-admin-border shadow-sm overflow-hidden">
           <motion.button
@@ -253,7 +249,7 @@ export default function AnalitikSelector() {
                             // dashboard yang sudah "done" hanya karena form-nya diutak-atik.
                             if (state === "error") setState("idle");
                           }}
-                          className={`w-full pl-9 pr-4 py-2.5 text-sm font-bold rounded-xl border bg-admin-bg text-admin-text
+                          className={`w-full pl-9 pr-4 py-2.5 text-sm font-bold rounded-[8px] border bg-admin-bg text-admin-text
                             focus:outline-none focus:ring-2 focus:ring-ring focus:border-ring transition-all
                             [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none
                             ${!tahunValid && tahun !== "" ? "border-admin-danger-text bg-admin-danger-text/5" : "border-admin-border"}`}
@@ -291,7 +287,7 @@ export default function AnalitikSelector() {
                               whileHover={{ scale: 1.01 }}
                               whileTap={{ scale: 0.98 }}
                               transition={spring}
-                              className={`flex items-center gap-2.5 px-3 py-2 rounded-xl border text-left text-[13px] font-semibold whitespace-nowrap
+                              className={`flex items-center gap-2.5 px-3 py-2 rounded-[8px] border text-left text-[13px] font-semibold whitespace-nowrap
                                 ${
                                   selected
                                     ? "bg-admin-accent border-admin-accent text-white"
@@ -328,7 +324,7 @@ export default function AnalitikSelector() {
                           : undefined
                       }
                       transition={spring}
-                      className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-sm font-bold whitespace-nowrap lg:mt-[26px]
+                      className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-[8px] text-sm font-bold whitespace-nowrap lg:mt-[26px]
                         ${
                           canRun && state !== "loading"
                             ? "bg-admin-accent text-white hover:bg-admin-accent/90"
@@ -370,16 +366,19 @@ export default function AnalitikSelector() {
                           setRefresh(true);
                           handleAnalisis(true);
                         }}
-                        className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold border border-admin-border text-admin-text-3 hover:text-admin-text hover:border-admin-accent/30"
+                        className="flex items-center gap-1.5 px-4 py-2.5 rounded-[8px] text-sm font-semibold border border-admin-border text-admin-text-3 hover:text-admin-text hover:border-admin-accent/30"
                       >
                         <RefreshCw size={13} />
                         Perbarui Data Analisis
                       </motion.button>
 
                       <span className="text-xs text-admin-text-3">
-                        Diproses dalam {(data.waktu_proses_ms / 1000).toFixed(1)}s
+                        Diproses dalam{" "}
+                        {(data.waktu_proses_ms / 1000).toFixed(1)}s
                         {data.sumber === "cache" && (
-                          <span className="ml-1 text-admin-accent">(dari cache)</span>
+                          <span className="ml-1 text-admin-accent">
+                            (dari cache)
+                          </span>
                         )}
                       </span>
                     </div>
@@ -434,7 +433,7 @@ export default function AnalitikSelector() {
                 whileHover={{ scale: 1.03 }}
                 whileTap={{ scale: 0.96 }}
                 transition={spring}
-                className="mt-4 px-4 py-2 rounded-xl text-sm font-semibold bg-admin-accent text-white hover:bg-admin-accent/90"
+                className="mt-4 px-4 py-2 rounded-[8px] text-sm font-semibold bg-admin-accent text-white hover:bg-admin-accent/90"
               >
                 Coba Lagi
               </motion.button>
@@ -522,7 +521,6 @@ export default function AnalitikSelector() {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
     </div>
   );
 }

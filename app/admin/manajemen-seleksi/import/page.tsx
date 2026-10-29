@@ -10,7 +10,6 @@ import DataPreviewTable from "@/components/admin/import/DataPreviewTable";
 import ImportSettingsCard from "@/components/admin/import/ImportSettingsCard";
 import ImportStatusBadge from "@/components/admin/import/ImportStatusBadge";
 import ImportSuccessBanner from "@/components/admin/import/ImportSuccessBanner";
-import { PageHeader } from "@/components/admin/ui/PageHeader";
 import { KpiCard } from "@/components/admin/ui/KpiCard";
 import { JALUR_VALUE_OPTIONS } from "@/lib/jalur";
 
@@ -174,39 +173,32 @@ export default function ImportDataPage() {
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-admin-bg font-admin-body text-admin-text flex flex-col">
-      <PageHeader
-        title="Import Data Pendaftar"
-        description="Unggah data pendaftar KIP-K per jalur masuk dan tahun seleksi"
-        right={
-          <>
-            {hasData && (
-              <button
-                onClick={() => setShowUpload((v) => !v)}
-                className="flex items-center gap-2 px-[15px] py-[10px] text-[12.5px] font-semibold rounded-[11px] border border-admin-border bg-transparent hover:bg-admin-surface-soft text-admin-text transition-colors"
-              >
-                {showUpload ? (
-                  <EyeOff size={15} className="text-admin-text-3" />
-                ) : (
-                  <Eye size={15} className="text-admin-text-3" />
-                )}
-                {showUpload ? "Sembunyikan Panel" : "Tampilkan Panel"}
-              </button>
-            )}
-            <ImportStatusBadge
-              saveStatus={saveStatus}
-              saveProgress={saveProgress}
-              saveError={saveError}
-              validation={validation}
-              jalurMasuk={jalurMasuk}
-              tahunSeleksi={tahunSeleksi}
-            />
-          </>
-        }
-      />
-
-      <div className="px-[30px] pt-[22px] pb-[34px] flex flex-col gap-[18px]">
+    <div className="px-4 sm:px-[30px] pt-[22px] pb-[34px] flex flex-col gap-[18px]">
+      <div className="flex flex-wrap items-center justify-end gap-3">
         {hasData && (
+          <button
+            onClick={() => setShowUpload((v) => !v)}
+            className="flex items-center gap-2 px-[15px] py-[10px] text-[12.5px] font-semibold rounded-[11px] border border-admin-border bg-transparent hover:bg-admin-surface-soft text-admin-text transition-colors"
+          >
+            {showUpload ? (
+              <EyeOff size={15} className="text-admin-text-3" />
+            ) : (
+              <Eye size={15} className="text-admin-text-3" />
+            )}
+            {showUpload ? "Sembunyikan Panel" : "Tampilkan Panel"}
+          </button>
+        )}
+        <ImportStatusBadge
+          saveStatus={saveStatus}
+          saveProgress={saveProgress}
+          saveError={saveError}
+          validation={validation}
+          jalurMasuk={jalurMasuk}
+          tahunSeleksi={tahunSeleksi}
+        />
+      </div>
+
+      {hasData && (
           <section className="grid grid-cols-2 lg:grid-cols-4 gap-[14px]">
             <KpiCard
               label="Baris Dimuat"
@@ -305,7 +297,6 @@ export default function ImportDataPage() {
             </motion.div>
           )}
         </motion.div>
-      </div>
     </div>
   );
 }

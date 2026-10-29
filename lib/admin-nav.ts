@@ -1,13 +1,9 @@
 import {
   LayoutDashboard,
-  Upload,
-  ListOrdered,
+  Workflow,
   Users,
-  ClipboardCheck,
   BookMarked,
-  BarChart3,
   Award,
-  ListFilter,
   UserMinus,
   type LucideIcon,
 } from "lucide-react";
@@ -20,18 +16,13 @@ export interface AdminNavItem {
 
 export const ADMIN_NAV_ITEMS: AdminNavItem[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/admin/import", label: "Import Data", icon: Upload },
-  { href: "/admin/wawancara/pengguna", label: "Daftar Pengguna", icon: Users },
   {
-    href: "/admin/wawancara/urutan",
-    label: "Urutan Pewawancara",
-    icon: ListOrdered,
+    href: "/admin/manajemen-seleksi",
+    label: "Manajemen Seleksi",
+    icon: Workflow,
   },
-  { href: "/admin/evaluasi", label: "Evaluasi", icon: ClipboardCheck },
-  { href: "/admin/filtering", label: "Filtering Kuota", icon: ListFilter },
-  { href: "/admin/hasil-akhir", label: "Hasil Akhir", icon: Award },
+  { href: "/admin/wawancara/pengguna", label: "Daftar Pengguna", icon: Users },
   { href: "/admin/monev", label: "Monev", icon: BookMarked },
-  { href: "/admin/analitik", label: "Analitik", icon: BarChart3 },
   { href: "/admin/prestasi", label: "Prestasi", icon: Award },
   { href: "/admin/pengunduran-diri", label: "Undur Diri", icon: UserMinus },
   { href: "/admin/aduan", label: "Aduan", icon: UserMinus },
