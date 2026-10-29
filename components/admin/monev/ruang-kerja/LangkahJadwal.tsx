@@ -11,7 +11,7 @@ import {
 } from "@/lib/monev-schedule";
 import { CalendarDays, ArrowRight, ChevronDown, Pencil, Clock3 } from "lucide-react";
 import { kolom, panel, tombol, utama } from "./tampilan";
-import { tanggalWib, judulPeriode, type PeriodeRuangKerja } from "@/lib/monev/ruang-kerja";
+import { tanggalWib, type PeriodeRuangKerja } from "@/lib/monev/ruang-kerja";
 
 const input = `${kolom} mt-2 !py-3.5 !text-base sm:!text-sm`;
 const button = tombol;
@@ -92,10 +92,10 @@ export default function LangkahJadwal({ periode: p, contoh = false }: { periode?
       }
       setConfirmation(null);
       if (action === "hapus") {
-        router.push("/admin/monev?tampilan=periode");
+        router.push("/admin/monev");
         refresh();
       } else if (!p) {
-        router.push(`/admin/monev/${json.data.id}?langkah=jadwal`);
+        router.push("/admin/monev");
         refresh();
       } else {
         setMessage("Perubahan jadwal berhasil disimpan.");
@@ -144,10 +144,10 @@ export default function LangkahJadwal({ periode: p, contoh = false }: { periode?
     UBAH_WAKTU_MULAI: "Waktu mulai diubah", UBAH_DEADLINE: "Batas pengisian diubah",
     AKTIFKAN: "Periode diaktifkan", NONAKTIFKAN: "Periode dinonaktifkan", TUTUP: "Periode ditutup", FINALISASI: "Evaluasi difinalkan",
   };
-  return <div className={p ? "grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_300px]" : "w-full"}>
+  return <div className="w-full">
     <div className="min-w-0 space-y-5">
       {p && <section className={panel}>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E8F0] px-5 py-4"><div><h2 className="text-[16px] font-semibold text-[#0F172A]">Jadwal pengisian</h2><p className="mt-1 text-[12px] text-[#64748B]">{judulPeriode(p)}</p></div>{!locked && !editing && <button onClick={() => setEditing(true)} className={tombol}><Pencil size={13} />{deadlineOnly ? status === "BERAKHIR" ? "Buka kembali" : "Perpanjang" : "Ubah jadwal"}</button>}</div>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E8F0] px-5 py-4"><h2 className="text-[16px] font-semibold text-[#0F172A]">Jadwal pengisian</h2>{!locked && !editing && <button onClick={() => setEditing(true)} className={tombol}><Pencil size={13} />{deadlineOnly ? status === "BERAKHIR" ? "Buka kembali" : "Perpanjang" : "Ubah jadwal"}</button>}</div>
         <div className="grid gap-5 p-5 sm:grid-cols-[1fr_auto_1fr]"><div><p className="mb-2 flex items-center gap-1.5 text-[11px] text-[#64748B]"><CalendarDays size={14} />Mulai pengisian</p><p className="text-[14px] font-medium text-[#0F172A]">{p.waktu_mulai ? tanggalWib(p.waktu_mulai) : "Belum ditentukan"}</p></div><ArrowRight size={17} className="hidden self-center text-[#CBD5E1] sm:block" /><div><p className="mb-2 flex items-center gap-1.5 text-[11px] text-[#64748B]"><Clock3 size={14} />Batas pengisian</p><p className="text-[14px] font-medium text-[#0F172A]">{tanggalWib(p.deadline)}</p></div></div>
         <div className="flex flex-wrap justify-between gap-2 border-t border-[#E2E8F0] bg-[#FAFBFD] px-5 py-3 text-[11px] text-[#64748B]"><span>Semua waktu dalam WIB (UTC+7)</span><span>{p.jumlah_laporan} laporan sudah masuk</span></div>
       </section>}
@@ -179,7 +179,7 @@ export default function LangkahJadwal({ periode: p, contoh = false }: { periode?
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <p className="text-[12px] leading-5 text-[#64748B]">{}</p>
                 <div className="flex shrink-0 flex-wrap gap-3">
-                  {p ? <button type="button" className={tombol} onClick={() => { setEditing(false); setError(""); }}>Batal</button> : busy ? <button type="button" disabled className={tombol}>Batal</button> : <Link href="/admin/monev?tampilan=periode" className={tombol}>Batal</Link>}
+                  {p ? <button type="button" className={tombol} onClick={() => { setEditing(false); setError(""); }}>Batal</button> : busy ? <button type="button" disabled className={tombol}>Batal</button> : <Link href="/admin/monev" className={tombol}>Batal</Link>}
                   <button type="submit" className={utama}>{busy ? "Menyimpan…" : !p ? "Buat periode" : deadlineOnly ? status === "BERAKHIR" ? "Buka kembali pengisian" : "Simpan perpanjangan" : "Simpan jadwal"}</button>
                 </div>
               </div>
@@ -199,7 +199,6 @@ export default function LangkahJadwal({ periode: p, contoh = false }: { periode?
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-[#E2E8F0] pt-5"><div><p className="text-[13px] font-medium">Hapus periode</p><p className="mt-1 text-[12px] text-[#64748B]">{p.jumlah_laporan ? "Tidak tersedia karena sudah ada laporan masuk." : "Hanya untuk periode yang belum memiliki laporan."}</p></div><button disabled={busy || p.jumlah_laporan > 0} onClick={() => setConfirmation("hapus")} className={`${tombol} text-red-700`}>Hapus periode</button></div>
       </div></details>}
     </div>
-    {p && <aside className={`${panel} p-5`}><h3 className="text-[14px] font-semibold text-[#0F172A]">Tentang jadwal</h3><p className="mt-3 text-[13px] leading-6 text-[#64748B]">Mahasiswa mengisi sesuai jadwal. Laporan yang masuk dapat diperiksa sebelum batas pengisian berakhir.</p></aside>}
     <Dialog open={confirmation !== null} onOpenChange={(open) => { if (!open && !busy) setConfirmation(null); }}><DialogContent><DialogTitle>{confirmation === "hapus" ? "Hapus periode?" : p?.is_active ? "Nonaktifkan periode?" : "Aktifkan periode?"}</DialogTitle><DialogDescription>{confirmation === "hapus" ? "Periode beserta riwayat jadwal dan log pengingat akan dihapus. Tindakan ini hanya tersedia untuk periode tanpa laporan." : p?.is_active ? "Periode tidak ditampilkan kepada mahasiswa dan pengisian tidak tersedia selama nonaktif." : "Periode ditampilkan kepada mahasiswa. Pengisian mengikuti jadwal yang telah ditentukan."}</DialogDescription><div className="mt-4 flex justify-end gap-3"><button disabled={busy} onClick={() => setConfirmation(null)} className={button}>Batal</button><button disabled={busy} onClick={() => void save(confirmation === "hapus" ? "hapus" : "aktif")} className={utama}>{busy ? "Memproses…" : "Ya, lanjutkan"}</button></div></DialogContent></Dialog>
   </div>;
 }

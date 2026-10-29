@@ -40,7 +40,7 @@ export default function MonevDashboard({ data, namaAdmin = "Admin Dirmawa", embe
           <h2 className="text-[20px] font-semibold leading-7 tracking-tight text-[#0F172A]">{action.title}</h2>
           <p className="mt-2 max-w-xl text-[13px] leading-6 text-[#64748B]">{action.detail}</p>
           <div className="mt-5 flex flex-wrap items-center gap-3"><Link href={action.href} className={utama}>{action.label}<ArrowRight size={15} /></Link>
-            <Link href={embedded ? url("jadwal") : `/admin/monev?tampilan=periode${data.contoh ? "&demo=1" : ""}`} className={tombol}>{embedded ? "Atur jadwal" : "Semua periode"}</Link>
+            <Link href={embedded ? url("jadwal") : `/admin/monev${data.contoh ? "?demo=1" : ""}`} className={tombol}>{embedded ? "Atur jadwal" : "Periode evaluasi"}</Link>
           </div>
         </div>
         <div className="flex flex-col justify-center border-t border-[#E2E8F0] bg-[#FAFBFD] p-5 sm:p-6 lg:border-l lg:border-t-0">

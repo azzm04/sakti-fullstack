@@ -113,7 +113,7 @@ export default function DaftarPeriode({
   const halamanAktif = Math.min(hal, jumlahHalaman);
   const mulai = (halamanAktif - 1) * ukuran;
   const tampil = rows.slice(mulai, mulai + ukuran);
-  const daftarUrl = `/admin/monev?tampilan=periode${contoh ? "&demo=1" : ""}`;
+  const daftarUrl = `/admin/monev${contoh ? "?demo=1" : ""}`;
   const ubahFilter = (set: (value: string) => void, value: string) => {
     set(value);
     setHal(1);
@@ -132,12 +132,6 @@ export default function DaftarPeriode({
 
   return (
     <div className={halaman}>
-      <nav aria-label="Navigasi periode evaluasi" className="mb-4 flex flex-wrap items-center gap-x-6 gap-y-1">
-        <Link href={`/admin/monev${contoh ? "?demo=1" : ""}`} className="inline-flex min-h-9 items-center gap-2 text-[12px] text-[#64748B] hover:text-[#000352]">
-          <ArrowLeft size={14} aria-hidden />Kembali ke Monev
-        </Link>
-        <Link href={`/admin?tab=monev&demo=${contoh ? 1 : 0}`} className="inline-flex min-h-9 items-center text-[12px] text-[#64748B] hover:text-[#000352] hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#000352]">Dashboard Monev</Link>
-      </nav>
       <header className="mb-6">
         <div>
           <h1 className="text-[24px] font-semibold leading-8 text-[#000352] lg:text-[32px] lg:leading-10">
@@ -151,7 +145,7 @@ export default function DaftarPeriode({
       {contoh && (
         <p className="mb-5 text-[12px] text-[#64748B]">
           Data contoh · {" "}
-          <Link href="/admin/monev?tampilan=periode" className="font-medium underline">
+          <Link href="/admin/monev" className="font-medium underline">
             Buka data asli
           </Link>
         </p>
@@ -272,7 +266,7 @@ export default function DaftarPeriode({
                     "Jadwal pengisian · WIB",
                     "Status periode",
                   ].map((h) => (
-                    <th key={h} scope="col" className="px-5 py-3 font-medium">
+                    <th key={h} scope="col" className={`px-5 py-3 font-medium${h === "Status periode" ? " text-center" : ""}`}>
                       {h}
                     </th>
                   ))}
@@ -321,7 +315,7 @@ export default function DaftarPeriode({
                         {tanggalWib(p.deadline)}
                       </p>
                     </td>
-                    <td className="px-5 py-5">
+                    <td className="px-5 py-5 text-center align-middle">
                       <StatusPeriode periode={p} />
                     </td>
                   </tr>

@@ -18,7 +18,7 @@ export default function RuangKerja({ periode, periods, dashboard, laporan }: {
   const final = periode.fase === "FINAL";
 
   return <div className={halaman}>
-    <div className="space-y-6">
+    <div className={jadwal ? "mx-auto w-full max-w-6xl space-y-6" : "space-y-6"}>
       <KepalaPeriode periode={periode} periods={periods} contoh={contoh} />
       {jadwal ? <LangkahJadwal key={`${periode.id}-${periode.updated_at}`} periode={periode} contoh={contoh} /> : <>
         <LaporanEkonomi key={periode.id} rows={laporan} contoh={contoh} final={final} />
