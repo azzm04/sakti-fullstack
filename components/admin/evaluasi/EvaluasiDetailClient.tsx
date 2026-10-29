@@ -228,7 +228,9 @@ export default function EvaluasiDetailClient({
 
   // ── Penetapan SK (alat bantu sementara — lihat plan Phase 1) ──────────────
   const [nimResmi, setNimResmi] = useState(kandidat.nim_resmi ?? "");
-  const [statusSk, setStatusSk] = useState<string | null>(kandidat.status_sk ?? null);
+  const [statusSk, setStatusSk] = useState<string | null>(
+    kandidat.status_sk ?? null,
+  );
   const [skSaveStatus, setSkSaveStatus] = useState<SaveStatus>("idle");
 
   async function handleSetStatusSk(next: "Ditetapkan" | "Tidak Ditetapkan") {
@@ -244,21 +246,32 @@ export default function EvaluasiDetailClient({
       const res = await fetch(`/api/admin/kandidat/${id}/status-sk`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status_sk: next, nim_resmi: nimResmi.trim() || null }),
+        body: JSON.stringify({
+          status_sk: next,
+          nim_resmi: nimResmi.trim() || null,
+        }),
       });
       const resData = await res.json().catch(() => ({}));
       if (!res.ok) {
-        toast.error("Gagal menyimpan", { description: resData.error || "Terjadi kesalahan." });
+        toast.error("Gagal menyimpan", {
+          description: resData.error || "Terjadi kesalahan.",
+        });
         setSkSaveStatus("error");
         return;
       }
       setStatusSk(next);
       setSkSaveStatus("saved");
-      toast.success(next === "Ditetapkan" ? "Ditetapkan sebagai penerima SK" : "Ditandai Tidak Ditetapkan");
+      toast.success(
+        next === "Ditetapkan"
+          ? "Ditetapkan sebagai penerima SK"
+          : "Ditandai Tidak Ditetapkan",
+      );
       router.refresh();
     } catch {
       setSkSaveStatus("error");
-      toast.error("Gagal menyimpan", { description: "Terjadi kesalahan jaringan." });
+      toast.error("Gagal menyimpan", {
+        description: "Terjadi kesalahan jaringan.",
+      });
     }
   }
 
@@ -427,12 +440,6 @@ export default function EvaluasiDetailClient({
                 className="border-0 bg-transparent outline-none text-[13px] text-admin-text w-full placeholder:text-admin-placeholder"
               />
             </label>
-            <button
-              type="button"
-              className="border border-admin-border bg-transparent rounded-[11px] w-[38px] h-[38px] shrink-0 flex items-center justify-center text-admin-text-2 hover:bg-admin-surface-soft transition-colors"
-            >
-              <Bell size={17} strokeWidth={1.6} />
-            </button>
           </>
         }
       />
@@ -455,7 +462,8 @@ export default function EvaluasiDetailClient({
               }}
               className="inline-flex items-center gap-[7px] text-[12.5px] font-semibold text-admin-accent hover:text-admin-accent-ink transition-colors cursor-pointer"
             >
-              <ArrowLeft className="cursor-pointer" size={14} /> Kembali ke daftar
+              <ArrowLeft className="cursor-pointer" size={14} /> Kembali ke
+              daftar
             </button>
             <h2 className="font-admin-heading text-[26px] font-semibold mt-2 tracking-[-0.015em] text-admin-text">
               {kandidat.nama_pendaftar}
@@ -469,9 +477,17 @@ export default function EvaluasiDetailClient({
                 <Pill tone="neutral">{kandidat.jalur_masuk}</Pill>
               )}
               {kandidat.status_final && (
-                <Pill tone={kandidat.status_final === "Lolos Kuota" ? "accent" : "danger"}>
+                <Pill
+                  tone={
+                    kandidat.status_final === "Lolos Kuota"
+                      ? "accent"
+                      : "danger"
+                  }
+                >
                   {kandidat.status_final}
-                  {kandidat.ranking_kuota ? ` · Peringkat #${kandidat.ranking_kuota}` : ""}
+                  {kandidat.ranking_kuota
+                    ? ` · Peringkat #${kandidat.ranking_kuota}`
+                    : ""}
                 </Pill>
               )}
             </div>
@@ -620,7 +636,10 @@ export default function EvaluasiDetailClient({
               <div>
                 <SectionHeader title="Status Sosial Ekonomi" />
                 <div className="grid grid-cols-2 gap-3">
-                  <ReadField label="Status DTSEN" value={kandidat.aktif_dtsen} />
+                  <ReadField
+                    label="Status DTSEN"
+                    value={kandidat.aktif_dtsen}
+                  />
                   <ReadField
                     label="Jumlah Tanggungan"
                     value={kandidat.jumlah_tanggungan}
@@ -778,7 +797,10 @@ export default function EvaluasiDetailClient({
 
                 {/* Kondisi Tempat Tinggal Riil */}
                 <div>
-                  <SectionHeader title="Kondisi Tempat Tinggal Riil" icon={Home} />
+                  <SectionHeader
+                    title="Kondisi Tempat Tinggal Riil"
+                    icon={Home}
+                  />
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                     <ReadField
                       label="Kepemilikan Rumah"
@@ -834,7 +856,10 @@ export default function EvaluasiDetailClient({
                   </div>
                   {kandidat.aset && (
                     <div className="mt-3">
-                      <ReadField label="Aset yang Dimiliki" value={kandidat.aset} />
+                      <ReadField
+                        label="Aset yang Dimiliki"
+                        value={kandidat.aset}
+                      />
                     </div>
                   )}
                 </div>
@@ -955,7 +980,9 @@ export default function EvaluasiDetailClient({
                     {form.hasil_akhir && (
                       <p className="text-[11px] text-admin-text-3 mt-1.5">
                         Hasil Akhir:{" "}
-                        <span className="font-semibold">{form.hasil_akhir}</span>
+                        <span className="font-semibold">
+                          {form.hasil_akhir}
+                        </span>
                       </p>
                     )}
                   </>
@@ -1025,12 +1052,15 @@ export default function EvaluasiDetailClient({
                   </span>
                 </div>
                 <p className="text-[11px] text-admin-text-3 mb-4">
-                  Status resmi pasca SK dari DIKTI/pimpinan — terpisah dari rekomendasi wawancara di atas.
+                  Status resmi pasca SK dari DIKTI/pimpinan — terpisah dari
+                  rekomendasi wawancara di atas.
                 </p>
 
                 {statusSk && (
                   <div className="mb-3">
-                    <Pill tone={statusSk === "Ditetapkan" ? "accent" : "danger"}>
+                    <Pill
+                      tone={statusSk === "Ditetapkan" ? "accent" : "danger"}
+                    >
                       {statusSk}
                       {kandidat.nim_resmi ? ` · NIM ${kandidat.nim_resmi}` : ""}
                     </Pill>

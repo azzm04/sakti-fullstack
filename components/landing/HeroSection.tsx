@@ -12,7 +12,7 @@ export default function HeroSection() {
     const ctx = gsap.context(() => {
       const chars = titleRef.current?.querySelectorAll(".char");
       const prefersReducedMotion = window.matchMedia(
-        "(prefers-reduced-motion: reduce)"
+        "(prefers-reduced-motion: reduce)",
       ).matches;
 
       if (chars && chars.length > 0) {
@@ -34,7 +34,7 @@ export default function HeroSection() {
               ease: "power3.out",
               stagger: 0.03, // Jeda per huruf sedikit dipercepat agar lebih mulus
               delay: 0.1, // Beri sedikit jeda saat halaman baru dimuat
-            }
+            },
           );
         }
       }
@@ -74,10 +74,6 @@ export default function HeroSection() {
       />
 
       <div className="relative z-10 w-full max-w-5xl mx-auto flex flex-col items-center px-4 sm:px-6">
-        <span className="inline-block px-4 py-1.5 bg-white/15 text-white text-[10px] sm:text-xs font-bold tracking-widest uppercase rounded-full mb-6 backdrop-blur-sm border border-white/20">
-          Universitas Diponegoro
-        </span>
-
         <h1
           ref={titleRef}
           className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight mb-6 leading-tight"
@@ -92,8 +88,8 @@ export default function HeroSection() {
 
         <p className="text-base sm:text-lg md:text-xl text-white max-w-2xl mb-10 font-light hover:text-white">
           Platform pendukung tata kelola beasiswa KIP Kuliah yang dilengkapi
-          Layanan Informasi Berbasis RAG, sistem monitoring evaluasi, dan Layanan Pengaduan
-          resmi.
+          Layanan Informasi Berbasis RAG, sistem monitoring evaluasi, dan
+          Layanan Pengaduan resmi.
         </p>
 
         <Link href="/login">

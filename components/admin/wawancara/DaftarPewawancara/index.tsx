@@ -36,7 +36,9 @@ export default function DaftarPewawancara() {
     } catch (err) {
       toast.error("Gagal memuat daftar pewawancara", {
         description:
-          err instanceof Error ? err.message : "Periksa koneksi Anda dan coba lagi.",
+          err instanceof Error
+            ? err.message
+            : "Periksa koneksi Anda dan coba lagi.",
       });
     } finally {
       setLoading(false);
@@ -151,7 +153,10 @@ export default function DaftarPewawancara() {
             color: "text-admin-text-5",
           },
         ].map(({ label, value, color }) => (
-          <div key={label} className="bg-white rounded-[8px] border border-admin-border-soft shadow-sm p-5">
+          <div
+            key={label}
+            className="bg-white rounded-[8px] border border-admin-border-soft shadow-sm p-5"
+          >
             <p className="text-xs text-admin-text-5 mb-1">{label}</p>
             <p className={`text-2xl font-extrabold ${color}`}>{value}</p>
           </div>
@@ -160,17 +165,20 @@ export default function DaftarPewawancara() {
 
       <div className="flex items-center gap-3 mb-4">
         <div className="relative flex-1 max-w-sm">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-admin-text-5" />
+          <Search
+            size={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-admin-text-5"
+          />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari nama atau email..."
-            className="w-full pl-9 pr-3 py-2.5 text-sm border border-admin-border rounded-xl bg-white focus:outline-none focus:border-admin-accent focus:ring-1 focus:ring-admin-accent/20 transition-[border-color,box-shadow] duration-200"
+            className="w-full pl-9 pr-3 py-2.5 text-sm border border-admin-border rounded-[8px] bg-white focus:outline-none focus:border-admin-accent focus:ring-1 focus:ring-admin-accent/20 transition-[border-color,box-shadow] duration-200"
           />
         </div>
         <button
           onClick={openAdd}
-          className="flex items-center gap-2 px-4 py-2.5 bg-admin-accent text-white text-sm font-semibold rounded-xl hover:bg-admin-accent/90 transition-colors shadow-sm"
+          className="flex items-center gap-2 px-4 py-2.5 bg-admin-accent text-white text-sm font-semibold rounded-[8px] hover:bg-admin-accent/90 transition-colors shadow-sm"
         >
           <Plus size={15} /> Tambah
         </button>
@@ -205,12 +213,16 @@ export default function DaftarPewawancara() {
         open={!!deleteTarget}
         variant="danger"
         title={
-          (deleteTarget?.users?.user_roles ?? []).some((r) => r.role === "MAHASISWA_KIPK")
+          (deleteTarget?.users?.user_roles ?? []).some(
+            (r) => r.role === "MAHASISWA_KIPK",
+          )
             ? "Cabut Role Pewawancara?"
             : "Hapus Akun Pewawancara?"
         }
         description={
-          (deleteTarget?.users?.user_roles ?? []).some((r) => r.role === "MAHASISWA_KIPK")
+          (deleteTarget?.users?.user_roles ?? []).some(
+            (r) => r.role === "MAHASISWA_KIPK",
+          )
             ? `Role Pewawancara untuk ${
                 deleteTarget?.nama ?? deleteTarget?.users?.email_sso ?? ""
               } akan dicabut. Akun tetap aktif karena masih punya role Mahasiswa KIP-K.`

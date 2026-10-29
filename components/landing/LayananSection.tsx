@@ -10,8 +10,7 @@ const layanan: Service[] = [
     description:
       "Asisten virtual AI yang siap menjawab pertanyaan seputar beasiswa KIP-Kuliah secara cepat dan akurat.",
     image: "/layanan/informasi-ai.png",
-    gradient:
-      "from-sky-100 to-sky-200 dark:from-sky-900/50 dark:to-sky-800/50",
+    gradient: "from-sky-100 to-sky-200 dark:from-sky-900/50 dark:to-sky-800/50",
   },
   {
     number: "002",
@@ -47,10 +46,6 @@ export default function LayananSection() {
         transition={{ duration: 0.5 }}
         className="text-center mb-12"
       >
-        <span className="inline-block px-4 py-1.5 bg-primary/10 text-primary text-[10px] sm:text-xs font-bold tracking-widest uppercase rounded-full mb-4">
-          Akses Cepat & Transparan
-        </span>
-
         <h2 className="text-3xl font-bold text-primary mb-4">
           Layanan Terpadu SAKTI
         </h2>

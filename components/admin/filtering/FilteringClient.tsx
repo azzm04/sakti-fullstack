@@ -145,7 +145,7 @@ export default function FilteringClient() {
                 inputMode="numeric"
                 value={tahun}
                 onChange={(e) => setTahun(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-admin-surface-soft border border-admin-border rounded-xl text-sm text-admin-text focus:outline-none focus:ring-2 focus:ring-admin-accent/30 focus:border-admin-accent"
+                className="w-full px-3.5 py-2.5 bg-admin-surface-soft border border-admin-border rounded-[8px] text-sm text-admin-text focus:outline-none focus:ring-2 focus:ring-admin-accent/30 focus:border-admin-accent"
               />
             </div>
 
@@ -175,7 +175,7 @@ export default function FilteringClient() {
                 placeholder="Contoh: 10"
                 value={kuota}
                 onChange={(e) => setKuota(e.target.value)}
-                className="w-full px-3.5 py-2.5 bg-admin-surface-soft border border-admin-border rounded-xl text-sm text-admin-text focus:outline-none focus:ring-2 focus:ring-admin-accent/30 focus:border-admin-accent"
+                className="w-full px-3.5 py-2.5 bg-admin-surface-soft border border-admin-border rounded-[8px] text-sm text-admin-text focus:outline-none focus:ring-2 focus:ring-admin-accent/30 focus:border-admin-accent"
               />
             </div>
           </div>
@@ -184,27 +184,25 @@ export default function FilteringClient() {
             <button
               onClick={handleTampilkan}
               disabled={!tahunValid || !jalur || state === "loading"}
-              className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl bg-admin-accent hover:bg-admin-accent-hover text-white disabled:bg-admin-border disabled:text-admin-placeholder disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-[8px] bg-admin-accent hover:bg-admin-accent-hover text-white disabled:bg-admin-border disabled:text-admin-placeholder disabled:cursor-not-allowed transition-colors"
             >
               {state === "loading" ? (
                 <Loader2 size={14} className="animate-spin" />
               ) : (
-                <RefreshCw size={14} />
+                <span>Tampilkan Hasil</span>
               )}
-              Tampilkan Peringkat
             </button>
 
             <button
               onClick={handleJalankan}
               disabled={!canRun || running}
-              className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl bg-admin-danger-bar hover:opacity-90 text-white disabled:bg-admin-border disabled:text-admin-placeholder disabled:cursor-not-allowed transition-colors"
+              className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-[8px] bg-admin-danger-bar hover:opacity-90 text-white disabled:bg-admin-border disabled:text-admin-placeholder disabled:cursor-not-allowed transition-colors"
             >
               {running ? (
                 <Loader2 size={14} className="animate-spin" />
               ) : (
-                <PlayCircle size={14} />
+                <span>Jalankan Filtering</span>
               )}
-              Jalankan Filtering
             </button>
           </div>
 
