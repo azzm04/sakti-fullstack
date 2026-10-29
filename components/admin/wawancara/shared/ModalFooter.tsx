@@ -29,7 +29,7 @@ export default function ModalFooter({
         <button
           type="button"
           onClick={onDelete}
-          className="inline-flex items-center gap-1.5 rounded-xl px-3 py-2.5 text-sm font-semibold text-admin-danger-bar transition-colors hover:bg-admin-danger-bg hover:text-admin-danger-text"
+          className="inline-flex items-center gap-1.5 rounded-[8px] bg-admin-danger-bar px-3 py-2.5 text-sm font-semibold text-white transition-opacity hover:opacity-90"
         >
           <Trash2 size={14} /> {deleteLabel}
         </button>
@@ -38,7 +38,7 @@ export default function ModalFooter({
       <button
         type="button"
         onClick={onClose}
-        className="rounded-xl border border-admin-border px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-admin-surface-soft"
+        className="rounded-[8px] border border-admin-border px-4 py-2.5 text-sm font-semibold transition-colors hover:bg-admin-surface-soft"
       >
         Batal
       </button>
@@ -46,7 +46,7 @@ export default function ModalFooter({
         type="button"
         onClick={onSave}
         disabled={saving}
-        className="flex items-center justify-center gap-2 rounded-xl bg-admin-accent px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-admin-accent/90 disabled:opacity-50"
+        className="flex items-center justify-center gap-2 rounded-[8px] bg-admin-accent px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-admin-accent/90 disabled:opacity-50"
       >
         {saving && <Loader2 size={14} className="animate-spin" />}
         {saving ? savingLabel : saveLabel}
