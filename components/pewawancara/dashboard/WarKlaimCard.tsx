@@ -20,7 +20,12 @@ interface WarKlaimCardProps {
   onUnwar: () => Promise<void>;
 }
 
-export function WarKlaimCard({ kuotaKe, mahasiswaList, distribusiDone, onUnwar }: WarKlaimCardProps) {
+export function WarKlaimCard({
+  kuotaKe,
+  mahasiswaList,
+  distribusiDone,
+  onUnwar,
+}: WarKlaimCardProps) {
   const [confirmUnwar, setConfirmUnwar] = useState(false);
   const [unwarring, setUnwarring] = useState(false);
 
@@ -80,7 +85,7 @@ export function WarKlaimCard({ kuotaKe, mahasiswaList, distribusiDone, onUnwar }
         {distribusiDone ? (
           <Link
             href="/pewawancara/mahasiswa"
-            className="flex items-center justify-between w-full px-4 py-3 bg-primary text-primary-foreground text-sm font-semibold rounded-xl hover:bg-primary/90 transition-colors"
+            className="flex items-center justify-between w-full px-4 py-3 bg-primary text-primary-foreground text-sm font-semibold rounded-[8px] hover:bg-primary/90 transition-colors"
           >
             <span className="flex items-center gap-2">
               <ClipboardList size={15} /> Mulai Wawancara
@@ -92,7 +97,7 @@ export function WarKlaimCard({ kuotaKe, mahasiswaList, distribusiDone, onUnwar }
             {!confirmUnwar ? (
               <button
                 onClick={() => setConfirmUnwar(true)}
-                className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-destructive border border-destructive/20 bg-destructive/5 rounded-xl hover:bg-destructive/10 transition-all"
+                className="flex items-center gap-2 px-4 py-2 text-xs font-semibold text-destructive border border-destructive/20 bg-destructive/5 rounded-[8px] hover:bg-destructive/10 transition-all"
               >
                 <ZapOff size={13} /> UN-WAR — Batalkan Kuota
               </button>
@@ -110,7 +115,11 @@ export function WarKlaimCard({ kuotaKe, mahasiswaList, distribusiDone, onUnwar }
                   disabled={unwarring}
                   className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-destructive rounded-lg hover:bg-destructive/90 disabled:opacity-50 transition-all"
                 >
-                  {unwarring ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
+                  {unwarring ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : (
+                    <CheckCircle2 size={13} />
+                  )}
                   Ya, Batalkan
                 </button>
                 <button

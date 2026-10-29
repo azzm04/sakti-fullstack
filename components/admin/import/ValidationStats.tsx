@@ -14,7 +14,7 @@ export default function ValidationStats({ stats }: Props) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
-        className="bg-surface-container-lowest p-4 rounded-xl flex flex-col items-center border-l-4 border-primary"
+        className="bg-surface-container-lowest p-4 rounded-[8px] flex flex-col items-center border-l-4 border-primary"
       >
         <span className="text-[10px] font-bold text-outline uppercase">
           Valid
@@ -28,7 +28,7 @@ export default function ValidationStats({ stats }: Props) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
-        className="bg-surface-container-lowest p-4 rounded-xl flex flex-col items-center border-l-4 border-error"
+        className="bg-surface-container-lowest p-4 rounded-[8px] flex flex-col items-center border-l-4 border-error"
       >
         <span className="text-[10px] font-bold text-outline uppercase">
           Incomplete
@@ -42,7 +42,7 @@ export default function ValidationStats({ stats }: Props) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
-        className="bg-surface-container-lowest p-4 rounded-xl flex flex-col items-center border-l-4 border-tertiary"
+        className="bg-surface-container-lowest p-4 rounded-[8px] flex flex-col items-center border-l-4 border-tertiary"
       >
         <span className="text-[10px] font-bold text-outline uppercase">
           Duplicates
@@ -56,7 +56,7 @@ export default function ValidationStats({ stats }: Props) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.4 }}
-        className="bg-primary p-4 rounded-xl flex flex-col items-center text-white"
+        className="bg-primary p-4 rounded-[8px] flex flex-col items-center text-white"
       >
         <span className="text-[10px] font-bold opacity-70 uppercase">
           Total Data

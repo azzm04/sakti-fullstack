@@ -19,7 +19,7 @@ export default function PanduanSection() {
             <h3 className="text-lg font-bold text-center text-primary mb-4">
               Video Tutorial Pendaftaran
             </h3>
-            <div className="relative w-full aspect-video bg-black rounded-xl overflow-hidden shadow-inner flex items-center justify-center">
+            <div className="relative w-full aspect-video bg-black rounded-[8px] overflow-hidden shadow-inner flex items-center justify-center">
               <video
                 controls
                 className="w-full h-full object-cover"

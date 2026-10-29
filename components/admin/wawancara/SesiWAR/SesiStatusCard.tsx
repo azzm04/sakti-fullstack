@@ -56,7 +56,9 @@ function StatusBadge({ sesi }: { sesi: Sesi }) {
 function Stat({ label, value }: { label: string; value: React.ReactNode }) {
   return (
     <div className="min-w-0 rounded-[8px] border border-admin-border-soft bg-admin-surface-soft px-3.5 py-2.5">
-      <p className="truncate text-[11px] font-medium text-admin-text-4">{label}</p>
+      <p className="truncate text-[11px] font-medium text-admin-text-4">
+        {label}
+      </p>
       <p className="mt-0.5 text-lg font-bold leading-6 text-admin-text">
         {value}
       </p>
@@ -88,7 +90,7 @@ export default function SesiStatusCard({
       {/* HP: aksi turun ke baris sendiri. Tablet ke atas: aksi di kanan. */}
       <div className="flex flex-col gap-4 p-4 sm:flex-row sm:items-start sm:justify-between sm:p-5">
         <div className="flex min-w-0 items-start gap-3">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-admin-accent/10 text-admin-accent sm:h-11 sm:w-11">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-[8px] bg-admin-accent/10 text-admin-accent sm:h-11 sm:w-11">
             <CalendarDays size={20} strokeWidth={1.8} />
           </div>
           <div className="min-w-0">
@@ -191,7 +193,10 @@ export default function SesiStatusCard({
 
       {sesi.war_aktif && (
         <p className="flex items-start gap-2 border-t border-admin-border-soft px-4 py-3 text-xs text-admin-text-3 sm:items-center sm:px-5">
-          <Info size={13} className="mt-px shrink-0 text-admin-accent sm:mt-0" />
+          <Info
+            size={13}
+            className="mt-px shrink-0 text-admin-accent sm:mt-0"
+          />
           Tutup pemilihan terlebih dahulu sebelum mendistribusikan mahasiswa.
         </p>
       )}

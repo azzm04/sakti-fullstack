@@ -115,7 +115,7 @@ export default function SectionImportSK() {
       {/* ── Upload Card ── */}
       <div className="bg-white rounded-[8px] border border-admin-border shadow-sm overflow-hidden">
         <div className="px-6 py-5 border-b border-admin-border flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-admin-accent/10 text-admin-accent flex items-center justify-center">
+          <div className="w-9 h-9 rounded-[8px] bg-admin-accent/10 text-admin-accent flex items-center justify-center">
             <Upload size={17} />
           </div>
           <div>
@@ -172,9 +172,7 @@ export default function SectionImportSK() {
                   <p className="text-sm font-semibold text-admin-text">
                     Klik untuk pilih file PDF
                   </p>
-                  <p className="text-xs text-admin-text-3">
-                    Hanya file .pdf
-                  </p>
+                  <p className="text-xs text-admin-text-3">Hanya file .pdf</p>
                 </>
               )}
             </div>
@@ -196,7 +194,7 @@ export default function SectionImportSK() {
                   setTahun(e.target.value);
                   setUploadStatus("idle");
                 }}
-                className="w-full appearance-none rounded-xl border border-admin-border bg-admin-surface-soft py-2.5 pl-9 pr-4 text-sm font-semibold text-admin-text outline-none transition-all focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/10"
+                className="w-full appearance-none rounded-[8px] border border-admin-border bg-admin-surface-soft py-2.5 pl-9 pr-4 text-sm font-semibold text-admin-text outline-none transition-all focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/10"
               >
                 {YEAR_OPTIONS.map((year) => (
                   <option key={year} value={year}>
@@ -220,7 +218,7 @@ export default function SectionImportSK() {
                     key={key}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => toggleJalur(key)}
-                    className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-semibold transition-all ${
+                    className={`flex items-center gap-2 px-3 py-2.5 rounded-[8px] border text-xs font-semibold transition-all ${
                       sel
                         ? "bg-admin-accent/8 border-admin-accent text-admin-accent"
                         : "bg-admin-surface-soft border-admin-border text-admin-text-3 hover:border-admin-text-6"
@@ -244,7 +242,7 @@ export default function SectionImportSK() {
               value={catatan}
               onChange={(e) => setCatatan(e.target.value)}
               placeholder="cth: SK Penerima KIP-K Jalur SNBP 2025"
-              className="w-full px-4 py-2.5 text-sm border border-admin-border rounded-xl bg-admin-surface-soft focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/10 transition-all"
+              className="w-full px-4 py-2.5 text-sm border border-admin-border rounded-[8px] bg-admin-surface-soft focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/10 transition-all"
             />
           </div>
 
@@ -277,7 +275,7 @@ export default function SectionImportSK() {
             whileTap={{ scale: !uploading ? 0.98 : 1 }}
             onClick={handleUpload}
             disabled={uploading || !file || jalurTerpilih.size === 0}
-            className="flex items-center gap-2 px-6 py-3 bg-admin-accent text-white rounded-xl text-sm font-semibold hover:bg-admin-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+            className="flex items-center gap-2 px-6 py-3 bg-admin-accent text-white rounded-[8px] text-sm font-semibold hover:bg-admin-accent/90 disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
           >
             {uploading ? (
               <>

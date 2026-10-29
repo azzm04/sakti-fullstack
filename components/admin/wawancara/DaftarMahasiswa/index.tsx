@@ -19,11 +19,17 @@ export default function DaftarMahasiswa() {
   const [deleteTarget, setDeleteTarget] = useState<MahasiswaKipk | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [form, setForm] = useState({ nama: "", nim: "", angkatan: "", prodi_id: "" });
+  const [form, setForm] = useState({
+    nama: "",
+    nim: "",
+    angkatan: "",
+    prodi_id: "",
+  });
   const [formError, setFormError] = useState("");
   const [prodiOptions, setProdiOptions] = useState<Prodi[]>([]);
 
-  const [pewawancaraTarget, setPewawancaraTarget] = useState<MahasiswaKipk | null>(null);
+  const [pewawancaraTarget, setPewawancaraTarget] =
+    useState<MahasiswaKipk | null>(null);
   const [pewawancaraNama, setPewawancaraNama] = useState("");
   const [pewawancaraError, setPewawancaraError] = useState("");
   const [assigningPewawancara, setAssigningPewawancara] = useState(false);
@@ -42,7 +48,9 @@ export default function DaftarMahasiswa() {
     } catch (err) {
       toast.error("Gagal memuat daftar mahasiswa", {
         description:
-          err instanceof Error ? err.message : "Periksa koneksi Anda dan coba lagi.",
+          err instanceof Error
+            ? err.message
+            : "Periksa koneksi Anda dan coba lagi.",
       });
     } finally {
       setLoading(false);
@@ -81,8 +89,16 @@ export default function DaftarMahasiswa() {
     if (!editing) return;
     setFormError("");
 
-    if (isNewProfile && (!form.nama.trim() || !form.nim.trim() || !form.angkatan || !form.prodi_id)) {
-      setFormError("Profil belum ada — Nama, NIM, Angkatan, dan Program Studi wajib diisi semua");
+    if (
+      isNewProfile &&
+      (!form.nama.trim() ||
+        !form.nim.trim() ||
+        !form.angkatan ||
+        !form.prodi_id)
+    ) {
+      setFormError(
+        "Profil belum ada — Nama, NIM, Angkatan, dan Program Studi wajib diisi semua",
+      );
       return;
     }
 
@@ -153,7 +169,10 @@ export default function DaftarMahasiswa() {
       const res = await fetch("/api/admin/pewawancara", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: pewawancaraTarget.email_sso, nama: pewawancaraNama.trim() }),
+        body: JSON.stringify({
+          email: pewawancaraTarget.email_sso,
+          nama: pewawancaraNama.trim(),
+        }),
       });
       const json = await res.json();
       if (!res.ok) {
@@ -206,7 +225,10 @@ export default function DaftarMahasiswa() {
             color: "text-admin-text-5",
           },
         ].map(({ label, value, color }) => (
-          <div key={label} className="bg-white rounded-[8px] border border-admin-border-soft shadow-sm p-5">
+          <div
+            key={label}
+            className="bg-white rounded-[8px] border border-admin-border-soft shadow-sm p-5"
+          >
             <p className="text-xs text-admin-text-5 mb-1">{label}</p>
             <p className={`text-2xl font-extrabold ${color}`}>{value}</p>
           </div>
@@ -215,12 +237,15 @@ export default function DaftarMahasiswa() {
 
       <div className="flex items-center gap-3 mb-4">
         <div className="relative flex-1 max-w-sm">
-          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-admin-text-5" />
+          <Search
+            size={14}
+            className="absolute left-3 top-1/2 -translate-y-1/2 text-admin-text-5"
+          />
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Cari nama, email, atau NIM..."
-            className="w-full pl-9 pr-3 py-2.5 text-sm border border-admin-border rounded-xl bg-white focus:outline-none focus:border-admin-accent focus:ring-1 focus:ring-admin-accent/20 transition-[border-color,box-shadow] duration-200"
+            className="w-full pl-9 pr-3 py-2.5 text-sm border border-admin-border rounded-[8px] bg-white focus:outline-none focus:border-admin-accent focus:ring-1 focus:ring-admin-accent/20 transition-[border-color,box-shadow] duration-200"
           />
         </div>
       </div>
@@ -279,10 +304,14 @@ export default function DaftarMahasiswa() {
         description={
           deleteTarget && deleteTarget.roles.length > 1
             ? `Profil KIP-K untuk ${
-                deleteTarget?.penerima_kipk?.nama ?? deleteTarget?.email_sso ?? ""
+                deleteTarget?.penerima_kipk?.nama ??
+                deleteTarget?.email_sso ??
+                ""
               } akan dihapus. Akun tetap aktif karena masih punya role Pewawancara.`
             : `Profil KIP-K untuk ${
-                deleteTarget?.penerima_kipk?.nama ?? deleteTarget?.email_sso ?? ""
+                deleteTarget?.penerima_kipk?.nama ??
+                deleteTarget?.email_sso ??
+                ""
               } akan dihapus dan akses loginnya dinonaktifkan.`
         }
         loading={deleting}

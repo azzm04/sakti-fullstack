@@ -7,15 +7,15 @@ import { X, Menu } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 
 const NAV_LINKS = [
-  { href: "/#beranda",   label: "Beranda" },
-  { href: "/#panduan",   label: "Panduan" },
+  { href: "/#beranda", label: "Beranda" },
+  { href: "/#panduan", label: "Panduan" },
   { href: "/#pengaduan", label: "Pengaduan" },
 ];
 
 export default function Navbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
-  
+
   // Panggil hook navigasi Next.js
   const pathname = usePathname();
   const router = useRouter();
@@ -26,7 +26,10 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const handleNavClick = (event: MouseEvent<HTMLAnchorElement>, href: string) => {
+  const handleNavClick = (
+    event: MouseEvent<HTMLAnchorElement>,
+    href: string,
+  ) => {
     event.preventDefault(); // Kita ambil alih navigasi secara manual
     setMobileOpen(false);
 
@@ -92,10 +95,14 @@ export default function Navbar() {
 
             <button
               onClick={() => setMobileOpen((v) => !v)}
-              className="md:hidden p-2 rounded-xl text-white hover:bg-white/10 transition-colors"
+              className="md:hidden p-2 rounded-[8px] text-white hover:bg-white/10 transition-colors"
               aria-label="Toggle menu"
             >
-              {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {mobileOpen ? (
+                <X className="w-6 h-6" />
+              ) : (
+                <Menu className="w-6 h-6" />
+              )}
             </button>
           </div>
         </nav>
@@ -126,11 +133,13 @@ export default function Navbar() {
             >
               {/* Drawer header */}
               <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
-                <span className="text-xl font-black tracking-tight text-primary font-headline">SAKTI</span>
+                <span className="text-xl font-black tracking-tight text-primary font-headline">
+                  SAKTI
+                </span>
                 <button
                   onClick={() => setMobileOpen(false)}
                   title="button"
-                  className="p-2 rounded-xl text-slate-400 hover:bg-slate-100 transition-colors"
+                  className="p-2 rounded-[8px] text-slate-400 hover:bg-slate-100 transition-colors"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -149,7 +158,7 @@ export default function Navbar() {
                       href={href}
                       scroll={false}
                       onClick={(event) => handleNavClick(event, href)}
-                      className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors"
+                      className="flex items-center gap-3 px-4 py-3 rounded-[8px] text-sm font-semibold text-slate-600 hover:bg-slate-50 hover:text-primary transition-colors"
                     >
                       {label}
                     </Link>

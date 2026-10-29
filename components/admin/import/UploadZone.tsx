@@ -27,16 +27,15 @@ interface Props {
   jalurMasuk?: string;
 }
 
-export default function UploadZone({
-  onDataUploaded,
-  jalurMasuk = "",
-}: Props) {
+export default function UploadZone({ onDataUploaded, jalurMasuk = "" }: Props) {
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [parseError, setParseError] = useState<string | null>(null);
 
   // ── Validasi kolom wajib ──────────────────────────────────────────────────
-  const validateRow = (row: unknown[]): { hasErrors: boolean; missingFields: string[] } => {
+  const validateRow = (
+    row: unknown[],
+  ): { hasErrors: boolean; missingFields: string[] } => {
     const required: { label: string; keys: string[] }[] = [
       {
         label: "NAMA PENDAFTAR",
@@ -44,7 +43,12 @@ export default function UploadZone({
       },
       {
         label: "NO. PENDAFTARAN KIPK",
-        keys: ["NO. PENDAFTARAN KIP", "NO PENDAFTARAN KIP", "NO. PENDAFTARAN KIPK", "PENDAFTARAN KIPK"],
+        keys: [
+          "NO. PENDAFTARAN KIP",
+          "NO PENDAFTARAN KIP",
+          "NO. PENDAFTARAN KIPK",
+          "PENDAFTARAN KIPK",
+        ],
       },
       {
         label: "NIK",
@@ -126,13 +130,20 @@ export default function UploadZone({
           _headerMap = headerMap;
 
           console.log("[UploadZone] Header row index:", headerRowIndex);
-          console.log("[UploadZone] Detected headers:", headerRow.filter(Boolean));
+          console.log(
+            "[UploadZone] Detected headers:",
+            headerRow.filter(Boolean),
+          );
 
           // ── Helper fungsi ──────────────────────────────────────────────
           const get = (row: unknown[], ...keys: string[]): string => {
             for (const key of keys) {
               const idx = headerMap[normalize(key)];
-              if (idx !== undefined && row[idx] !== undefined && row[idx] !== "") {
+              if (
+                idx !== undefined &&
+                row[idx] !== undefined &&
+                row[idx] !== ""
+              ) {
                 return String(row[idx]).trim();
               }
             }
@@ -145,15 +156,19 @@ export default function UploadZone({
             // Bersihkan format Rupiah: "Rp. 2.250.000" atau " 2.250.000 "
             const cleaned = val
               .replace(/[Rp\s]/gi, "")
-              .replace(/\./g, "")   // titik ribuan
-              .replace(",", ".");   // koma desimal
+              .replace(/\./g, "") // titik ribuan
+              .replace(",", "."); // koma desimal
             const n = parseFloat(cleaned);
             return isNaN(n) ? 0 : n;
           };
 
           // Kolom "Ket. Penghasilan Ayah/bln" di CSV berisi angka nominal asli
           // (berbeda dengan kolom "Penghasilan Ayah" yang berisi range teks)
-          const getPenghasilan = (row: unknown[], ketKey: string, rangeKey: string): number => {
+          const getPenghasilan = (
+            row: unknown[],
+            ketKey: string,
+            rangeKey: string,
+          ): number => {
             const ket = getNum(row, ketKey);
             if (ket > 0) return ket;
             // Fallback: parse range teks  "Rp. 1.000.001 - Rp. 1.250.000" → ambil nilai tengah
@@ -172,7 +187,9 @@ export default function UploadZone({
           const dataRows = rawRows
             .slice(headerRowIndex + 1)
             .filter((row) =>
-              row.some((cell) => cell !== "" && cell !== null && cell !== undefined),
+              row.some(
+                (cell) => cell !== "" && cell !== null && cell !== undefined,
+              ),
             );
 
           const candidates: CandidateData[] = dataRows.map((row, index) => {
@@ -208,24 +225,45 @@ export default function UploadZone({
                 "NO. KK",
                 "NO KK",
               ),
-              nik_kepala_keluarga: get(
-                row,
-                "NIK KEPALA KELUARGA",
-                "NIK KK",
-              ),
+              nik_kepala_keluarga: get(row, "NIK KEPALA KELUARGA", "NIK KK"),
               nisn: get(row, "NISN"),
 
               // ── Status sosial ──
-              aktif_dtsen: get(row, "AKTIF DTSEN", "STATUS DTKS", "STATUS DTSEN", "STATUS DATA TUNGGAL"),
-              validasi_aktif_dtsen: get(row, "VALIDASI AKTIF DTSEN", "VALIDASI DTKS", "VALIDASI DTSEN"),
+              aktif_dtsen: get(
+                row,
+                "AKTIF DTSEN",
+                "STATUS DTKS",
+                "STATUS DTSEN",
+                "STATUS DATA TUNGGAL",
+              ),
+              validasi_aktif_dtsen: get(
+                row,
+                "VALIDASI AKTIF DTSEN",
+                "VALIDASI DTKS",
+                "VALIDASI DTSEN",
+              ),
               desil_dtsen: get(row, "DESIL DTSEN", "STATUS P3KE"),
-              validasi_desil_dtsen: get(row, "VALIDASI P3KE", "VALIDASI DESIL DTSEN"), 
+              validasi_desil_dtsen: get(
+                row,
+                "VALIDASI P3KE",
+                "VALIDASI DESIL DTSEN",
+              ),
               validasi_kip: get(row, "VALIDASI KIP"),
               validasi_kks: get(row, "VALIDASI KKS"),
 
               // ── Sekolah ──
-              asal_sekolah: get(row, "ASAL SEKOLAH", "SEKOLAH ASAL", "NAMA SEKOLAH"),
-              kab_kota_sekolah: get(row, "KAB/KOTA SEKOLAH", "KAB KOTA SEKOLAH", "KOTA SEKOLAH"),
+              asal_sekolah: get(
+                row,
+                "ASAL SEKOLAH",
+                "SEKOLAH ASAL",
+                "NAMA SEKOLAH",
+              ),
+              kab_kota_sekolah: get(
+                row,
+                "KAB/KOTA SEKOLAH",
+                "KAB KOTA SEKOLAH",
+                "KOTA SEKOLAH",
+              ),
               provinsi_sekolah: get(row, "PROVINSI SEKOLAH", "PROVINSI ASAL"),
 
               // ── Data pribadi ──
@@ -264,8 +302,16 @@ export default function UploadZone({
               status_ibu: get(row, "STATUS IBU"),
 
               // ── Ekonomi ──
-              penghasilan_lain: getNum(row, "PENGHASILAN LAIN/ BLN", "PENGHASILAN LAIN"),
-              jumlah_tanggungan: getNum(row, "JUMLAH TANGGUNGAN", "JML TANGGUNGAN"),
+              penghasilan_lain: getNum(
+                row,
+                "PENGHASILAN LAIN/ BLN",
+                "PENGHASILAN LAIN",
+              ),
+              jumlah_tanggungan: getNum(
+                row,
+                "JUMLAH TANGGUNGAN",
+                "JML TANGGUNGAN",
+              ),
               jumlah_orang_rumah: getNum(
                 row,
                 "JML TANGGUNGAN SEBENARNYA",
@@ -289,11 +335,21 @@ export default function UploadZone({
                 "KOTA",
               ),
               provinsi: get(row, "PROVINSI SEKOLAH", "PROVINSI"),
-              jarak_pusat_kota: getNum(row, "JARAK PUSAT KOTA (KM)", "JARAK PUSAT KOTA"),
+              jarak_pusat_kota: getNum(
+                row,
+                "JARAK PUSAT KOTA (KM)",
+                "JARAK PUSAT KOTA",
+              ),
 
               // ── Lainnya ──
               jalur_masuk: get(row, "JALUR MASUK", "JALUR"),
-              golongan_ukt: getNum(row, "GOLONGAN UKT", "GOL. UKT", "GOL UKT", "GOLONGAN"),
+              golongan_ukt: getNum(
+                row,
+                "GOLONGAN UKT",
+                "GOL. UKT",
+                "GOL UKT",
+                "GOLONGAN",
+              ),
 
               hasErrors: validation.hasErrors,
               missingFields: validation.missingFields,
@@ -350,7 +406,9 @@ export default function UploadZone({
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop,
     accept: {
-      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [
+        ".xlsx",
+      ],
       "application/vnd.ms-excel": [".xls"],
       "text/csv": [".csv"],
     },
@@ -395,7 +453,7 @@ export default function UploadZone({
           {!isProcessing && (
             <button
               type="button"
-              className="px-5 py-2 text-sm font-semibold bg-admin-accent text-white rounded-xl hover:bg-admin-accent-hover transition-colors"
+              className="px-5 py-2 text-sm font-semibold bg-admin-accent text-white rounded-[8px] hover:bg-admin-accent-hover transition-colors"
             >
               Pilih File
             </button>
@@ -447,14 +505,16 @@ export default function UploadZone({
           Kolom wajib di file
         </p>
         <div className="flex flex-wrap gap-1.5">
-          {["Nama Siswa2", "No. Pendaftaran KIP", "NIK", "Alamat Email"].map((col) => (
-            <span
-              key={col}
-              className="text-[10px] font-medium px-2 py-0.5 bg-white border border-admin-border rounded text-admin-text-2"
-            >
-              {col}
-            </span>
-          ))}
+          {["Nama Siswa2", "No. Pendaftaran KIP", "NIK", "Alamat Email"].map(
+            (col) => (
+              <span
+                key={col}
+                className="text-[10px] font-medium px-2 py-0.5 bg-white border border-admin-border rounded text-admin-text-2"
+              >
+                {col}
+              </span>
+            ),
+          )}
         </div>
         <p className="mt-2 text-[10px] text-admin-text-4">
           Header CSV harus sesuai dengan format file{" "}

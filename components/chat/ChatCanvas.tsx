@@ -168,7 +168,11 @@ const PreviewAttachment = memo(
     <div className="relative group flex flex-col gap-1.5 shrink-0">
       <div className="w-16 h-16 sm:w-20 sm:h-20 bg-slate-100 rounded-lg overflow-hidden border border-slate-200 flex items-center justify-center relative shadow-sm">
         {att.contentType.startsWith("image/") && att.url ? (
-          <img src={att.url} alt={att.name} className="size-full object-cover" />
+          <img
+            src={att.url}
+            alt={att.name}
+            className="size-full object-cover"
+          />
         ) : (
           <span className="text-[10px] font-bold text-slate-400 text-center px-1">
             {att.name.split(".").pop()?.toUpperCase()}
@@ -282,7 +286,9 @@ function MultimodalInput({
       if (!file) return;
 
       if (!ACCEPTED_TYPES.includes(file.type) || file.size > 5 * 1024 * 1024) {
-        setUploadError("Hanya gambar PNG, JPG, atau WebP dengan ukuran maksimal 5 MB.");
+        setUploadError(
+          "Hanya gambar PNG, JPG, atau WebP dengan ukuran maksimal 5 MB.",
+        );
         setTimeout(() => setUploadError(""), 3000);
         return;
       }
@@ -294,7 +300,9 @@ function MultimodalInput({
       if (hasil) {
         // Satu gambar per pesan: gambar baru menggantikan yang lama
         setAttachments((prev) => {
-          prev.forEach((a) => a.url.startsWith("blob:") && URL.revokeObjectURL(a.url));
+          prev.forEach(
+            (a) => a.url.startsWith("blob:") && URL.revokeObjectURL(a.url),
+          );
           return [hasil];
         });
       }
@@ -349,7 +357,7 @@ function MultimodalInput({
 
       <div
         className={cn(
-          "relative flex flex-col w-full bg-white border border-[#CBD5E1] rounded-xl overflow-hidden transition-colors duration-200",
+          "relative flex flex-col w-full bg-white border border-[#CBD5E1] rounded-[8px] overflow-hidden transition-colors duration-200",
           "focus-within:ring-2 focus-within:ring-[#000352]/10 focus-within:border-[#000352]",
         )}
       >
@@ -468,7 +476,10 @@ export default function ChatCanvas({
 }: ChatCanvasProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_MESSAGE]);
   const [input, setInput] = useState("");
-  const isNewConversation = !currentSessionId && messages.length === 1 && messages[0].id === INITIAL_MESSAGE.id;
+  const isNewConversation =
+    !currentSessionId &&
+    messages.length === 1 &&
+    messages[0].id === INITIAL_MESSAGE.id;
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
@@ -586,12 +597,14 @@ export default function ChatCanvas({
     const url = URL.createObjectURL(file);
 
     setAttachments((prev) => {
-      prev.forEach((a) => a.url.startsWith("blob:") && URL.revokeObjectURL(a.url));
-      return [{ url, name: file.name, contentType: file.type, size: file.size }];
+      prev.forEach(
+        (a) => a.url.startsWith("blob:") && URL.revokeObjectURL(a.url),
+      );
+      return [
+        { url, name: file.name, contentType: file.type, size: file.size },
+      ];
     });
   }, []);
-
-
 
   // ==========================================================
   // SEND MESSAGE
@@ -629,17 +642,17 @@ export default function ChatCanvas({
         // CONVERT IMAGE TO BASE64
         const base64 = atts[0]?.url.startsWith("blob:")
           ? await fetch(atts[0].url)
-            .then((r) => r.blob())
-            .then(
-              (b) =>
-                new Promise<string>((res, rej) => {
-                  const reader = new FileReader();
-                  reader.onload = () =>
-                    res((reader.result as string).split(",")[1]);
-                  reader.onerror = rej;
-                  reader.readAsDataURL(b);
-                }),
-            )
+              .then((r) => r.blob())
+              .then(
+                (b) =>
+                  new Promise<string>((res, rej) => {
+                    const reader = new FileReader();
+                    reader.onload = () =>
+                      res((reader.result as string).split(",")[1]);
+                    reader.onerror = rej;
+                    reader.readAsDataURL(b);
+                  }),
+              )
           : null;
 
         // API REQUEST
@@ -959,9 +972,18 @@ export default function ChatCanvas({
         onMouseDown={handleChatMouseDown}
         onAuxClick={handleChatAuxClick}
       >
-        <div className={cn("max-w-3xl mx-auto", isNewConversation && "flex min-h-full flex-col justify-center py-4 sm:py-8")}>
+        <div
+          className={cn(
+            "max-w-3xl mx-auto",
+            isNewConversation &&
+              "flex min-h-full flex-col justify-center py-4 sm:py-8",
+          )}
+        >
           {isNewConversation ? (
-            <section aria-labelledby="sakabot-welcome-title" className="mx-auto w-full max-w-xl">
+            <section
+              aria-labelledby="sakabot-welcome-title"
+              className="mx-auto w-full max-w-xl"
+            >
               <div className="mb-6 flex flex-col items-center text-center">
                 <Image
                   src="/illustrations/sakabot-header-animated.svg"
@@ -970,13 +992,23 @@ export default function ChatCanvas({
                   height={116}
                   className="mb-4 h-24 w-20 object-contain sm:h-[116px] sm:w-24"
                 />
-                <h2 id="sakabot-welcome-title" className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0B1536]">Ada yang bisa saya bantu?</h2>
-                <p className="mt-3 max-w-md text-sm sm:text-base leading-relaxed text-[#64748B]">Tanyakan informasi KIP Kuliah atau pilih topik berikut untuk memulai.</p>
+                <h2
+                  id="sakabot-welcome-title"
+                  className="text-2xl sm:text-3xl font-bold tracking-tight text-[#0B1536]"
+                >
+                  Ada yang bisa saya bantu?
+                </h2>
+                <p className="mt-3 max-w-md text-sm sm:text-base leading-relaxed text-[#64748B]">
+                  Tanyakan informasi KIP Kuliah atau pilih topik berikut untuk
+                  memulai.
+                </p>
               </div>
-              <SuggestedActions onSelect={(question) => {
-                setInput(question);
-                document.getElementById("sakabot-message-input")?.focus();
-              }} />
+              <SuggestedActions
+                onSelect={(question) => {
+                  setInput(question);
+                  document.getElementById("sakabot-message-input")?.focus();
+                }}
+              />
             </section>
           ) : (
             <ChatMessages
@@ -1016,7 +1048,9 @@ export default function ChatCanvas({
             <ChevronUp
               size={12}
               strokeWidth={3}
-              className={scrollDir === "up" ? "text-[#000352]" : "text-slate-400"}
+              className={
+                scrollDir === "up" ? "text-[#000352]" : "text-slate-400"
+              }
             />
             <span className="w-1 h-1 rounded-full bg-slate-400" />
             <ChevronDown
@@ -1047,7 +1081,7 @@ export default function ChatCanvas({
               animate={{ scale: 1, y: 0 }}
               exit={{ scale: 0.95, y: 10 }}
               transition={{ type: "spring", stiffness: 300, damping: 25 }}
-              className="relative z-10 flex flex-col items-center gap-4 px-10 py-8 bg-white rounded-xl shadow-lg border border-[#E2E8F0] max-w-sm w-full"
+              className="relative z-10 flex flex-col items-center gap-4 px-10 py-8 bg-white rounded-[8px] shadow-lg border border-[#E2E8F0] max-w-sm w-full"
             >
               <div className="w-16 h-16 rounded-lg bg-[#EEF3FB] flex items-center justify-center border-2 border-dashed border-[#94A3B8]">
                 <ImagePlus className="w-8 h-8 text-[#000352]" />

@@ -54,9 +54,7 @@ const MessageItem = memo(
         )}
       >
         {/* ── Avatar Assistant ── */}
-        {!isUser && (
-          <MessageAvatar />
-        )}
+        {!isUser && <MessageAvatar />}
 
         <div
           className={cn(
@@ -66,7 +64,7 @@ const MessageItem = memo(
         >
           {/* Gambar Lampiran */}
           {msg.imageUrl && (
-            <div className="mb-2 relative rounded-xl overflow-hidden border border-slate-200 shadow-sm max-w-[200px] bg-slate-100 flex items-center justify-center min-h-[100px]">
+            <div className="mb-2 relative rounded-[8px] overflow-hidden border border-slate-200 shadow-sm max-w-[200px] bg-slate-100 flex items-center justify-center min-h-[100px]">
               {/* eslint-disable-next-line @next/next/no-img-element -- base64/runtime image, next/image cannot optimize data URIs */}
               <img
                 src={
@@ -89,8 +87,8 @@ const MessageItem = memo(
             className={cn(
               "relative group px-4 py-3", // Sedikit diperkecil paddingnya agar mirip demo
               isUser
-                ? "bg-[#000352] text-white rounded-xl rounded-tr-sm"
-                : "bg-white border border-[#E2E8F0] text-[#334155] rounded-xl rounded-tl-sm pb-10",
+                ? "bg-[#000352] text-white rounded-[8px] rounded-tr-sm"
+                : "bg-white border border-[#E2E8F0] text-[#334155] rounded-[8px] rounded-tl-sm pb-10",
             )}
           >
             {/* Action Bar (Copy) */}
@@ -113,7 +111,7 @@ const MessageItem = memo(
               className={cn(
                 "prose prose-sm max-w-none break-words",
                 isUser ? "prose-invert" : "prose-slate",
-                "prose-p:leading-relaxed prose-pre:my-2 prose-pre:p-3 prose-pre:bg-slate-800 prose-pre:rounded-xl",
+                "prose-p:leading-relaxed prose-pre:my-2 prose-pre:p-3 prose-pre:bg-slate-800 prose-pre:rounded-[8px]",
               )}
             >
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -121,9 +119,7 @@ const MessageItem = memo(
               </ReactMarkdown>
             </div>
           </div>
-
         </div>
-
       </motion.div>
     );
   },
@@ -204,21 +200,31 @@ export default function ChatMessages({
 
             <div
               role="status"
-              className="mt-1 flex min-h-11 items-center gap-3 rounded-xl rounded-tl-sm border border-[#E2E8F0] bg-white px-4 py-3"
+              className="mt-1 flex min-h-11 items-center gap-3 rounded-[8px] rounded-tl-sm border border-[#E2E8F0] bg-white px-4 py-3"
             >
-              <span className="text-sm text-[#64748B]">Sedang menyiapkan jawaban</span>
+              <span className="text-sm text-[#64748B]">
+                Sedang menyiapkan jawaban
+              </span>
               <span className="flex items-center gap-1" aria-hidden="true">
                 {[0, 1, 2].map((index) => (
                   <motion.span
                     key={index}
                     className="size-1.5 rounded-full bg-[#000352]/60"
-                    animate={reduceMotion ? { opacity: 0.6 } : { y: [0, -3, 0], opacity: [0.4, 1, 0.4] }}
-                    transition={reduceMotion ? { duration: 0 } : {
-                      duration: 1.2,
-                      repeat: Infinity,
-                      delay: index * 0.16,
-                      ease: "easeInOut",
-                    }}
+                    animate={
+                      reduceMotion
+                        ? { opacity: 0.6 }
+                        : { y: [0, -3, 0], opacity: [0.4, 1, 0.4] }
+                    }
+                    transition={
+                      reduceMotion
+                        ? { duration: 0 }
+                        : {
+                            duration: 1.2,
+                            repeat: Infinity,
+                            delay: index * 0.16,
+                            ease: "easeInOut",
+                          }
+                    }
                   />
                 ))}
               </span>

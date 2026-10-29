@@ -25,7 +25,9 @@ export default function FormCekAduan() {
     setHasil(null);
 
     try {
-      const res = await fetch(`/api/aduan/cek?kode=${encodeURIComponent(kodeInput.trim())}`);
+      const res = await fetch(
+        `/api/aduan/cek?kode=${encodeURIComponent(kodeInput.trim())}`,
+      );
       const responseData = await res.json();
 
       if (!res.ok) {
@@ -42,21 +44,27 @@ export default function FormCekAduan() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "MENUNGGU": return "bg-amber-100 text-amber-800 border-amber-200";
-      case "DIPROSES": return "bg-blue-100 text-blue-800 border-blue-200";
-      case "SELESAI": return "bg-emerald-100 text-emerald-800 border-emerald-200";
-      case "DITOLAK": return "bg-rose-100 text-rose-800 border-rose-200";
-      default: return "bg-gray-100 text-gray-800 border-gray-200";
+      case "MENUNGGU":
+        return "bg-amber-100 text-amber-800 border-amber-200";
+      case "DIPROSES":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "SELESAI":
+        return "bg-emerald-100 text-emerald-800 border-emerald-200";
+      case "DITOLAK":
+        return "bg-rose-100 text-rose-800 border-rose-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   return (
     <div className="-mt-20 relative z-20 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden p-6 sm:p-10">
-
         <form onSubmit={handleCari} className="flex flex-col sm:flex-row gap-4">
           <div className="flex-1">
-            <label htmlFor="kode" className="sr-only">Kode Aduan Laporan</label>
+            <label htmlFor="kode" className="sr-only">
+              Kode Aduan Laporan
+            </label>
             <input
               type="text"
               id="kode"
@@ -83,30 +91,49 @@ export default function FormCekAduan() {
         )}
 
         {hasil && (
-          <div className="mt-8 border border-slate-200 rounded-xl overflow-hidden bg-slate-50">
+          <div className="mt-8 border border-slate-200 rounded-[8px] overflow-hidden bg-slate-50">
             <div className="bg-slate-100 px-6 py-4 border-b border-slate-200 flex justify-between items-center">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">Detail Aduan</span>
+              <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
+                Detail Aduan
+              </span>
               <span className="text-xs text-slate-500">
-                Diajukan pada: {new Date(hasil.created_at).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' })}
+                Diajukan pada:{" "}
+                {new Date(hasil.created_at).toLocaleDateString("id-ID", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })}
               </span>
             </div>
 
             <div className="p-6">
               <div className="mb-6">
-                <h4 className="text-sm font-semibold text-slate-500 mb-1">Kode Laporan</h4>
-                <p className="text-xl font-extrabold text-slate-900 tracking-wide">{hasil.kode_laporan}</p>
+                <h4 className="text-sm font-semibold text-slate-500 mb-1">
+                  Kode Laporan
+                </h4>
+                <p className="text-xl font-extrabold text-slate-900 tracking-wide">
+                  {hasil.kode_laporan}
+                </p>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
-                  <h4 className="text-sm font-semibold text-slate-500 mb-2">Kategori Laporan</h4>
+                  <h4 className="text-sm font-semibold text-slate-500 mb-2">
+                    Kategori Laporan
+                  </h4>
                   <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-slate-200 text-slate-700">
-                    {hasil.jenis_aduan === 'KETIDAKTEPATAN' ? 'Ketidaktepatan Sasaran' : 'Penyalahgunaan Dana'}
+                    {hasil.jenis_aduan === "KETIDAKTEPATAN"
+                      ? "Ketidaktepatan Sasaran"
+                      : "Penyalahgunaan Dana"}
                   </span>
                 </div>
                 <div>
-                  <h4 className="text-sm font-semibold text-slate-500 mb-2">Status Saat Ini</h4>
-                  <span className={`inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold border ${getStatusColor(hasil.status)}`}>
+                  <h4 className="text-sm font-semibold text-slate-500 mb-2">
+                    Status Saat Ini
+                  </h4>
+                  <span
+                    className={`inline-flex items-center px-4 py-1.5 rounded-full text-xs font-bold border ${getStatusColor(hasil.status)}`}
+                  >
                     <span className="w-1.5 h-1.5 rounded-full bg-current mr-2 animate-pulse"></span>
                     {hasil.status}
                   </span>
@@ -115,7 +142,6 @@ export default function FormCekAduan() {
             </div>
           </div>
         )}
-
       </div>
     </div>
   );

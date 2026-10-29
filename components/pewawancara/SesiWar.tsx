@@ -3,9 +3,20 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  CalendarDays, Zap, ZapOff, Play, RefreshCw,
-  CheckCircle2, AlertTriangle, Loader2, Plus,
-  UserCheck, Users, Clock, Trash2, X
+  CalendarDays,
+  Zap,
+  ZapOff,
+  Play,
+  RefreshCw,
+  CheckCircle2,
+  AlertTriangle,
+  Loader2,
+  Plus,
+  UserCheck,
+  Users,
+  Clock,
+  Trash2,
+  X,
 } from "lucide-react";
 
 import type { SesiWawancara, KuotaPewawancara } from "@/schemas";
@@ -20,17 +31,19 @@ export default function SesiWAR() {
   const [distributing, setDistributing] = useState(false);
   const [deletingSlot, setDeletingSlot] = useState<number | null>(null);
   const [offset, setOffset] = useState(0);
-  
+
   // Modal states
   const [showBuatSesi, setShowBuatSesi] = useState(false);
   const [showConfirmWar, setShowConfirmWar] = useState(false);
-  
+
   const [formSesi, setFormSesi] = useState({
     kuota_pewawancara: "20",
     kuota_mahasiswa: "120",
   });
   const [savingSesi, setSavingSesi] = useState(false);
-  const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(null);
+  const [msg, setMsg] = useState<{ type: "ok" | "err"; text: string } | null>(
+    null,
+  );
 
   const fetchSesi = useCallback(async () => {
     setLoading(true);
@@ -82,7 +95,7 @@ export default function SesiWAR() {
   function handleToggleWAR() {
     if (!SesiWawancara) return;
     const newState = !SesiWawancara.war_aktif;
-    
+
     if (newState) {
       setShowConfirmWar(true);
     } else {
@@ -92,10 +105,10 @@ export default function SesiWAR() {
 
   async function executeToggleWAR(newState: boolean) {
     if (!SesiWawancara) return;
-    
+
     setToggling(true);
     setShowConfirmWar(false);
-    
+
     try {
       const res = await fetch("/api/admin/SesiWawancara", {
         method: "PATCH",
@@ -126,8 +139,13 @@ export default function SesiWAR() {
       setMsg({ type: "err", text: "Belum ada pewawancara yang mengisi Slot" });
       return;
     }
-    if (!confirm(`Distribusikan mahasiswa ke ${kuotaList.length} pewawancara?\nTindakan ini tidak bisa dibatalkan.`)) return;
-    
+    if (
+      !confirm(
+        `Distribusikan mahasiswa ke ${kuotaList.length} pewawancara?\nTindakan ini tidak bisa dibatalkan.`,
+      )
+    )
+      return;
+
     setDistributing(true);
     try {
       const res = await fetch("/api/admin/SesiWawancara/distribusi", {
@@ -151,8 +169,13 @@ export default function SesiWAR() {
   }
 
   async function handleHapusSlot(slotId: number, namaPewawancara: string) {
-    if (!confirm(`Hapus ${namaPewawancara} dari Slot Pengambilan Kuota?\nMereka bisa klaim Slot lagi jika WAR masih aktif.`)) return;
-    
+    if (
+      !confirm(
+        `Hapus ${namaPewawancara} dari Slot Pengambilan Kuota?\nMereka bisa klaim Slot lagi jika WAR masih aktif.`,
+      )
+    )
+      return;
+
     setDeletingSlot(slotId);
     try {
       const res = await fetch(`/api/admin/SesiWawancara?slot_id=${slotId}`, {
@@ -293,7 +316,8 @@ export default function SesiWAR() {
                     </span>
                   ) : (
                     <span className="flex items-center gap-1.5 text-xs font-bold text-slate-500 bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200">
-                      <ZapOff size={14} /> PEMILIHAN URUTAN WAWANCARA BELUM DIBUKA
+                      <ZapOff size={14} /> PEMILIHAN URUTAN WAWANCARA BELUM
+                      DIBUKA
                     </span>
                   )}
                 </div>
@@ -536,7 +560,9 @@ export default function SesiWAR() {
                           ),
                         },
                         (_, i) => offset + s.kuota_ke + i * step,
-                      ).filter((n) => n <= offset + SesiWawancara.kuota_mahasiswa);
+                      ).filter(
+                        (n) => n <= offset + SesiWawancara.kuota_mahasiswa,
+                      );
                       const isDeleting = deletingSlot === s.id;
 
                       return (
@@ -545,7 +571,7 @@ export default function SesiWAR() {
                           className={`hover:bg-slate-50/80 transition-colors group ${isDeleting ? "opacity-40" : ""}`}
                         >
                           <td className="px-6 py-4">
-                            <div className="w-10 h-10 rounded-xl bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm">
+                            <div className="w-10 h-10 rounded-[8px] bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-sm">
                               {s.kuota_ke}
                             </div>
                           </td>
@@ -597,7 +623,7 @@ export default function SesiWAR() {
                                   )
                                 }
                                 disabled={isDeleting}
-                                className="p-2 rounded-xl text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors ml-auto opacity-0 group-hover:opacity-100"
+                                className="p-2 rounded-[8px] text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors ml-auto opacity-0 group-hover:opacity-100"
                                 title="Hapus slot ini"
                               >
                                 {isDeleting ? (
@@ -696,7 +722,7 @@ export default function SesiWAR() {
                     }
                     className="w-full px-4 py-3 text-sm font-medium border border-slate-200 rounded-2xl focus:outline-none focus:border-indigo-500 focus:ring-4 focus:ring-indigo-500/10 transition-all"
                   />
-                  <div className="mt-3 bg-indigo-50 rounded-xl p-3 border border-indigo-100">
+                  <div className="mt-3 bg-indigo-50 rounded-[8px] p-3 border border-indigo-100">
                     <p className="text-xs font-semibold text-indigo-700 flex items-center justify-between">
                       <span>Estimasi Beban Tugas:</span>
                       <span className="text-sm">
@@ -724,9 +750,7 @@ export default function SesiWAR() {
                   disabled={savingSesi}
                   className="flex-1 py-3 text-sm font-semibold bg-indigo-600 text-white rounded-2xl hover:bg-indigo-700 disabled:opacity-50 transition-all flex items-center justify-center gap-2 shadow-sm"
                 >
-                  {savingSesi && (
-                    <Loader2 size={16} className="animate-spin" />
-                  )}
+                  {savingSesi && <Loader2 size={16} className="animate-spin" />}
                   Generate Sesi
                 </button>
               </div>
@@ -754,8 +778,7 @@ export default function SesiWAR() {
                 Buka Sesi Pengambilan Kuota?
               </h3>
               <p className="text-sm text-slate-500 mb-8 leading-relaxed">
-                Pewawancara akan dapat mulai mengklaim slot wawancara untuk
-                hari{" "}
+                Pewawancara akan dapat mulai mengklaim slot wawancara untuk hari{" "}
                 <span className="font-bold text-slate-700">
                   {new Date(tanggal).toLocaleDateString("id-ID", {
                     weekday: "long",

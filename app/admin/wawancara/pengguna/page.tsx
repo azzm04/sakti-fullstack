@@ -7,7 +7,11 @@ import DaftarMahasiswa from "@/components/admin/wawancara/DaftarMahasiswa";
 import WawancaraPageShell from "@/components/admin/wawancara/shared/WawancaraPageShell";
 import type { DaftarPenggunaRole } from "@/types/wawancara";
 
-const ROLE_TABS: { key: DaftarPenggunaRole; label: string; icon: React.ElementType }[] = [
+const ROLE_TABS: {
+  key: DaftarPenggunaRole;
+  label: string;
+  icon: React.ElementType;
+}[] = [
   { key: "pewawancara", label: "Pewawancara", icon: UserCheck },
   { key: "mahasiswa", label: "Mahasiswa KIP-K", icon: GraduationCap },
 ];
@@ -20,7 +24,7 @@ export default function DaftarPenggunaPage() {
       title="Daftar Pengguna"
       description="Kelola akun pewawancara dan mahasiswa KIP-K"
     >
-      <div className="flex gap-1 p-1 bg-admin-surface-soft border border-admin-border-soft rounded-xl w-fit mb-5">
+      <div className="flex gap-1 p-1 bg-admin-surface-soft border border-admin-border-soft rounded-[8px] w-fit mb-5">
         {ROLE_TABS.map(({ key, label, icon: Icon }) => (
           <button
             key={key}

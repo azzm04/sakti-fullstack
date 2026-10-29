@@ -49,7 +49,13 @@ export default function SesiWAR() {
     description: string;
     variant: ConfirmVariant;
     onConfirm: () => void;
-  }>({ open: false, title: "", description: "", variant: "warning", onConfirm: () => {} });
+  }>({
+    open: false,
+    title: "",
+    description: "",
+    variant: "warning",
+    onConfirm: () => {},
+  });
 
   // `silent` = refresh di latar belakang (polling, tombol muat ulang, setelah
   // aksi): data lama tetap tampil, tidak diganti spinner "Memuat...".
@@ -69,7 +75,8 @@ export default function SesiWAR() {
       } catch {
         // Gagal saat refresh senyap: biarkan data terakhir, coba lagi di siklus berikutnya.
       } finally {
-        if (!opts?.silent && requestId === requestIdRef.current) setLoading(false);
+        if (!opts?.silent && requestId === requestIdRef.current)
+          setLoading(false);
       }
     },
     [tanggal],
@@ -109,7 +116,11 @@ export default function SesiWAR() {
   }
 
   function openBuatSesi() {
-    setFormSesi((f) => ({ ...f, tanggal_mulai: tanggal, tanggal_selesai: tanggal }));
+    setFormSesi((f) => ({
+      ...f,
+      tanggal_mulai: tanggal,
+      tanggal_selesai: tanggal,
+    }));
     fetchKandidatCount(formSesi.jalur_masuk, formSesi.tahun_seleksi);
     setShowBuatSesi(true);
   }
@@ -117,7 +128,13 @@ export default function SesiWAR() {
   async function handleBuatSesi() {
     setSavingSesi(true);
     try {
-      const { tanggal_mulai, tanggal_selesai, jalur_masuk, tahun_seleksi, kuota_pewawancara } = formSesi;
+      const {
+        tanggal_mulai,
+        tanggal_selesai,
+        jalur_masuk,
+        tahun_seleksi,
+        kuota_pewawancara,
+      } = formSesi;
 
       if (tanggal_mulai && tanggal_selesai) {
         // Rentang tanggal diisi → batch create
@@ -322,7 +339,9 @@ export default function SesiWAR() {
     if (!sesi) return;
     setConfirmModal((c) => ({ ...c, open: false }));
     try {
-      const res = await fetch(`/api/admin/sesi?id=${sesi.id}`, { method: "DELETE" });
+      const res = await fetch(`/api/admin/sesi?id=${sesi.id}`, {
+        method: "DELETE",
+      });
       const json = await res.json();
       if (!res.ok) {
         toast.error(json.error ?? "Gagal menghapus sesi");
@@ -348,67 +367,71 @@ export default function SesiWAR() {
           inert + ditutup overlay, supaya admin tidak bisa beraksi di sesi
           tanggal sebelumnya sebelum data tanggal tujuan terbuka. */}
       <div inert={loading} aria-busy={loading}>
-      <SesiOverview
-        onSelectTanggal={setTanggal}
-        activeTanggal={tanggal}
-        refreshKey={overviewKey}
-      />
+        <SesiOverview
+          onSelectTanggal={setTanggal}
+          activeTanggal={tanggal}
+          refreshKey={overviewKey}
+        />
 
-      <div className="flex items-center gap-3 mb-6">
-        <div className="flex items-center gap-2 bg-white border border-admin-border rounded-xl px-3 py-2 shadow-sm">
-          <CalendarDays size={15} className="text-admin-text-5" />
-          <input
-            type="date"
-            value={tanggal}
-            onChange={(e) => setTanggal(e.target.value)}
-            className="text-sm font-semibold text-admin-text-2 bg-transparent rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-admin-accent/30"
-            title="pilih tanggal"
-          />
-        </div>
-        <button
-          onClick={() => fetchSesi({ silent: true })}
-          className="w-9 h-9 flex items-center justify-center rounded-xl bg-white border border-admin-border text-admin-text-5 hover:text-admin-accent hover:border-admin-accent transition-colors shadow-sm"
-          title="Muat ulang"
-        >
-          <RefreshCw size={14} />
-        </button>
-      </div>
-
-      {loading ? (
-        <div className="min-h-60" />
-      ) : !sesi ? (
-        <div className="bg-white rounded-[8px] border border-admin-border-soft shadow-sm p-10 text-center">
-          <CalendarDays size={36} className="text-admin-border mx-auto mb-3" />
-          <p className="text-sm font-semibold text-admin-text-3 mb-1">
-            Belum ada sesi untuk tanggal ini
-          </p>
-          <p className="text-xs text-admin-text-5 mb-5">
-            Buat sesi terlebih dahulu sebelum membuka pemilihan urutan pewawancara
-          </p>
+        <div className="flex items-center gap-3 mb-6">
+          <div className="flex items-center gap-2 bg-white border border-admin-border rounded-[8px] px-3 py-2 shadow-sm">
+            <CalendarDays size={15} className="text-admin-text-5" />
+            <input
+              type="date"
+              value={tanggal}
+              onChange={(e) => setTanggal(e.target.value)}
+              className="text-sm font-semibold text-admin-text-2 bg-transparent rounded focus:outline-none focus-visible:ring-2 focus-visible:ring-admin-accent/30"
+              title="pilih tanggal"
+            />
+          </div>
           <button
-            onClick={openBuatSesi}
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-admin-accent text-white text-sm font-semibold rounded-xl hover:bg-admin-accent/90 transition-colors"
+            onClick={() => fetchSesi({ silent: true })}
+            className="w-9 h-9 flex items-center justify-center rounded-[8px] bg-white border border-admin-border text-admin-text-5 hover:text-admin-accent hover:border-admin-accent transition-colors shadow-sm"
+            title="Muat ulang"
           >
-            <Plus size={15} /> Buat Sesi
+            <RefreshCw size={14} />
           </button>
         </div>
-      ) : (
-        <div className="space-y-5">
-          <SesiStatusCard
-            sesi={sesi}
-            tanggal={tanggal}
-            kuotaList={kuotaList}
-            toggling={toggling}
-            distributing={distributing}
-            onEditKuota={openEditKuota}
-            onDeleteSesi={handleDeleteSesi}
-            onToggleWAR={handleToggleWAR}
-            onDistribusi={handleDistribusi}
-          />
-          <KuotaProgress sesi={sesi} kuotaList={kuotaList} />
-          <KuotaTable sesi={sesi} kuotaList={kuotaList} offset={offset} />
-        </div>
-      )}
+
+        {loading ? (
+          <div className="min-h-60" />
+        ) : !sesi ? (
+          <div className="bg-white rounded-[8px] border border-admin-border-soft shadow-sm p-10 text-center">
+            <CalendarDays
+              size={36}
+              className="text-admin-border mx-auto mb-3"
+            />
+            <p className="text-sm font-semibold text-admin-text-3 mb-1">
+              Belum ada sesi untuk tanggal ini
+            </p>
+            <p className="text-xs text-admin-text-5 mb-5">
+              Buat sesi terlebih dahulu sebelum membuka pemilihan urutan
+              pewawancara
+            </p>
+            <button
+              onClick={openBuatSesi}
+              className="inline-flex items-center gap-2 px-5 py-2.5 bg-admin-accent text-white text-sm font-semibold rounded-[8px] hover:bg-admin-accent/90 transition-colors"
+            >
+              <Plus size={15} /> Buat Sesi
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-5">
+            <SesiStatusCard
+              sesi={sesi}
+              tanggal={tanggal}
+              kuotaList={kuotaList}
+              toggling={toggling}
+              distributing={distributing}
+              onEditKuota={openEditKuota}
+              onDeleteSesi={handleDeleteSesi}
+              onToggleWAR={handleToggleWAR}
+              onDistribusi={handleDistribusi}
+            />
+            <KuotaProgress sesi={sesi} kuotaList={kuotaList} />
+            <KuotaTable sesi={sesi} kuotaList={kuotaList} offset={offset} />
+          </div>
+        )}
       </div>
 
       {loading && (
@@ -420,7 +443,9 @@ export default function SesiWAR() {
           <div className="flex items-center gap-3 rounded-[8px] border border-admin-border bg-white px-5 py-4 shadow-lg">
             <Loader2 size={18} className="animate-spin text-admin-accent" />
             <div>
-              <p className="text-sm font-semibold text-admin-text">Memuat sesi…</p>
+              <p className="text-sm font-semibold text-admin-text">
+                Memuat sesi…
+              </p>
               <p className="text-xs text-admin-text-4">{tanggalLabel}</p>
             </div>
           </div>

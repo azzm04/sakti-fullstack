@@ -1,29 +1,36 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Cpu, ChevronDown, ChevronUp } from "lucide-react"
-import type { ModelInfo } from "@/types/analitik"
+import { useState } from "react";
+import { Cpu, ChevronDown, ChevronUp } from "lucide-react";
+import type { ModelInfo } from "@/types/analitik";
 
 interface Props {
-  data: ModelInfo
+  data: ModelInfo;
 }
 
 export default function ModelInfoCard({ data }: Props) {
   // Collapsed by default — info teknis, bukan untuk pengguna umum
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(false);
 
   const params = Object.entries(data.best_params).map(([k, v]) => ({
     key: k.replace(/_/g, " "),
     value: String(v),
-  }))
+  }));
 
   const stats = [
-    { label: "Data Train",    value: String(data.jumlah_data_train) },
-    { label: "Data Test",     value: String(data.jumlah_data_test) },
-    { label: "Akurasi Train", value: `${(data.train_accuracy * 100).toFixed(1)}%` },
-    { label: "Akurasi CV",    value: `${(data.cv_accuracy * 100).toFixed(2)}%` },
-    { label: "Akurasi Test",  value: `${(data.test_accuracy * 100).toFixed(1)}%`, highlight: true },
-  ]
+    { label: "Data Train", value: String(data.jumlah_data_train) },
+    { label: "Data Test", value: String(data.jumlah_data_test) },
+    {
+      label: "Akurasi Train",
+      value: `${(data.train_accuracy * 100).toFixed(1)}%`,
+    },
+    { label: "Akurasi CV", value: `${(data.cv_accuracy * 100).toFixed(2)}%` },
+    {
+      label: "Akurasi Test",
+      value: `${(data.test_accuracy * 100).toFixed(1)}%`,
+      highlight: true,
+    },
+  ];
 
   return (
     <div className="bg-white rounded-[8px] border border-admin-border shadow-sm overflow-hidden">
@@ -33,22 +40,29 @@ export default function ModelInfoCard({ data }: Props) {
         className="w-full flex items-center justify-between px-6 py-4 hover:bg-admin-surface-soft/40 transition-colors"
       >
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-xl bg-admin-accent/8 flex items-center justify-center shrink-0">
+          <div className="w-8 h-8 rounded-[8px] bg-admin-accent/8 flex items-center justify-center shrink-0">
             <Cpu size={15} className="text-admin-accent" />
           </div>
           <div className="text-left">
-            <p className="text-sm font-bold text-admin-text">Detail Teknis Model</p>
+            <p className="text-sm font-bold text-admin-text">
+              Detail Teknis Model
+            </p>
             <p className="text-[11px] text-admin-text-3">
-              {data.algoritma} · Akurasi {(data.test_accuracy * 100).toFixed(1)}%
+              {data.algoritma} · Akurasi {(data.test_accuracy * 100).toFixed(1)}
+              %
               {!expanded && (
-                <span className="ml-2 text-admin-accent/60">— klik untuk detail</span>
+                <span className="ml-2 text-admin-accent/60">
+                  — klik untuk detail
+                </span>
               )}
             </p>
           </div>
         </div>
-        {expanded
-          ? <ChevronUp size={16} className="text-admin-text-3 shrink-0" />
-          : <ChevronDown size={16} className="text-admin-text-3 shrink-0" />}
+        {expanded ? (
+          <ChevronUp size={16} className="text-admin-text-3 shrink-0" />
+        ) : (
+          <ChevronDown size={16} className="text-admin-text-3 shrink-0" />
+        )}
       </button>
 
       {/* Content — hanya muncul saat expanded */}
@@ -63,7 +77,9 @@ export default function ModelInfoCard({ data }: Props) {
               {stats.map(({ label, value, highlight }) => (
                 <div key={label} className="flex justify-between">
                   <span className="text-admin-text-3">{label}</span>
-                  <span className={`font-semibold ${highlight ? "text-admin-accent" : "text-admin-text"}`}>
+                  <span
+                    className={`font-semibold ${highlight ? "text-admin-accent" : "text-admin-text"}`}
+                  >
                     {value}
                   </span>
                 </div>
@@ -79,7 +95,9 @@ export default function ModelInfoCard({ data }: Props) {
                 {params.map(({ key, value }) => (
                   <div key={key} className="flex justify-between">
                     <span className="text-admin-text-3 capitalize">{key}</span>
-                    <span className="font-mono font-semibold text-admin-text">{value}</span>
+                    <span className="font-mono font-semibold text-admin-text">
+                      {value}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -88,5 +106,5 @@ export default function ModelInfoCard({ data }: Props) {
         </div>
       )}
     </div>
-  )
+  );
 }

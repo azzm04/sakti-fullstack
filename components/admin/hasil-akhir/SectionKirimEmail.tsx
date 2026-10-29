@@ -145,7 +145,7 @@ export default function SectionKirimEmail({ onEnqueued }: Props) {
       {/* ── Form Card ── */}
       <div className="bg-white rounded-[8px] border border-admin-border shadow-sm overflow-hidden">
         <div className="px-6 py-5 border-b border-admin-border flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-admin-danger-bg text-admin-danger-bar flex items-center justify-center">
+          <div className="w-9 h-9 rounded-[8px] bg-admin-danger-bg text-admin-danger-bar flex items-center justify-center">
             <Mail size={17} />
           </div>
           <div>
@@ -182,7 +182,7 @@ export default function SectionKirimEmail({ onEnqueued }: Props) {
                     key={key}
                     whileTap={{ scale: 0.97 }}
                     onClick={() => toggleJalur(key)}
-                    className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-semibold transition-all ${
+                    className={`flex items-center gap-2 px-3 py-2.5 rounded-[8px] border text-xs font-semibold transition-all ${
                       sel
                         ? "bg-admin-accent/8 border-admin-accent text-admin-accent"
                         : "bg-admin-surface-soft border-admin-border text-admin-text-3 hover:border-admin-text-6"
@@ -218,7 +218,7 @@ export default function SectionKirimEmail({ onEnqueued }: Props) {
                       setStatus("idle");
                       setConfirmed(false);
                     }}
-                    className={`w-full flex items-start gap-3 px-4 py-3 rounded-xl border text-left transition-all ${
+                    className={`w-full flex items-start gap-3 px-4 py-3 rounded-[8px] border text-left transition-all ${
                       skTerpilih === sk.id
                         ? "bg-admin-accent/8 border-admin-accent"
                         : "bg-admin-surface-soft border-admin-border hover:border-admin-text-6"
@@ -276,7 +276,7 @@ export default function SectionKirimEmail({ onEnqueued }: Props) {
               type="text"
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-              className="w-full px-4 py-3 text-sm border border-admin-border rounded-xl bg-admin-surface-soft focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/10 transition-all"
+              className="w-full px-4 py-3 text-sm border border-admin-border rounded-[8px] bg-admin-surface-soft focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/10 transition-all"
             />
           </div>
 
@@ -448,7 +448,7 @@ export default function SectionKirimEmail({ onEnqueued }: Props) {
             whileTap={{ scale: canSend ? 0.98 : 1 }}
             onClick={handleEnqueue}
             disabled={!canSend}
-            className="flex items-center justify-center gap-2 w-full md:w-auto px-8 py-3 bg-admin-danger-bar text-white rounded-xl text-sm font-semibold hover:bg-admin-danger-text disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
+            className="flex items-center justify-center gap-2 w-full md:w-auto px-8 py-3 bg-admin-danger-bar text-white rounded-[8px] text-sm font-semibold hover:bg-admin-danger-text disabled:opacity-40 disabled:cursor-not-allowed transition-all shadow-sm"
           >
             {sending ? (
               <>

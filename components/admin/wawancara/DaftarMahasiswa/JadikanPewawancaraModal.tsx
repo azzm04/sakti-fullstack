@@ -39,14 +39,14 @@ export default function JadikanPewawancaraModal({
         <>
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 text-sm font-semibold border border-admin-border rounded-xl hover:bg-admin-surface-soft transition-all"
+            className="flex-1 py-2.5 text-sm font-semibold border border-admin-border rounded-[8px] hover:bg-admin-surface-soft transition-all"
           >
             Batal
           </button>
           <button
             onClick={onSave}
             disabled={saving}
-            className="flex-1 py-2.5 text-sm font-semibold bg-admin-accent text-white rounded-xl hover:bg-admin-accent/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+            className="flex-1 py-2.5 text-sm font-semibold bg-admin-accent text-white rounded-[8px] hover:bg-admin-accent/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
           >
             {saving && <Loader2 size={14} className="animate-spin" />}
             {saving ? "Menyimpan & mengirim email..." : "Jadikan Pewawancara"}
@@ -63,16 +63,19 @@ export default function JadikanPewawancaraModal({
           value={nama}
           onChange={(e) => onChangeNama(e.target.value)}
           placeholder="Nama untuk ditampilkan sebagai pewawancara"
-          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
+          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-[8px] focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
         />
       </div>
       <p className="text-[11px] text-admin-text-5 bg-admin-surface-soft rounded-[8px] px-3 py-2 border border-admin-border-soft">
-        Akun ini akan tetap sebagai Mahasiswa KIP-K — role Pewawancara ditambahkan,
-        bukan menggantikan. Akan muncul juga di tab Pewawancara, dan email pemberitahuan
-        penunjukan pewawancara dikirim ke alamat ini.
+        Akun ini akan tetap sebagai Mahasiswa KIP-K — role Pewawancara
+        ditambahkan, bukan menggantikan. Akan muncul juga di tab Pewawancara,
+        dan email pemberitahuan penunjukan pewawancara dikirim ke alamat ini.
       </p>
       {formError && (
-        <p role="alert" className="text-xs text-admin-danger-text bg-admin-danger-bg rounded-[8px] px-3 py-2">
+        <p
+          role="alert"
+          className="text-xs text-admin-danger-text bg-admin-danger-bg rounded-[8px] px-3 py-2"
+        >
           {formError}
         </p>
       )}

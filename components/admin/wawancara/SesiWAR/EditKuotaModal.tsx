@@ -29,7 +29,8 @@ export default function EditKuotaModal({
   onClose,
   onSubmit,
 }: EditKuotaModalProps) {
-  const disabled = saving || parseInt(form.kuota_pewawancara) < minKuotaPewawancara;
+  const disabled =
+    saving || parseInt(form.kuota_pewawancara) < minKuotaPewawancara;
 
   return (
     <ModalShell
@@ -46,14 +47,14 @@ export default function EditKuotaModal({
         <>
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 text-sm font-semibold border border-admin-border rounded-xl hover:bg-admin-surface-soft transition-all"
+            className="flex-1 py-2.5 text-sm font-semibold border border-admin-border rounded-[8px] hover:bg-admin-surface-soft transition-all"
           >
             Batal
           </button>
           <button
             onClick={onSubmit}
             disabled={disabled}
-            className="flex-1 py-2.5 text-sm font-semibold bg-admin-accent text-white rounded-xl hover:bg-admin-accent/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+            className="flex-1 py-2.5 text-sm font-semibold bg-admin-accent text-white rounded-[8px] hover:bg-admin-accent/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
           >
             {saving && <Loader2 size={14} className="animate-spin" />}
             Simpan
@@ -65,8 +66,8 @@ export default function EditKuotaModal({
         <div className="px-3 py-2 bg-admin-warn-bg-2 border border-admin-warn-border rounded-[8px]">
           <p className="text-[11px] text-admin-warn-text font-medium flex items-center gap-1.5">
             <AlertTriangle size={12} />
-            {minKuotaPewawancara} pewawancara sudah klaim kuota. Kuota pewawancara tidak boleh
-            kurang dari {minKuotaPewawancara}.
+            {minKuotaPewawancara} pewawancara sudah klaim kuota. Kuota
+            pewawancara tidak boleh kurang dari {minKuotaPewawancara}.
           </p>
         </div>
       )}
@@ -81,8 +82,10 @@ export default function EditKuotaModal({
           max={50}
           value={form.kuota_pewawancara}
           title="kuota pewawancara"
-          onChange={(e) => onChange({ ...form, kuota_pewawancara: e.target.value })}
-          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
+          onChange={(e) =>
+            onChange({ ...form, kuota_pewawancara: e.target.value })
+          }
+          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-[8px] focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
         />
       </div>
       <div>
@@ -94,13 +97,16 @@ export default function EditKuotaModal({
           min={1}
           value={form.kuota_mahasiswa}
           title="kuota mahasiswa"
-          onChange={(e) => onChange({ ...form, kuota_mahasiswa: e.target.value })}
-          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
+          onChange={(e) =>
+            onChange({ ...form, kuota_mahasiswa: e.target.value })
+          }
+          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-[8px] focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
         />
         <p className="text-[11px] text-admin-text-5 mt-1">
           Tiap pewawancara akan mewawancarai ±
           {Math.ceil(
-            parseInt(form.kuota_mahasiswa || "1") / parseInt(form.kuota_pewawancara || "1"),
+            parseInt(form.kuota_mahasiswa || "1") /
+              parseInt(form.kuota_pewawancara || "1"),
           )}{" "}
           mahasiswa
         </p>

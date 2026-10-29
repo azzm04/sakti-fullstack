@@ -4,10 +4,30 @@ import { User, CalendarDays, Users, Lock } from "lucide-react";
 
 export type Mode = "saya" | "hari_ini" | "semua";
 
-export const MODE_CONFIG: { key: Mode; label: string; icon: React.ElementType; desc: string }[] = [
-  { key: "saya",     label: "Jatah Saya",  icon: User,         desc: "Mahasiswa yang harus kamu wawancarai hari ini" },
-  { key: "hari_ini", label: "Hari Ini",    icon: CalendarDays, desc: "Semua mahasiswa yang dijadwalkan wawancara hari ini" },
-  { key: "semua",    label: "Semua",       icon: Users,        desc: "Seluruh pendaftar KIP-K" },
+export const MODE_CONFIG: {
+  key: Mode;
+  label: string;
+  icon: React.ElementType;
+  desc: string;
+}[] = [
+  {
+    key: "saya",
+    label: "Jatah Saya",
+    icon: User,
+    desc: "Mahasiswa yang harus kamu wawancarai hari ini",
+  },
+  {
+    key: "hari_ini",
+    label: "Hari Ini",
+    icon: CalendarDays,
+    desc: "Semua mahasiswa yang dijadwalkan wawancara hari ini",
+  },
+  {
+    key: "semua",
+    label: "Semua",
+    icon: Users,
+    desc: "Seluruh pendaftar KIP-K",
+  },
 ];
 
 interface ModeFilterTabsProps {
@@ -20,10 +40,15 @@ interface ModeFilterTabsProps {
 /**
  * Tab filter mode: Jatah Saya / Hari Ini / Semua.
  */
-export function ModeFilterTabs({ mode, onModeChange, jatahSudahSelesai, total }: ModeFilterTabsProps) {
+export function ModeFilterTabs({
+  mode,
+  onModeChange,
+  jatahSudahSelesai,
+  total,
+}: ModeFilterTabsProps) {
   return (
     <>
-      <div className="flex gap-1 p-1 bg-tertiary border border-border rounded-xl w-fit mb-5 shadow-sm">
+      <div className="flex gap-1 p-1 bg-tertiary border border-border rounded-[8px] w-fit mb-5 shadow-sm">
         {MODE_CONFIG.map(({ key, label, icon: Icon }) => {
           const isLocked = key === "hari_ini" && !jatahSudahSelesai;
           return (
@@ -35,8 +60,8 @@ export function ModeFilterTabs({ mode, onModeChange, jatahSudahSelesai, total }:
                 mode === key
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : isLocked
-                  ? "text-muted-foreground/40 cursor-not-allowed"
-                  : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    ? "text-muted-foreground/40 cursor-not-allowed"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
               }`}
             >
               {isLocked ? <Lock size={12} /> : <Icon size={13} />}
@@ -50,7 +75,9 @@ export function ModeFilterTabs({ mode, onModeChange, jatahSudahSelesai, total }:
       <p className="text-xs text-muted-foreground mb-4">
         {MODE_CONFIG.find((m) => m.key === mode)?.desc}
         {mode !== "saya" && (
-          <span className="ml-1 text-muted-foreground/60">· {total} mahasiswa</span>
+          <span className="ml-1 text-muted-foreground/60">
+            · {total} mahasiswa
+          </span>
         )}
       </p>
     </>

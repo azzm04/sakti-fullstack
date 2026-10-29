@@ -29,7 +29,7 @@ type KandidatRow = {
   nisn: string;
   prodi: string;
   jalur_masuk: string;
-  lolos: boolean; 
+  lolos: boolean;
 };
 
 interface Props {
@@ -38,7 +38,11 @@ interface Props {
   summary: HasilAkhirSummary | null;
 }
 
-export default function SectionExportExcel({ tahun, onTahunChange, summary }: Props) {
+export default function SectionExportExcel({
+  tahun,
+  onTahunChange,
+  summary,
+}: Props) {
   const [selected, setSelected] = useState<Set<JalurKey>>(
     new Set(["SNBP_ELIGIBLE"]),
   );
@@ -103,7 +107,9 @@ export default function SectionExportExcel({ tahun, onTahunChange, summary }: Pr
       const rows = rawRows.filter((r) => r.lolos === true);
 
       if (rows.length === 0) {
-        throw new Error(`Tidak ada data penerima yang Lolos untuk jalur terpilih pada tahun ${tahun}.`);
+        throw new Error(
+          `Tidak ada data penerima yang Lolos untuk jalur terpilih pada tahun ${tahun}.`,
+        );
       }
 
       // Build Excel dengan XLSX
@@ -118,7 +124,7 @@ export default function SectionExportExcel({ tahun, onTahunChange, summary }: Pr
           rows.map((r, i) => ({
             No: i + 1,
             "Nama Siswa": r.nama,
-            NISN: r.nisn, 
+            NISN: r.nisn,
             Prodi: r.prodi,
           })),
         );
@@ -127,12 +133,15 @@ export default function SectionExportExcel({ tahun, onTahunChange, summary }: Pr
       } else {
         // Multi sheet — mapping string jalur database via sumber alias bersama
         for (const key of selected) {
-          const jalurLabel = JALUR_OPTIONS.find((j) => j.key === key)?.label ?? key;
+          const jalurLabel =
+            JALUR_OPTIONS.find((j) => j.key === key)?.label ?? key;
           const allowedValues = JALUR_DB_ALIASES[key] ?? [];
 
           // Filter berdasarkan kecocokan string di database
-          const filtered = rows.filter((r) => allowedValues.includes(r.jalur_masuk));
-          
+          const filtered = rows.filter((r) =>
+            allowedValues.includes(r.jalur_masuk),
+          );
+
           if (filtered.length > 0) {
             const ws = XLSX.utils.json_to_sheet(
               filtered.map((r, i) => ({
@@ -163,7 +172,7 @@ export default function SectionExportExcel({ tahun, onTahunChange, summary }: Pr
     <div className="bg-white rounded-[8px] border border-admin-border shadow-sm overflow-hidden">
       {/* Card Header */}
       <div className="px-6 py-5 border-b border-admin-border flex items-center gap-3">
-        <div className="w-9 h-9 rounded-xl bg-admin-accent/10 text-admin-accent flex items-center justify-center">
+        <div className="w-9 h-9 rounded-[8px] bg-admin-accent/10 text-admin-accent flex items-center justify-center">
           <FileSpreadsheet size={17} />
         </div>
         <div>
@@ -171,18 +180,22 @@ export default function SectionExportExcel({ tahun, onTahunChange, summary }: Pr
             Export Data Penerima (Lolos) ke Excel
           </h2>
           <p className="text-xs text-admin-text-3 mt-0.5">
-            Hanya mengekspor kandidat yang lolos (Diusulkan). Format: No | Nama Siswa | NISN | Prodi
+            Hanya mengekspor kandidat yang lolos (Diusulkan). Format: No | Nama
+            Siswa | NISN | Prodi
           </p>
         </div>
       </div>
 
       <div className="p-6 space-y-6">
-        
         {/* Pilih Tahun Seleksi */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-admin-surface-soft/50 p-4 rounded-[8px] border border-admin-border">
           <div>
-            <label className="text-sm font-semibold text-admin-text block">Tahun Seleksi</label>
-            <p className="text-xs text-admin-text-3 mt-0.5">Filter data penerima KIP-K berdasarkan tahun.</p>
+            <label className="text-sm font-semibold text-admin-text block">
+              Tahun Seleksi
+            </label>
+            <p className="text-xs text-admin-text-3 mt-0.5">
+              Filter data penerima KIP-K berdasarkan tahun.
+            </p>
           </div>
           <div className="w-full md:w-32">
             <input
@@ -219,7 +232,7 @@ export default function SectionExportExcel({ tahun, onTahunChange, summary }: Pr
                   key={key}
                   whileTap={{ scale: 0.97 }}
                   onClick={() => toggleJalur(key)}
-                  className={`flex items-center justify-between gap-2.5 px-4 py-3 rounded-xl border text-sm font-semibold transition-all ${
+                  className={`flex items-center justify-between gap-2.5 px-4 py-3 rounded-[8px] border text-sm font-semibold transition-all ${
                     isSelected
                       ? `${jalurColor(key)} shadow-sm`
                       : "bg-admin-surface-soft border-admin-border text-admin-text-3 hover:border-admin-text-6"
@@ -289,7 +302,7 @@ export default function SectionExportExcel({ tahun, onTahunChange, summary }: Pr
           whileTap={{ scale: 0.98 }}
           onClick={handleExport}
           disabled={loading || selected.size === 0}
-          className="flex items-center justify-center gap-2 w-full md:w-auto px-8 py-3 bg-admin-accent text-white rounded-xl text-sm font-semibold hover:bg-admin-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
+          className="flex items-center justify-center gap-2 w-full md:w-auto px-8 py-3 bg-admin-accent text-white rounded-[8px] text-sm font-semibold hover:bg-admin-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all shadow-sm"
         >
           {loading ? (
             <>

@@ -65,7 +65,7 @@ export default function PewawancaraFormModal({
           onChange={(e) => onChange({ ...form, email: e.target.value })}
           placeholder="email-mahasiswa@students.undip.ac.id"
           disabled={editing}
-          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft disabled:opacity-60 transition-[border-color,box-shadow] duration-200"
+          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-[8px] focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft disabled:opacity-60 transition-[border-color,box-shadow] duration-200"
         />
       </div>
       <div>
@@ -77,20 +77,25 @@ export default function PewawancaraFormModal({
           value={form.nama}
           onChange={(e) => onChange({ ...form, nama: e.target.value })}
           placeholder="Nama Mahasiswa"
-          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
+          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-[8px] focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
         />
       </div>
       {editing && <RoleSection roles={roles} current="PEWAWANCARA" />}
       {!editing && (
         <p className="text-[11px] text-admin-text-5 bg-admin-surface-soft rounded-[8px] px-3 py-2 border border-admin-border-soft">
-          Email pemberitahuan penunjukan pewawancara akan dikirim ke alamat ini, dan pengguna
-          bisa langsung login via OTP. Kalau email ini sudah
-          terdaftar (mis. sebagai Mahasiswa KIP-K), role Pewawancara akan ditambahkan ke akun
-          itu — bukan membuat akun baru.
+          Email pemberitahuan penunjukan pewawancara akan dikirim ke alamat ini,
+          dan pengguna bisa langsung login via OTP. Kalau email ini sudah
+          terdaftar (mis. sebagai Mahasiswa KIP-K), role Pewawancara akan
+          ditambahkan ke akun itu — bukan membuat akun baru.
         </p>
       )}
       {formError && (
-        <p role="alert" className="text-xs text-admin-danger-text bg-admin-danger-bg rounded-[8px] px-3 py-2">{formError}</p>
+        <p
+          role="alert"
+          className="text-xs text-admin-danger-text bg-admin-danger-bg rounded-[8px] px-3 py-2"
+        >
+          {formError}
+        </p>
       )}
     </ModalShell>
   );

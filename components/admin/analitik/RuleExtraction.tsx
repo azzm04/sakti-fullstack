@@ -1,6 +1,12 @@
 "use client";
 
-import { CheckCircle2, XCircle, ChevronDown, ChevronUp, GitFork } from "lucide-react";
+import {
+  CheckCircle2,
+  XCircle,
+  ChevronDown,
+  ChevronUp,
+  GitFork,
+} from "lucide-react";
 import type { RuleNode } from "@/types/analitik";
 import { useState } from "react";
 
@@ -73,7 +79,12 @@ function parseClauses(kondisi: string): Clause[] {
     .map((raw) => {
       const m = raw.match(/^(.+?)\s*([≤>])\s*([\d.]+)$/);
       if (!m) return { raw, feature: raw, op: ">" as const, value: NaN };
-      return { raw, feature: m[1].trim(), op: m[2] as "≤" | ">", value: parseFloat(m[3]) };
+      return {
+        raw,
+        feature: m[1].trim(),
+        op: m[2] as "≤" | ">",
+        value: parseFloat(m[3]),
+      };
     });
 }
 
@@ -89,8 +100,16 @@ function confidenceLabel(pct: number): {
       bar: "bg-admin-accent",
     };
   if (pct >= 75)
-    return { label: "Yakin", color: "text-admin-warn-text", bar: "bg-admin-warn-bar" };
-  return { label: "Kurang Yakin", color: "text-admin-danger-text", bar: "bg-admin-danger-bar" };
+    return {
+      label: "Yakin",
+      color: "text-admin-warn-text",
+      bar: "bg-admin-warn-bar",
+    };
+  return {
+    label: "Kurang Yakin",
+    color: "text-admin-danger-text",
+    bar: "bg-admin-danger-bar",
+  };
 }
 
 const PREVIEW_COUNT = 4;
@@ -129,7 +148,8 @@ function findFork(
 
   for (const ca of a.clauses) {
     const idx = remainingB.findIndex(
-      (cb) => cb.feature === ca.feature && cb.op === ca.op && cb.value === ca.value,
+      (cb) =>
+        cb.feature === ca.feature && cb.op === ca.op && cb.value === ca.value,
     );
     if (idx >= 0) {
       shared.push(ca);
@@ -167,7 +187,15 @@ function buildRenderItems(rules: RenderRule[]): RenderItem[] {
         const b = swapped ? rules[i] : rules[j];
         const diffA = swapped ? fork.diffB : fork.diffA;
         const diffB = swapped ? fork.diffA : fork.diffB;
-        items.push({ type: "fork", shared: fork.shared, feature: diffA.feature, a, b, diffA, diffB });
+        items.push({
+          type: "fork",
+          shared: fork.shared,
+          feature: diffA.feature,
+          a,
+          b,
+          diffA,
+          diffB,
+        });
         paired = true;
         break;
       }
@@ -205,7 +233,8 @@ export default function RuleExtraction({ rules }: Props) {
         Pola Keputusan yang Ditemukan
       </h3>
       <p className="text-[12.5px] text-admin-text-3 mt-1 mb-4">
-        {ordered.length} pola hasil analisis — makin banyak sampel & keyakinan, makin kuat pola ini
+        {ordered.length} pola hasil analisis — makin banyak sampel & keyakinan,
+        makin kuat pola ini
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
@@ -226,7 +255,9 @@ export default function RuleExtraction({ rules }: Props) {
               key={i}
               index={i + 1}
               rule={item.rule}
-              variant={item.rule.keputusan === "Diusulkan" ? "diusulkan" : "tidak"}
+              variant={
+                item.rule.keputusan === "Diusulkan" ? "diusulkan" : "tidak"
+              }
             />
           ),
         )}
@@ -236,12 +267,16 @@ export default function RuleExtraction({ rules }: Props) {
         <div className="flex justify-center mt-4">
           <button
             onClick={() => setShowAll((v) => !v)}
-            className="flex items-center gap-1.5 text-xs font-semibold text-admin-text-3 bg-admin-surface border border-admin-border rounded-xl px-4 py-2.5 hover:bg-admin-surface-soft hover:text-admin-text transition-colors"
+            className="flex items-center gap-1.5 text-xs font-semibold text-admin-text-3 bg-admin-surface border border-admin-border rounded-[8px] px-4 py-2.5 hover:bg-admin-surface-soft hover:text-admin-text transition-colors"
           >
             {showAll ? (
-              <>Sembunyikan <ChevronUp size={14} /></>
+              <>
+                Sembunyikan <ChevronUp size={14} />
+              </>
             ) : (
-              <>Lihat {hiddenCount} pola lainnya <ChevronDown size={14} /></>
+              <>
+                Lihat {hiddenCount} pola lainnya <ChevronDown size={14} />
+              </>
             )}
           </button>
         </div>
@@ -269,7 +304,9 @@ function RuleCard({
   return (
     <div className="bg-admin-surface border border-admin-border rounded-[8px] p-5">
       <div className="flex items-center justify-between mb-4">
-        <p className={`flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider ${iconColor}`}>
+        <p
+          className={`flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider ${iconColor}`}
+        >
           <Icon size={14} />
           {isDiusulkan ? "Cenderung Diusulkan" : "Cenderung Tidak Diusulkan"}
         </p>
@@ -298,7 +335,10 @@ function RuleCard({
         </span>
         <div className="flex items-center gap-2">
           <div className="w-14 h-1.5 bg-admin-grid rounded-full overflow-hidden">
-            <div className={`h-full ${bar} rounded-full`} style={{ width: `${pct}%` }} />
+            <div
+              className={`h-full ${bar} rounded-full`}
+              style={{ width: `${pct}%` }}
+            />
           </div>
           <span className={`text-[11px] font-bold whitespace-nowrap ${color}`}>
             {label} ({pct}%)
@@ -399,16 +439,23 @@ function ForkBranch({
       >
         {parseCondition(diffClause.raw)}
       </p>
-      <div className={`flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide ${
-        isDiusulkan ? "text-admin-accent" : "text-admin-danger-bar"
-      }`}>
+      <div
+        className={`flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide ${
+          isDiusulkan ? "text-admin-accent" : "text-admin-danger-bar"
+        }`}
+      >
         <Icon size={12} />
         {isDiusulkan ? "Diusulkan" : "Tidak Diusulkan"}
       </div>
-      <p className="text-[10.5px] text-admin-text-4 mt-2">{rule.jumlah_sampel} data serupa</p>
+      <p className="text-[10.5px] text-admin-text-4 mt-2">
+        {rule.jumlah_sampel} data serupa
+      </p>
       <div className="flex items-center gap-1.5 mt-1.5">
         <div className="w-10 h-1.5 bg-admin-grid rounded-full overflow-hidden shrink-0">
-          <div className={`h-full ${bar} rounded-full`} style={{ width: `${pct}%` }} />
+          <div
+            className={`h-full ${bar} rounded-full`}
+            style={{ width: `${pct}%` }}
+          />
         </div>
         <span className={`text-[10.5px] font-bold whitespace-nowrap ${color}`}>
           {label} ({pct}%)

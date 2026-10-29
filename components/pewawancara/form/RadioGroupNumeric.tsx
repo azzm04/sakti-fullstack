@@ -11,7 +11,13 @@ interface RadioGroupNumericProps {
 /**
  * Radio group untuk pilihan numerik.
  */
-export function RadioGroupNumeric({ label, value, options, onChange, required }: RadioGroupNumericProps) {
+export function RadioGroupNumeric({
+  label,
+  value,
+  options,
+  onChange,
+  required,
+}: RadioGroupNumericProps) {
   return (
     <div>
       <label className="block text-xs font-bold text-secondary mb-2">
@@ -23,7 +29,7 @@ export function RadioGroupNumeric({ label, value, options, onChange, required }:
             key={opt.value}
             type="button"
             onClick={() => onChange(opt.value)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
+            className={`px-4 py-2 rounded-[8px] text-xs font-bold border transition-all ${
               value === opt.value
                 ? "bg-primary/10 text-primary border-primary/30 shadow-sm"
                 : "bg-tertiary text-muted-foreground border-border hover:border-secondary/50"

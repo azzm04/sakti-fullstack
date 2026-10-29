@@ -77,7 +77,7 @@ export function WarActiveCard({
                   }}
                   disabled={isTaken}
                   className={`
-                    aspect-square rounded-xl flex items-center justify-center text-sm font-bold
+                    aspect-square rounded-[8px] flex items-center justify-center text-sm font-bold
                     transition-all duration-150 border-2 relative
                     ${
                       isTaken
@@ -102,13 +102,16 @@ export function WarActiveCard({
           {/* Legend */}
           <div className="flex items-center gap-4 mt-3">
             <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              <span className="h-3 w-3 rounded bg-primary inline-block" /> Dipilih
+              <span className="h-3 w-3 rounded bg-primary inline-block" />{" "}
+              Dipilih
             </span>
             <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              <span className="h-3 w-3 rounded bg-muted border border-border inline-block" /> Terisi
+              <span className="h-3 w-3 rounded bg-muted border border-border inline-block" />{" "}
+              Terisi
             </span>
             <span className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-              <span className="h-3 w-3 rounded bg-card border-2 border-border inline-block" /> Tersedia
+              <span className="h-3 w-3 rounded bg-card border-2 border-border inline-block" />{" "}
+              Tersedia
             </span>
           </div>
         </div>
@@ -122,7 +125,7 @@ export function WarActiveCard({
               exit={{ opacity: 0, height: 0 }}
               className="overflow-hidden"
             >
-              <div className="rounded-xl bg-primary/5 border border-primary/20 p-4">
+              <div className="rounded-[8px] bg-primary/5 border border-primary/20 p-4">
                 <p className="text-xs font-bold text-primary mb-2 flex items-center gap-1.5">
                   <Hash size={12} />
                   Kuota {selectedKuota} — Mahasiswa yang akan kamu tangani:
@@ -148,7 +151,7 @@ export function WarActiveCard({
           onClick={onKlaim}
           disabled={!selectedKuota || claiming}
           className={`
-            w-full py-3.5 font-bold text-sm rounded-xl transition-all duration-200
+            w-full py-3.5 font-bold text-sm rounded-[8px] transition-all duration-200
             flex items-center justify-center gap-2
             ${
               selectedKuota && !claiming
@@ -159,7 +162,8 @@ export function WarActiveCard({
         >
           {claiming ? (
             <>
-              <Loader2 size={16} className="animate-spin" /> Mengklaim Kuota {selectedKuota}…
+              <Loader2 size={16} className="animate-spin" /> Mengklaim Kuota{" "}
+              {selectedKuota}…
             </>
           ) : selectedKuota ? (
             <>

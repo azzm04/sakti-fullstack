@@ -3,9 +3,18 @@
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Search, Plus, Pencil, Trash2, X, Loader2,
-  CheckCircle2, UserCheck, Users, ShieldCheck,
-  AlertTriangle, Mail
+  Search,
+  Plus,
+  Pencil,
+  Trash2,
+  X,
+  Loader2,
+  CheckCircle2,
+  UserCheck,
+  Users,
+  ShieldCheck,
+  AlertTriangle,
+  Mail,
 } from "lucide-react";
 
 import type { Pewawancara } from "@/schemas";
@@ -106,9 +115,27 @@ export default function DaftarPewawancara() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { label: "Total Pewawancara", value: total, icon: Users, color: "text-indigo-600", bg: "bg-indigo-50" },
-          { label: "Akun Aktif", value: data.filter((p) => p.is_active).length, icon: ShieldCheck, color: "text-emerald-600", bg: "bg-emerald-50" },
-          { label: "Akun Non-aktif", value: data.filter((p) => !p.is_active).length, icon: AlertTriangle, color: "text-slate-500", bg: "bg-slate-100" },
+          {
+            label: "Total Pewawancara",
+            value: total,
+            icon: Users,
+            color: "text-indigo-600",
+            bg: "bg-indigo-50",
+          },
+          {
+            label: "Akun Aktif",
+            value: data.filter((p) => p.is_active).length,
+            icon: ShieldCheck,
+            color: "text-emerald-600",
+            bg: "bg-emerald-50",
+          },
+          {
+            label: "Akun Non-aktif",
+            value: data.filter((p) => !p.is_active).length,
+            icon: AlertTriangle,
+            color: "text-slate-500",
+            bg: "bg-slate-100",
+          },
         ].map(({ label, value, icon: Icon, color, bg }) => (
           <div
             key={label}
@@ -270,14 +297,14 @@ export default function DaftarPewawancara() {
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <button
                           onClick={() => openEdit(p)}
-                          className="p-2 rounded-xl text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                          className="p-2 rounded-[8px] text-slate-400 hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
                           title="Edit"
                         >
                           <Pencil size={16} />
                         </button>
                         <button
                           onClick={() => handleDelete(p)}
-                          className="p-2 rounded-xl text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
+                          className="p-2 rounded-[8px] text-slate-400 hover:bg-rose-50 hover:text-rose-600 transition-colors"
                           title="Hapus"
                         >
                           <Trash2 size={16} />
@@ -304,7 +331,7 @@ export default function DaftarPewawancara() {
             >
               <div className="flex items-center justify-between mb-6">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-[8px] bg-indigo-50 text-indigo-600 flex items-center justify-center">
                     <UserCheck size={20} />
                   </div>
                   <h3 className="text-xl font-bold text-slate-900">

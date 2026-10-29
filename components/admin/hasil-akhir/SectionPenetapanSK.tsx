@@ -66,7 +66,10 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
   const [matching, setMatching] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [saveResult, setSaveResult] = useState<{ berhasil: number; gagal: number } | null>(null);
+  const [saveResult, setSaveResult] = useState<{
+    berhasil: number;
+    gagal: number;
+  } | null>(null);
   const [tidakDitemukan, setTidakDitemukan] = useState<InfoItem[]>([]);
   const [barisTidakCocok, setBarisTidakCocok] = useState<InfoItem[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -92,14 +95,17 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
     setBarisTidakCocok([]);
     try {
       const jalurParam = Array.from(selectedJalur).join(",");
-      const res = await fetch(`/api/admin/hasil-akhir/penetapan-sk?tahun=${tahun}&jalur=${jalurParam}`);
+      const res = await fetch(
+        `/api/admin/hasil-akhir/penetapan-sk?tahun=${tahun}&jalur=${jalurParam}`,
+      );
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Gagal mengambil data");
 
       const initial: EditableRow[] = (json.data as PoolRow[]).map((r) => ({
         ...r,
         nimInput: r.nim_resmi ?? "",
-        statusInput: (r.status_sk as "Ditetapkan" | "Tidak Ditetapkan" | null) ?? null,
+        statusInput:
+          (r.status_sk as "Ditetapkan" | "Tidak Ditetapkan" | null) ?? null,
         touched: false,
         dariExcel: false,
       }));
@@ -112,7 +118,9 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
   }
 
   function updateRow(id: string, patch: Partial<EditableRow>) {
-    setRows((prev) => prev.map((r) => (r.id === id ? { ...r, ...patch, touched: true } : r)));
+    setRows((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, ...patch, touched: true } : r)),
+    );
   }
 
   async function handleUploadExcel(file: File) {
@@ -131,12 +139,20 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Gagal mencocokkan data");
 
-      const matchById = new Map((json.matched as MatchedItem[]).map((m) => [m.kandidat_id, m]));
+      const matchById = new Map(
+        (json.matched as MatchedItem[]).map((m) => [m.kandidat_id, m]),
+      );
       setRows((prev) =>
         prev.map((r) => {
           const m = matchById.get(r.id);
           if (!m) return r;
-          return { ...r, nimInput: m.nim_dari_excel, statusInput: "Ditetapkan", touched: true, dariExcel: true };
+          return {
+            ...r,
+            nimInput: m.nim_dari_excel,
+            statusInput: "Ditetapkan",
+            touched: true,
+            dariExcel: true,
+          };
         }),
       );
       setTidakDitemukan(json.tidakDitemukanDiExcel ?? []);
@@ -152,15 +168,23 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
   async function handleSimpanSemua() {
     const items = rows
       .filter((r) => r.touched && r.statusInput)
-      .map((r) => ({ kandidat_id: r.id, nim_resmi: r.nimInput || null, status_sk: r.statusInput as string }));
+      .map((r) => ({
+        kandidat_id: r.id,
+        nim_resmi: r.nimInput || null,
+        status_sk: r.statusInput as string,
+      }));
 
     if (items.length === 0) {
       setError("Tidak ada baris yang diubah untuk disimpan.");
       return;
     }
-    const invalid = items.find((i) => i.status_sk === "Ditetapkan" && !NIM_REGEX.test(i.nim_resmi ?? ""));
+    const invalid = items.find(
+      (i) => i.status_sk === "Ditetapkan" && !NIM_REGEX.test(i.nim_resmi ?? ""),
+    );
     if (invalid) {
-      setError("Ada baris berstatus Ditetapkan dengan NIM tidak valid (harus 14 digit angka).");
+      setError(
+        "Ada baris berstatus Ditetapkan dengan NIM tidak valid (harus 14 digit angka).",
+      );
       return;
     }
 
@@ -174,8 +198,13 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error ?? "Gagal menyimpan data");
-      setSaveResult({ berhasil: json.berhasil, gagal: json.gagal?.length ?? 0 });
-      setRows((prev) => prev.map((r) => ({ ...r, touched: false, dariExcel: false })));
+      setSaveResult({
+        berhasil: json.berhasil,
+        gagal: json.gagal?.length ?? 0,
+      });
+      setRows((prev) =>
+        prev.map((r) => ({ ...r, touched: false, dariExcel: false })),
+      );
       onSaved?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Terjadi kesalahan");
@@ -191,8 +220,12 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
       onCountsChange?.(null);
       return;
     }
-    const ditetapkan = rows.filter((r) => r.statusInput === "Ditetapkan").length;
-    const tidakDitetapkan = rows.filter((r) => r.statusInput === "Tidak Ditetapkan").length;
+    const ditetapkan = rows.filter(
+      (r) => r.statusInput === "Ditetapkan",
+    ).length;
+    const tidakDitetapkan = rows.filter(
+      (r) => r.statusInput === "Tidak Ditetapkan",
+    ).length;
     onCountsChange?.({
       ditetapkan,
       tidakDitetapkan,
@@ -206,13 +239,16 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
     <div className="space-y-5">
       <div className="bg-white rounded-[8px] border border-admin-border shadow-sm overflow-hidden">
         <div className="px-6 py-5 border-b border-admin-border flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-admin-accent/10 text-admin-accent flex items-center justify-center">
+          <div className="w-9 h-9 rounded-[8px] bg-admin-accent/10 text-admin-accent flex items-center justify-center">
             <ShieldCheck size={17} />
           </div>
           <div>
-            <h2 className="font-admin-heading font-bold text-admin-text text-base">Penetapan SK Massal</h2>
+            <h2 className="font-admin-heading font-bold text-admin-text text-base">
+              Penetapan SK Massal
+            </h2>
             <p className="text-xs text-admin-text-3 mt-0.5">
-              Tetapkan status resmi pasca-SK untuk kandidat &quot;Diusulkan&quot; — manual atau dibantu cocokkan Excel.
+              Tetapkan status resmi pasca-SK untuk kandidat
+              &quot;Diusulkan&quot; — manual atau dibantu cocokkan Excel.
             </p>
           </div>
         </div>
@@ -243,7 +279,7 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
                       key={key}
                       type="button"
                       onClick={() => toggleJalur(key)}
-                      className={`flex items-center gap-2 px-3 py-2.5 rounded-xl border text-xs font-semibold transition-all ${
+                      className={`flex items-center gap-2 px-3 py-2.5 rounded-[8px] border text-xs font-semibold transition-all ${
                         sel
                           ? "bg-admin-accent/8 border-admin-accent text-admin-accent"
                           : "bg-admin-surface-soft border-admin-border text-admin-text-3 hover:border-admin-text-6"
@@ -262,9 +298,13 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
             <button
               onClick={handleTampilkan}
               disabled={loading}
-              className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl bg-admin-accent hover:bg-admin-accent/90 text-white disabled:opacity-50 transition-all"
+              className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-[8px] bg-admin-accent hover:bg-admin-accent/90 text-white disabled:opacity-50 transition-all"
             >
-              {loading ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
+              {loading ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <ShieldCheck size={14} />
+              )}
               Tampilkan Data
             </button>
 
@@ -281,9 +321,13 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
             <button
               onClick={() => fileInputRef.current?.click()}
               disabled={matching || rows.length === 0}
-              className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-xl bg-white border border-admin-border text-admin-text-2 hover:border-admin-accent disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              className="flex items-center gap-2 px-4 py-2.5 text-xs font-bold rounded-[8px] bg-white border border-admin-border text-admin-text-2 hover:border-admin-accent disabled:opacity-40 disabled:cursor-not-allowed transition-all"
             >
-              {matching ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+              {matching ? (
+                <Loader2 size={14} className="animate-spin" />
+              ) : (
+                <Upload size={14} />
+              )}
               Upload Excel untuk Auto-isi
             </button>
 
@@ -291,9 +335,13 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
               <button
                 onClick={handleSimpanSemua}
                 disabled={saving || touchedCount === 0}
-                className="ml-auto flex items-center gap-2 px-5 py-2.5 text-xs font-bold rounded-xl bg-admin-danger-bar text-white hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                className="ml-auto flex items-center gap-2 px-5 py-2.5 text-xs font-bold rounded-[8px] bg-admin-danger-bar text-white hover:opacity-90 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
-                {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                {saving ? (
+                  <Loader2 size={14} className="animate-spin" />
+                ) : (
+                  <CheckCircle2 size={14} />
+                )}
                 Simpan Semua ({touchedCount})
               </button>
             )}
@@ -317,7 +365,8 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
                 exit={{ opacity: 0 }}
                 className="flex items-center gap-2 px-4 py-3 bg-admin-accent/10 border border-admin-accent/25 rounded-[8px] text-sm font-semibold text-admin-accent-ink"
               >
-                <CheckCircle2 size={15} /> Berhasil menyimpan {saveResult.berhasil} baris
+                <CheckCircle2 size={15} /> Berhasil menyimpan{" "}
+                {saveResult.berhasil} baris
                 {saveResult.gagal > 0 ? `, ${saveResult.gagal} gagal.` : "."}
               </motion.div>
             )}
@@ -341,7 +390,10 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
               </thead>
               <tbody>
                 {rows.map((r) => (
-                  <tr key={r.id} className="border-b border-admin-border-soft last:border-0 hover:bg-admin-surface-soft">
+                  <tr
+                    key={r.id}
+                    className="border-b border-admin-border-soft last:border-0 hover:bg-admin-surface-soft"
+                  >
                     <td className="px-4 py-2.5 font-semibold text-admin-text">
                       <div className="flex items-center gap-1.5">
                         {r.nama_pendaftar ?? "—"}
@@ -355,14 +407,20 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
                     <td className="px-4 py-2.5 font-admin-mono text-xs text-admin-text-3">
                       {r.no_pendaftaran_kipk ?? "—"}
                     </td>
-                    <td className="px-4 py-2.5 text-admin-text-2">{r.prodi_pendaftar ?? "—"}</td>
-                    <td className="px-4 py-2.5 text-admin-text-2">{r.jalur_masuk ?? "—"}</td>
+                    <td className="px-4 py-2.5 text-admin-text-2">
+                      {r.prodi_pendaftar ?? "—"}
+                    </td>
+                    <td className="px-4 py-2.5 text-admin-text-2">
+                      {r.jalur_masuk ?? "—"}
+                    </td>
                     <td className="px-4 py-2.5">
                       <input
                         type="text"
                         inputMode="numeric"
                         value={r.nimInput}
-                        onChange={(e) => updateRow(r.id, { nimInput: e.target.value })}
+                        onChange={(e) =>
+                          updateRow(r.id, { nimInput: e.target.value })
+                        }
                         placeholder="14 digit"
                         className="w-36 px-2.5 py-1.5 text-xs font-admin-mono border border-admin-border rounded-lg bg-admin-surface-soft focus:outline-none focus:border-admin-accent"
                       />
@@ -370,7 +428,9 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
                     <td className="px-4 py-2.5">
                       <div className="flex gap-1.5">
                         <button
-                          onClick={() => updateRow(r.id, { statusInput: "Ditetapkan" })}
+                          onClick={() =>
+                            updateRow(r.id, { statusInput: "Ditetapkan" })
+                          }
                           className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-all ${
                             r.statusInput === "Ditetapkan"
                               ? "bg-admin-accent text-white border-admin-accent"
@@ -380,7 +440,9 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
                           Ditetapkan
                         </button>
                         <button
-                          onClick={() => updateRow(r.id, { statusInput: "Tidak Ditetapkan" })}
+                          onClick={() =>
+                            updateRow(r.id, { statusInput: "Tidak Ditetapkan" })
+                          }
                           className={`px-2.5 py-1.5 rounded-lg text-[11px] font-semibold border transition-all ${
                             r.statusInput === "Tidak Ditetapkan"
                               ? "bg-admin-danger-bar text-white border-admin-danger-bar"
@@ -404,11 +466,14 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
           {tidakDitemukan.length > 0 && (
             <div className="bg-admin-warn-bg-2 border border-admin-warn-border rounded-[8px] p-4">
               <p className="text-xs font-bold text-admin-warn-text mb-2">
-                Diusulkan tapi tidak ditemukan di Excel ({tidakDitemukan.length})
+                Diusulkan tapi tidak ditemukan di Excel ({tidakDitemukan.length}
+                )
               </p>
               <ul className="text-xs text-admin-warn-text/90 space-y-1 max-h-48 overflow-y-auto">
                 {tidakDitemukan.map((k) => (
-                  <li key={k.kandidat_id}>{k.nama_pendaftar} — {k.no_pendaftaran_kipk}</li>
+                  <li key={k.kandidat_id}>
+                    {k.nama_pendaftar} — {k.no_pendaftaran_kipk}
+                  </li>
                 ))}
               </ul>
             </div>
@@ -416,7 +481,8 @@ export default function SectionPenetapanSK({ onSaved, onCountsChange }: Props) {
           {barisTidakCocok.length > 0 && (
             <div className="bg-admin-danger-bg border border-admin-danger-border rounded-[8px] p-4">
               <p className="text-xs font-bold text-admin-danger-text mb-2">
-                Baris Excel tidak cocok dengan kandidat manapun ({barisTidakCocok.length})
+                Baris Excel tidak cocok dengan kandidat manapun (
+                {barisTidakCocok.length})
               </p>
               <ul className="text-xs text-admin-danger-text/90 space-y-1 max-h-48 overflow-y-auto">
                 {barisTidakCocok.map((b, i) => (

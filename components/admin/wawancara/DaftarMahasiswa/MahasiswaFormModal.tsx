@@ -64,20 +64,21 @@ export default function MahasiswaFormModal({
     >
       {isNewProfile && (
         <p className="text-[11px] text-admin-text-5 bg-admin-surface-soft rounded-[8px] px-3 py-2 border border-admin-border-soft">
-          Akun ini belum punya profil KIP-K (mis. dibuat lewat penambahan role, bukan alur
-          verifikasi SK). Isi semua field untuk membuat profil baru.
+          Akun ini belum punya profil KIP-K (mis. dibuat lewat penambahan role,
+          bukan alur verifikasi SK). Isi semua field untuk membuat profil baru.
         </p>
       )}
       <div>
         <label className="block text-xs font-semibold text-admin-text-4 mb-1.5">
-          Nama {isNewProfile && <span className="text-admin-danger-bar">*</span>}
+          Nama{" "}
+          {isNewProfile && <span className="text-admin-danger-bar">*</span>}
         </label>
         <input
           type="text"
           value={form.nama}
           onChange={(e) => onChange({ ...form, nama: e.target.value })}
           placeholder="Nama Mahasiswa"
-          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
+          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-[8px] focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
         />
       </div>
       <div>
@@ -89,29 +90,31 @@ export default function MahasiswaFormModal({
           value={form.nim}
           onChange={(e) => onChange({ ...form, nim: e.target.value })}
           placeholder="24010120140001"
-          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
+          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-[8px] focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
         />
       </div>
       <div>
         <label className="block text-xs font-semibold text-admin-text-4 mb-1.5">
-          Angkatan {isNewProfile && <span className="text-admin-danger-bar">*</span>}
+          Angkatan{" "}
+          {isNewProfile && <span className="text-admin-danger-bar">*</span>}
         </label>
         <input
           type="number"
           value={form.angkatan}
           onChange={(e) => onChange({ ...form, angkatan: e.target.value })}
           placeholder="2024"
-          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none transition-[border-color,box-shadow] duration-200"
+          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-[8px] focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none transition-[border-color,box-shadow] duration-200"
         />
       </div>
       <div>
         <label className="block text-xs font-semibold text-admin-text-4 mb-1.5">
-          Program Studi {isNewProfile && <span className="text-admin-danger-bar">*</span>}
+          Program Studi{" "}
+          {isNewProfile && <span className="text-admin-danger-bar">*</span>}
         </label>
         <select
           value={form.prodi_id}
           onChange={(e) => onChange({ ...form, prodi_id: e.target.value })}
-          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
+          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-[8px] focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
         >
           <option value="">— Pilih Program Studi —</option>
           {prodiOptions.map((p) => (
@@ -125,14 +128,22 @@ export default function MahasiswaFormModal({
         roles={roles}
         current="MAHASISWA_KIPK"
         addAction={
-          isPewawancara ? undefined : { label: "Jadikan Pewawancara", onClick: onJadikanPewawancara }
+          isPewawancara
+            ? undefined
+            : { label: "Jadikan Pewawancara", onClick: onJadikanPewawancara }
         }
       />
       <p className="text-[11px] text-admin-text-5 bg-admin-surface-soft rounded-[8px] px-3 py-2 border border-admin-border-soft">
-        Email tidak bisa diubah di sini — akun ini terverifikasi lewat SSO Undip.
+        Email tidak bisa diubah di sini — akun ini terverifikasi lewat SSO
+        Undip.
       </p>
       {formError && (
-        <p role="alert" className="text-xs text-admin-danger-text bg-admin-danger-bg rounded-[8px] px-3 py-2">{formError}</p>
+        <p
+          role="alert"
+          className="text-xs text-admin-danger-text bg-admin-danger-bg rounded-[8px] px-3 py-2"
+        >
+          {formError}
+        </p>
       )}
     </ModalShell>
   );

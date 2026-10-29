@@ -1,13 +1,19 @@
 import { Send, Loader2, ImagePlus, X } from "lucide-react";
 import { useState, useRef, useCallback } from "react";
 
-const ACCEPTED_IMAGE_TYPES = ["image/png", "image/jpeg", "image/jpg", "image/webp", "image/gif"];
+const ACCEPTED_IMAGE_TYPES = [
+  "image/png",
+  "image/jpeg",
+  "image/jpg",
+  "image/webp",
+  "image/gif",
+];
 const ACCEPTED_EXT = ".png,.jpg,.jpeg,.webp,.gif";
 
 interface ChatInputProps {
-  input: string;                                          // ← dari useChat
+  input: string; // ← dari useChat
   onInputChange: (e: React.ChangeEvent<HTMLInputElement>) => void; // ← dari useChat
-  onSend: (imageBase64?: string | null) => void;         // ← tidak perlu kirim text
+  onSend: (imageBase64?: string | null) => void; // ← tidak perlu kirim text
   isLoading: boolean;
   onStop?: () => void;
 }
@@ -21,39 +27,49 @@ function toBase64(file: File): Promise<string> {
   });
 }
 
-export default function ChatInput({ onSend, isLoading, input, onInputChange }: ChatInputProps) {
-  const [preview, setPreview]       = useState<string | null>(null);
+export default function ChatInput({
+  onSend,
+  isLoading,
+  input,
+  onInputChange,
+}: ChatInputProps) {
+  const [preview, setPreview] = useState<string | null>(null);
   const [imageBase64, setImageBase64] = useState<string | null>(null);
-  const [imgError, setImgError]     = useState("");
+  const [imgError, setImgError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
 
   const handleSend = () => {
     if ((!input.trim() && !imageBase64) || isLoading) return;
     onSend(imageBase64);
-    onInputChange({ target: { value: "" } } as React.ChangeEvent<HTMLInputElement>);
+    onInputChange({
+      target: { value: "" },
+    } as React.ChangeEvent<HTMLInputElement>);
     setPreview(null);
     setImageBase64(null);
     setImgError("");
   };
 
-  const handleFile = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = "";
+  const handleFile = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      e.target.value = "";
 
-    if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
-      setImgError("Hanya gambar (PNG, JPG, WebP, GIF) yang diizinkan.");
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      setImgError("Ukuran gambar maksimal 5MB.");
-      return;
-    }
-    setImgError("");
-    const b64 = await toBase64(file);
-    setImageBase64(b64);
-    setPreview(URL.createObjectURL(file));
-  }, []);
+      if (!ACCEPTED_IMAGE_TYPES.includes(file.type)) {
+        setImgError("Hanya gambar (PNG, JPG, WebP, GIF) yang diizinkan.");
+        return;
+      }
+      if (file.size > 5 * 1024 * 1024) {
+        setImgError("Ukuran gambar maksimal 5MB.");
+        return;
+      }
+      setImgError("");
+      const b64 = await toBase64(file);
+      setImageBase64(b64);
+      setPreview(URL.createObjectURL(file));
+    },
+    [],
+  );
 
   const removeImage = () => {
     if (preview) URL.revokeObjectURL(preview);
@@ -66,11 +82,14 @@ export default function ChatInput({ onSend, isLoading, input, onInputChange }: C
 
   return (
     <div className="p-3 bg-white border-t border-slate-100">
-
       {/* Image preview */}
       {preview && (
         <div className="relative w-fit mb-2 ml-1 group">
-          <img src={preview} alt="preview" className="h-14 w-14 rounded-xl object-cover border border-slate-200 shadow-sm" />
+          <img
+            src={preview}
+            alt="preview"
+            className="h-14 w-14 rounded-[8px] object-cover border border-slate-200 shadow-sm"
+          />
           <button
             onClick={removeImage}
             className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-slate-800 text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity text-[10px] shadow"
@@ -81,13 +100,21 @@ export default function ChatInput({ onSend, isLoading, input, onInputChange }: C
         </div>
       )}
 
-      {imgError && <p className="text-[11px] text-red-500 px-1 mb-1.5">{imgError}</p>}
+      {imgError && (
+        <p className="text-[11px] text-red-500 px-1 mb-1.5">{imgError}</p>
+      )}
 
       {/* Input row */}
       <div className="bg-slate-50 rounded-2xl flex items-end px-3 py-1.5 border border-slate-200 focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/20 transition-all gap-1">
-
         {/* Image attach button */}
-        <input ref={fileRef} type="file" accept={ACCEPTED_EXT} className="hidden" onChange={handleFile} title="Masukkan gambar" />
+        <input
+          ref={fileRef}
+          type="file"
+          accept={ACCEPTED_EXT}
+          className="hidden"
+          onChange={handleFile}
+          title="Masukkan gambar"
+        />
         <button
           type="button"
           onClick={() => fileRef.current?.click()}

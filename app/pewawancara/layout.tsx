@@ -4,34 +4,39 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence, type Variants } from "motion/react";
-import {
-  LayoutDashboard,
-  ClipboardList,
-  LogOut,
-  Menu,
-  X,
-} from "lucide-react";
+import { LayoutDashboard, ClipboardList, LogOut, Menu, X } from "lucide-react";
 
 const navItems = [
-  { href: "/pewawancara",           label: "Pemilihan Sesi", icon: LayoutDashboard },
-  { href: "/pewawancara/mahasiswa", label: "Verifikasi Wawancara", icon: ClipboardList   },
+  { href: "/pewawancara", label: "Pemilihan Sesi", icon: LayoutDashboard },
+  {
+    href: "/pewawancara/mahasiswa",
+    label: "Verifikasi Wawancara",
+    icon: ClipboardList,
+  },
 ];
 
 const sidebarVariants: Variants = {
-  hidden:  { x: -20, opacity: 0 },
-  visible: { x: 0, opacity: 1, transition: { duration: 0.35, ease: [0.25, 0, 0, 1] } },
+  hidden: { x: -20, opacity: 0 },
+  visible: {
+    x: 0,
+    opacity: 1,
+    transition: { duration: 0.35, ease: [0.25, 0, 0, 1] },
+  },
 };
 
 const drawerVariants: Variants = {
-  hidden:  { x: "-100%" },
-  visible: { x: 0, transition: { type: "spring", stiffness: 300, damping: 30 } },
-  exit:    { x: "-100%", transition: { duration: 0.2, ease: [0.4, 0, 1, 1] } },
+  hidden: { x: "-100%" },
+  visible: {
+    x: 0,
+    transition: { type: "spring", stiffness: 300, damping: 30 },
+  },
+  exit: { x: "-100%", transition: { duration: 0.2, ease: [0.4, 0, 1, 1] } },
 };
 
 const overlayVariants: Variants = {
-  hidden:  { opacity: 0 },
+  hidden: { opacity: 0 },
   visible: { opacity: 1 },
-  exit:    { opacity: 0 },
+  exit: { opacity: 0 },
 };
 
 // Dipindahkan keluar dari PewawancaraLayout supaya tidak dibuat ulang tiap render
@@ -47,25 +52,30 @@ function SidebarContent({
   return (
     <div className="flex flex-col h-full">
       <div className="px-6 pt-8 pb-1">
-        <span className="text-2xl font-extrabold font-headline text-primary">SAKTI</span>
+        <span className="text-2xl font-extrabold font-headline text-primary">
+          SAKTI
+        </span>
       </div>
       <div className="px-6 pb-6 pt-1">
-        <p className="font-headline font-bold text-primary text-sm leading-tight">Dashboard Pewawancara</p>
+        <p className="font-headline font-bold text-primary text-sm leading-tight">
+          Dashboard Pewawancara
+        </p>
       </div>
 
       <div className="mx-4 h-px bg-border mb-3" />
 
       <nav className="flex-1 px-3 space-y-0.5">
         {navItems.map(({ href, label, icon: Icon }) => {
-          const active = href === "/pewawancara"
-            ? pathname === "/pewawancara"
-            : pathname === href || pathname.startsWith(href + "/");
+          const active =
+            href === "/pewawancara"
+              ? pathname === "/pewawancara"
+              : pathname === href || pathname.startsWith(href + "/");
           return (
             <Link
               key={href}
               href={href}
               onClick={onNavigate}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-sm font-medium transition-all duration-150 ${
                 active
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -83,7 +93,7 @@ function SidebarContent({
         <motion.button
           whileHover={{ x: 2 }}
           onClick={onLogout}
-          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-[8px] text-sm text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
         >
           <LogOut size={16} />
           Keluar
@@ -93,7 +103,11 @@ function SidebarContent({
   );
 }
 
-export default function PewawancaraLayout({ children }: { children: React.ReactNode }) {
+export default function PewawancaraLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -156,7 +170,9 @@ export default function PewawancaraLayout({ children }: { children: React.ReactN
 
           {/* Mobile Topbar */}
           <div className="md:hidden fixed top-0 left-0 right-0 z-40 flex items-center justify-between px-4 py-3 bg-tertiary border-b border-border">
-            <span className="text-xl font-extrabold font-headline text-primary">SAKTI</span>
+            <span className="text-xl font-extrabold font-headline text-primary">
+              SAKTI
+            </span>
             <motion.button
               whileTap={{ scale: 0.9 }}
               onClick={() => setMobileOpen(true)}
@@ -203,9 +219,7 @@ export default function PewawancaraLayout({ children }: { children: React.ReactN
           </AnimatePresence>
 
           {/* Main */}
-          <main className="flex-1 min-w-0 md:pt-0 pt-14">
-            {children}
-          </main>
+          <main className="flex-1 min-w-0 md:pt-0 pt-14">{children}</main>
         </>
       )}
     </div>

@@ -12,7 +12,11 @@ interface WarWaitingCardProps {
 /**
  * Card yang ditampilkan saat sesi sudah ada tapi WAR belum dibuka admin.
  */
-export function WarWaitingCard({ tanggal, kuotaPewawancara, kuotaMahasiswa }: WarWaitingCardProps) {
+export function WarWaitingCard({
+  tanggal,
+  kuotaPewawancara,
+  kuotaMahasiswa,
+}: WarWaitingCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 8 }}
@@ -45,7 +49,7 @@ export function WarWaitingCard({ tanggal, kuotaPewawancara, kuotaMahasiswa }: Wa
             Halaman akan otomatis memperbarui setiap 5 detik.
           </p>
         </div>
-        <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/5 border border-primary/20 rounded-xl text-sm font-semibold text-primary">
+        <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/5 border border-primary/20 rounded-[8px] text-sm font-semibold text-primary">
           <ClipboardList size={14} />
           {new Date(tanggal + "T00:00:00").toLocaleDateString("id-ID", {
             weekday: "long",
@@ -55,9 +59,14 @@ export function WarWaitingCard({ tanggal, kuotaPewawancara, kuotaMahasiswa }: Wa
           })}
         </div>
         <p className="text-xs text-muted-foreground">
-          Kuota: <span className="font-semibold text-foreground">{kuotaPewawancara} pewawancara</span>
+          Kuota:{" "}
+          <span className="font-semibold text-foreground">
+            {kuotaPewawancara} pewawancara
+          </span>
           {" · "}
-          <span className="font-semibold text-foreground">{kuotaMahasiswa} mahasiswa</span>
+          <span className="font-semibold text-foreground">
+            {kuotaMahasiswa} mahasiswa
+          </span>
         </p>
       </div>
     </motion.div>

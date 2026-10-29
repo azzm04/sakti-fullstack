@@ -4,9 +4,17 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
-import { Loader2, CheckCircle2, AlertCircle, UploadCloud, X, Download, FileText, ArrowLeft } from "lucide-react";
+import {
+  Loader2,
+  CheckCircle2,
+  AlertCircle,
+  UploadCloud,
+  X,
+  Download,
+  FileText,
+  ArrowLeft,
+} from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-
 
 const PEKERJAAN_OPTIONS = [
   "Tidak Bekerja",
@@ -30,9 +38,14 @@ const formatRupiah = (angka: number) =>
     minimumFractionDigits: 0,
   }).format(angka);
 
-
 // Shared form controls.
-const AnimatedExpand = ({ show, children }: { show: boolean, children: React.ReactNode }) => (
+const AnimatedExpand = ({
+  show,
+  children,
+}: {
+  show: boolean;
+  children: React.ReactNode;
+}) => (
   <AnimatePresence initial={false}>
     {show && (
       <motion.div
@@ -48,7 +61,13 @@ const AnimatedExpand = ({ show, children }: { show: boolean, children: React.Rea
   </AnimatePresence>
 );
 
-const RupiahInput = ({ value, onChange, placeholder = "0", id, required = false }: any) => {
+const RupiahInput = ({
+  value,
+  onChange,
+  placeholder = "0",
+  id,
+  required = false,
+}: any) => {
   const [displayValue, setDisplayValue] = useState(() => {
     return value ? new Intl.NumberFormat("id-ID").format(value) : "";
   });
@@ -74,7 +93,9 @@ const RupiahInput = ({ value, onChange, placeholder = "0", id, required = false 
 
   return (
     <div className="relative">
-      <span className="absolute left-[20px] top-[14px] text-[#64748B] font-medium font-roboto text-[14px]">Rp</span>
+      <span className="absolute left-[20px] top-[14px] text-[#64748B] font-medium font-roboto text-[14px]">
+        Rp
+      </span>
       <input
         id={id}
         type="text"
@@ -88,12 +109,23 @@ const RupiahInput = ({ value, onChange, placeholder = "0", id, required = false 
   );
 };
 
-const FileUploadBox = ({ title, subTitle, buttonText = "Unggah bukti pendapatan lain", file, onFileChange, onRemove, id, required = false, inputRef, accept = ".pdf, image/*" }: any) => {
+const FileUploadBox = ({
+  title,
+  subTitle,
+  buttonText = "Unggah bukti pendapatan lain",
+  file,
+  onFileChange,
+  onRemove,
+  id,
+  required = false,
+  inputRef,
+  accept = ".pdf, image/*",
+}: any) => {
   const formatBytes = (bytes: number, decimals = 2) => {
-    if (!+bytes) return '0 Bytes';
+    if (!+bytes) return "0 Bytes";
     const k = 1024;
     const dm = decimals < 0 ? 0 : decimals;
-    const sizes = ['Bytes', 'KB', 'MB'];
+    const sizes = ["Bytes", "KB", "MB"];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
   };
@@ -103,7 +135,11 @@ const FileUploadBox = ({ title, subTitle, buttonText = "Unggah bukti pendapatan 
       <label className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#0F172A] mb-1.5 md:mb-2">
         {title} {required && <span className="text-red-500">*</span>}
       </label>
-      {subTitle && <div className="font-roboto text-[11px] md:text-[12px] text-[#64748B] mb-3 md:mb-4 leading-relaxed">{subTitle}</div>}
+      {subTitle && (
+        <div className="font-roboto text-[11px] md:text-[12px] text-[#64748B] mb-3 md:mb-4 leading-relaxed">
+          {subTitle}
+        </div>
+      )}
 
       <AnimatePresence mode="wait">
         {file ? (
@@ -116,17 +152,26 @@ const FileUploadBox = ({ title, subTitle, buttonText = "Unggah bukti pendapatan 
             className="flex items-center justify-between p-3 bg-white border border-[#E2E8F0] rounded-[8px] hover:border-[#CBD5E1] transition-colors"
           >
             <div className="flex items-center gap-3 overflow-hidden">
-              <FileText className="text-[#64748B] shrink-0" size={18} strokeWidth={1.5} />
+              <FileText
+                className="text-[#64748B] shrink-0"
+                size={18}
+                strokeWidth={1.5}
+              />
               <div className="min-w-0 flex flex-col gap-0.5">
-                <p className="font-roboto text-[13px] font-medium text-[#1E293B] truncate">{file.name}</p>
-                <p className="font-roboto text-[11px] text-[#94A3B8]">{formatBytes(file.size)}</p>
+                <p className="font-roboto text-[13px] font-medium text-[#1E293B] truncate">
+                  {file.name}
+                </p>
+                <p className="font-roboto text-[11px] text-[#94A3B8]">
+                  {formatBytes(file.size)}
+                </p>
               </div>
             </div>
             <button
               type="button"
               onClick={onRemove}
               className="flex items-center justify-center w-7 h-7 text-[#94A3B8] hover:text-[#EF4444] hover:bg-red-50 rounded-md transition-colors shrink-0 ml-2"
-              title="Hapus File" aria-label={`Hapus ${file.name}`}
+              title="Hapus File"
+              aria-label={`Hapus ${file.name}`}
             >
               <X size={16} strokeWidth={1.5} />
             </button>
@@ -147,8 +192,18 @@ const FileUploadBox = ({ title, subTitle, buttonText = "Unggah bukti pendapatan 
             <p className="mb-1 font-roboto text-[14px] font-medium text-[#1E293B]">
               {buttonText}
             </p>
-            <p className="font-roboto text-[12px] text-[#64748B]">JPG, PNG atau PDF • Maks. 1 MB</p>
-            <input ref={inputRef} id={id} type="file" className="sr-only" aria-label={typeof title === "string" ? title : "Unggah dokumen"} accept={accept} onChange={onFileChange} />
+            <p className="font-roboto text-[12px] text-[#64748B]">
+              JPG, PNG atau PDF • Maks. 1 MB
+            </p>
+            <input
+              ref={inputRef}
+              id={id}
+              type="file"
+              className="sr-only"
+              aria-label={typeof title === "string" ? title : "Unggah dokumen"}
+              accept={accept}
+              onChange={onFileChange}
+            />
           </motion.label>
         )}
       </AnimatePresence>
@@ -169,16 +224,25 @@ export default function FormEvaluasiMonev() {
   const [tanggungan, setTanggungan] = useState(1);
 
   const [filePekerjaanAyah, setFilePekerjaanAyah] = useState<File | null>(null);
-  const [filePenghasilanAyah, setFilePenghasilanAyah] = useState<File | null>(null);
+  const [filePenghasilanAyah, setFilePenghasilanAyah] = useState<File | null>(
+    null,
+  );
   const [filePekerjaanIbu, setFilePekerjaanIbu] = useState<File | null>(null);
-  const [filePenghasilanIbu, setFilePenghasilanIbu] = useState<File | null>(null);
-  const [filePenghasilanLain, setFilePenghasilanLain] = useState<File | null>(null);
+  const [filePenghasilanIbu, setFilePenghasilanIbu] = useState<File | null>(
+    null,
+  );
+  const [filePenghasilanLain, setFilePenghasilanLain] = useState<File | null>(
+    null,
+  );
   const [fileScanKk, setFileScanKk] = useState<File | null>(null);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCheckingSubmission, setIsCheckingSubmission] = useState(true);
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
-  const [submittedData, setSubmittedData] = useState<Record<string, unknown> | null>(null);
+  const [submittedData, setSubmittedData] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [isPernyataanChecked, setIsPernyataanChecked] = useState(false);
@@ -202,7 +266,9 @@ export default function FormEvaluasiMonev() {
   useEffect(() => {
     async function checkSubmission() {
       try {
-        const res = await fetch(`/api/monev/check-submission?periode_id=${periodeId}`);
+        const res = await fetch(
+          `/api/monev/check-submission?periode_id=${periodeId}`,
+        );
         const json = await res.json();
         if (json.submitted) {
           setAlreadySubmitted(true);
@@ -222,7 +288,7 @@ export default function FormEvaluasiMonev() {
   // ═══════════════════════════════════════════════════
   function handleFileChange(
     e: React.ChangeEvent<HTMLInputElement>,
-    setter: (f: File | null) => void
+    setter: (f: File | null) => void,
   ) {
     const file = e.target.files?.[0] ?? null;
     if (file && file.size > MAX_FILE_SIZE) {
@@ -268,11 +334,15 @@ export default function FormEvaluasiMonev() {
       !filePekerjaanIbu;
 
     if (ayahBekerjaTanpaBukti) {
-      setError("Upload bukti pekerjaan ayah karena pekerjaan bukan 'Tidak Bekerja'.");
+      setError(
+        "Upload bukti pekerjaan ayah karena pekerjaan bukan 'Tidak Bekerja'.",
+      );
       return;
     }
     if (ibuBekerjaTanpaBukti) {
-      setError("Upload bukti pekerjaan ibu karena pekerjaan bukan 'Tidak Bekerja' / 'Ibu Rumah Tangga'.");
+      setError(
+        "Upload bukti pekerjaan ibu karena pekerjaan bukan 'Tidak Bekerja' / 'Ibu Rumah Tangga'.",
+      );
       return;
     }
     // Slip gaji wajib jika penghasilan > 0
@@ -303,11 +373,15 @@ export default function FormEvaluasiMonev() {
       fd.append("jumlah_tanggungan", String(tanggungan));
 
       // Append file hanya jika ada
-      if (filePekerjaanAyah) fd.append("file_pekerjaan_ayah", filePekerjaanAyah);
-      if (filePenghasilanAyah) fd.append("file_penghasilan_ayah", filePenghasilanAyah);
+      if (filePekerjaanAyah)
+        fd.append("file_pekerjaan_ayah", filePekerjaanAyah);
+      if (filePenghasilanAyah)
+        fd.append("file_penghasilan_ayah", filePenghasilanAyah);
       if (filePekerjaanIbu) fd.append("file_pekerjaan_ibu", filePekerjaanIbu);
-      if (filePenghasilanIbu) fd.append("file_penghasilan_ibu", filePenghasilanIbu);
-      if (filePenghasilanLain) fd.append("file_penghasilan_lain", filePenghasilanLain);
+      if (filePenghasilanIbu)
+        fd.append("file_penghasilan_ibu", filePenghasilanIbu);
+      if (filePenghasilanLain)
+        fd.append("file_penghasilan_lain", filePenghasilanLain);
       if (fileScanKk) fd.append("file_scan_kk", fileScanKk);
 
       const res = await fetch("/api/monev/submit", {
@@ -337,8 +411,11 @@ export default function FormEvaluasiMonev() {
   // ═══════════════════════════════════════════════════
   if (isCheckingSubmission) {
     return (
-      <div className={`min-h-screen bg-[#F7F9FC] py-12 px-4 flex items-center justify-center`} style={{ fontFamily: "Roboto, sans-serif" }}>
-        <div className="flex items-center gap-3 text-slate-500 bg-white px-6 py-4 rounded-xl shadow-sm border border-slate-200">
+      <div
+        className={`min-h-screen bg-[#F7F9FC] py-12 px-4 flex items-center justify-center`}
+        style={{ fontFamily: "Roboto, sans-serif" }}
+      >
+        <div className="flex items-center gap-3 text-slate-500 bg-white px-6 py-4 rounded-[8px] shadow-sm border border-slate-200">
           <Loader2 className="animate-spin" size={20} />
           <span className="text-sm font-medium">Memuat data evaluasi...</span>
         </div>
@@ -358,27 +435,41 @@ export default function FormEvaluasiMonev() {
     const fatherIncome = readAmount(submittedData.penghasilan_ayah);
     const motherIncome = readAmount(submittedData.penghasilan_ibu);
     const otherIncome = readAmount(submittedData.penghasilan_lain);
-    const reportedTotal = fatherIncome !== null && motherIncome !== null && otherIncome !== null
-      ? fatherIncome + motherIncome + otherIncome
-      : null;
+    const reportedTotal =
+      fatherIncome !== null && motherIncome !== null && otherIncome !== null
+        ? fatherIncome + motherIncome + otherIncome
+        : null;
     const dependents = readAmount(submittedData.jumlah_tanggungan);
-    const reportDate = typeof submittedData.waktu_lapor === "string"
-      ? new Date(submittedData.waktu_lapor)
-      : null;
-    const validReportDate = reportDate && !Number.isNaN(reportDate.getTime()) ? reportDate : null;
+    const reportDate =
+      typeof submittedData.waktu_lapor === "string"
+        ? new Date(submittedData.waktu_lapor)
+        : null;
+    const validReportDate =
+      reportDate && !Number.isNaN(reportDate.getTime()) ? reportDate : null;
     const formattedReportDate = validReportDate
       ? new Intl.DateTimeFormat("id-ID", {
-          day: "2-digit", month: "long", year: "numeric", timeZone: "Asia/Jakarta",
+          day: "2-digit",
+          month: "long",
+          year: "numeric",
+          timeZone: "Asia/Jakarta",
         }).format(validReportDate)
       : null;
     const formattedReportTime = validReportDate
       ? new Intl.DateTimeFormat("id-ID", {
-          hour: "2-digit", minute: "2-digit", hourCycle: "h23", timeZone: "Asia/Jakarta",
-        }).format(validReportDate).replace(":", ".")
+          hour: "2-digit",
+          minute: "2-digit",
+          hourCycle: "h23",
+          timeZone: "Asia/Jakarta",
+        })
+          .format(validReportDate)
+          .replace(":", ".")
       : null;
 
     return (
-      <div className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8" style={{ fontFamily: "Roboto, sans-serif" }}>
+      <div
+        className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6 sm:py-8 lg:px-8"
+        style={{ fontFamily: "Roboto, sans-serif" }}
+      >
         <Link
           href="/mahasiswa/monev"
           className="inline-flex min-h-11 items-center gap-2 rounded text-[13px] font-medium text-[#475569] transition-colors hover:text-[#000352] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#000352] focus-visible:ring-offset-2"
@@ -388,52 +479,106 @@ export default function FormEvaluasiMonev() {
         </Link>
 
         <header>
-          <h1 className="text-3xl font-bold leading-tight tracking-tight text-[#0B1536] sm:text-4xl">Laporan Monev</h1>
+          <h1 className="text-3xl font-bold leading-tight tracking-tight text-[#0B1536] sm:text-4xl">
+            Laporan Monev
+          </h1>
           <p className="mt-3 text-[14px] leading-6 text-[#64748B] sm:text-base">
             Ringkasan data ekonomi yang Anda kirim untuk evaluasi KIP Kuliah.
           </p>
         </header>
 
         <div className="overflow-hidden rounded-lg border border-[#E2E8F0] bg-white">
-          <section aria-label="Status pengiriman laporan" className="flex flex-col gap-5 px-5 py-6 md:flex-row md:items-center md:justify-between md:px-9">
+          <section
+            aria-label="Status pengiriman laporan"
+            className="flex flex-col gap-5 px-5 py-6 md:flex-row md:items-center md:justify-between md:px-9"
+          >
             <div>
               <p className="flex items-center gap-2 text-[14px] font-semibold text-[#0F172A]">
-                <CheckCircle2 size={18} className="shrink-0 text-[#15803D]" aria-hidden="true" />
+                <CheckCircle2
+                  size={18}
+                  className="shrink-0 text-[#15803D]"
+                  aria-hidden="true"
+                />
                 Laporan terkirim
               </p>
-              <p className="mt-1.5 text-[13px] leading-5 text-[#64748B]">Anda tidak perlu mengisi ulang periode ini.</p>
+              <p className="mt-1.5 text-[13px] leading-5 text-[#64748B]">
+                Anda tidak perlu mengisi ulang periode ini.
+              </p>
             </div>
             <div className="md:text-right">
-              <p className="text-[12px] leading-5 text-[#64748B]">Waktu pengiriman</p>
+              <p className="text-[12px] leading-5 text-[#64748B]">
+                Waktu pengiriman
+              </p>
               {validReportDate ? (
-                <time dateTime={validReportDate.toISOString()} className="mt-1 block text-[13px] leading-5 text-[#334155]">
+                <time
+                  dateTime={validReportDate.toISOString()}
+                  className="mt-1 block text-[13px] leading-5 text-[#334155]"
+                >
                   {formattedReportDate}, {formattedReportTime} WIB
                 </time>
               ) : (
-                <p className="mt-1 text-[13px] text-[#64748B]">Tidak tersedia</p>
+                <p className="mt-1 text-[13px] text-[#64748B]">
+                  Tidak tersedia
+                </p>
               )}
             </div>
           </section>
 
-          <section aria-labelledby="income-summary-heading" className="border-t border-[#E2E8F0] px-5 py-6 md:px-9 md:py-8">
-            <h2 id="income-summary-heading" className="text-[18px] font-semibold leading-7 text-[#000352]">Data penghasilan</h2>
-            <p className="mt-1 text-[13px] leading-5 text-[#64748B]">Seluruh penghasilan di bawah adalah per bulan.</p>
+          <section
+            aria-labelledby="income-summary-heading"
+            className="border-t border-[#E2E8F0] px-5 py-6 md:px-9 md:py-8"
+          >
+            <h2
+              id="income-summary-heading"
+              className="text-[18px] font-semibold leading-7 text-[#000352]"
+            >
+              Data penghasilan
+            </h2>
+            <p className="mt-1 text-[13px] leading-5 text-[#64748B]">
+              Seluruh penghasilan di bawah adalah per bulan.
+            </p>
 
             <div className="mt-6 grid gap-6 sm:grid-cols-2 sm:gap-8">
               {[
-                { label: "Ayah", job: submittedData.pekerjaan_ayah, income: fatherIncome },
-                { label: "Ibu", job: submittedData.pekerjaan_ibu, income: motherIncome },
+                {
+                  label: "Ayah",
+                  job: submittedData.pekerjaan_ayah,
+                  income: fatherIncome,
+                },
+                {
+                  label: "Ibu",
+                  job: submittedData.pekerjaan_ibu,
+                  income: motherIncome,
+                },
               ].map(({ label, job, income }) => (
-                <section key={label} aria-label={`Data ${label.toLowerCase()}`} className="min-w-0">
-                  <h3 className="mb-3 text-[14px] font-semibold text-[#0F172A]">{label}</h3>
+                <section
+                  key={label}
+                  aria-label={`Data ${label.toLowerCase()}`}
+                  className="min-w-0"
+                >
+                  <h3 className="mb-3 text-[14px] font-semibold text-[#0F172A]">
+                    {label}
+                  </h3>
                   <dl className="space-y-3">
                     <div>
-                      <dt className="text-[12px] leading-5 text-[#64748B]">Pekerjaan</dt>
-                      <dd className="mt-0.5 break-words text-[14px] leading-6 text-[#334155]">{typeof job === "string" && job.trim() ? job : "Tidak tersedia"}</dd>
+                      <dt className="text-[12px] leading-5 text-[#64748B]">
+                        Pekerjaan
+                      </dt>
+                      <dd className="mt-0.5 break-words text-[14px] leading-6 text-[#334155]">
+                        {typeof job === "string" && job.trim()
+                          ? job
+                          : "Tidak tersedia"}
+                      </dd>
                     </div>
                     <div>
-                      <dt className="text-[12px] leading-5 text-[#64748B]">Penghasilan per bulan</dt>
-                      <dd className="mt-0.5 break-words text-[15px] font-medium leading-6 tabular-nums text-[#0F172A]">{income === null ? "Tidak tersedia" : formatRupiah(income)}</dd>
+                      <dt className="text-[12px] leading-5 text-[#64748B]">
+                        Penghasilan per bulan
+                      </dt>
+                      <dd className="mt-0.5 break-words text-[15px] font-medium leading-6 tabular-nums text-[#0F172A]">
+                        {income === null
+                          ? "Tidak tersedia"
+                          : formatRupiah(income)}
+                      </dd>
                     </div>
                   </dl>
                 </section>
@@ -442,24 +587,51 @@ export default function FormEvaluasiMonev() {
 
             <dl className="mt-6 border-t border-[#EEF2F6] pt-5">
               <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-                <dt className="text-[13px] leading-6 text-[#475569]">Penghasilan lain per bulan</dt>
-                <dd className="text-[14px] font-medium leading-6 tabular-nums text-[#0F172A]">{otherIncome === null ? "Tidak tersedia" : formatRupiah(otherIncome)}</dd>
+                <dt className="text-[13px] leading-6 text-[#475569]">
+                  Penghasilan lain per bulan
+                </dt>
+                <dd className="text-[14px] font-medium leading-6 tabular-nums text-[#0F172A]">
+                  {otherIncome === null
+                    ? "Tidak tersedia"
+                    : formatRupiah(otherIncome)}
+                </dd>
               </div>
             </dl>
           </section>
 
           <dl className="grid gap-6 border-t border-[#E2E8F0] bg-[#F8FAFC] px-5 py-6 sm:grid-cols-2 sm:gap-8 md:px-9">
             <div className="min-w-0">
-              <dt className="text-[13px] leading-5 text-[#475569]">Total penghasilan per bulan</dt>
-              <dd className="mt-2 break-words text-[22px] font-semibold leading-8 tabular-nums text-[#000352]">{reportedTotal === null ? "Tidak tersedia" : formatRupiah(reportedTotal)}</dd>
-              <dd className="mt-1 text-[12px] leading-5 text-[#64748B]">Penghasilan ayah, ibu, dan lainnya.</dd>
+              <dt className="text-[13px] leading-5 text-[#475569]">
+                Total penghasilan per bulan
+              </dt>
+              <dd className="mt-2 break-words text-[22px] font-semibold leading-8 tabular-nums text-[#000352]">
+                {reportedTotal === null
+                  ? "Tidak tersedia"
+                  : formatRupiah(reportedTotal)}
+              </dd>
+              <dd className="mt-1 text-[12px] leading-5 text-[#64748B]">
+                Penghasilan ayah, ibu, dan lainnya.
+              </dd>
             </div>
             <div className="min-w-0">
-              <dt className="text-[13px] leading-5 text-[#475569]">Jumlah tanggungan</dt>
+              <dt className="text-[13px] leading-5 text-[#475569]">
+                Jumlah tanggungan
+              </dt>
               <dd className="mt-2 text-[22px] font-semibold leading-8 tabular-nums text-[#000352]">
-                {dependents === null ? "Tidak tersedia" : <>{dependents}<span className="ml-1.5 text-[14px] font-normal text-[#475569]">orang</span></>}
+                {dependents === null ? (
+                  "Tidak tersedia"
+                ) : (
+                  <>
+                    {dependents}
+                    <span className="ml-1.5 text-[14px] font-normal text-[#475569]">
+                      orang
+                    </span>
+                  </>
+                )}
               </dd>
-              <dd className="mt-1 text-[12px] leading-5 text-[#64748B]">Termasuk diri Anda.</dd>
+              <dd className="mt-1 text-[12px] leading-5 text-[#64748B]">
+                Termasuk diri Anda.
+              </dd>
             </div>
           </dl>
         </div>
@@ -470,13 +642,20 @@ export default function FormEvaluasiMonev() {
   // ═══════════════════════════════════════════════════
   if (success) {
     return (
-      <div className={`min-h-screen bg-[#F7F9FC] py-12 px-4 flex items-center justify-center`} style={{ fontFamily: "Roboto, sans-serif" }}>
-        <div className="bg-white px-10 py-12 rounded-xl shadow-sm border border-[#E5EAF0] text-center space-y-4">
+      <div
+        className={`min-h-screen bg-[#F7F9FC] py-12 px-4 flex items-center justify-center`}
+        style={{ fontFamily: "Roboto, sans-serif" }}
+      >
+        <div className="bg-white px-10 py-12 rounded-[8px] shadow-sm border border-[#E5EAF0] text-center space-y-4">
           <div className="mx-auto w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center">
             <CheckCircle2 className="text-emerald-600" size={32} />
           </div>
-          <h2 className="text-xl font-bold text-emerald-800">Evaluasi Berhasil Dikirim!</h2>
-          <p className="text-sm text-slate-500">Mengalihkan ke halaman riwayat...</p>
+          <h2 className="text-xl font-bold text-emerald-800">
+            Evaluasi Berhasil Dikirim!
+          </h2>
+          <p className="text-sm text-slate-500">
+            Mengalihkan ke halaman riwayat...
+          </p>
         </div>
       </div>
     );
@@ -486,7 +665,10 @@ export default function FormEvaluasiMonev() {
   // RENDER: Form isian (belum submit)
   // ═══════════════════════════════════════════════════
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8" style={{ fontFamily: "Roboto, sans-serif" }}>
+    <div
+      className="mx-auto max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8"
+      style={{ fontFamily: "Roboto, sans-serif" }}
+    >
       <div className="space-y-6">
         <Link
           href="/mahasiswa/monev"
@@ -502,21 +684,29 @@ export default function FormEvaluasiMonev() {
               Pengisian Monev
             </h1>
             <p className="mt-3 text-[14px] leading-6 text-[#64748B] sm:text-base">
-              Lengkapi data ekonomi dan dokumen pendukung untuk evaluasi KIP Kuliah.
+              Lengkapi data ekonomi dan dokumen pendukung untuk evaluasi KIP
+              Kuliah.
             </p>
           </div>
         </header>
 
         <div className="rounded-lg border border-[#E2E8F0] bg-white p-5 md:p-9">
-
           {/* Error Banner */}
           {error && (
-            <div role="alert" className="mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4">
+            <div
+              role="alert"
+              className="mb-6 flex items-start gap-3 rounded-lg border border-red-200 bg-red-50 p-4"
+            >
               <AlertCircle className="text-red-500 shrink-0 mt-0.5" size={18} />
               <div className="flex-1">
                 <p className="text-sm font-semibold text-red-800">{error}</p>
               </div>
-              <button type="button" aria-label="Tutup pesan kesalahan" onClick={() => setError(null)} className="text-red-400 hover:text-red-600 shrink-0">
+              <button
+                type="button"
+                aria-label="Tutup pesan kesalahan"
+                onClick={() => setError(null)}
+                className="text-red-400 hover:text-red-600 shrink-0"
+              >
                 <X size={16} />
               </button>
             </div>
@@ -526,35 +716,51 @@ export default function FormEvaluasiMonev() {
             {/* SECTION 1: Pekerjaan dan Pendapatan Orang Tua */}
             <section className="border-b border-[#E2E8F0] pb-8">
               <div className="mb-4 md:mb-5">
-                <h2 className="font-roboto font-semibold text-[18px] leading-7 text-[#000352]">Data ayah</h2>
+                <h2 className="font-roboto font-semibold text-[18px] leading-7 text-[#000352]">
+                  Data ayah
+                </h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
                 {/* Kiri: Pekerjaan Ayah */}
                 <div className="flex flex-col">
                   <div>
-                    <label htmlFor="pekerjaan-ayah" className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#0F172A] mb-1.5 md:mb-2">
+                    <label
+                      htmlFor="pekerjaan-ayah"
+                      className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#0F172A] mb-1.5 md:mb-2"
+                    >
                       Pekerjaan Ayah <span className="text-red-500">*</span>
                     </label>
-                    <select id="pekerjaan-ayah"
+                    <select
+                      id="pekerjaan-ayah"
                       value={pekerjaanAyah}
                       onChange={(e) => setPekerjaanAyah(e.target.value)}
                       className="w-full pl-[20px] pr-10 py-[14px] appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23667085%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:16px_16px] bg-[position:right_20px_center] bg-no-repeat bg-white border border-[#E2E8F0] rounded-lg font-roboto text-[14px] text-[#0F172A] focus:ring-2 focus:ring-[#000352] focus:border-[#000352] outline-none transition-colors"
                       required
                     >
                       <option value="">Pilih Pekerjaan...</option>
-                      {PEKERJAAN_OPTIONS.filter((p) => p !== "Ibu Rumah Tangga").map((p) => (
-                        <option key={p} value={p}>{p}</option>
+                      {PEKERJAAN_OPTIONS.filter(
+                        (p) => p !== "Ibu Rumah Tangga",
+                      ).map((p) => (
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
                       ))}
                     </select>
                   </div>
-                  <AnimatedExpand show={pekerjaanAyah !== "" && pekerjaanAyah !== "Tidak Bekerja"}>
+                  <AnimatedExpand
+                    show={
+                      pekerjaanAyah !== "" && pekerjaanAyah !== "Tidak Bekerja"
+                    }
+                  >
                     <FileUploadBox
                       id="file-kerja-ayah"
                       title="Lampiran Pekerjaan"
                       subTitle="Unggah bukti pekerjaan ayah."
                       buttonText="Unggah bukti pekerjaan"
                       file={filePekerjaanAyah}
-                      onFileChange={(e: any) => handleFileChange(e, setFilePekerjaanAyah)}
+                      onFileChange={(e: any) =>
+                        handleFileChange(e, setFilePekerjaanAyah)
+                      }
                       onRemove={() => setFilePekerjaanAyah(null)}
                       inputRef={fileRefs.pekerjaanAyah}
                       required
@@ -565,8 +771,12 @@ export default function FormEvaluasiMonev() {
                 {/* Kanan: Pendapatan Ayah */}
                 <div className="flex flex-col">
                   <div>
-                    <label htmlFor="pendapatan-ayah" className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#0F172A] mb-1.5 md:mb-2">
-                      Pendapatan Ayah (per bulan) <span className="text-red-500">*</span>
+                    <label
+                      htmlFor="pendapatan-ayah"
+                      className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#0F172A] mb-1.5 md:mb-2"
+                    >
+                      Pendapatan Ayah (per bulan){" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     <RupiahInput
                       value={pendapatanAyah}
@@ -581,7 +791,9 @@ export default function FormEvaluasiMonev() {
                       subTitle="Unggah slip gaji / surat penghasilan ayah."
                       buttonText="Unggah bukti pendapatan"
                       file={filePenghasilanAyah}
-                      onFileChange={(e: any) => handleFileChange(e, setFilePenghasilanAyah)}
+                      onFileChange={(e: any) =>
+                        handleFileChange(e, setFilePenghasilanAyah)
+                      }
                       onRemove={() => setFilePenghasilanAyah(null)}
                       inputRef={fileRefs.penghasilanAyah}
                       required
@@ -594,16 +806,22 @@ export default function FormEvaluasiMonev() {
             {/* SECTION 2: Pekerjaan dan Pendapatan Ibu */}
             <section className="border-b border-[#E2E8F0] pb-8">
               <div className="mb-4 md:mb-5">
-                <h2 className="font-roboto font-semibold text-[18px] leading-7 text-[#000352]">Data ibu</h2>
+                <h2 className="font-roboto font-semibold text-[18px] leading-7 text-[#000352]">
+                  Data ibu
+                </h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 items-start">
                 {/* Kiri: Pekerjaan Ibu */}
                 <div className="flex flex-col">
                   <div>
-                    <label htmlFor="pekerjaan-ibu" className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#0F172A] mb-1.5 md:mb-2">
+                    <label
+                      htmlFor="pekerjaan-ibu"
+                      className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#0F172A] mb-1.5 md:mb-2"
+                    >
                       Pekerjaan Ibu <span className="text-red-500">*</span>
                     </label>
-                    <select id="pekerjaan-ibu"
+                    <select
+                      id="pekerjaan-ibu"
                       value={pekerjaanIbu}
                       onChange={(e) => setPekerjaanIbu(e.target.value)}
                       className="w-full pl-[20px] pr-10 py-[14px] appearance-none bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2220%22%20height%3D%2220%22%20viewBox%3D%220%200%2024%2024%22%20fill%3D%22none%22%20stroke%3D%22%23667085%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:16px_16px] bg-[position:right_20px_center] bg-no-repeat bg-white border border-[#E2E8F0] rounded-lg font-roboto text-[14px] text-[#0F172A] focus:ring-2 focus:ring-[#000352] focus:border-[#000352] outline-none transition-colors"
@@ -611,18 +829,28 @@ export default function FormEvaluasiMonev() {
                     >
                       <option value="">Pilih Pekerjaan...</option>
                       {PEKERJAAN_OPTIONS.map((p) => (
-                        <option key={p} value={p}>{p}</option>
+                        <option key={p} value={p}>
+                          {p}
+                        </option>
                       ))}
                     </select>
                   </div>
-                  <AnimatedExpand show={pekerjaanIbu !== "" && pekerjaanIbu !== "Tidak Bekerja" && pekerjaanIbu !== "Ibu Rumah Tangga"}>
+                  <AnimatedExpand
+                    show={
+                      pekerjaanIbu !== "" &&
+                      pekerjaanIbu !== "Tidak Bekerja" &&
+                      pekerjaanIbu !== "Ibu Rumah Tangga"
+                    }
+                  >
                     <FileUploadBox
                       id="file-kerja-ibu"
                       title="Lampiran Pekerjaan"
                       subTitle="Unggah bukti pekerjaan ibu."
                       buttonText="Unggah bukti pekerjaan"
                       file={filePekerjaanIbu}
-                      onFileChange={(e: any) => handleFileChange(e, setFilePekerjaanIbu)}
+                      onFileChange={(e: any) =>
+                        handleFileChange(e, setFilePekerjaanIbu)
+                      }
                       onRemove={() => setFilePekerjaanIbu(null)}
                       inputRef={fileRefs.pekerjaanIbu}
                       required
@@ -633,8 +861,12 @@ export default function FormEvaluasiMonev() {
                 {/* Kanan: Pendapatan Ibu */}
                 <div className="flex flex-col">
                   <div>
-                    <label htmlFor="pendapatan-ibu" className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#0F172A] mb-1.5 md:mb-2">
-                      Pendapatan Ibu (per bulan) <span className="text-red-500">*</span>
+                    <label
+                      htmlFor="pendapatan-ibu"
+                      className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#0F172A] mb-1.5 md:mb-2"
+                    >
+                      Pendapatan Ibu (per bulan){" "}
+                      <span className="text-red-500">*</span>
                     </label>
                     <RupiahInput
                       value={pendapatanIbu}
@@ -649,7 +881,9 @@ export default function FormEvaluasiMonev() {
                       subTitle="Upload slip gaji / surat penghasilan ibu."
                       buttonText="Unggah bukti pendapatan"
                       file={filePenghasilanIbu}
-                      onFileChange={(e: any) => handleFileChange(e, setFilePenghasilanIbu)}
+                      onFileChange={(e: any) =>
+                        handleFileChange(e, setFilePenghasilanIbu)
+                      }
                       onRemove={() => setFilePenghasilanIbu(null)}
                       inputRef={fileRefs.penghasilanIbu}
                       required
@@ -662,13 +896,18 @@ export default function FormEvaluasiMonev() {
             {/* SECTION 3: Pendapatan Lain & Tanggungan */}
             <section className="border-b border-[#E2E8F0] pb-8">
               <div className="mb-4 md:mb-5">
-                <h2 className="font-roboto font-semibold text-[18px] leading-7 text-[#000352]">Penghasilan lain dan tanggungan</h2>
+                <h2 className="font-roboto font-semibold text-[18px] leading-7 text-[#000352]">
+                  Penghasilan lain dan tanggungan
+                </h2>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                 {/* Kiri: Pendapatan Lain */}
                 <div className="flex flex-col h-full">
                   <div>
-                    <label htmlFor="pendapatan-lain" className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#0F172A] mb-1.5 md:mb-2">
+                    <label
+                      htmlFor="pendapatan-lain"
+                      className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#0F172A] mb-1.5 md:mb-2"
+                    >
                       Pendapatan Lain-lain (per bulan)
                     </label>
                     <RupiahInput
@@ -681,21 +920,31 @@ export default function FormEvaluasiMonev() {
                       Jika tidak ada, isi 0 dan unggah surat pernyataan.
                     </p>
                   </div>
-                  <AnimatedExpand show={pendapatanLain >= 0 && pendapatanLain.toString() !== ''}>
+                  <AnimatedExpand
+                    show={
+                      pendapatanLain >= 0 && pendapatanLain.toString() !== ""
+                    }
+                  >
                     <FileUploadBox
                       id="file-gaji-lain"
                       title="Bukti Pendapatan Lain"
                       subTitle={
                         <div className="min-h-[60px] md:min-h-[64px] flex flex-col justify-start">
                           <span>Unggah bukti atau surat pernyataan.</span>
-                          <a href="/format-surat-pernyataan-pendapatan.docx" download className="inline-flex items-center gap-1 font-roboto text-[12px] text-[#000352] font-medium hover:underline mt-1.5 w-fit">
+                          <a
+                            href="/format-surat-pernyataan-pendapatan.docx"
+                            download
+                            className="inline-flex items-center gap-1 font-roboto text-[12px] text-[#000352] font-medium hover:underline mt-1.5 w-fit"
+                          >
                             <Download size={14} />
                             Unduh format surat pernyataan
                           </a>
                         </div>
                       }
                       file={filePenghasilanLain}
-                      onFileChange={(e: any) => handleFileChange(e, setFilePenghasilanLain)}
+                      onFileChange={(e: any) =>
+                        handleFileChange(e, setFilePenghasilanLain)
+                      }
                       onRemove={() => setFilePenghasilanLain(null)}
                       inputRef={fileRefs.penghasilanLain}
                       required
@@ -706,7 +955,10 @@ export default function FormEvaluasiMonev() {
                 {/* Kanan: Tanggungan */}
                 <div className="flex flex-col h-full">
                   <div>
-                    <label htmlFor="jumlah-tanggungan" className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#0F172A] mb-1.5 md:mb-2">
+                    <label
+                      htmlFor="jumlah-tanggungan"
+                      className="block font-roboto font-medium text-[13px] md:text-[14px] text-[#0F172A] mb-1.5 md:mb-2"
+                    >
                       Jumlah Tanggungan <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -715,7 +967,9 @@ export default function FormEvaluasiMonev() {
                       min="1"
                       className="w-full px-[20px] py-[14px] bg-white border border-[#E2E8F0] rounded-lg font-roboto text-[14px] text-[#0F172A] focus:ring-2 focus:ring-[#000352] focus:border-[#000352] outline-none transition-colors"
                       value={tanggungan}
-                      onChange={(e) => setTanggungan(Number(e.target.value) || 1)}
+                      onChange={(e) =>
+                        setTanggungan(Number(e.target.value) || 1)
+                      }
                       required
                     />
                     <p className="font-roboto text-[11px] md:text-[12px] text-[#64748B] mt-1 md:mt-1.5 leading-relaxed">
@@ -728,12 +982,17 @@ export default function FormEvaluasiMonev() {
                       title="Kartu Keluarga (KK)"
                       subTitle={
                         <div className="min-h-[60px] md:min-h-[64px] flex flex-col justify-start">
-                          <span>Unggah scan Kartu Keluarga sebagai bukti data keluarga.</span>
+                          <span>
+                            Unggah scan Kartu Keluarga sebagai bukti data
+                            keluarga.
+                          </span>
                         </div>
                       }
                       buttonText="Unggah Kartu Keluarga"
                       file={fileScanKk}
-                      onFileChange={(e: any) => handleFileChange(e, setFileScanKk)}
+                      onFileChange={(e: any) =>
+                        handleFileChange(e, setFileScanKk)
+                      }
                       onRemove={() => setFileScanKk(null)}
                       inputRef={fileRefs.scanKk}
                       accept="image/png, image/jpeg, image/jpg"
@@ -745,16 +1004,39 @@ export default function FormEvaluasiMonev() {
             </section>
 
             {/* SECTION 4: Ringkasan Ekonomi */}
-            <section aria-labelledby="form-summary-heading" className="rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-5 sm:p-6">
-              <h2 id="form-summary-heading" className="mb-5 text-[16px] font-semibold text-[#000352]">Ringkasan penghasilan</h2>
+            <section
+              aria-labelledby="form-summary-heading"
+              className="rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] p-5 sm:p-6"
+            >
+              <h2
+                id="form-summary-heading"
+                className="mb-5 text-[16px] font-semibold text-[#000352]"
+              >
+                Ringkasan penghasilan
+              </h2>
               <div className="flex flex-col md:flex-row justify-between gap-6">
                 <div className="flex-1 min-w-0">
-                  <p className="font-roboto text-[13px] font-medium text-[#475569] mb-2">Total penghasilan</p>
+                  <p className="font-roboto text-[13px] font-medium text-[#475569] mb-2">
+                    Total penghasilan
+                  </p>
                   <div className="flex flex-wrap items-baseline gap-x-1.5 mb-1.5">
-                    <p className="font-roboto text-[22px] font-semibold text-[#000352] leading-8 break-words tabular-nums" title={totalPendapatan > 0 ? formatRupiah(totalPendapatan) : "Belum Dihitung"}>
-                      {totalPendapatan > 0 ? formatRupiah(totalPendapatan) : "—"}
+                    <p
+                      className="font-roboto text-[22px] font-semibold text-[#000352] leading-8 break-words tabular-nums"
+                      title={
+                        totalPendapatan > 0
+                          ? formatRupiah(totalPendapatan)
+                          : "Belum Dihitung"
+                      }
+                    >
+                      {totalPendapatan > 0
+                        ? formatRupiah(totalPendapatan)
+                        : "—"}
                     </p>
-                    {totalPendapatan > 0 && <span className="font-roboto text-[14px] font-medium text-[#64748B]">/ bulan</span>}
+                    {totalPendapatan > 0 && (
+                      <span className="font-roboto text-[14px] font-medium text-[#64748B]">
+                        / bulan
+                      </span>
+                    )}
                   </div>
                   <p className="font-roboto text-[12px] text-[#64748B]">
                     Pendapatan Ayah + Ibu + Pendapatan Lainnya
@@ -765,12 +1047,27 @@ export default function FormEvaluasiMonev() {
                 <div className="w-full h-px md:w-px md:h-16 bg-[#E2E8F0] shrink-0 self-center my-2 md:my-0"></div>
 
                 <div className="flex-1 min-w-0">
-                  <p className="font-roboto text-[13px] font-medium text-[#475569] mb-2">Penghasilan per tanggungan</p>
+                  <p className="font-roboto text-[13px] font-medium text-[#475569] mb-2">
+                    Penghasilan per tanggungan
+                  </p>
                   <div className="flex flex-wrap items-baseline gap-x-1.5 mb-1.5">
-                    <p className="font-roboto text-[22px] font-semibold text-[#000352] leading-8 break-words tabular-nums" title={rupiahPerTanggungan > 0 ? formatRupiah(rupiahPerTanggungan) : "Belum Dihitung"}>
-                      {rupiahPerTanggungan > 0 ? formatRupiah(rupiahPerTanggungan) : "—"}
+                    <p
+                      className="font-roboto text-[22px] font-semibold text-[#000352] leading-8 break-words tabular-nums"
+                      title={
+                        rupiahPerTanggungan > 0
+                          ? formatRupiah(rupiahPerTanggungan)
+                          : "Belum Dihitung"
+                      }
+                    >
+                      {rupiahPerTanggungan > 0
+                        ? formatRupiah(rupiahPerTanggungan)
+                        : "—"}
                     </p>
-                    {rupiahPerTanggungan > 0 && <span className="font-roboto text-[14px] font-medium text-[#64748B]">/ orang / bulan</span>}
+                    {rupiahPerTanggungan > 0 && (
+                      <span className="font-roboto text-[14px] font-medium text-[#64748B]">
+                        / orang / bulan
+                      </span>
+                    )}
                   </div>
                   <p className="font-roboto text-[12px] text-[#64748B]">
                     Total Pendapatan &divide; Jumlah Tanggungan
@@ -788,8 +1085,13 @@ export default function FormEvaluasiMonev() {
                 checked={isPernyataanChecked}
                 onChange={(e) => setIsPernyataanChecked(e.target.checked)}
               />
-              <label htmlFor="pernyataan" className="font-roboto text-[13px] md:text-[14px] text-[#4B5563] leading-relaxed cursor-pointer select-none">
-                Saya menyatakan bahwa seluruh data yang saya masukkan adalah benar dan sesuai dengan kondisi sebenarnya. Saya bertanggung jawab atas kebenaran data tersebut.
+              <label
+                htmlFor="pernyataan"
+                className="font-roboto text-[13px] md:text-[14px] text-[#4B5563] leading-relaxed cursor-pointer select-none"
+              >
+                Saya menyatakan bahwa seluruh data yang saya masukkan adalah
+                benar dan sesuai dengan kondisi sebenarnya. Saya bertanggung
+                jawab atas kebenaran data tersebut.
               </label>
             </div>
 
@@ -806,9 +1108,7 @@ export default function FormEvaluasiMonev() {
                     Mengirim laporan...
                   </>
                 ) : (
-                  <>
-                    Kirim laporan Monev
-                  </>
+                  <>Kirim laporan Monev</>
                 )}
               </button>
             </div>

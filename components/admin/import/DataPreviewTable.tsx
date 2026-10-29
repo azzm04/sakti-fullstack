@@ -15,12 +15,32 @@ import {
 } from "@tanstack/react-table";
 import { CandidateData } from "@/schemas";
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from "@/components/ui/table";
 import {
-  Table2, FileText, Database, CheckCircle2, AlertTriangle,
-  Eye, EyeOff, Save, Search, X, ArrowUpDown, ArrowUp, ArrowDown,
-  Info, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight,
+  Table2,
+  FileText,
+  Database,
+  CheckCircle2,
+  AlertTriangle,
+  Eye,
+  EyeOff,
+  Save,
+  Search,
+  X,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Info,
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Lightbulb,
 } from "lucide-react";
 
@@ -43,12 +63,25 @@ const formatRupiah = (value: number) =>
     maximumFractionDigits: 0,
   }).format(value);
 
-function CellValue({ value, isNumber }: { value: unknown; isNumber?: boolean }) {
-  if (value === null || value === undefined || value === "" || (isNumber && value === 0)) {
+function CellValue({
+  value,
+  isNumber,
+}: {
+  value: unknown;
+  isNumber?: boolean;
+}) {
+  if (
+    value === null ||
+    value === undefined ||
+    value === "" ||
+    (isNumber && value === 0)
+  ) {
     return <span className="text-admin-text-5">—</span>;
   }
   if (isNumber && typeof value === "number") {
-    return <span className="font-medium text-admin-text">{formatRupiah(value)}</span>;
+    return (
+      <span className="font-medium text-admin-text">{formatRupiah(value)}</span>
+    );
   }
   return <>{String(value)}</>;
 }
@@ -63,8 +96,8 @@ function P3KEBadge({ status }: { status: string }) {
         isBelum
           ? "bg-admin-surface-soft text-admin-text-3 border-admin-border"
           : isDesil
-          ? "bg-admin-accent/8 text-admin-accent border-admin-accent/20"
-          : "bg-admin-accent/10 text-admin-accent-ink border-admin-accent/25"
+            ? "bg-admin-accent/8 text-admin-accent border-admin-accent/20"
+            : "bg-admin-accent/10 text-admin-accent-ink border-admin-accent/25"
       }`}
     >
       {status}
@@ -105,7 +138,9 @@ export default function DataPreviewTable({
       columnHelper.accessor("no", {
         header: "No",
         cell: (info) => (
-          <span className="font-bold text-admin-accent">{info.getValue() as number}</span>
+          <span className="font-bold text-admin-accent">
+            {info.getValue() as number}
+          </span>
         ),
         size: 55,
       }),
@@ -121,7 +156,9 @@ export default function DataPreviewTable({
       columnHelper.accessor("nama_pendaftar", {
         header: "Nama Pendaftar",
         cell: (info) => (
-          <span className="font-semibold text-admin-text">{String(info.getValue() || "—")}</span>
+          <span className="font-semibold text-admin-text">
+            {String(info.getValue() || "—")}
+          </span>
         ),
         size: 210,
       }),
@@ -158,7 +195,7 @@ export default function DataPreviewTable({
         cell: (info) => <CellValue value={info.getValue()} />,
         size: 210,
       }),
-columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
+      columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
         header: "Aktif DTSEN",
         cell: (info) => <DTKSBadge status={String(info.getValue() ?? "")} />,
         size: 130,
@@ -187,7 +224,11 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
         header: "Jarak (KM)",
         cell: (info) => {
           const v = info.getValue() as number;
-          return v ? <span>{v} km</span> : <span className="text-admin-text-5">—</span>;
+          return v ? (
+            <span>{v} km</span>
+          ) : (
+            <span className="text-admin-text-5">—</span>
+          );
         },
         size: 100,
       }),
@@ -428,19 +469,24 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
   const validCount = data.length - errorCount;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative">
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="relative"
+    >
       <div className="bg-admin-surface rounded-[8px] border border-admin-border shadow-[0_1px_2px_rgba(20,40,70,0.05)] overflow-hidden">
-
         {/* ── Header ── */}
         <div className="px-6 py-5 border-b border-admin-border-soft">
           <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
             <div className="flex-1">
               <div className="flex items-center gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-admin-accent flex items-center justify-center shadow-sm">
+                <div className="w-10 h-10 rounded-[8px] bg-admin-accent flex items-center justify-center shadow-sm">
                   <Table2 size={20} className="text-white" />
                 </div>
                 <div>
-                  <h4 className="font-admin-heading text-lg font-extrabold text-admin-text">Data Preview</h4>
+                  <h4 className="font-admin-heading text-lg font-extrabold text-admin-text">
+                    Data Preview
+                  </h4>
                   <p className="text-[11px] text-admin-text-3 flex items-center gap-1.5">
                     <FileText size={11} />
                     {fileName}
@@ -452,16 +498,22 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
               <div className="flex items-center gap-2 flex-wrap">
                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-admin-accent/8 rounded-lg border border-admin-accent/20">
                   <Database size={12} className="text-admin-accent" />
-                  <span className="text-xs font-bold text-admin-accent">{data.length} Baris</span>
+                  <span className="text-xs font-bold text-admin-accent">
+                    {data.length} Baris
+                  </span>
                 </div>
                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-admin-accent/10 rounded-lg border border-admin-accent/20">
                   <CheckCircle2 size={12} className="text-admin-accent" />
-                  <span className="text-xs font-bold text-admin-accent-ink">{validCount} Valid</span>
+                  <span className="text-xs font-bold text-admin-accent-ink">
+                    {validCount} Valid
+                  </span>
                 </div>
                 {errorCount > 0 && (
                   <div className="flex items-center gap-1.5 px-3 py-1.5 bg-admin-warn-bg-2 rounded-lg border border-admin-warn-border">
                     <Info size={12} className="text-admin-warn-text" />
-                    <span className="text-xs font-bold text-admin-warn-text">{errorCount} Perlu Periksa</span>
+                    <span className="text-xs font-bold text-admin-warn-text">
+                      {errorCount} Perlu Periksa
+                    </span>
                   </div>
                 )}
               </div>
@@ -471,7 +523,7 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 onClick={() => setShowAllColumns(!showAllColumns)}
-                className="px-4 py-2.5 bg-admin-surface-soft hover:bg-admin-border/60 text-admin-text text-xs font-bold rounded-xl transition-all flex items-center gap-2"
+                className="px-4 py-2.5 bg-admin-surface-soft hover:bg-admin-border/60 text-admin-text text-xs font-bold rounded-[8px] transition-all flex items-center gap-2"
               >
                 {showAllColumns ? <EyeOff size={14} /> : <Eye size={14} />}
                 {showAllColumns ? "Kolom Dasar" : "Semua Kolom"}
@@ -479,13 +531,20 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
 
               <button
                 onClick={onSave}
-                disabled={!hasData || saveStatus === "saving" || saveStatus === "saved"}
-                className={`px-4 py-2.5 text-xs font-bold rounded-xl transition-all flex items-center gap-2
-                  ${saveStatus === "saved" ? "bg-admin-accent text-white" :
-                    saveStatus === "saving" ? "bg-admin-accent/60 text-white cursor-wait" :
-                    saveStatus === "error" ? "bg-admin-danger-text text-white" :
-                    hasData ? "bg-admin-accent hover:bg-admin-accent-hover text-white" :
-                    "bg-admin-border text-admin-placeholder cursor-not-allowed"
+                disabled={
+                  !hasData || saveStatus === "saving" || saveStatus === "saved"
+                }
+                className={`px-4 py-2.5 text-xs font-bold rounded-[8px] transition-all flex items-center gap-2
+                  ${
+                    saveStatus === "saved"
+                      ? "bg-admin-accent text-white"
+                      : saveStatus === "saving"
+                        ? "bg-admin-accent/60 text-white cursor-wait"
+                        : saveStatus === "error"
+                          ? "bg-admin-danger-text text-white"
+                          : hasData
+                            ? "bg-admin-accent hover:bg-admin-accent-hover text-white"
+                            : "bg-admin-border text-admin-placeholder cursor-not-allowed"
                   }`}
               >
                 {saveStatus === "saving" ? (
@@ -497,22 +556,29 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
                 ) : (
                   <Save size={14} />
                 )}
-                {saveStatus === "saving" ? "Menyimpan..." :
-                  saveStatus === "saved" ? "Tersimpan" :
-                  saveStatus === "error" ? "Gagal" : "Simpan Data"}
+                {saveStatus === "saving"
+                  ? "Menyimpan..."
+                  : saveStatus === "saved"
+                    ? "Tersimpan"
+                    : saveStatus === "error"
+                      ? "Gagal"
+                      : "Simpan Data"}
               </button>
             </div>
           </div>
 
           {/* Search */}
           <div className="mt-4 relative">
-            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-admin-text-3" />
+            <Search
+              size={16}
+              className="absolute left-3.5 top-1/2 -translate-y-1/2 text-admin-text-3"
+            />
             <input
               type="text"
               value={globalFilter ?? ""}
               onChange={(e) => setGlobalFilter(e.target.value)}
               placeholder="Cari nama, NIK, prodi, email, status P3KE..."
-              className="w-full pl-10 pr-10 py-2.5 bg-admin-surface-soft border border-admin-border rounded-xl text-sm text-admin-text placeholder:text-admin-placeholder focus:outline-none focus:ring-2 focus:ring-admin-accent/30 focus:border-admin-accent transition-all"
+              className="w-full pl-10 pr-10 py-2.5 bg-admin-surface-soft border border-admin-border rounded-[8px] text-sm text-admin-text placeholder:text-admin-placeholder focus:outline-none focus:ring-2 focus:ring-admin-accent/30 focus:border-admin-accent transition-all"
             />
             {globalFilter && (
               <button
@@ -530,7 +596,10 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
           <Table>
             <TableHeader>
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id} className="bg-admin-surface-soft border-b border-admin-border-soft hover:bg-admin-surface-soft">
+                <TableRow
+                  key={headerGroup.id}
+                  className="bg-admin-surface-soft border-b border-admin-border-soft hover:bg-admin-surface-soft"
+                >
                   {headerGroup.headers.map((header) => (
                     <TableHead
                       key={header.id}
@@ -542,15 +611,30 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
                           className="flex items-center gap-1 text-[10px] font-extrabold uppercase tracking-wider text-admin-text-3 hover:text-admin-accent transition-colors"
                           onClick={header.column.getToggleSortingHandler()}
                         >
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                          {{
-                            asc: <ArrowUp size={11} className="text-admin-accent" />,
-                            desc: <ArrowDown size={11} className="text-admin-accent" />,
-                          }[header.column.getIsSorted() as string] ?? (
-                            header.column.getCanSort() ? (
-                              <ArrowUpDown size={10} className="text-admin-text-5" />
-                            ) : null
+                          {flexRender(
+                            header.column.columnDef.header,
+                            header.getContext(),
                           )}
+                          {{
+                            asc: (
+                              <ArrowUp
+                                size={11}
+                                className="text-admin-accent"
+                              />
+                            ),
+                            desc: (
+                              <ArrowDown
+                                size={11}
+                                className="text-admin-accent"
+                              />
+                            ),
+                          }[header.column.getIsSorted() as string] ??
+                            (header.column.getCanSort() ? (
+                              <ArrowUpDown
+                                size={10}
+                                className="text-admin-text-5"
+                              />
+                            ) : null)}
                         </button>
                       )}
                     </TableHead>
@@ -574,14 +658,20 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
                         key={cell.id}
                         className="px-4 py-3 text-sm text-admin-text-2 whitespace-nowrap"
                       >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
                       </TableCell>
                     ))}
                   </TableRow>
                 ))
               ) : (
                 <TableRow>
-                  <TableCell colSpan={columns.length} className="h-24 text-center text-admin-text-5 text-sm">
+                  <TableCell
+                    colSpan={columns.length}
+                    className="h-24 text-center text-admin-text-5 text-sm"
+                  >
                     Tidak ada data ditemukan.
                   </TableCell>
                 </TableRow>
@@ -595,9 +685,13 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
           <p className="text-xs text-admin-text-3">
             Menampilkan{" "}
             <span className="font-bold text-admin-text-2">
-              {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}–
+              {table.getState().pagination.pageIndex *
+                table.getState().pagination.pageSize +
+                1}
+              –
               {Math.min(
-                (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
+                (table.getState().pagination.pageIndex + 1) *
+                  table.getState().pagination.pageSize,
                 table.getFilteredRowModel().rows.length,
               )}
             </span>{" "}
@@ -610,8 +704,16 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
 
           <div className="flex items-center gap-1">
             {[
-              { icon: ChevronsLeft, action: () => table.setPageIndex(0), disabled: !table.getCanPreviousPage() },
-              { icon: ChevronLeft, action: () => table.previousPage(), disabled: !table.getCanPreviousPage() },
+              {
+                icon: ChevronsLeft,
+                action: () => table.setPageIndex(0),
+                disabled: !table.getCanPreviousPage(),
+              },
+              {
+                icon: ChevronLeft,
+                action: () => table.previousPage(),
+                disabled: !table.getCanPreviousPage(),
+              },
             ].map(({ icon: Icon, action, disabled }, i) => (
               <button
                 key={i}
@@ -624,12 +726,21 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
             ))}
 
             <span className="px-3 py-1 text-xs font-bold text-admin-accent-ink bg-admin-accent/10 rounded-lg border border-admin-accent/20">
-              {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
+              {table.getState().pagination.pageIndex + 1} /{" "}
+              {table.getPageCount()}
             </span>
 
             {[
-              { icon: ChevronRight, action: () => table.nextPage(), disabled: !table.getCanNextPage() },
-              { icon: ChevronsRight, action: () => table.setPageIndex(table.getPageCount() - 1), disabled: !table.getCanNextPage() },
+              {
+                icon: ChevronRight,
+                action: () => table.nextPage(),
+                disabled: !table.getCanNextPage(),
+              },
+              {
+                icon: ChevronsRight,
+                action: () => table.setPageIndex(table.getPageCount() - 1),
+                disabled: !table.getCanNextPage(),
+              },
             ].map(({ icon: Icon, action, disabled }, i) => (
               <button
                 key={i}
@@ -652,13 +763,17 @@ columnHelper.accessor("aktif_dtsen" as keyof CandidateData, {
           transition={{ delay: 0.3 }}
           className="mt-4 p-4 bg-admin-warn-bg-2 border border-admin-warn-border rounded-[8px] flex items-start gap-3"
         >
-          <Lightbulb size={18} className="text-admin-warn-text mt-0.5 shrink-0" />
+          <Lightbulb
+            size={18}
+            className="text-admin-warn-text mt-0.5 shrink-0"
+          />
           <div>
             <h5 className="text-sm font-bold text-admin-warn-text mb-0.5">
               {errorCount} data belum lengkap
             </h5>
             <p className="text-xs text-admin-warn-text/85">
-              Kolom wajib (Nama, No. Pendaftaran KIP, NIK, Email) kosong. Data tetap dapat disimpan dan akan ditandai untuk verifikasi manual.
+              Kolom wajib (Nama, No. Pendaftaran KIP, NIK, Email) kosong. Data
+              tetap dapat disimpan dan akan ditandai untuk verifikasi manual.
             </p>
           </div>
         </motion.div>

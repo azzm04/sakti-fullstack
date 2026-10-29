@@ -40,16 +40,24 @@ export default function BuatSesiModal({
   const end = form.tanggal_selesai ? new Date(form.tanggal_selesai) : null;
   const rentangValid = !!start && !!end && end >= start;
   const jumlahHari = rentangValid
-    ? Math.floor(((end as Date).getTime() - (start as Date).getTime()) / (1000 * 60 * 60 * 24)) + 1
+    ? Math.floor(
+        ((end as Date).getTime() - (start as Date).getTime()) /
+          (1000 * 60 * 60 * 24),
+      ) + 1
     : 0;
 
   const tahunValid = /^\d{4}$/.test(form.tahun_seleksi);
 
-  const showPreview = rentangValid && kandidatCount !== null && kandidatCount > 0;
-  const perHari = showPreview ? Math.floor((kandidatCount as number) / jumlahHari) : 0;
+  const showPreview =
+    rentangValid && kandidatCount !== null && kandidatCount > 0;
+  const perHari = showPreview
+    ? Math.floor((kandidatCount as number) / jumlahHari)
+    : 0;
   const sisa = showPreview ? (kandidatCount as number) % jumlahHari : 0;
 
-  const perHariKuota = showPreview ? Math.ceil((kandidatCount as number) / jumlahHari) : 0;
+  const perHariKuota = showPreview
+    ? Math.ceil((kandidatCount as number) / jumlahHari)
+    : 0;
   const perPewawancara =
     showPreview && parseInt(form.kuota_pewawancara || "1") > 0
       ? Math.ceil(perHariKuota / parseInt(form.kuota_pewawancara || "1"))
@@ -66,14 +74,20 @@ export default function BuatSesiModal({
         <>
           <button
             onClick={onClose}
-            className="flex-1 py-2.5 text-sm font-semibold border border-admin-border rounded-xl hover:bg-admin-surface-soft transition-all"
+            className="flex-1 py-2.5 text-sm font-semibold border border-admin-border rounded-[8px] hover:bg-admin-surface-soft transition-all"
           >
             Batal
           </button>
           <button
             onClick={onSubmit}
-            disabled={saving || !form.tanggal_mulai || !form.tanggal_selesai || !tahunValid || !kandidatCount}
-            className="flex-1 py-2.5 text-sm font-semibold bg-admin-accent text-white rounded-xl hover:bg-admin-accent/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
+            disabled={
+              saving ||
+              !form.tanggal_mulai ||
+              !form.tanggal_selesai ||
+              !tahunValid ||
+              !kandidatCount
+            }
+            className="flex-1 py-2.5 text-sm font-semibold bg-admin-accent text-white rounded-[8px] hover:bg-admin-accent/90 disabled:opacity-50 transition-all flex items-center justify-center gap-2"
           >
             {saving && <Loader2 size={14} className="animate-spin" />}
             Buat Sesi
@@ -95,7 +109,7 @@ export default function BuatSesiModal({
               onChange(next);
               onFilterChange(next.jalur_masuk, next.tahun_seleksi);
             }}
-            className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
+            className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-[8px] focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
           >
             <option value="SNBT ELIGIBLE">SNBT (Eligible)</option>
             <option value="SNBT NON ELIGIBLE">SNBT (Non-Eligible)</option>
@@ -121,8 +135,10 @@ export default function BuatSesiModal({
                 onFilterChange(next.jalur_masuk, next.tahun_seleksi);
               }
             }}
-            className={`w-full px-3 py-2.5 text-sm border rounded-xl focus:outline-none focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200 ${
-              tahunValid ? "border-admin-border focus:border-admin-accent" : "border-admin-danger-text"
+            className={`w-full px-3 py-2.5 text-sm border rounded-[8px] focus:outline-none focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200 ${
+              tahunValid
+                ? "border-admin-border focus:border-admin-accent"
+                : "border-admin-danger-text"
             }`}
           />
         </div>
@@ -134,7 +150,8 @@ export default function BuatSesiModal({
             "Menghitung..."
           ) : (
             <>
-              Total kandidat <b className="text-admin-accent">{form.jalur_masuk}</b> tahun{" "}
+              Total kandidat{" "}
+              <b className="text-admin-accent">{form.jalur_masuk}</b> tahun{" "}
               <b className="text-admin-accent">{form.tahun_seleksi}</b>:{" "}
               <b className="text-admin-text">{kandidatCount}</b> mahasiswa
             </>
@@ -152,8 +169,10 @@ export default function BuatSesiModal({
             type="date"
             value={form.tanggal_mulai}
             title="Tanggal mulai"
-            onChange={(e) => onChange({ ...form, tanggal_mulai: e.target.value })}
-            className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
+            onChange={(e) =>
+              onChange({ ...form, tanggal_mulai: e.target.value })
+            }
+            className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-[8px] focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
           />
         </div>
         <div>
@@ -165,8 +184,10 @@ export default function BuatSesiModal({
             title="tanggal"
             value={form.tanggal_selesai}
             min={form.tanggal_mulai || undefined}
-            onChange={(e) => onChange({ ...form, tanggal_selesai: e.target.value })}
-            className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
+            onChange={(e) =>
+              onChange({ ...form, tanggal_selesai: e.target.value })
+            }
+            className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-[8px] focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
           />
         </div>
       </div>
@@ -187,14 +208,18 @@ export default function BuatSesiModal({
                   key={i}
                   className="text-[10px] font-bold px-2 py-1 bg-white border border-admin-accent/20 rounded-lg text-admin-text-2"
                 >
-                  {d.toLocaleDateString("id-ID", { day: "numeric", month: "short" })}:{" "}
-                  <span className="text-admin-accent">{kuota}</span>
+                  {d.toLocaleDateString("id-ID", {
+                    day: "numeric",
+                    month: "short",
+                  })}
+                  : <span className="text-admin-accent">{kuota}</span>
                 </span>
               );
             })}
           </div>
           <p className="text-[10px] text-admin-text-4 mt-1.5">
-            Total: {kandidatCount} mahasiswa (maks tidak melebihi jumlah kandidat)
+            Total: {kandidatCount} mahasiswa (maks tidak melebihi jumlah
+            kandidat)
           </p>
         </div>
       )}
@@ -210,12 +235,15 @@ export default function BuatSesiModal({
           max={50}
           value={form.kuota_pewawancara}
           title="Kuota pewawancara"
-          onChange={(e) => onChange({ ...form, kuota_pewawancara: e.target.value })}
-          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-xl focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
+          onChange={(e) =>
+            onChange({ ...form, kuota_pewawancara: e.target.value })
+          }
+          className="w-full px-3 py-2.5 text-sm border border-admin-border rounded-[8px] focus:outline-none focus:border-admin-accent focus:ring-2 focus:ring-admin-accent/20 bg-admin-surface-soft transition-[border-color,box-shadow] duration-200"
         />
         {perPewawancara !== null && (
           <p className="text-[11px] text-admin-text-5 mt-1">
-            Tiap pewawancara ≈ <b className="text-admin-text-2">{perPewawancara}</b> mahasiswa/hari
+            Tiap pewawancara ≈{" "}
+            <b className="text-admin-text-2">{perPewawancara}</b> mahasiswa/hari
           </p>
         )}
       </div>

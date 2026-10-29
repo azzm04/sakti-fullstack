@@ -15,7 +15,12 @@ interface RadioGroupBooleanProps {
 /**
  * Radio group untuk pilihan boolean (Ada / Tidak Ada).
  */
-export function RadioGroupBoolean({ label, value, onChange, required }: RadioGroupBooleanProps) {
+export function RadioGroupBoolean({
+  label,
+  value,
+  onChange,
+  required,
+}: RadioGroupBooleanProps) {
   return (
     <div>
       <label className="block text-xs font-bold text-secondary mb-2">
@@ -27,7 +32,7 @@ export function RadioGroupBoolean({ label, value, onChange, required }: RadioGro
             key={String(opt.value)}
             type="button"
             onClick={() => onChange(opt.value)}
-            className={`px-4 py-2 rounded-xl text-xs font-bold border transition-all ${
+            className={`px-4 py-2 rounded-[8px] text-xs font-bold border transition-all ${
               value === opt.value
                 ? opt.value
                   ? "bg-emerald-50 text-emerald-700 border-emerald-200 shadow-sm"

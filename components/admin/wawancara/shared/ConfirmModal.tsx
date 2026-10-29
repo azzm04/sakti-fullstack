@@ -91,22 +91,26 @@ export default function ConfirmModal({
             </div>
 
             <div className="text-center mb-6">
-              <h3 className="font-admin-heading text-lg font-bold text-admin-text mb-2">{title}</h3>
-              <p className="text-sm text-admin-text-4 leading-relaxed">{description}</p>
+              <h3 className="font-admin-heading text-lg font-bold text-admin-text mb-2">
+                {title}
+              </h3>
+              <p className="text-sm text-admin-text-4 leading-relaxed">
+                {description}
+              </p>
             </div>
 
             <div className="flex gap-3">
               <button
                 onClick={onCancel}
                 disabled={loading}
-                className="flex-1 py-2.5 text-sm font-semibold border border-admin-border rounded-xl hover:bg-admin-surface-soft text-admin-text-2 transition-all disabled:opacity-50"
+                className="flex-1 py-2.5 text-sm font-semibold border border-admin-border rounded-[8px] hover:bg-admin-surface-soft text-admin-text-2 transition-all disabled:opacity-50"
               >
                 {cancelLabel}
               </button>
               <button
                 onClick={onConfirm}
                 disabled={loading}
-                className={`flex-1 py-2.5 text-sm font-semibold text-white rounded-xl transition-all flex items-center justify-center gap-2 disabled:opacity-50 ${cfg.btnClass}`}
+                className={`flex-1 py-2.5 text-sm font-semibold text-white rounded-[8px] transition-all flex items-center justify-center gap-2 disabled:opacity-50 ${cfg.btnClass}`}
               >
                 {loading && <Loader2 size={14} className="animate-spin" />}
                 {confirmLabel ?? cfg.defaultLabel}

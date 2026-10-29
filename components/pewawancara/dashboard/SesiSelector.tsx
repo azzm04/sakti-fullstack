@@ -9,7 +9,11 @@ interface SesiSelectorProps {
   onSelect: (id: number) => void;
 }
 
-export function SesiSelector({ sesiList, selectedSesiId, onSelect }: SesiSelectorProps) {
+export function SesiSelector({
+  sesiList,
+  selectedSesiId,
+  onSelect,
+}: SesiSelectorProps) {
   if (sesiList.length <= 1) return null;
 
   return (
@@ -27,7 +31,7 @@ export function SesiSelector({ sesiList, selectedSesiId, onSelect }: SesiSelecto
             <button
               key={s.id}
               onClick={() => onSelect(s.id)}
-              className={`px-4 py-2.5 rounded-xl text-xs font-bold border-2 transition-all relative ${
+              className={`px-4 py-2.5 rounded-[8px] text-xs font-bold border-2 transition-all relative ${
                 isSelected
                   ? "bg-primary text-primary-foreground border-primary shadow-md"
                   : hasClaimed
@@ -42,7 +46,9 @@ export function SesiSelector({ sesiList, selectedSesiId, onSelect }: SesiSelecto
                   month: "short",
                 })}
               </span>
-              <span className={`text-[10px] font-medium ${isSelected ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+              <span
+                className={`text-[10px] font-medium ${isSelected ? "text-primary-foreground/70" : "text-muted-foreground"}`}
+              >
                 {s.kuota_terisi}/{s.kuota_pewawancara} kuota
               </span>
 
