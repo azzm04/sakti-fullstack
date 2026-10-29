@@ -1,61 +1,21 @@
-import { prisma } from "@/lib/db";
-import MonevClient from "@/components/admin/monev/MonevClient";
+import { redirect } from "next/navigation";
+import { requireAdminRole } from "@/lib/auth-server";
+import { getPeriodeRuangKerja } from "@/lib/monev/ruang-kerja-data";
+import { getContohRuangKerja } from "@/lib/monev/contoh-ruang-kerja";
+import { urlPeriode } from "@/lib/monev/ruang-kerja";
+import DaftarPeriode from "@/components/admin/monev/DaftarPeriode";
+import AwalMonev from "@/components/admin/monev/AwalMonev";
 
-export interface MonevSchedule {
-  id: string;
-  label: string;
-  waktu_mulai: string | null;
-  deadline: string;
-  is_active: boolean;
-  created_at: string;
-  updated_at: string | null;
-  tahun_akademik: number | null;
-  semester: string | null;
-  jumlah_laporan: number;
-}
-
-async function getInitialSchedules(): Promise<MonevSchedule[]> {
-  try {
-    // Bentuknya harus sama dengan GET /api/admin/monev/schedule — client
-    // memakai initialSchedules sampai refetch pertama, jadi updated_at
-    // (optimistic lock) dan jumlah_laporan (penentu status) wajib ada.
-    const rows = await prisma.periode_monev.findMany({
-      orderBy: { created_at: "desc" },
-      select: {
-        id:             true,
-        label:          true,
-        waktu_mulai:    true,
-        deadline:       true,
-        is_active:      true,
-        created_at:     true,
-        updated_at:     true,
-        tahun_akademik: true,
-        semester:       true,
-        _count: { select: { pengisian_monev: true } },
-      },
-    });
-
-    return rows.map((r) => ({
-      id:             r.id,
-      label:          r.label,
-      waktu_mulai:    r.waktu_mulai?.toISOString() ?? null,
-      deadline:       r.deadline.toISOString(),
-      is_active:      r.is_active,
-      created_at:     r.created_at.toISOString(),
-      updated_at:     r.updated_at?.toISOString() ?? null,
-      tahun_akademik: r.tahun_akademik,
-      semester:       r.semester,
-      jumlah_laporan: r._count.pengisian_monev,
-    }));
-  } catch (err) {
-    console.error("[Server] getInitialSchedules error:", err);
-    return [];
-  }
-}
-
-export default async function AdminMonevPage({ searchParams }: { searchParams: Promise<{ tab?: string; periode?: string }> }) {
+export default async function AdminMonevPage({ searchParams }: {
+  searchParams: Promise<{ tab?: string; periode?: string; buat?: string; demo?: string; tampilan?: string }>;
+}) {
+  await requireAdminRole();
   const params = await searchParams;
-  const initialSchedules = await getInitialSchedules();
-
-  return <MonevClient key={`${params.tab ?? "jadwal"}-${params.periode ?? ""}`} initialSchedules={initialSchedules} initialTab={params.tab === "hasil" ? "hasil" : "jadwal"} initialPeriodId={params.periode} />;
+  const contoh = process.env.NODE_ENV !== "production" && params.demo === "1";
+  if (params.tab === "hasil" && params.periode) redirect(urlPeriode(params.periode, "pemeriksaan", contoh));
+  if (params.tab) redirect(`/admin/monev?tampilan=periode${contoh ? "&demo=1" : ""}`);
+  if (params.buat === "1") return <DaftarPeriode periods={[]} buat />;
+  if (params.tampilan !== "periode") return <AwalMonev contoh={contoh} />;
+  const periods = contoh ? getContohRuangKerja().periods : await getPeriodeRuangKerja();
+  return <DaftarPeriode periods={periods} buat={params.buat === "1"} contoh={contoh} />;
 }

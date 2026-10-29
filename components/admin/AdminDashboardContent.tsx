@@ -6,16 +6,14 @@ import { useRouter } from "next/navigation";
 import { ArrowUpRight } from "lucide-react";
 import { PageHeader } from "@/components/admin/ui/PageHeader";
 import MonospaceBarChart from "@/components/ui/monospace-bar-chart";
-import type { SelectionGroup, MonevDashboardData, MonevPeriodSummary } from "@/lib/admin-dashboard-data";
+import type { SelectionGroup } from "@/lib/admin-dashboard-data";
+import type { MonevDashboard as MonevDashboardData } from "@/lib/dashboard-monev/data";
+import MonevDashboard from "@/components/admin/dashboard-monev/MonevDashboard";
 
 const number = (value: number) => value.toLocaleString("id-ID");
 const control = "min-h-11 rounded-lg border border-[#CBD5E1] bg-white px-3 text-sm text-[#334155] focus:outline-none focus:ring-2 focus:ring-[#000352]/20";
 const panel = "rounded-lg border border-[#E2E8F0] bg-white p-5 sm:p-6";
 const link = "inline-flex items-center gap-1 text-sm font-medium text-[#000352] hover:underline";
-const statusLabels: Record<MonevPeriodSummary["status"], string> = {
-  BELUM_DIMULAI: "Belum dibuka", BERLANGSUNG: "Berlangsung", BERAKHIR: "Berakhir",
-  NONAKTIF: "Tersembunyi", NONAKTIF_BERJALAN: "Tersembunyi",
-};
 const date = (iso: string) => new Date(iso).toLocaleString("id-ID", {
   day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit", timeZone: "Asia/Jakarta",
 });
@@ -75,38 +73,8 @@ function SelectionDashboard({ data }: { data: SelectionGroup[] }) {
   </div>;
 }
 
-function MonevDashboard({ data }: { data: MonevDashboardData }) {
-  const [periodId, setPeriodId] = useState(data.periods.find((period) => period.status === "BERLANGSUNG")?.id ?? data.periods.at(-1)?.id ?? "semua");
-  const [range, setRange] = useState("6");
-  const selected = data.periods.find((period) => period.id === periodId);
-  const periods = selected ? [selected] : data.periods;
-  const sum = (key: "reports" | "pending" | "review") => periods.reduce((total, period) => total + period[key], 0);
-  const chartPeriods = range === "semua" ? data.periods : data.periods.slice(-Number(range));
-  const resultsUrl = (id: string) => `/admin/monev?tab=hasil&periode=${encodeURIComponent(id)}`;
-  return <div className="space-y-6">
-    <div className="flex flex-wrap items-end justify-between gap-4">
-      <label className="grid gap-2 text-xs font-medium text-[#64748B]">Periode Monev<select value={periodId} onChange={(event) => setPeriodId(event.target.value)} className={`${control} max-w-full`}><option value="semua">Semua periode</option>{[...data.periods].reverse().map((period) => <option key={period.id} value={period.id}>{period.label}</option>)}</select></label>
-      <Link href="/admin/monev" className={link}>Kelola jadwal pengisian <ArrowUpRight size={16} /></Link>
-    </div>
-    <Metrics items={[
-      { label: "Laporan masuk", value: sum("reports"), note: selected ? selected.label : "Akumulasi seluruh periode" },
-      { label: "Mahasiswa pelapor", value: selected?.students ?? data.uniqueStudents, note: "Mahasiswa unik yang pernah mengirim" },
-      { label: "Belum dipindai AI", value: sum("pending"), note: "Laporan belum memiliki hasil pemindaian" },
-      { label: "Perlu ditinjau", value: sum("review"), note: "Indikasi perbedaan atau dokumen tidak terbaca" },
-    ]} />
-    <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1.6fr)_minmax(0,1fr)]">
-      <div className="space-y-3"><label className="flex items-center justify-between gap-3 text-sm text-[#64748B]">Rekap lintas periode<select className={control} value={range} onChange={(event) => setRange(event.target.value)}><option value="6">6 periode terakhir</option><option value="semua">Semua periode</option></select></label><MonospaceBarChart key={range} title="Laporan masuk per periode" description="Jumlah laporan tersimpan. Rentang grafik terpisah dari filter ringkasan di atas." data={chartPeriods.map((period) => ({ label: period.label, value: period.reports }))} unit="laporan" /></div>
-      <div className="space-y-4">
-        <section className={panel}><h2 className="text-base font-semibold text-[#0B1536]">{selected ? "Periode terpilih" : "Cakupan rekap"}</h2>{selected ? <><p className="mt-4 font-medium text-[#000352]">{selected.label}</p><p className="mt-2 text-sm text-[#64748B]">{statusLabels[selected.status]}</p><p className="mt-4 text-xs text-[#64748B]">Batas pengisian (WIB)</p><p className="mt-1 text-sm">{date(selected.deadline)}</p><Link href={resultsUrl(selected.id)} className={`${link} mt-5`}>Periksa hasil Monev <ArrowUpRight size={16} /></Link></> : <p className="mt-3 text-sm leading-relaxed text-[#64748B]">{data.periods.length ? `${data.periods.length} periode tercatat. Pilih periode untuk membuka laporan mahasiswa.` : "Belum ada periode Monev. Buat periode melalui halaman jadwal pengisian."}</p>}</section>
-        <section className={panel}><h2 className="text-base font-semibold text-[#0B1536]">Tentang angka rekap</h2><p className="mt-3 text-sm leading-relaxed text-[#64748B]">Satu mahasiswa dapat mengirim laporan pada beberapa periode. Jumlah laporan berbeda dari jumlah mahasiswa unik.</p><p className="mt-3 text-sm leading-relaxed text-[#64748B]">Persentase pengisian belum ditampilkan karena daftar mahasiswa wajib isi per periode belum tersedia.</p></section>
-      </div>
-    </div>
-    <section className="overflow-hidden rounded-lg border border-[#E2E8F0] bg-white"><div className="px-6 py-5"><h2 className="font-semibold text-[#0B1536]">Rekap periode</h2><p className="mt-1 text-sm text-[#64748B]">Mengikuti pilihan periode pada ringkasan.</p></div><div className="overflow-x-auto"><table className="w-full min-w-[740px] text-left text-sm"><thead className="border-y border-[#E2E8F0] bg-slate-50 text-[#64748B]"><tr>{["Periode", "Laporan", "Mahasiswa pelapor", "Belum dipindai", "Perlu ditinjau", ""].map((label) => <th key={label} scope="col" className="px-5 py-3 font-medium">{label || "Aksi"}</th>)}</tr></thead><tbody className="divide-y divide-[#E2E8F0]">{periods.length ? [...periods].reverse().map((period) => <tr key={period.id}><td className="px-5 py-4"><p className="font-medium text-[#0B1536]">{period.label}</p><p className="mt-1 text-xs text-[#64748B]">{statusLabels[period.status]}</p></td><td className="px-5 py-4 tabular-nums">{number(period.reports)}</td><td className="px-5 py-4 tabular-nums">{number(period.students)}</td><td className="px-5 py-4 tabular-nums">{number(period.pending)}</td><td className="px-5 py-4 tabular-nums">{number(period.review)}</td><td className="px-5 py-4"><Link href={resultsUrl(period.id)} className={link}>Lihat hasil</Link></td></tr>) : <tr><td colSpan={6} className="p-10 text-center text-[#64748B]">Belum ada periode Monev.</td></tr>}</tbody></table></div></section>
-  </div>;
-}
-
-export default function AdminDashboardContent({ selection, monev }: { selection: SelectionGroup[] | null; monev: MonevDashboardData | null }) {
-  const [tab, setTab] = useState<"seleksi" | "monev">("seleksi");
+export default function AdminDashboardContent({ selection, monev, initialTab = "seleksi", namaAdmin }: { selection: SelectionGroup[] | null; monev: MonevDashboardData | null; initialTab?: "seleksi" | "monev"; namaAdmin?: string }) {
+  const [tab, setTab] = useState<"seleksi" | "monev">(initialTab);
   const tabs = [{ id: "seleksi", label: "Manajemen Seleksi" }, { id: "monev", label: "Monev" }] as const;
   return <div className="min-h-screen bg-[#F8FAFC] text-[#334155]">
     <PageHeader title="Dashboard" description="Pantau pelaksanaan seleksi dan monitoring mahasiswa KIP Kuliah." />
@@ -117,7 +85,7 @@ export default function AdminDashboardContent({ selection, monev }: { selection:
           className={`border-b-2 px-1 pb-3 text-sm font-medium focus-visible:outline-2 focus-visible:outline-[#000352] ${tab === item.id ? "border-[#000352] text-[#000352]" : "border-transparent text-[#64748B] hover:text-[#000352]"}`}>{item.label}</button>)}
       </div>
       <section id="dashboard-panel-seleksi" role="tabpanel" aria-labelledby="dashboard-tab-seleksi" hidden={tab !== "seleksi"}>{tab === "seleksi" && (selection ? <SelectionDashboard data={selection} /> : <DataError />)}</section>
-      <section id="dashboard-panel-monev" role="tabpanel" aria-labelledby="dashboard-tab-monev" hidden={tab !== "monev"}>{tab === "monev" && (monev ? <MonevDashboard data={monev} /> : <DataError />)}</section>
+      <section id="dashboard-panel-monev" role="tabpanel" aria-labelledby="dashboard-tab-monev" hidden={tab !== "monev"}>{tab === "monev" && (monev ? <MonevDashboard data={monev} namaAdmin={namaAdmin} /> : <DataError />)}</section>
     </div>
   </div>;
 }
