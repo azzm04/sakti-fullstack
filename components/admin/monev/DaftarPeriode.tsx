@@ -249,11 +249,11 @@ export default function DaftarPeriode({
             <Link href="/admin/monev?buat=1" className={`${utama} shrink-0`}><Plus size={15} aria-hidden />Buat periode</Link>
           </div>
           <div className="relative hidden overflow-x-auto md:block" tabIndex={0} role="region" aria-label="Tabel periode evaluasi, geser untuk kolom lainnya">
-            <table className="w-full min-w-[1245px] table-fixed text-left text-[13px]">
+            <table className="w-full min-w-[1325px] table-fixed text-left text-[13px]">
               <caption className="sr-only">
                 Daftar evaluasi ekonomi per tahun akademik dan semester
               </caption>
-              <colgroup><col style={{ width: 65 }} /><col style={{ width: 152 }} /><col style={{ width: 250 }} /><col style={{ width: 180 }} /><col style={{ width: 145 }} /><col style={{ width: 105 }} /><col style={{ width: 210 }} /><col style={{ width: 138 }} /></colgroup>
+              <colgroup><col style={{ width: 65 }} /><col style={{ width: 232 }} /><col style={{ width: 250 }} /><col style={{ width: 180 }} /><col style={{ width: 145 }} /><col style={{ width: 105 }} /><col style={{ width: 210 }} /><col style={{ width: 138 }} /></colgroup>
               <thead className="border-y border-[#E2E8F0] bg-[#FAFBFD] text-[12px] text-[#64748B]">
                 <tr>
                   {[

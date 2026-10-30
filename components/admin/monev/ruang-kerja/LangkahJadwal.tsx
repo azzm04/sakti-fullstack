@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { toast } from "sonner";
 import { useState, useTransition, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
@@ -11,7 +12,7 @@ import {
 } from "@/lib/monev-schedule";
 import { CalendarDays, ArrowRight, ChevronDown, Pencil, Clock3 } from "lucide-react";
 import { kolom, panel, tombol, utama } from "./tampilan";
-import { tanggalWib, type PeriodeRuangKerja } from "@/lib/monev/ruang-kerja";
+import { tanggalWib, urlPeriode, type PeriodeRuangKerja } from "@/lib/monev/ruang-kerja";
 
 const input = `${kolom} mt-2 !py-3.5 !text-base sm:!text-sm`;
 const button = tombol;
@@ -95,9 +96,20 @@ export default function LangkahJadwal({ periode: p, contoh = false }: { periode?
         router.push("/admin/monev");
         refresh();
       } else if (!p) {
+        toast.success("Periode berhasil dibuat.", {
+          duration: 10000,
+          description: "Belum ada pengingat yang dikirim.",
+          action: { label: "Lihat pengingat", onClick: () => router.push(urlPeriode(json.data.id, "pengingat")) },
+        });
         router.push("/admin/monev");
         refresh();
       } else {
+        const diperpanjang = action === "simpan" && new Date(String(body.deadline)).getTime() > new Date(p.deadline).getTime();
+        if (diperpanjang) toast.success("Jadwal pengisian diperpanjang.", {
+          duration: 15000,
+          description: "Belum ada pemberitahuan yang dikirim.",
+          action: { label: "Siapkan pemberitahuan perpanjangan", onClick: () => router.push(`${urlPeriode(p.id, "pengingat")}&jenis=perpanjangan`) },
+        });
         setMessage("Perubahan jadwal berhasil disimpan.");
         setEditing(false);
         void mutate();

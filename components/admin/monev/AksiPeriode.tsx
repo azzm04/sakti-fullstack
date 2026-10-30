@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Check, ClipboardCheck, Eye, Pencil, Trash2 } from "lucide-react";
+import { Bell, Check, ClipboardCheck, Eye, Pencil, Trash2 } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { judulPeriode, urlPeriode, type PeriodeRuangKerja } from "@/lib/monev/ruang-kerja";
 import { tombol } from "./ruang-kerja/tampilan";
@@ -43,6 +43,7 @@ export default function AksiPeriode({ periode: p, contoh }: { periode: PeriodeRu
       <Link href={urlPeriode(p.id, p.fase === "FINAL" ? "finalisasi" : "pemeriksaan", contoh)} className={`${ikon} text-[#000352] hover:bg-[#EEF0F8]`} title={p.fase === "FINAL" ? "Lihat hasil" : "Proses evaluasi"} aria-label={`${p.fase === "FINAL" ? "Lihat hasil" : "Proses evaluasi"} ${judulPeriode(p)}`}>
         {p.fase === "FINAL" ? <Eye size={16} aria-hidden /> : <ClipboardCheck size={16} aria-hidden />}
       </Link>
+      <Link href={urlPeriode(p.id, "pengingat", contoh)} className={`${ikon} text-[#64748B] hover:bg-[#F1F5F9] hover:text-[#000352]`} title="Pengingat pengisian" aria-label={`Pengingat pengisian ${judulPeriode(p)}`}><Bell size={16} aria-hidden /></Link>
       {!contoh && !terkunci && <Link href={urlPeriode(p.id, "jadwal", contoh)} className={`${ikon} text-[#64748B] hover:bg-[#F1F5F9] hover:text-[#000352]`} title="Ubah jadwal" aria-label={`Ubah jadwal ${judulPeriode(p)}`}><Pencil size={16} aria-hidden /></Link>}
       {!alasan && <button type="button" title="Hapus periode" aria-label={`Hapus periode ${judulPeriode(p)}`} onClick={() => { setGalat(""); setKonfirmasi(true); }} className={`${ikon} text-red-600 hover:bg-red-50`}><Trash2 size={16} aria-hidden /></button>}
     </div>

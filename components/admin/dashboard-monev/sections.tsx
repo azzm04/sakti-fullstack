@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import {
   BriefcaseBusiness, FileWarning, MessageCircleOff, Repeat2, Send, ShieldAlert, TrendingUp,
   UserRoundMinus, UserRoundX, UsersRound, type LucideIcon,
@@ -59,7 +60,7 @@ export function HasilPemeriksaan({ data, buka }: { data: MonevDashboard["pemerik
 /* ── Hubungi mahasiswa ──────────────────────────────────────── */
 const ikonKontak = { TELEGRAM: Send, BELUM_TELEGRAM: MessageCircleOff, BELUM_AKUN: UserRoundX } as const;
 
-export function HubungiMahasiswa({ data, fase, buka }: { data: MonevDashboard["belum"]; fase: Fase; buka: Buka }) {
+export function HubungiMahasiswa({ data, fase, buka, pengingatUrl }: { data: MonevDashboard["belum"]; fase: Fase; buka: Buka; pengingatUrl?: string }) {
   const lewat = pengisianBerakhir(fase);
   const kelompok = (["TELEGRAM", "BELUM_TELEGRAM", "BELUM_AKUN"] as const).map((k) => ({ kontak: k, daftar: data.daftar.filter((b) => b.kontak === k) }));
   const sub = (k: (typeof kelompok)[number]["kontak"]) => {
@@ -69,6 +70,7 @@ export function HubungiMahasiswa({ data, fase, buka }: { data: MonevDashboard["b
   };
   return (
     <Panel title={lewat ? "Tidak mengisi" : "Belum mengisi"}
+      aksi={pengingatUrl ? <Link href={pengingatUrl} className="inline-flex min-h-9 items-center text-[12px] font-medium text-[#000352] hover:underline">Kelola pengingat</Link> : undefined}
       info={lewat
         ? "Batas pengisian sudah lewat dan pengingat tidak dikirim lagi. Perpanjang periode di halaman jadwal bila mahasiswa masih diberi kesempatan."
         : "Pengingat Telegram dikirim otomatis pukul 08.00 WIB pada 30, 7, 3, 2, dan 1 hari sebelum batas, hanya ke yang belum mengisi."}>

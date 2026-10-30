@@ -55,7 +55,7 @@ export const tanggalWib = (iso: string) => new Date(iso).toLocaleString("id-ID",
 export function judulPeriode(p: { label: string }) {
   return p.label.replace(/^Monev KIP-K Undip Semester\s+/i, "");
 }
-export function urlPeriode(id: string, langkah?: Langkah, contoh = false, filter?: string) {
+export function urlPeriode(id: string, langkah?: Langkah | "pengingat", contoh = false, filter?: string) {
   const params = new URLSearchParams();
   if (langkah) params.set("langkah", langkah);
   if (contoh) params.set("demo", "1");

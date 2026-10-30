@@ -57,11 +57,11 @@ export default function MonevDashboard({ data, namaAdmin = "Admin Dirmawa", embe
         { label: "Sudah mengirim", value: r.terkirim, icon: FileCheck2, filter: "sudah-mengisi", note: "Laporan ekonomi masuk" },
         { label: "Belum mengisi", value: r.wajibIsi - r.terkirim, icon: UserRoundX, filter: "belum-mengisi", note: "Perlu dipantau" },
         { label: "Perlu ditinjau", value: r.perluDitinjau, icon: ClipboardList, filter: "perlu-ditinjau", note: `${angka(r.belumDipindai)} belum dipindai` },
-      ].map((m) => <Link key={m.label} href={url("pemeriksaan", m.filter)} className={`${panel} group p-4 transition hover:border-[#B8BED8] sm:p-5`}><div className="flex items-center justify-between"><span className="text-[12px] text-[#64748B]">{m.label}</span><m.icon size={17} className="text-[#6B70B8]" /></div><div className="mt-3 flex items-center justify-between"><strong className="text-[28px] font-semibold tracking-tight text-[#0F172A]">{angka(m.value)}</strong><ArrowRight size={15} className="text-[#CBD5E1] group-hover:text-[#000352]" /></div><p className="mt-1 text-[11px] text-[#94A3B8]">{m.note}</p></Link>)}
+      ].map((m) => <Link key={m.label} href={m.filter === "belum-mengisi" ? urlPeriode(s.id, "pengingat", data.contoh) : url("pemeriksaan", m.filter)} className={`${panel} group p-4 transition hover:border-[#B8BED8] sm:p-5`}><div className="flex items-center justify-between"><span className="text-[12px] text-[#64748B]">{m.label}</span><m.icon size={17} className="text-[#6B70B8]" /></div><div className="mt-3 flex items-center justify-between"><strong className="text-[28px] font-semibold tracking-tight text-[#0F172A]">{angka(m.value)}</strong><ArrowRight size={15} className="text-[#CBD5E1] group-hover:text-[#000352]" /></div><p className="mt-1 text-[11px] text-[#94A3B8]">{m.note}</p></Link>)}
     </div>
     <div className={`grid items-start gap-5 xl:grid-cols-[minmax(0,1fr)_340px] ${pending ? "opacity-60" : ""}`}>
       <div className="min-w-0 space-y-5"><PengisianProdi data={data.belum.perProdi} belum={data.belum.daftar} buka={setDaftar} /><PerluDitinjau data={data.perhatian} buka={setDaftar} /></div>
-      <div className="min-w-0 space-y-5"><HubungiMahasiswa data={data.belum} fase={s.fase} buka={setDaftar} /><HasilPemeriksaan data={data.pemeriksaan} buka={setDaftar} /><PerubahanKondisi data={data.perubahan} buka={setDaftar} /></div>
+      <div className="min-w-0 space-y-5"><HubungiMahasiswa data={data.belum} fase={s.fase} buka={setDaftar} pengingatUrl={urlPeriode(s.id, "pengingat", data.contoh)} /><HasilPemeriksaan data={data.pemeriksaan} buka={setDaftar} /><PerubahanKondisi data={data.perubahan} buka={setDaftar} /></div>
     </div>
     <DaftarDialog isi={daftar} onClose={() => setDaftar(null)} />
   </div>;
