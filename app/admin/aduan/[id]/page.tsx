@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
-import { ArrowLeft, ExternalLink, FileText } from "lucide-react";
+import { ArrowLeft, ExternalLink, FileText, Printer } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { BUKTI_CONFIG } from "@/lib/aduan/bukti-config";
@@ -115,13 +115,23 @@ export default async function DetailAduanAdmin({
       style={{ fontFamily: "Roboto, sans-serif" }}
     >
       <div className="mx-auto max-w-6xl px-4 pb-16 pt-8 sm:px-6 sm:pt-10 lg:px-8">
-        <Link
-          href="/admin/aduan"
-          className="inline-flex items-center gap-2 text-[14px] font-medium text-[#64748B] transition-colors hover:text-[#000352]"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          Kembali ke daftar laporan
-        </Link>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <Link
+            href="/admin/aduan"
+            className="inline-flex items-center gap-2 text-[14px] font-medium text-[#64748B] transition-colors hover:text-[#000352]"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Kembali ke daftar laporan
+          </Link>
+
+          <Link
+            href={`/admin/aduan/${aduan.id}/lembar-kendali`}
+            className="inline-flex h-9 items-center gap-2 rounded-lg bg-[#003C71] px-4 text-[13px] font-medium text-white transition-colors hover:bg-[#00529B]"
+          >
+            <Printer className="h-4 w-4" />
+            Lembar kendali
+          </Link>
+        </div>
 
         {/* ===== Header: mengikuti kartu sapaan di dasbor mahasiswa ===== */}
         <section className="mt-5">
